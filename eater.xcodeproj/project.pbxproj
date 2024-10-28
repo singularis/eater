@@ -1,0 +1,617 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FE8070872CD81998001318C0 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = FE8070862CD81998001318C0 /* GRPC */; };
+		FEFD384C2CE0167500A05F44 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = FEFD384B2CE0167300A05F44 /* .gitignore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FE0505882CD03A3B00E3EF2F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE05056F2CD03A3A00E3EF2F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE0505762CD03A3A00E3EF2F;
+			remoteInfo = eater;
+		};
+		FE0505922CD03A3B00E3EF2F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE05056F2CD03A3A00E3EF2F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE0505762CD03A3A00E3EF2F;
+			remoteInfo = eater;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		FE0505772CD03A3A00E3EF2F /* eater.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = eater.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE0505872CD03A3B00E3EF2F /* eaterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = eaterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE0505912CD03A3B00E3EF2F /* eaterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = eaterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FEFD384B2CE0167300A05F44 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FEFD383B2CE002AB00A05F44 /* Exceptions for "eater" folder in "eater" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FE0505762CD03A3A00E3EF2F /* eater */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		FE0505792CD03A3A00E3EF2F /* eater */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FEFD383B2CE002AB00A05F44 /* Exceptions for "eater" folder in "eater" target */,
+			);
+			path = eater;
+			sourceTree = "<group>";
+		};
+		FE05058A2CD03A3B00E3EF2F /* eaterTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = eaterTests;
+			sourceTree = "<group>";
+		};
+		FE0505942CD03A3B00E3EF2F /* eaterUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = eaterUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FE0505742CD03A3A00E3EF2F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE8070872CD81998001318C0 /* GRPC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE0505842CD03A3B00E3EF2F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE05058E2CD03A3B00E3EF2F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FE05056E2CD03A3A00E3EF2F = {
+			isa = PBXGroup;
+			children = (
+				FEFD384B2CE0167300A05F44 /* .gitignore */,
+				FE0505792CD03A3A00E3EF2F /* eater */,
+				FE05058A2CD03A3B00E3EF2F /* eaterTests */,
+				FE0505942CD03A3B00E3EF2F /* eaterUITests */,
+				FE0505782CD03A3A00E3EF2F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FE0505782CD03A3A00E3EF2F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FE0505772CD03A3A00E3EF2F /* eater.app */,
+				FE0505872CD03A3B00E3EF2F /* eaterTests.xctest */,
+				FE0505912CD03A3B00E3EF2F /* eaterUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FE0505762CD03A3A00E3EF2F /* eater */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE05059B2CD03A3B00E3EF2F /* Build configuration list for PBXNativeTarget "eater" */;
+			buildPhases = (
+				FE0505732CD03A3A00E3EF2F /* Sources */,
+				FE0505742CD03A3A00E3EF2F /* Frameworks */,
+				FE0505752CD03A3A00E3EF2F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FE0505792CD03A3A00E3EF2F /* eater */,
+			);
+			name = eater;
+			packageProductDependencies = (
+				FE8070862CD81998001318C0 /* GRPC */,
+			);
+			productName = eater;
+			productReference = FE0505772CD03A3A00E3EF2F /* eater.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FE0505862CD03A3B00E3EF2F /* eaterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE05059E2CD03A3B00E3EF2F /* Build configuration list for PBXNativeTarget "eaterTests" */;
+			buildPhases = (
+				FE0505832CD03A3B00E3EF2F /* Sources */,
+				FE0505842CD03A3B00E3EF2F /* Frameworks */,
+				FE0505852CD03A3B00E3EF2F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE0505892CD03A3B00E3EF2F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FE05058A2CD03A3B00E3EF2F /* eaterTests */,
+			);
+			name = eaterTests;
+			packageProductDependencies = (
+			);
+			productName = eaterTests;
+			productReference = FE0505872CD03A3B00E3EF2F /* eaterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FE0505902CD03A3B00E3EF2F /* eaterUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE0505A12CD03A3B00E3EF2F /* Build configuration list for PBXNativeTarget "eaterUITests" */;
+			buildPhases = (
+				FE05058D2CD03A3B00E3EF2F /* Sources */,
+				FE05058E2CD03A3B00E3EF2F /* Frameworks */,
+				FE05058F2CD03A3B00E3EF2F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE0505932CD03A3B00E3EF2F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FE0505942CD03A3B00E3EF2F /* eaterUITests */,
+			);
+			name = eaterUITests;
+			packageProductDependencies = (
+			);
+			productName = eaterUITests;
+			productReference = FE0505912CD03A3B00E3EF2F /* eaterUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FE05056F2CD03A3A00E3EF2F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					FE0505762CD03A3A00E3EF2F = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					FE0505862CD03A3B00E3EF2F = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = FE0505762CD03A3A00E3EF2F;
+					};
+					FE0505902CD03A3B00E3EF2F = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = FE0505762CD03A3A00E3EF2F;
+					};
+				};
+			};
+			buildConfigurationList = FE0505722CD03A3A00E3EF2F /* Build configuration list for PBXProject "eater" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FE05056E2CD03A3A00E3EF2F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FE8070812CD80CFD001318C0 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				FE8070852CD81833001318C0 /* XCRemoteSwiftPackageReference "grpc-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FE0505782CD03A3A00E3EF2F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FE0505762CD03A3A00E3EF2F /* eater */,
+				FE0505862CD03A3B00E3EF2F /* eaterTests */,
+				FE0505902CD03A3B00E3EF2F /* eaterUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FE0505752CD03A3A00E3EF2F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FEFD384C2CE0167500A05F44 /* .gitignore in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE0505852CD03A3B00E3EF2F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE05058F2CD03A3B00E3EF2F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FE0505732CD03A3A00E3EF2F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE0505832CD03A3B00E3EF2F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE05058D2CD03A3B00E3EF2F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FE0505892CD03A3B00E3EF2F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE0505762CD03A3A00E3EF2F /* eater */;
+			targetProxy = FE0505882CD03A3B00E3EF2F /* PBXContainerItemProxy */;
+		};
+		FE0505932CD03A3B00E3EF2F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE0505762CD03A3A00E3EF2F /* eater */;
+			targetProxy = FE0505922CD03A3B00E3EF2F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		FE0505992CD03A3B00E3EF2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FE05059A2CD03A3B00E3EF2F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FE05059C2CD03A3B00E3EF2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"eater/Preview Content\"";
+				DEVELOPMENT_TEAM = 7U2NSWS6B2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = eater/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				NEW_SETTING = "";
+				PRODUCT_BUNDLE_IDENTIFIER = racoon.eater;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FE05059D2CD03A3B00E3EF2F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"eater/Preview Content\"";
+				DEVELOPMENT_TEAM = 7U2NSWS6B2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = eater/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				NEW_SETTING = "";
+				PRODUCT_BUNDLE_IDENTIFIER = racoon.eater;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FE05059F2CD03A3B00E3EF2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/eater.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/eater";
+			};
+			name = Debug;
+		};
+		FE0505A02CD03A3B00E3EF2F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/eater.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/eater";
+			};
+			name = Release;
+		};
+		FE0505A22CD03A3B00E3EF2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = eater;
+			};
+			name = Debug;
+		};
+		FE0505A32CD03A3B00E3EF2F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = eater;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FE0505722CD03A3A00E3EF2F /* Build configuration list for PBXProject "eater" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE0505992CD03A3B00E3EF2F /* Debug */,
+				FE05059A2CD03A3B00E3EF2F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE05059B2CD03A3B00E3EF2F /* Build configuration list for PBXNativeTarget "eater" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE05059C2CD03A3B00E3EF2F /* Debug */,
+				FE05059D2CD03A3B00E3EF2F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE05059E2CD03A3B00E3EF2F /* Build configuration list for PBXNativeTarget "eaterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE05059F2CD03A3B00E3EF2F /* Debug */,
+				FE0505A02CD03A3B00E3EF2F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE0505A12CD03A3B00E3EF2F /* Build configuration list for PBXNativeTarget "eaterUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE0505A22CD03A3B00E3EF2F /* Debug */,
+				FE0505A32CD03A3B00E3EF2F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FE8070812CD80CFD001318C0 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+		FE8070852CD81833001318C0 /* XCRemoteSwiftPackageReference "grpc-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/grpc/grpc-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.24.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FE8070862CD81998001318C0 /* GRPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FE8070852CD81833001318C0 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPC;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = FE05056F2CD03A3A00E3EF2F /* Project object */;
+}
