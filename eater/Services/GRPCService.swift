@@ -37,7 +37,8 @@ class GRPCService {
                     Product(
                         name: dish.dishName,
                         calories: Int(dish.estimatedAvgCalories),
-                        weight: Int(dish.totalAvgWeight)
+                        weight: Int(dish.totalAvgWeight),
+                        ingredients: dish.ingredients
                     )
                 }
 
