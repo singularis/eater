@@ -4,18 +4,16 @@ struct ContentView: View {
     @State private var products: [Product] = []
     @State private var caloriesLeft: Int = 0
     @State private var date = Date()
-    @State private var showCamera = false // State to control camera view
 
     var body: some View {
         ZStack {
-            // Dark Mode Background
             Color.black
                 .edgesIgnoringSafeArea(.all)
 
-            VStack(spacing: 25) {
+            VStack(spacing: 3) {
                 // Date Display
-                Text("Today: \(date, formatter: dateFormatter)")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                Text(date, formatter: dateFormatter)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .padding()
                     .background(Color.black.opacity(0.8))
@@ -23,7 +21,7 @@ struct ContentView: View {
                     .shadow(color: .black.opacity(0.9), radius: 10, x: 0, y: 8)
 
                 // Calories Left Display
-                Text("Total calories left: \(caloriesLeft)")
+                Text("Calories: \(caloriesLeft)")
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .padding()
@@ -31,30 +29,22 @@ struct ContentView: View {
                     .cornerRadius(16)
                     .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
 
-                // Product List
                 ProductListView(products: products)
-                    .padding(.top, 10)
+                    .padding(.top, 3)
 
-                // Camera Button
-                Button(action: {
-                    showCamera = true
-                }) {
-                    Image(systemName: "camera.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 24, height: 24)
-                        .padding()
-                }
-                .buttonStyle(SolidDarkBlueButtonStyle()) // Apply custom button style
-                .padding(.top, 20)
+                CameraButtonView(onPhotoSubmitted: {
+                    // Added 5-second delay before calling fetchData()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                        fetchData() // Call fetchData() after a 5-second delay
+                    }
+                })
+                .buttonStyle(SolidDarkBlueButtonStyle())
+                .padding(.top, 10)
             }
             .onAppear {
                 fetchData()
             }
             .padding()
-        }
-        .sheet(isPresented: $showCamera) {
-            CameraView()
         }
     }
 
@@ -66,7 +56,6 @@ struct ContentView: View {
     }
 }
 
-// Custom Button Style for Solid Dark Blue Button
 struct SolidDarkBlueButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -83,15 +72,12 @@ struct SolidDarkBlueButtonStyle: ButtonStyle {
     }
 }
 
-// Global Date Formatter
 private let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
     formatter.timeStyle = .none
     return formatter
 }()
-
-
 
 #Preview {
     ContentView()

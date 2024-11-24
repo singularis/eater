@@ -5,6 +5,9 @@ struct CameraButtonView: View {
     @State private var showCamera = false
     @State private var cameraUnavailableAlert = false
 
+    // Closure to notify when photo is submitted
+    var onPhotoSubmitted: (() -> Void)?
+
     var body: some View {
         Button(action: {
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
@@ -13,14 +16,18 @@ struct CameraButtonView: View {
                 cameraUnavailableAlert = true
             }
         }) {
-            Text("Take food photo")
+            Image(systemName: "camera.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 24, height: 24)
                 .padding()
-                .background(Color.gray)
-                .foregroundColor(.white)
-                .cornerRadius(10)
         }
         .sheet(isPresented: $showCamera) {
-            CameraView()
+            // Pass the closure to CameraView
+            CameraView(onPhotoSubmitted: {
+                onPhotoSubmitted?() // Call the closure when photo is submitted
+                showCamera = false  // Dismiss the sheet
+            })
         }
         .alert(isPresented: $cameraUnavailableAlert) {
             Alert(
@@ -31,7 +38,11 @@ struct CameraButtonView: View {
         }
     }
 }
+
 struct CameraView: UIViewControllerRepresentable {
+    // Closure to notify when photo is submitted
+    var onPhotoSubmitted: (() -> Void)?
+
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.sourceType = .camera // Force camera usage
@@ -55,16 +66,19 @@ struct CameraView: UIViewControllerRepresentable {
             self.parent = parent
         }
 
+        // Called when the user picks an image
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
+                // Send the photo via GRPCService
                 GRPCService().sendPhoto(image: image)
+                parent.onPhotoSubmitted?() // Call the closure when photo is submitted
             }
             picker.dismiss(animated: true)
         }
 
+        // Called when the user cancels the picker
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
             picker.dismiss(animated: true)
         }
     }
 }
-

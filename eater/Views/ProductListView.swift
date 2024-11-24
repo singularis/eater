@@ -7,7 +7,7 @@ struct ProductListView: View {
         List(products) { product in
             VStack(alignment: .leading) {
                 Text(product.name)
-                Text("Proteins: \(product.proteins), Fats: \(product.fats), Carbs: \(product.carbs)")
+                Text("Calories: \(product.calories), Weight: \(product.weight)")
             }
         }
     }

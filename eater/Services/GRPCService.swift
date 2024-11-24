@@ -6,16 +6,55 @@ class GRPCService {
     func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
         print("Starting fetchProducts() gRPC call...")
 
-        // Simulate gRPC call to eater_today and handle caching
-        let products = [Product(name: "Apple", proteins: 0, fats: 0, carbs: 20)]
-        let remainingCalories = 500
+        var request = URLRequest(url: URL(string: "https://chater.singularis.work/eater_get_today")!)
+        request.httpMethod = "GET"
+        if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
+           let dict = NSDictionary(contentsOfFile: path),
+           let token = dict["API_TOKEN"] as? String {
+            request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
 
-        print("Fetched products: \(products)")
-        print("Remaining calories: \(remainingCalories)")
+        // Send the request
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error fetching products: \(error.localizedDescription)")
+                completion([], 0) // Return empty array and 0 calories on error
+                return
+            }
 
-        // Return mock response via completion handler
-        completion(products, remainingCalories)
+            guard let data = data else {
+                print("No data received from fetchProducts()")
+                completion([], 0) // Return empty array and 0 calories on error
+                return
+            }
 
+            // Parse the response data
+            do {
+                let todayFood = try TodayFood(serializedBytes: data)
+
+                // Map TodayFood to [Product]
+                let products = todayFood.dishesToday.map { dish in
+                    Product(
+                        name: dish.dishName,
+                        calories: Int(dish.estimatedAvgCalories),
+                        weight: Int(dish.totalAvgWeight)
+                    )
+                }
+
+                // Get remainingCalories from TodayFood
+                let remainingCalories = Int(todayFood.totalForDay.totalCalories)
+
+                print("Fetched products: \(products)")
+                print("Remaining calories: \(remainingCalories)")
+
+                completion(products, remainingCalories)
+            } catch {
+                print("Failed to parse TodayFood: \(error.localizedDescription)")
+                completion([], 0) // Return empty array and 0 calories on error
+            }
+        }
+
+        task.resume()
         print("Completed fetchProducts() call.")
     }
 
@@ -28,13 +67,10 @@ class GRPCService {
             return
         }
 
-        // Create PhotoMessage
         let timestamp = ISO8601DateFormatter().string(from: Date())
         var photoMessage = Eater_PhotoMessage() // Now this should be recognized
         photoMessage.time = timestamp
         photoMessage.photoData = imageData
-
-        // Serialize PhotoMessage to Data
         do {
             let serializedData = try photoMessage.serializedData()
 
