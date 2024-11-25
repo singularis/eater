@@ -29,13 +29,12 @@ struct ContentView: View {
                     .cornerRadius(16)
                     .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
 
-                ProductListView(products: products)
+                ProductListView(products: products, onRefresh: fetchData)
                     .padding(.top, 3)
 
                 CameraButtonView(onPhotoSubmitted: {
-                    // Added 5-second delay before calling fetchData()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                        fetchData() // Call fetchData() after a 5-second delay
+                        fetchData()
                     }
                 })
                 .buttonStyle(SolidDarkBlueButtonStyle())
@@ -55,6 +54,7 @@ struct ContentView: View {
         }
     }
 }
+
 
 struct SolidDarkBlueButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
