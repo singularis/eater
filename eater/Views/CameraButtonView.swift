@@ -70,8 +70,15 @@ struct CameraView: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
                 // Send the photo via GRPCService
-                GRPCService().sendPhoto(image: image)
-                parent.onPhotoSubmitted?() // Call the closure when photo is submitted
+                let grpcService = GRPCService()
+                grpcService.sendPhoto(image: image) { success in
+                    if success {
+                        print("Photo sent successfully!")
+                    } else {
+                        print("Failed to send photo.")
+                    }
+                }
+                parent.onPhotoSubmitted?()
             }
             picker.dismiss(animated: true)
         }

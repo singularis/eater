@@ -3,6 +3,7 @@ import UIKit
 import SwiftProtobuf
 
 class GRPCService {
+
     func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
         print("Starting fetchProducts() gRPC call...")
 
@@ -59,25 +60,20 @@ class GRPCService {
         print("Completed fetchProducts() call.")
     }
 
-    func sendPhoto(image: UIImage) {
+    func sendPhoto(image: UIImage, completion: @escaping (Bool) -> Void) {
         print("Starting sendPhoto() with image...")
-
-        // Convert UIImage to Data
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             print("Failed to convert UIImage to Data.")
+            completion(false)
             return
         }
 
         let timestamp = ISO8601DateFormatter().string(from: Date())
-        var photoMessage = Eater_PhotoMessage() // Now this should be recognized
+        var photoMessage = Eater_PhotoMessage()
         photoMessage.time = timestamp
         photoMessage.photoData = imageData
         do {
             let serializedData = try photoMessage.serializedData()
-
-
-            
-            // Send serialized data as POST body
             var request = URLRequest(url: URL(string: "https://chater.singularis.work/eater_receive_photo")!)
             request.httpMethod = "POST"
             request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
@@ -87,26 +83,45 @@ class GRPCService {
                 request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
             request.httpBody = serializedData
+            func sendRequest(retriesRemaining: Int) {
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        print("Error sending photo: \(error.localizedDescription)")
+                        if retriesRemaining > 0 {
+                            print("Retrying sendPhoto()...")
+                            sendRequest(retriesRemaining: retriesRemaining - 1)
+                        } else {
+                            print("Max retries reached. sendPhoto() failed.")
+                            completion(false)
+                        }
+                        return
+                    }
 
-            // Send the request
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                if let error = error {
-                    print("Error sending photo: \(error.localizedDescription)")
-                    return
+                    if let response = response as? HTTPURLResponse {
+                        print("Response status code: \(response.statusCode)")
+                        if response.statusCode == 200 {
+                            if let data = data, let confirmationText = String(data: data, encoding: .utf8) {
+                                print("Confirmation \(confirmationText)")
+                                completion(true)
+                            }
+                        } else {
+                            if retriesRemaining > 0 {
+                                print("Retrying sendPhoto()...")
+                                sendRequest(retriesRemaining: retriesRemaining - 1)
+                            } else {
+                                print("Max retries reached. sendPhoto() failed.")
+                                completion(false)
+                            }
+                        }
+                    }
                 }
-
-                if let response = response as? HTTPURLResponse {
-                    print("Response status code: \(response.statusCode)")
-                }
-
-                if let data = data, let responseString = String(data: data, encoding: .utf8) {
-                    print("Response: \(responseString)")
-                }
+                task.resume()
             }
 
-            task.resume()
+            sendRequest(retriesRemaining: 10)
         } catch {
             print("Failed to serialize PhotoMessage: \(error.localizedDescription)")
+            completion(false)
         }
 
         print("Completed sendPhoto() method.")
