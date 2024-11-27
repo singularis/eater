@@ -109,8 +109,15 @@ class GRPCService {
                         print("Response status code: \(response.statusCode)")
                         if response.statusCode == 200 {
                             if let data = data, let confirmationText = String(data: data, encoding: .utf8) {
-                                print("Confirmation \(confirmationText)")
-                                completion(true)
+                                print("Confirmation: \(confirmationText)")
+                                if confirmationText.lowercased().contains("not a food") {
+                                    DispatchQueue.main.async {
+                                        AlertHelper.showAlert(title: "Error", message: "The submitted photo is not food.")
+                                    }
+                                    completion(false)
+                                } else {
+                                    completion(true)
+                                }
                             }
                         } else {
                             if retriesRemaining > 0 {
@@ -136,4 +143,5 @@ class GRPCService {
 
         print("Completed sendPhoto() method.")
     }
+
 }
