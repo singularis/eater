@@ -24,7 +24,7 @@ class GRPCService {
                 print("Error fetching products: \(error.localizedDescription)")
                 if retries > 0 {
                     print("Retrying fetchProducts()...")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { 
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         self.fetchProducts(retries: retries - 1, completion: completion)
                     }
                 } else {
@@ -128,7 +128,7 @@ class GRPCService {
                 task.resume()
             }
 
-            sendRequest(retriesRemaining: 10)
+            sendRequest(retriesRemaining: 3)
         } catch {
             print("Failed to serialize PhotoMessage: \(error.localizedDescription)")
             completion(false)
