@@ -5,6 +5,10 @@ import SwiftProtobuf
 class GRPCService {
 
     func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
+        fetchProducts(retries: 3, completion: completion)
+    }
+
+    private func fetchProducts(retries: Int, completion: @escaping ([Product], Int) -> Void) {
         print("Starting fetchProducts() gRPC call...")
 
         var request = URLRequest(url: URL(string: "https://chater.singularis.work/eater_get_today")!)
@@ -15,25 +19,29 @@ class GRPCService {
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        // Send the request
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Error fetching products: \(error.localizedDescription)")
-                completion([], 0) // Return empty array and 0 calories on error
+                if retries > 0 {
+                    print("Retrying fetchProducts()...")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { 
+                        self.fetchProducts(retries: retries - 1, completion: completion)
+                    }
+                } else {
+                    print("Max retries reached. Giving up.")
+                    completion([], 0)
+                }
                 return
             }
 
             guard let data = data else {
                 print("No data received from fetchProducts()")
-                completion([], 0) // Return empty array and 0 calories on error
+                completion([], 0)
                 return
             }
 
-            // Parse the response data
             do {
                 let todayFood = try TodayFood(serializedBytes: data)
-
-                // Map TodayFood to [Product]
                 let products = todayFood.dishesToday.map { dish in
                     Product(
                         name: dish.dishName,
@@ -42,8 +50,6 @@ class GRPCService {
                         ingredients: dish.ingredients
                     )
                 }
-
-                // Get remainingCalories from TodayFood
                 let remainingCalories = Int(todayFood.totalForDay.totalCalories)
 
                 print("Fetched products: \(products)")
@@ -52,7 +58,7 @@ class GRPCService {
                 completion(products, remainingCalories)
             } catch {
                 print("Failed to parse TodayFood: \(error.localizedDescription)")
-                completion([], 0) // Return empty array and 0 calories on error
+                completion([], 0)
             }
         }
 
@@ -88,8 +94,10 @@ class GRPCService {
                     if let error = error {
                         print("Error sending photo: \(error.localizedDescription)")
                         if retriesRemaining > 0 {
-                            print("Retrying sendPhoto()...")
-                            sendRequest(retriesRemaining: retriesRemaining - 1)
+                            print("Retrying sendPhoto() in 20 seconds...")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+                                sendRequest(retriesRemaining: retriesRemaining - 1)
+                            }
                         } else {
                             print("Max retries reached. sendPhoto() failed.")
                             completion(false)
@@ -106,8 +114,10 @@ class GRPCService {
                             }
                         } else {
                             if retriesRemaining > 0 {
-                                print("Retrying sendPhoto()...")
-                                sendRequest(retriesRemaining: retriesRemaining - 1)
+                                print("Retrying sendPhoto() in 20 seconds...")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+                                    sendRequest(retriesRemaining: retriesRemaining - 1)
+                                }
                             } else {
                                 print("Max retries reached. sendPhoto() failed.")
                                 completion(false)
