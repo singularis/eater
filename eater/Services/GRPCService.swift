@@ -1,9 +1,8 @@
 import Foundation
-import UIKit
 import SwiftProtobuf
+import UIKit
 
 class GRPCService {
-
     func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
         fetchProducts(retries: 3, completion: completion)
     }
@@ -15,11 +14,12 @@ class GRPCService {
         request.httpMethod = "GET"
         if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
            let dict = NSDictionary(contentsOfFile: path),
-           let token = dict["API_TOKEN"] as? String {
+           let token = dict["API_TOKEN"] as? String
+        {
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
             if let error = error {
                 print("Error fetching products: \(error.localizedDescription)")
                 if retries > 0 {
@@ -85,7 +85,8 @@ class GRPCService {
             request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
             if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path),
-               let token = dict["API_TOKEN"] as? String {
+               let token = dict["API_TOKEN"] as? String
+            {
                 request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
             request.httpBody = serializedData
@@ -135,7 +136,7 @@ class GRPCService {
                 task.resume()
             }
 
-            sendRequest(retriesRemaining: 3)
+            sendRequest(retriesRemaining: 0)
         } catch {
             print("Failed to serialize PhotoMessage: \(error.localizedDescription)")
             completion(false)
@@ -143,5 +144,4 @@ class GRPCService {
 
         print("Completed sendPhoto() method.")
     }
-
 }

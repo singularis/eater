@@ -6,5 +6,4 @@ struct Product: Identifiable {
     let calories: Int
     let weight: Int
     let ingredients: [String]
-
 }

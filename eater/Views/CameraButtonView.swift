@@ -1,5 +1,5 @@
-import SwiftUI
 import AVFoundation
+import SwiftUI
 
 struct CameraButtonView: View {
     @State private var showCamera = false
@@ -26,7 +26,7 @@ struct CameraButtonView: View {
             // Pass the closure to CameraView
             CameraView(onPhotoSubmitted: {
                 onPhotoSubmitted?() // Call the closure when photo is submitted
-                showCamera = false  // Dismiss the sheet
+                showCamera = false // Dismiss the sheet
             })
         }
         .alert(isPresented: $cameraUnavailableAlert) {
@@ -53,7 +53,7 @@ struct CameraView: UIViewControllerRepresentable {
         return picker
     }
 
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func updateUIViewController(_: UIImagePickerController, context _: Context) {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
