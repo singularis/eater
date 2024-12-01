@@ -30,9 +30,9 @@ struct ContentView: View {
                     .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
 
                 ProductListView(products: products, onRefresh: fetchData,
-                                onSwipeAction: { product in
-                                    print("Swiped on product: \(product.name)")
-                                })
+                                onDelete: { time in
+                                                                    deleteProduct(time: time)
+                                                                })
                                 .padding(.top, 3)
 
                 CameraButtonView(onPhotoSubmitted: {
@@ -54,6 +54,15 @@ struct ContentView: View {
         GRPCService().fetchProducts { fetchedProducts, calories in
             products = fetchedProducts
             caloriesLeft = calories
+        }
+    }
+    func deleteProduct(time: Int64) {
+        GRPCService().deleteFood(time: Int(time)) { success in
+            if success {
+                fetchData()
+            } else {
+                print("Failed to delete product")
+            }
         }
     }
 }

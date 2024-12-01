@@ -3,67 +3,89 @@ import SwiftProtobuf
 import UIKit
 
 class GRPCService {
-    func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
-        fetchProducts(retries: 3, completion: completion)
-    }
 
-    private func fetchProducts(retries: Int, completion: @escaping ([Product], Int) -> Void) {
-        print("Starting fetchProducts() gRPC call...")
+    private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest? {
+        guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
+            return nil
+        }
 
-        var request = URLRequest(url: URL(string: "https://chater.singularis.work/eater_get_today")!)
-        request.httpMethod = "GET"
+        var request = URLRequest(url: url)
+        request.httpMethod = httpMethod
+        request.httpBody = body
+
         if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
            let dict = NSDictionary(contentsOfFile: path),
-           let token = dict["API_TOKEN"] as? String
-        {
+           let token = dict["API_TOKEN"] as? String {
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
-            if let error = error {
-                print("Error fetching products: \(error.localizedDescription)")
-                if retries > 0 {
-                    print("Retrying fetchProducts()...")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        self.fetchProducts(retries: retries - 1, completion: completion)
+        return request
+    }
+
+    private func sendRequest(request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
+        let task = URLSession.shared.dataTask(with: request, completionHandler: completion)
+        task.resume()
+        print("Sent request to \(request.url?.absoluteString ?? "unknown URL")")
+    }
+
+    func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
+        print("Starting fetchProducts() gRPC call...")
+
+        guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
+            print("Failed to create request for fetchProducts()")
+            completion([], 0)
+            return
+        }
+
+        let maxRetries = 3
+
+        func attemptFetch(retriesLeft: Int) {
+            sendRequest(request: request) { data, _, error in
+                if let error = error {
+                    print("Error fetching products: \(error.localizedDescription)")
+                    if retriesLeft > 0 {
+                        print("Retrying fetchProducts()... Retries left: \(retriesLeft - 1)")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            attemptFetch(retriesLeft: retriesLeft - 1)
+                        }
+                    } else {
+                        print("Max retries reached. Giving up.")
+                        completion([], 0)
                     }
-                } else {
-                    print("Max retries reached. Giving up.")
+                    return
+                }
+
+                guard let data = data else {
+                    print("No data received from fetchProducts()")
+                    completion([], 0)
+                    return
+                }
+
+                do {
+                    let todayFood = try TodayFood(serializedBytes: data)
+                    let products = todayFood.dishesToday.map { dish in
+                        Product(
+                            time: dish.time,
+                            name: dish.dishName,
+                            calories: Int(dish.estimatedAvgCalories),
+                            weight: Int(dish.totalAvgWeight),
+                            ingredients: dish.ingredients
+                        )
+                    }
+                    let remainingCalories = Int(todayFood.totalForDay.totalCalories)
+
+                    print("Fetched products: \(products)")
+                    print("Remaining calories: \(remainingCalories)")
+
+                    completion(products, remainingCalories)
+                } catch {
+                    print("Failed to parse TodayFood: \(error.localizedDescription)")
                     completion([], 0)
                 }
-                return
-            }
-
-            guard let data = data else {
-                print("No data received from fetchProducts()")
-                completion([], 0)
-                return
-            }
-
-            do {
-                let todayFood = try TodayFood(serializedBytes: data)
-                let products = todayFood.dishesToday.map { dish in
-                    Product(
-                        name: dish.dishName,
-                        calories: Int(dish.estimatedAvgCalories),
-                        weight: Int(dish.totalAvgWeight),
-                        ingredients: dish.ingredients
-                    )
-                }
-                let remainingCalories = Int(todayFood.totalForDay.totalCalories)
-
-                print("Fetched products: \(products)")
-                print("Remaining calories: \(remainingCalories)")
-
-                completion(products, remainingCalories)
-            } catch {
-                print("Failed to parse TodayFood: \(error.localizedDescription)")
-                completion([], 0)
             }
         }
 
-        task.resume()
-        print("Completed fetchProducts() call.")
+        attemptFetch(retriesLeft: maxRetries)
     }
 
     func sendPhoto(image: UIImage, completion: @escaping (Bool) -> Void) {
@@ -78,70 +100,81 @@ class GRPCService {
         var photoMessage = Eater_PhotoMessage()
         photoMessage.time = timestamp
         photoMessage.photoData = imageData
+
         do {
             let serializedData = try photoMessage.serializedData()
-            var request = URLRequest(url: URL(string: "https://chater.singularis.work/eater_receive_photo")!)
-            request.httpMethod = "POST"
-            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
-            if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
-               let dict = NSDictionary(contentsOfFile: path),
-               let token = dict["API_TOKEN"] as? String
-            {
-                request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            guard var request = createRequest(endpoint: "eater_receive_photo", httpMethod: "POST", body: serializedData) else {
+                print("Failed to create request for sendPhoto()")
+                completion(false)
+                return
             }
-            request.httpBody = serializedData
-            func sendRequest(retriesRemaining: Int) {
-                let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                    if let error = error {
-                        print("Error sending photo: \(error.localizedDescription)")
-                        if retriesRemaining > 0 {
-                            print("Retrying sendPhoto() in 20 seconds...")
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
-                                sendRequest(retriesRemaining: retriesRemaining - 1)
-                            }
-                        } else {
-                            print("Max retries reached. sendPhoto() failed.")
-                            completion(false)
-                        }
-                        return
-                    }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-                    if let response = response as? HTTPURLResponse {
-                        print("Response status code: \(response.statusCode)")
-                        if response.statusCode == 200 {
-                            if let data = data, let confirmationText = String(data: data, encoding: .utf8) {
-                                print("Confirmation: \(confirmationText)")
-                                if confirmationText.lowercased().contains("not a food") {
-                                    DispatchQueue.main.async {
-                                        AlertHelper.showAlert(title: "Error", message: "The submitted photo is not food.")
-                                    }
-                                    completion(false)
-                                } else {
-                                    completion(true)
+            sendRequest(request: request) { data, response, error in
+                if let error = error {
+                    print("Error sending photo: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    print("Response status code: \(response.statusCode)")
+                    if response.statusCode == 200 {
+                        if let data = data, let confirmationText = String(data: data, encoding: .utf8) {
+                            print("Confirmation: \(confirmationText)")
+                            if confirmationText.lowercased().contains("not a food") {
+                                DispatchQueue.main.async {
+                                    AlertHelper.showAlert(title: "Error", message: "The submitted photo is not food.")
                                 }
-                            }
-                        } else {
-                            if retriesRemaining > 0 {
-                                print("Retrying sendPhoto() in 20 seconds...")
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
-                                    sendRequest(retriesRemaining: retriesRemaining - 1)
-                                }
-                            } else {
-                                print("Max retries reached. sendPhoto() failed.")
                                 completion(false)
+                            } else {
+                                completion(true)
                             }
                         }
+                    } else {
+                        print("sendPhoto() failed. Status code: \(response.statusCode)")
+                        completion(false)
                     }
                 }
-                task.resume()
             }
 
-            sendRequest(retriesRemaining: 0)
         } catch {
             print("Failed to serialize PhotoMessage: \(error.localizedDescription)")
             completion(false)
         }
+    }
 
-        print("Completed sendPhoto() method.")
+    func deleteFood(time: Int, completion: @escaping (Bool) -> Void) {
+        print("Starting deleteFood() with time: \(time)...")
+
+        guard var request = createRequest(endpoint: "delete_food", httpMethod: "POST") else {
+            print("Failed to create request for deleteFood()")
+            completion(false)
+            return
+        }
+        request.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let bodyParameters = ["time": String(time)]
+        let bodyString = bodyParameters.map { "\($0)=\($1)" }.joined(separator: "&")
+        request.httpBody = bodyString.data(using: .utf8)
+
+        sendRequest(request: request) { _, response, error in
+            if let error = error {
+                print("Error deleting food: \(error.localizedDescription)")
+                completion(false)
+                return
+            }
+
+            if let response = response as? HTTPURLResponse {
+                print("Response status code: \(response.statusCode)")
+                if response.statusCode == 200 {
+                    print("Food deleted successfully.")
+                    completion(true)
+                } else {
+                    print("Failed to delete food. Status code: \(response.statusCode)")
+                    completion(false)
+                }
+            }
+        }
     }
 }

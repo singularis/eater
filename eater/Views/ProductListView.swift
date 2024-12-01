@@ -3,7 +3,8 @@ import SwiftUI
 struct ProductListView: View {
     let products: [Product]
     let onRefresh: () -> Void
-    let onSwipeAction: (Product) -> Void
+    let onDelete: (Int64) -> Void // Change to accept Int64
+
     var body: some View {
         List {
             ForEach(products) { product in
@@ -15,7 +16,7 @@ struct ProductListView: View {
                 }
                 .swipeActions {
                     Button {
-                        onSwipeAction(product)
+                        onDelete(product.time)
                     } label: {
                         Text("Remove")
                     }
