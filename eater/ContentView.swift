@@ -57,7 +57,7 @@ struct ContentView: View {
         }
     }
     func deleteProduct(time: Int64) {
-        GRPCService().deleteFood(time: Int(time)) { success in
+        GRPCService().deleteFood(time: Int64(time)) { success in
             if success {
                 fetchData()
             } else {

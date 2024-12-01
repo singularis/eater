@@ -37,7 +37,7 @@ class GRPCService {
             return
         }
 
-        let maxRetries = 3
+        let maxRetries = 0
 
         func attemptFetch(retriesLeft: Int) {
             sendRequest(request: request) { data, _, error in
@@ -144,37 +144,50 @@ class GRPCService {
         }
     }
 
-    func deleteFood(time: Int, completion: @escaping (Bool) -> Void) {
+    func deleteFood(time: Int64, completion: @escaping (Bool) -> Void) {
         print("Starting deleteFood() with time: \(time)...")
 
-        guard var request = createRequest(endpoint: "delete_food", httpMethod: "POST") else {
-            print("Failed to create request for deleteFood()")
-            completion(false)
-            return
-        }
-        request.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        var deleteFoodRequest = Eater_DeleteFoodRequest()
+        deleteFoodRequest.time = time
 
-        let bodyParameters = ["time": String(time)]
-        let bodyString = bodyParameters.map { "\($0)=\($1)" }.joined(separator: "&")
-        request.httpBody = bodyString.data(using: .utf8)
+        do {
+            let requestBody = try deleteFoodRequest.serializedData()
 
-        sendRequest(request: request) { _, response, error in
-            if let error = error {
-                print("Error deleting food: \(error.localizedDescription)")
+            // Create the HTTP request
+            guard var request = createRequest(endpoint: "delete_food", httpMethod: "POST", body: requestBody) else {
+                print("Failed to create request for deleteFood()")
                 completion(false)
                 return
             }
-
-            if let response = response as? HTTPURLResponse {
-                print("Response status code: \(response.statusCode)")
-                if response.statusCode == 200 {
-                    print("Food deleted successfully.")
-                    completion(true)
-                } else {
-                    print("Failed to delete food. Status code: \(response.statusCode)")
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+            sendRequest(request: request) { data, response, error in
+                if let error = error {
+                    print("Error deleting food: \(error.localizedDescription)")
                     completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    print("Response status code: \(response.statusCode)")
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            // Parse the Protobuf response
+                            let deleteFoodResponse = try Eater_DeleteFoodResponse(serializedBytes: data)
+                            print("Delete food response: \(deleteFoodResponse)")
+                            completion(deleteFoodResponse.success)
+                        } catch {
+                            print("Failed to parse DeleteFoodResponse: \(error.localizedDescription)")
+                            completion(false)
+                        }
+                    } else {
+                        print("Failed to delete food. Status code: \(response.statusCode)")
+                        completion(false)
+                    }
                 }
             }
+        } catch {
+            print("Failed to serialize DeleteFoodRequest: \(error.localizedDescription)")
+            completion(false)
         }
     }
 }
