@@ -15,99 +15,99 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 struct Eater_DeleteFoodRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  var time: Int64 = 0
+    var time: Int64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+    init() {}
 }
 
 struct Eater_DeleteFoodResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  var success: Bool = false
+    var success: Bool = false
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+    init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "Eater"
+private let _protobuf_package = "Eater"
 
 extension Eater_DeleteFoodRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".DeleteFoodRequest"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "time"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".DeleteFoodRequest"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "time"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.time) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &time)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.time != 0 {
-      try visitor.visitSingularInt64Field(value: self.time, fieldNumber: 1)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if time != 0 {
+            try visitor.visitSingularInt64Field(value: time, fieldNumber: 1)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_DeleteFoodRequest, rhs: Eater_DeleteFoodRequest) -> Bool {
-    if lhs.time != rhs.time {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_DeleteFoodRequest, rhs: Eater_DeleteFoodRequest) -> Bool {
+        if lhs.time != rhs.time { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_DeleteFoodResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".DeleteFoodResponse"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "success"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".DeleteFoodResponse"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "success"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularBoolField(value: &success)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if success != false {
+            try visitor.visitSingularBoolField(value: success, fieldNumber: 1)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_DeleteFoodResponse, rhs: Eater_DeleteFoodResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_DeleteFoodResponse, rhs: Eater_DeleteFoodResponse) -> Bool {
+        if lhs.success != rhs.success { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }

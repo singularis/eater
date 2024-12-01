@@ -3,7 +3,6 @@ import SwiftProtobuf
 import UIKit
 
 class GRPCService {
-
     private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest? {
         guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
             return nil
@@ -15,7 +14,8 @@ class GRPCService {
 
         if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
            let dict = NSDictionary(contentsOfFile: path),
-           let token = dict["API_TOKEN"] as? String {
+           let token = dict["API_TOKEN"] as? String
+        {
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 

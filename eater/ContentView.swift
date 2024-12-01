@@ -31,8 +31,8 @@ struct ContentView: View {
 
                 ProductListView(products: products, onRefresh: fetchData,
                                 onDelete: { time in
-                                                                    deleteProduct(time: time)
-                                                                })
+                                    deleteProduct(time: time)
+                                })
                                 .padding(.top, 3)
 
                 CameraButtonView(onPhotoSubmitted: {
@@ -56,6 +56,7 @@ struct ContentView: View {
             caloriesLeft = calories
         }
     }
+
     func deleteProduct(time: Int64) {
         GRPCService().deleteFood(time: Int64(time)) { success in
             if success {
