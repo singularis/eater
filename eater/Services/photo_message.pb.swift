@@ -16,63 +16,71 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-    typealias Version = _2
+fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+  typealias Version = _2
 }
 
 struct Eater_PhotoMessage: @unchecked Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-    var time: String = .init()
+  var time: String = String()
 
-    var photoData: Data = .init()
+  var photoData: Data = Data()
 
-    var unknownFields = SwiftProtobuf.UnknownStorage()
+  var photoType: String = String()
 
-    init() {}
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-private let _protobuf_package = "eater"
+fileprivate let _protobuf_package = "eater"
 
 extension Eater_PhotoMessage: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    static let protoMessageName: String = _protobuf_package + ".PhotoMessage"
-    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-        1: .same(proto: "time"),
-        2: .standard(proto: "photo_data"),
-    ]
+  static let protoMessageName: String = _protobuf_package + ".PhotoMessage"
+  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "time"),
+    2: .standard(proto: "photo_data"),
+    3: .same(proto: "photoType"),
+  ]
 
-    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &time)
-            case 2: try decoder.decodeSingularBytesField(value: &photoData)
-            default: break
-            }
-        }
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.time) }()
+      case 2: try { try decoder.decodeSingularBytesField(value: &self.photoData) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.photoType) }()
+      default: break
+      }
     }
+  }
 
-    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-        if !time.isEmpty {
-            try visitor.visitSingularStringField(value: time, fieldNumber: 1)
-        }
-        if !photoData.isEmpty {
-            try visitor.visitSingularBytesField(value: photoData, fieldNumber: 2)
-        }
-        try unknownFields.traverse(visitor: &visitor)
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.time.isEmpty {
+      try visitor.visitSingularStringField(value: self.time, fieldNumber: 1)
     }
+    if !self.photoData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.photoData, fieldNumber: 2)
+    }
+    if !self.photoType.isEmpty {
+      try visitor.visitSingularStringField(value: self.photoType, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
 
-    static func == (lhs: Eater_PhotoMessage, rhs: Eater_PhotoMessage) -> Bool {
-        if lhs.time != rhs.time { return false }
-        if lhs.photoData != rhs.photoData { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
+  static func ==(lhs: Eater_PhotoMessage, rhs: Eater_PhotoMessage) -> Bool {
+    if lhs.time != rhs.time {return false}
+    if lhs.photoData != rhs.photoData {return false}
+    if lhs.photoType != rhs.photoType {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
 }

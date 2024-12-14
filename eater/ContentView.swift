@@ -4,6 +4,7 @@ struct ContentView: View {
     @State private var products: [Product] = []
     @State private var caloriesLeft: Int = 0
     @State private var date = Date()
+    @State private var showCamera = false
 
     var body: some View {
         ZStack {
@@ -20,20 +21,36 @@ struct ContentView: View {
                     .cornerRadius(16)
                     .shadow(color: .black.opacity(0.9), radius: 10, x: 0, y: 8)
 
-                // Calories Left Display
-                Text("Calories: \(caloriesLeft)")
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.gray.opacity(0.8))
-                    .cornerRadius(16)
-                    .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+                GeometryReader { geo in
+                    Button(action: {
+                        showCamera = true
+                    }) {
+                        Text("93")
+                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.gray.opacity(0.8))
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+                    }
+                    .position(x: 30, y: geo.size.height / 2)
+                    .sheet(isPresented: $showCamera) {
+                        CameraView(photoType: "weight_prompt", onPhotoSubmitted: fetchData)
+                    }
 
-                ProductListView(products: products, onRefresh: fetchData,
-                                onDelete: { time in
-                                    deleteProduct(time: time)
-                                })
-                                .padding(.top, 3)
+                    Text("Calories: \(caloriesLeft)")
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.gray.opacity(0.8))
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+                        .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                }
+                .frame(height: 60)
+
+                ProductListView(products: products, onRefresh: fetchData, onDelete: deleteProduct)
+                    .padding(.top, 3)
 
                 CameraButtonView(onPhotoSubmitted: {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
@@ -72,7 +89,7 @@ struct SolidDarkBlueButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding()
-            .frame(maxWidth: .infinity) // Make it a full-width button
+            .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 25, style: .continuous)
                     .fill(Color.blue.opacity(0.9))

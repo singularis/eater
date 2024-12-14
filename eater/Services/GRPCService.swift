@@ -91,8 +91,8 @@ class GRPCService {
         }
     }
 
-    func sendPhoto(image: UIImage, completion: @escaping (Bool) -> Void) {
-        print("Starting sendPhoto() with image...")
+    func sendPhoto(image: UIImage, photoType: String, completion: @escaping (Bool) -> Void) {
+        print("Starting sendPhoto() with image and type: \(photoType)...")
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             print("Failed to convert UIImage to Data.")
             completion(false)
@@ -103,6 +103,7 @@ class GRPCService {
         var photoMessage = Eater_PhotoMessage()
         photoMessage.time = timestamp
         photoMessage.photoData = imageData
+        photoMessage.photoType = photoType
 
         do {
             let serializedData = try photoMessage.serializedData()
@@ -124,9 +125,9 @@ class GRPCService {
                     print("Response status code: \(response.statusCode)")
                     if response.statusCode == 200, let data = data, let confirmationText = String(data: data, encoding: .utf8) {
                         print("Confirmation: \(confirmationText)")
-                        if confirmationText.lowercased().contains("not a food") {
+                        if confirmationText.lowercased().contains("not a") {
                             DispatchQueue.main.async {
-                                AlertHelper.showAlert(title: "Error", message: "The submitted photo is not food.")
+                                AlertHelper.showAlert(title: "Error", message: confirmationText)
                             }
                             completion(false)
                         } else {
