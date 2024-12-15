@@ -3,7 +3,7 @@ import SwiftUI
 struct ProductListView: View {
     let products: [Product]
     let onRefresh: () -> Void
-    let onDelete: (Int64) -> Void // Change to accept Int64
+    let onDelete: (Int64) -> Void
 
     var body: some View {
         List {

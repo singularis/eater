@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var products: [Product] = []
     @State private var caloriesLeft: Int = 0
+    @State private var persohWeight: Float = 0
     @State private var date = Date()
     @State private var showCamera = false
 
@@ -25,7 +26,7 @@ struct ContentView: View {
                     Button(action: {
                         showCamera = true
                     }) {
-                        Text("93")
+                        Text(String(format: "%.1f", persohWeight))
                             .font(.system(size: 22, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                             .padding()
@@ -68,9 +69,10 @@ struct ContentView: View {
     }
 
     func fetchData() {
-        GRPCService().fetchProducts { fetchedProducts, calories in
+        GRPCService().fetchProducts { fetchedProducts, calories, weight in
             products = fetchedProducts
             caloriesLeft = calories
+            persohWeight = weight
         }
     }
 

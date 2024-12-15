@@ -45,25 +45,25 @@ class GRPCService {
         task.resume()
     }
 
-    func fetchProducts(completion: @escaping ([Product], Int) -> Void) {
+    func fetchProducts(completion: @escaping ([Product], Int, Float) -> Void) {
         print("Starting fetchProducts() gRPC call...")
 
         guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
             print("Failed to create request for fetchProducts()")
-            completion([], 0)
+            completion([], 0, 0)
             return
         }
 
         sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
             if let error = error {
                 print("Failed to fetch products: \(error.localizedDescription)")
-                completion([], 0)
+                completion([], 0, 0)
                 return
             }
 
             guard let data = data else {
                 print("No data received from fetchProducts()")
-                completion([], 0)
+                completion([], 0, 0)
                 return
             }
 
@@ -79,14 +79,16 @@ class GRPCService {
                     )
                 }
                 let remainingCalories = Int(todayFood.totalForDay.totalCalories)
+                let persohWeight = Float(todayFood.personWeight)
 
                 print("Fetched products: \(products)")
                 print("Remaining calories: \(remainingCalories)")
+                print("Person weight calories: \(persohWeight)")
 
-                completion(products, remainingCalories)
+                completion(products, remainingCalories, persohWeight)
             } catch {
                 print("Failed to parse TodayFood: \(error.localizedDescription)")
-                completion([], 0)
+                completion([], 0, 0)
             }
         }
     }
