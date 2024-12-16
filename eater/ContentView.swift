@@ -47,6 +47,14 @@ struct ContentView: View {
                         .cornerRadius(16)
                         .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                    Text("Tend")
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.gray.opacity(0.8))
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+                        .position(x: geo.size.width - 30, y: geo.size.height / 2)
                 }
                 .frame(height: 60)
 
