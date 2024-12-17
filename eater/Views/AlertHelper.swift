@@ -15,7 +15,7 @@ class AlertHelper {
         if let attributedMessage = alert.message {
             let mutableAttributedMessage = NSMutableAttributedString(string: attributedMessage)
 
-            let largerFontSize: CGFloat = 14
+            let largerFontSize: CGFloat = 16
 
             mutableAttributedMessage.addAttribute(
                 .font,
