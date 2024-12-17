@@ -3,9 +3,10 @@ import SwiftUI
 struct ContentView: View {
     @State private var products: [Product] = []
     @State private var caloriesLeft: Int = 0
-    @State private var persohWeight: Float = 0
+    @State private var personWeight: Float = 0
     @State private var date = Date()
     @State private var showCamera = false
+    @State private var isLoadingRecommendation = false
 
     var body: some View {
         ZStack {
@@ -26,7 +27,7 @@ struct ContentView: View {
                     Button(action: {
                         showCamera = true
                     }) {
-                        Text(String(format: "%.1f", persohWeight))
+                        Text(String(format: "%.1f", personWeight))
                             .font(.system(size: 22, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                             .padding()
@@ -47,14 +48,32 @@ struct ContentView: View {
                         .cornerRadius(16)
                         .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                    Text("Tend")
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.gray.opacity(0.8))
-                        .cornerRadius(16)
-                        .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
-                        .position(x: geo.size.width - 30, y: geo.size.height / 2)
+
+                    // Modified "Tend" button
+                    ZStack {
+                        if isLoadingRecommendation {
+                            ProgressView() // Show loading indicator
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Text("Tend")
+                                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.8))
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+                    .position(x: geo.size.width - 30, y: geo.size.height / 2)
+                    .onTapGesture {
+                        isLoadingRecommendation = true
+                        GRPCService().getRecommendation(days: 7) { recommendation in
+                            DispatchQueue.main.async {
+                                AlertHelper.showAlert(title: "Recommendation", message: recommendation)
+                                isLoadingRecommendation = false
+                            }
+                        }
+                    }
                 }
                 .frame(height: 60)
 
@@ -80,7 +99,7 @@ struct ContentView: View {
         GRPCService().fetchProducts { fetchedProducts, calories, weight in
             products = fetchedProducts
             caloriesLeft = calories
-            persohWeight = weight
+            personWeight = weight
         }
     }
 
@@ -94,7 +113,6 @@ struct ContentView: View {
         }
     }
 }
-
 struct SolidDarkBlueButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

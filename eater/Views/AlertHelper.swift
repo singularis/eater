@@ -11,6 +11,21 @@ class AlertHelper {
         }
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+
+        if let attributedMessage = alert.message {
+            let mutableAttributedMessage = NSMutableAttributedString(string: attributedMessage)
+
+            let largerFontSize: CGFloat = 14
+
+            mutableAttributedMessage.addAttribute(
+                .font,
+                value: UIFont.systemFont(ofSize: largerFontSize),
+                range: NSRange(location: 0, length: mutableAttributedMessage.length)
+            )
+
+            alert.setValue(mutableAttributedMessage, forKey: "attributedMessage")
+        }
+
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         rootViewController.present(alert, animated: true)
     }

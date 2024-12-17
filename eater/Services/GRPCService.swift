@@ -193,4 +193,49 @@ class GRPCService {
             completion(false)
         }
     }
+    func getRecommendation(days: Int32, completion: @escaping (String) -> Void) {
+        print("Starting getRecommendation() with days: \(days)...")
+
+        var recommendationRequest = Eater_RecommendationRequest()
+        recommendationRequest.days = days
+
+        do {
+            let requestBody = try recommendationRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "get_recommendation", httpMethod: "POST", body: requestBody) else {
+                print("Failed to create request for getRecommendation()")
+                completion("")
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    print("Error getting recommendation: \(error.localizedDescription)")
+                    completion("")
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    print("Response status code: \(response.statusCode)")
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            let recommendationResponse = try Eater_RecommendationResponse(serializedBytes: data)
+                            print("Recommendation response: \(recommendationResponse)")
+                            completion(recommendationResponse.recommendation)
+                        } catch {
+                            print("Failed to parse RecommendationResponse: \(error.localizedDescription)")
+                            completion("")
+                        }
+                    } else {
+                        print("Failed to get recommendation. Status code: \(response.statusCode)")
+                        completion("")
+                    }
+                }
+            }
+        } catch {
+            print("Failed to serialize RecommendationRequest: \(error.localizedDescription)")
+            completion("")
+        }
+    }
 }
