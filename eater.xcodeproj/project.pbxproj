@@ -64,6 +64,11 @@
 			path = eaterUITests;
 			sourceTree = "<group>";
 		};
+		FEEEA9812D2C66D30096EBD0 /* Preview Content */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +105,7 @@
 				FE05058A2CD03A3B00E3EF2F /* eaterTests */,
 				FE0505942CD03A3B00E3EF2F /* eaterUITests */,
 				FE0505782CD03A3A00E3EF2F /* Products */,
+				FEEEA9812D2C66D30096EBD0 /* Preview Content */,
 			);
 			sourceTree = "<group>";
 		};
@@ -130,6 +136,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				FE0505792CD03A3A00E3EF2F /* eater */,
+				FEEEA9812D2C66D30096EBD0 /* Preview Content */,
 			);
 			name = eater;
 			packageProductDependencies = (
@@ -422,7 +429,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"eater/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 7U2NSWS6B2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -453,7 +460,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"eater/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 7U2NSWS6B2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

@@ -7,7 +7,9 @@ struct ContentView: View {
     @State private var date = Date()
     @State private var showCamera = false
     @State private var isLoadingRecommendation = false
-
+    let softLimit = 1900
+    let hardLimit = 2100
+    
     var body: some View {
         ZStack {
             Color.black
@@ -40,19 +42,18 @@ struct ContentView: View {
                         CameraView(photoType: "weight_prompt", onPhotoSubmitted: fetchData)
                     }
 
-                    Text("Calories: \(caloriesLeft)")
+                    Text("Calories: \(softLimit-caloriesLeft)")
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundColor(getColor(for: caloriesLeft))
                         .padding()
                         .background(Color.gray.opacity(0.8))
                         .cornerRadius(16)
                         .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
 
-                    // Modified "Tend" button
                     ZStack {
                         if isLoadingRecommendation {
-                            ProgressView() // Show loading indicator
+                            ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
                             Text("Tend")
@@ -110,6 +111,15 @@ struct ContentView: View {
             } else {
                 print("Failed to delete product")
             }
+        }
+    }
+    private func getColor(for value: Int) -> Color {
+        if value < softLimit {
+            return .green
+        } else if value < hardLimit {
+            return .yellow
+        } else {
+            return .red
         }
     }
 }
