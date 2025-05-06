@@ -15,10 +15,7 @@ class GRPCService {
         request.httpMethod = httpMethod
         request.httpBody = body
 
-        if let path = Bundle.main.path(forResource: "config", ofType: "plist"),
-           let dict = NSDictionary(contentsOfFile: path),
-           let token = dict["API_TOKEN"] as? String
-        {
+        if let token = UserDefaults.standard.string(forKey: "auth_token") {
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
