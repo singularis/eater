@@ -121,7 +121,8 @@ final class AuthenticationService: ObservableObject {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootVC = windowScene.windows.first?.rootViewController else {
             // If we're in a preview or the window scene isn't ready, try to get the key window
-            if let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }),
+            if let keyWindowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let keyWindow = keyWindowScene.windows.first(where: { $0.isKeyWindow }),
                let rootVC = keyWindow.rootViewController {
                 startGoogleSignIn(with: rootVC)
             } else {
