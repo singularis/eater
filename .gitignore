@@ -1,1 +1,14 @@
 config.plist
+.DS_Store
+.vscode
+.idea
+.env
+.env.local
+.env.development.local
+.env.test.local
+eater/config.plist
+eater/config.plist.local
+eater/config.plist.development
+eater/config.plist.test
+eater/config.plist.production
+eater/config.plist.local
