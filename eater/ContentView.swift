@@ -7,8 +7,11 @@ struct ContentView: View {
     @State private var date = Date()
     @State private var showCamera = false
     @State private var isLoadingRecommendation = false
-    let softLimit = 1900
-    let hardLimit = 2100
+    @State private var showLimitsAlert = false
+    @State private var tempSoftLimit = ""
+    @State private var tempHardLimit = ""
+    @State private var softLimit = 1900
+    @State private var hardLimit = 2100
     
     var body: some View {
         ZStack {
@@ -50,6 +53,11 @@ struct ContentView: View {
                         .cornerRadius(16)
                         .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                        .onTapGesture {
+                            tempSoftLimit = String(softLimit)
+                            tempHardLimit = String(hardLimit)
+                            showLimitsAlert = true
+                        }
 
                     ZStack {
                         if isLoadingRecommendation {
@@ -90,9 +98,24 @@ struct ContentView: View {
                 .padding(.top, 10)
             }
             .onAppear {
+                loadLimitsFromUserDefaults()
                 fetchData()
             }
             .padding()
+            .alert("Set Calorie Limits", isPresented: $showLimitsAlert) {
+                VStack {
+                    TextField("Soft Limit", text: $tempSoftLimit)
+                        .keyboardType(.numberPad)
+                    TextField("Hard Limit", text: $tempHardLimit)
+                        .keyboardType(.numberPad)
+                }
+                Button("Save") {
+                    saveLimits()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Set your daily calorie soft limit (yellow warning) and hard limit (red warning)")
+            }
         }
     }
 
@@ -121,6 +144,40 @@ struct ContentView: View {
         } else {
             return .red
         }
+    }
+
+    private func loadLimitsFromUserDefaults() {
+        let userDefaults = UserDefaults.standard
+        let savedSoftLimit = userDefaults.integer(forKey: "softLimit")
+        let savedHardLimit = userDefaults.integer(forKey: "hardLimit")
+        
+        // Only use saved values if they exist (not 0)
+        if savedSoftLimit > 0 {
+            softLimit = savedSoftLimit
+        }
+        if savedHardLimit > 0 {
+            hardLimit = savedHardLimit
+        }
+    }
+
+    private func saveLimits() {
+        guard let newSoftLimit = Int(tempSoftLimit),
+              let newHardLimit = Int(tempHardLimit),
+              newSoftLimit > 0,
+              newHardLimit > 0,
+              newSoftLimit <= newHardLimit else {
+            // Show error if invalid input
+            AlertHelper.showAlert(title: "Invalid Input", message: "Please enter valid positive numbers. Soft limit must be less than or equal to hard limit.")
+            return
+        }
+        
+        softLimit = newSoftLimit
+        hardLimit = newHardLimit
+        
+        // Save to UserDefaults
+        let userDefaults = UserDefaults.standard
+        userDefaults.set(softLimit, forKey: "softLimit")
+        userDefaults.set(hardLimit, forKey: "hardLimit")
     }
 }
 struct SolidDarkBlueButtonStyle: ButtonStyle {
