@@ -13,6 +13,12 @@ struct ContentView: View {
     @State private var softLimit = 1900
     @State private var hardLimit = 2100
     
+    // New loading states
+    @State private var isLoadingData = false
+    @State private var isLoadingWeightPhoto = false
+    @State private var isLoadingFoodPhoto = false
+    @State private var deletingProductTime: Int64? = nil
+    
     var body: some View {
         ZStack {
             Color.black
@@ -32,17 +38,35 @@ struct ContentView: View {
                     Button(action: {
                         showCamera = true
                     }) {
-                        Text(String(format: "%.1f", personWeight))
-                            .font(.system(size: 22, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.gray.opacity(0.8))
-                            .cornerRadius(16)
-                            .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+                        ZStack {
+                            if isLoadingWeightPhoto {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text(String(format: "%.1f", personWeight))
+                                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding()
+                        .background(Color.gray.opacity(0.8))
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
                     }
                     .position(x: 30, y: geo.size.height / 2)
                     .sheet(isPresented: $showCamera) {
-                        CameraView(photoType: "weight_prompt", onPhotoSubmitted: fetchData)
+                        CameraView(
+                            photoType: "weight_prompt", 
+                            onPhotoSuccess: {
+                                fetchDataWithWeightLoading()
+                            },
+                            onPhotoFailure: {
+                                isLoadingWeightPhoto = false
+                            },
+                            onPhotoStarted: {
+                                isLoadingWeightPhoto = true
+                            }
+                        )
                     }
 
                     Text("Calories: \(softLimit-caloriesLeft)")
@@ -86,20 +110,35 @@ struct ContentView: View {
                 }
                 .frame(height: 60)
 
-                ProductListView(products: products, onRefresh: fetchData, onDelete: deleteProduct)
-                    .padding(.top, 3)
+                ProductListView(
+                    products: products, 
+                    onRefresh: fetchDataWithLoading, 
+                    onDelete: deleteProductWithLoading,
+                    deletingProductTime: deletingProductTime
+                )
+                .padding(.top, 3)
 
-                CameraButtonView(onPhotoSubmitted: {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                        fetchData()
+                CameraButtonView(
+                    isLoadingFoodPhoto: isLoadingFoodPhoto,
+                    onPhotoSuccess: {
+                        fetchDataAfterFoodPhoto()
+                    },
+                    onPhotoFailure: {
+                        // Photo processing failed, no need to fetch data
+                        isLoadingFoodPhoto = false
+                        print("Food photo processing failed")
+                    },
+                    onPhotoStarted: {
+                        // Photo processing started
+                        isLoadingFoodPhoto = true
                     }
-                })
+                )
                 .buttonStyle(SolidDarkBlueButtonStyle())
                 .padding(.top, 10)
             }
             .onAppear {
                 loadLimitsFromUserDefaults()
-                fetchData()
+                fetchDataWithLoading()
             }
             .padding()
             .alert("Set Calorie Limits", isPresented: $showLimitsAlert) {
@@ -116,26 +155,67 @@ struct ContentView: View {
             } message: {
                 Text("Set your daily calorie soft limit (yellow warning) and hard limit (red warning)")
             }
+            
+            LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
         }
     }
 
+    func fetchDataWithLoading() {
+        isLoadingData = true
+        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+            DispatchQueue.main.async {
+                products = fetchedProducts
+                caloriesLeft = calories
+                personWeight = weight
+                isLoadingData = false
+            }
+        }
+    }
+    
+    func fetchDataWithWeightLoading() {
+        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+            DispatchQueue.main.async {
+                products = fetchedProducts
+                caloriesLeft = calories
+                personWeight = weight
+                isLoadingWeightPhoto = false
+            }
+        }
+    }
+    
     func fetchData() {
         GRPCService().fetchProducts { fetchedProducts, calories, weight in
-            products = fetchedProducts
-            caloriesLeft = calories
-            personWeight = weight
+            DispatchQueue.main.async {
+                products = fetchedProducts
+                caloriesLeft = calories
+                personWeight = weight
+            }
         }
     }
 
     func deleteProduct(time: Int64) {
         GRPCService().deleteFood(time: Int64(time)) { success in
-            if success {
-                fetchData()
-            } else {
-                print("Failed to delete product")
+            DispatchQueue.main.async {
+                if success {
+                    self.fetchData()
+                } else {
+                    print("Failed to delete product")
+                }
             }
         }
     }
+    
+    func fetchDataWithCompletion(completion: @escaping () -> Void) {
+        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+            DispatchQueue.main.async {
+                self.products = fetchedProducts
+                self.caloriesLeft = calories
+                self.personWeight = weight
+                completion()
+            }
+        }
+    }
+
     private func getColor(for value: Int) -> Color {
         if value < softLimit {
             return .green
@@ -178,6 +258,33 @@ struct ContentView: View {
         let userDefaults = UserDefaults.standard
         userDefaults.set(softLimit, forKey: "softLimit")
         userDefaults.set(hardLimit, forKey: "hardLimit")
+    }
+
+    func deleteProductWithLoading(time: Int64) {
+        deletingProductTime = time
+        GRPCService().deleteFood(time: Int64(time)) { success in
+            DispatchQueue.main.async {
+                if success {
+                    self.fetchDataWithCompletion {
+                        self.deletingProductTime = nil
+                    }
+                } else {
+                    print("Failed to delete product")
+                    self.deletingProductTime = nil
+                }
+            }
+        }
+    }
+
+    func fetchDataAfterFoodPhoto() {
+        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+            DispatchQueue.main.async {
+                self.products = fetchedProducts
+                self.caloriesLeft = calories
+                self.personWeight = weight
+                self.isLoadingFoodPhoto = false
+            }
+        }
     }
 }
 struct SolidDarkBlueButtonStyle: ButtonStyle {
