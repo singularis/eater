@@ -235,4 +235,50 @@ class GRPCService {
             completion("")
         }
     }
+    
+    func deleteUser(email: String, completion: @escaping (Bool) -> Void) {
+        print("Starting deleteUser() with email: \(email)...")
+
+        var deleteUserRequest = Eater_DeleteUserRequest()
+        deleteUserRequest.email = email
+
+        do {
+            let requestBody = try deleteUserRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "delete_user", httpMethod: "POST", body: requestBody) else {
+                print("Failed to create request for deleteUser()")
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    print("Error deleting user: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    print("Response status code: \(response.statusCode)")
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            let deleteUserResponse = try Eater_DeleteUserResponse(serializedBytes: data)
+                            print("Delete user response: \(deleteUserResponse)")
+                            completion(deleteUserResponse.success)
+                        } catch {
+                            print("Failed to parse DeleteUserResponse: \(error.localizedDescription)")
+                            completion(false)
+                        }
+                    } else {
+                        print("Failed to delete user. Status code: \(response.statusCode)")
+                        completion(false)
+                    }
+                }
+            }
+        } catch {
+            print("Failed to serialize DeleteUserRequest: \(error.localizedDescription)")
+            completion(false)
+        }
+    }
 }

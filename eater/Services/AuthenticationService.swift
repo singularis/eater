@@ -152,7 +152,31 @@ final class AuthenticationService: ObservableObject {
 
     func signOut() {
         GIDSignIn.sharedInstance.signOut()
+        clearAllUserData()
+        isAuthenticated = false
+        userEmail = nil
+    }
+    
+    func clearAllUserData() {
+        // Remove authentication token
         UserDefaults.standard.removeObject(forKey: "auth_token")
+        
+        // Remove user preferences
+        UserDefaults.standard.removeObject(forKey: "softLimit")
+        UserDefaults.standard.removeObject(forKey: "hardLimit")
+        
+        // Synchronize to ensure data is immediately written
+        UserDefaults.standard.synchronize()
+    }
+    
+    func deleteAccountAndClearData() {
+        // Sign out from Google
+        GIDSignIn.sharedInstance.signOut()
+        
+        // Clear all local user data
+        clearAllUserData()
+        
+        // Reset authentication state
         isAuthenticated = false
         userEmail = nil
     }

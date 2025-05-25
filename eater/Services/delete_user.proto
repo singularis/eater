@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package Eater;
+
+message DeleteUserRequest {
+  string email = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
+
+service EaterService {
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+} 

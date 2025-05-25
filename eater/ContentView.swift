@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var authService: AuthenticationService
     @State private var products: [Product] = []
     @State private var caloriesLeft: Int = 0
     @State private var personWeight: Float = 0
@@ -12,6 +13,7 @@ struct ContentView: View {
     @State private var tempHardLimit = ""
     @State private var softLimit = 1900
     @State private var hardLimit = 2100
+    @State private var showUserProfile = false
     
     // New loading states
     @State private var isLoadingData = false
@@ -25,14 +27,37 @@ struct ContentView: View {
                 .edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 3) {
-                // Date Display
-                Text(date, formatter: dateFormatter)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.black.opacity(0.8))
-                    .cornerRadius(16)
-                    .shadow(color: .black.opacity(0.9), radius: 10, x: 0, y: 8)
+                // Top bar with user icon and date
+                HStack {
+                    // User Icon
+                    Button(action: {
+                        showUserProfile = true
+                    }) {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(.white)
+                            .background(Color.gray.opacity(0.3))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
+                    }
+                    
+                    Spacer()
+                    
+                    // Date Display
+                    Text(date, formatter: dateFormatter)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black.opacity(0.8))
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.9), radius: 10, x: 0, y: 8)
+                    
+                    Spacer()
+                    
+                    // Invisible spacer to balance the layout
+                    Color.clear
+                        .frame(width: 30, height: 30)
+                }
 
                 GeometryReader { geo in
                     Button(action: {
@@ -154,6 +179,10 @@ struct ContentView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Set your daily calorie soft limit (yellow warning) and hard limit (red warning)")
+            }
+            .sheet(isPresented: $showUserProfile) {
+                UserProfileView()
+                    .environmentObject(authService)
             }
             
             LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
