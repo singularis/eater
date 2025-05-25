@@ -33,5 +33,9 @@ struct LoginView: View {
 
 #Preview {
     LoginView()
-        .environmentObject(AuthenticationService())
+        .environmentObject({
+            let authService = AuthenticationService()
+            // For login view, we don't set preview state since it should show the login screen
+            return authService
+        }())
 }

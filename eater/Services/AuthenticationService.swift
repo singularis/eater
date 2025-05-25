@@ -180,6 +180,12 @@ final class AuthenticationService: ObservableObject {
         isAuthenticated = false
         userEmail = nil
     }
+    
+    // Preview helper method
+    func setPreviewState(email: String) {
+        isAuthenticated = true
+        userEmail = email
+    }
 
     // MARK: private
     private func generateAndStoreToken(for email: String) {

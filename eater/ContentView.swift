@@ -341,4 +341,9 @@ private let dateFormatter: DateFormatter = {
 
 #Preview {
     ContentView()
+        .environmentObject({
+            let authService = AuthenticationService()
+            authService.setPreviewState(email: "preview@example.com")
+            return authService
+        }())
 }

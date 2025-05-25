@@ -103,5 +103,9 @@ struct UserProfileView: View {
 
 #Preview {
     UserProfileView()
-        .environmentObject(AuthenticationService())
+        .environmentObject({
+            let authService = AuthenticationService()
+            authService.setPreviewState(email: "preview@example.com")
+            return authService
+        }())
 } 
