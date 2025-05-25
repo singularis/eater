@@ -3,6 +3,7 @@ import SwiftUI
 import UIKit
 import GoogleSignIn
 import GoogleSignInSwift
+import AuthenticationServices
 import CryptoKit            // ← built-in
 
 // MARK: - JWT helpers
@@ -150,6 +151,8 @@ final class AuthenticationService: ObservableObject {
         }
     }
 
+
+
     func signOut() {
         GIDSignIn.sharedInstance.signOut()
         clearAllUserData()
@@ -173,6 +176,9 @@ final class AuthenticationService: ObservableObject {
         // Sign out from Google
         GIDSignIn.sharedInstance.signOut()
         
+        // Note: Sign in with Apple doesn't require explicit sign out
+        // as it uses secure tokens that are managed by the system
+        
         // Clear all local user data
         clearAllUserData()
         
@@ -187,8 +193,8 @@ final class AuthenticationService: ObservableObject {
         userEmail = email
     }
 
-    // MARK: private
-    private func generateAndStoreToken(for email: String) {
+    // MARK: Token Management
+    func generateAndStoreToken(for email: String) {
         do {
             let token = try JWT.signHS256(
                 payload: ["sub": email, "iat": Int(Date().timeIntervalSince1970)],
@@ -208,3 +214,5 @@ final class AuthenticationService: ObservableObject {
         userEmail = email
     }
 }
+
+
