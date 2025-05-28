@@ -32,4 +32,12 @@ class AlertHelper {
         })
         rootViewController.present(alert, animated: true)
     }
+    
+    static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
+        let disclaimerText = "\n\n⚠️ HEALTH DISCLAIMER:\nThis information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.\n\nSources: USDA FoodData Central, Dietary Guidelines for Americans"
+        
+        let fullMessage = recommendation + disclaimerText
+        
+        showAlert(title: "Health Recommendation", message: fullMessage, completion: completion)
+    }
 }

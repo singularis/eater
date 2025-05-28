@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var softLimit = 1900
     @State private var hardLimit = 2100
     @State private var showUserProfile = false
+    @State private var showHealthDisclaimer = false
     
     // New loading states
     @State private var isLoadingData = false
@@ -39,6 +40,18 @@ struct ContentView: View {
                             .background(Color.gray.opacity(0.3))
                             .clipShape(Circle())
                             .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
+                    }
+                    
+                    // Health Info Button
+                    Button(action: {
+                        showHealthDisclaimer = true
+                    }) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.blue)
+                            .background(Color.white.opacity(0.9))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
                     }
                     
                     Spacer()
@@ -127,7 +140,7 @@ struct ContentView: View {
                         isLoadingRecommendation = true
                         GRPCService().getRecommendation(days: 7) { recommendation in
                             DispatchQueue.main.async {
-                                AlertHelper.showAlert(title: "Recommendation", message: recommendation)
+                                AlertHelper.showHealthRecommendation(recommendation: recommendation)
                                 isLoadingRecommendation = false
                             }
                         }
@@ -178,11 +191,14 @@ struct ContentView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Set your daily calorie soft limit (yellow warning) and hard limit (red warning)")
+                Text("Set your daily calorie soft limit (yellow warning) and hard limit (red warning).\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice. Tap the info button for sources and disclaimers.")
             }
             .sheet(isPresented: $showUserProfile) {
                 UserProfileView()
                     .environmentObject(authService)
+            }
+            .sheet(isPresented: $showHealthDisclaimer) {
+                HealthDisclaimerView()
             }
             
             LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
