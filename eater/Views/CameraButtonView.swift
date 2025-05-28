@@ -19,20 +19,12 @@ struct CameraButtonView: View {
             }
         }) {
             HStack {
-                if isLoadingFoodPhoto {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(0.8)
-                    Text("Processing...")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                } else {
-                    Image(systemName: "camera.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 24, height: 24)
-                    Text("Add Food")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                }
+                Image(systemName: "camera.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                Text("Add Food")
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
             }
             .padding()
         }

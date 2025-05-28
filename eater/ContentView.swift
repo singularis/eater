@@ -202,6 +202,7 @@ struct ContentView: View {
             }
             
             LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
+            LoadingOverlay(isVisible: isLoadingFoodPhoto, message: "Analyzing food photo...")
         }
     }
 
