@@ -126,7 +126,7 @@ class GRPCService {
                         print("Confirmation: \(confirmationText)")
                         if confirmationText.lowercased().contains("not a") {
                             DispatchQueue.main.async {
-                                AlertHelper.showAlert(title: "Error", message: confirmationText)
+                                AlertHelper.showAlert(title: "Food Not Recognized", message: confirmationText)
                             }
                             completion(false)
                         } else {
@@ -134,6 +134,9 @@ class GRPCService {
                         }
                     } else {
                         print("sendPhoto() failed. Status code: \(response.statusCode)")
+                        DispatchQueue.main.async {
+                            AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                        }
                         completion(false)
                     }
                 }
