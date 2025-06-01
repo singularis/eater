@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var hardLimit = 2100
     @State private var showUserProfile = false
     @State private var showHealthDisclaimer = false
+    @State private var showOnboarding = false
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
     
     // New loading states
     @State private var isLoadingData = false
@@ -173,6 +175,9 @@ struct ContentView: View {
             .onAppear {
                 loadLimitsFromUserDefaults()
                 fetchDataWithLoading()
+                if !hasSeenOnboarding {
+                    showOnboarding = true
+                }
             }
             .padding()
             .alert("Set Calorie Limits", isPresented: $showLimitsAlert) {
@@ -196,6 +201,10 @@ struct ContentView: View {
             .sheet(isPresented: $showHealthDisclaimer) {
                 HealthDisclaimerView()
             }
+            .overlay(
+                OnboardingView(isPresented: $showOnboarding)
+                    .opacity(showOnboarding ? 1 : 0)
+            )
             
             LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
             LoadingOverlay(isVisible: isLoadingFoodPhoto, message: "Analyzing food photo...")
