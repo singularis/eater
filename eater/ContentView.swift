@@ -42,18 +42,6 @@ struct ContentView: View {
                             .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
                     }
                     
-                    // Health Info Button
-                    Button(action: {
-                        showHealthDisclaimer = true
-                    }) {
-                        Image(systemName: "info.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.blue)
-                            .background(Color.white.opacity(0.9))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-                    }
-                    
                     Spacer()
                     
                     // Date Display
@@ -67,9 +55,17 @@ struct ContentView: View {
                     
                     Spacer()
                     
-                    // Invisible spacer to balance the layout
-                    Color.clear
-                        .frame(width: 30, height: 30)
+                    // Health Info Button
+                    Button(action: {
+                        showHealthDisclaimer = true
+                    }) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.blue)
+                            .background(Color.white.opacity(0.9))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                    }
                 }
 
                 GeometryReader { geo in
