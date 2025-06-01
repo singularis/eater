@@ -126,7 +126,11 @@ class GRPCService {
                         print("Confirmation: \(confirmationText)")
                         if confirmationText.lowercased().contains("not a") {
                             DispatchQueue.main.async {
-                                AlertHelper.showAlert(title: "Food Not Recognized", message: confirmationText)
+                                if photoType == "weight_prompt" {
+                                    AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure the scale display is clearly visible and well-lit.")
+                                } else {
+                                    AlertHelper.showAlert(title: "Food Not Recognized", message: confirmationText)
+                                }
                             }
                             completion(false)
                         } else {
@@ -135,7 +139,11 @@ class GRPCService {
                     } else {
                         print("sendPhoto() failed. Status code: \(response.statusCode)")
                         DispatchQueue.main.async {
-                            AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                            if photoType == "weight_prompt" {
+                                AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display is clearly visible\n• The lighting is good\n• The scale is on a flat surface\n• The display is not blurry")
+                            } else {
+                                AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                            }
                         }
                         completion(false)
                     }
