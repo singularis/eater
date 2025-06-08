@@ -172,6 +172,9 @@ final class AuthenticationService: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "softLimit")
         UserDefaults.standard.removeObject(forKey: "hardLimit")
         
+        // Reset onboarding state - user should see onboarding again after login
+        UserDefaults.standard.removeObject(forKey: "hasSeenOnboarding")
+        
         // Synchronize to ensure data is immediately written
         UserDefaults.standard.synchronize()
     }
