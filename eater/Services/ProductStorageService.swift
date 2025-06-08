@@ -21,15 +21,13 @@ class ProductStorageService {
             userDefaults.set(calories, forKey: caloriesKey)
             userDefaults.set(weight, forKey: weightKey)
             userDefaults.set(Date().timeIntervalSince1970, forKey: lastUpdateKey)
-            print("ProductStorageService: Saved \(products.count) products locally")
         } catch {
-            print("ProductStorageService: Failed to save products - \(error)")
+            // Failed to save products
         }
     }
     
     func loadProducts() -> ([Product], Int, Float) {
         guard let productsData = userDefaults.data(forKey: productsKey) else {
-            print("ProductStorageService: No cached products found")
             return ([], 0, 0)
         }
         
@@ -40,10 +38,8 @@ class ProductStorageService {
             let calories = userDefaults.integer(forKey: caloriesKey)
             let weight = userDefaults.float(forKey: weightKey)
             
-            print("ProductStorageService: Loaded \(products.count) products from cache")
             return (products, calories, weight)
         } catch {
-            print("ProductStorageService: Failed to load products - \(error)")
             return ([], 0, 0)
         }
     }
@@ -51,25 +47,16 @@ class ProductStorageService {
     // MARK: - Fetch and Process with Image Mapping
     
     func fetchAndProcessProducts(tempImageTime: Int64? = nil, completion: @escaping ([Product], Int, Float) -> Void) {
-        print("ProductStorageService: Fetching products from backend...")
-        
         GRPCService().fetchProducts { [weak self] products, calories, weight in
             DispatchQueue.main.async {
                 // If we have a temporary image, map it to the newest product
                 if let tempTime = tempImageTime, !products.isEmpty {
                     let newestProduct = products.max(by: { $0.time < $1.time })!
-                    print("ProductStorageService: Mapping image from temp_\(tempTime) to \(newestProduct.time)")
                     
-                    let moved = ImageStorageService.shared.moveTemporaryImage(
+                    ImageStorageService.shared.moveTemporaryImage(
                         fromTime: tempTime,
                         toTime: newestProduct.time
                     )
-                    
-                    if moved {
-                        print("ProductStorageService: Successfully mapped image")
-                    } else {
-                        print("ProductStorageService: Failed to map image")
-                    }
                 }
                 
                 // Save products locally
@@ -88,7 +75,6 @@ class ProductStorageService {
         userDefaults.removeObject(forKey: caloriesKey)
         userDefaults.removeObject(forKey: weightKey)
         userDefaults.removeObject(forKey: lastUpdateKey)
-        print("ProductStorageService: Cache cleared")
     }
     
     func isDataStale(maxAgeMinutes: Double = 5) -> Bool {

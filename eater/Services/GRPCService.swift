@@ -27,12 +27,10 @@ class GRPCService {
             if let error = error {
                 if retriesLeft > 0 {
                     let delay = self.baseDelay * pow(2, Double(self.maxRetries - retriesLeft))
-                    print("Request failed: \(error.localizedDescription). Retrying in \(delay) seconds... (\(retriesLeft) retries left)")
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                         self.sendRequest(request: request, retriesLeft: retriesLeft - 1, completion: completion)
                     }
                 } else {
-                    print("Max retries reached. Request failed permanently.")
                     completion(nil, nil, error)
                 }
             } else {
@@ -43,23 +41,18 @@ class GRPCService {
     }
 
     func fetchProducts(completion: @escaping ([Product], Int, Float) -> Void) {
-        print("Starting fetchProducts() gRPC call...")
-
         guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
-            print("Failed to create request for fetchProducts()")
             completion([], 0, 0)
             return
         }
 
         sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
             if let error = error {
-                print("Failed to fetch products: \(error.localizedDescription)")
                 completion([], 0, 0)
                 return
             }
 
             guard let data = data else {
-                print("No data received from fetchProducts()")
                 completion([], 0, 0)
                 return
             }
@@ -78,22 +71,15 @@ class GRPCService {
                 let remainingCalories = Int(todayFood.totalForDay.totalCalories)
                 let persohWeight = Float(todayFood.personWeight)
 
-                print("Fetched products: \(products)")
-                print("Remaining calories: \(remainingCalories)")
-                print("Person weight calories: \(persohWeight)")
-
                 completion(products, remainingCalories, persohWeight)
             } catch {
-                print("Failed to parse TodayFood: \(error.localizedDescription)")
                 completion([], 0, 0)
             }
         }
     }
 
     func sendPhoto(image: UIImage, photoType: String, timestampMillis: Int64? = nil, completion: @escaping (Bool) -> Void) {
-        print("Starting sendPhoto() with image and type: \(photoType)...")
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            print("Failed to convert UIImage to Data.")
             completion(false)
             return
         }
@@ -113,7 +99,6 @@ class GRPCService {
         do {
             let serializedData = try photoMessage.serializedData()
             guard var request = createRequest(endpoint: "eater_receive_photo", httpMethod: "POST", body: serializedData) else {
-                print("Failed to create request for sendPhoto()")
                 completion(false)
                 return
             }
@@ -121,15 +106,12 @@ class GRPCService {
 
             sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
                 if let error = error {
-                    print("Error sending photo: \(error.localizedDescription)")
                     completion(false)
                     return
                 }
 
                 if let response = response as? HTTPURLResponse {
-                    print("Response status code: \(response.statusCode)")
                     if response.statusCode == 200, let data = data, let confirmationText = String(data: data, encoding: .utf8) {
-                        print("Confirmation: \(confirmationText)")
                         if confirmationText.lowercased().contains("not a") {
                             DispatchQueue.main.async {
                                 if photoType == "weight_prompt" {
@@ -140,12 +122,10 @@ class GRPCService {
                             }
                             completion(false)
                         } else {
-                            print("Calling completion(true) for successful photo processing")
                             completion(true)
                         }
                         return
                     } else {
-                        print("sendPhoto() failed. Status code: \(response.statusCode)")
                         DispatchQueue.main.async {
                             if photoType == "weight_prompt" {
                                 AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display is clearly visible\n• The lighting is good\n• The scale is on a flat surface\n• The display is not blurry")
@@ -159,14 +139,11 @@ class GRPCService {
             }
 
         } catch {
-            print("Failed to serialize PhotoMessage: \(error.localizedDescription)")
             completion(false)
         }
     }
 
     func deleteFood(time: Int64, completion: @escaping (Bool) -> Void) {
-        print("Starting deleteFood() with time: \(time)...")
-
         var deleteFoodRequest = Eater_DeleteFoodRequest()
         deleteFoodRequest.time = time
 
@@ -174,7 +151,6 @@ class GRPCService {
             let requestBody = try deleteFoodRequest.serializedData()
 
             guard var request = createRequest(endpoint: "delete_food", httpMethod: "POST", body: requestBody) else {
-                print("Failed to create request for deleteFood()")
                 completion(false)
                 return
             }
@@ -182,36 +158,29 @@ class GRPCService {
 
             sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
                 if let error = error {
-                    print("Error deleting food: \(error.localizedDescription)")
                     completion(false)
                     return
                 }
 
                 if let response = response as? HTTPURLResponse {
-                    print("Response status code: \(response.statusCode)")
                     if response.statusCode == 200, let data = data {
                         do {
                             let deleteFoodResponse = try Eater_DeleteFoodResponse(serializedBytes: data)
-                            print("Delete food response: \(deleteFoodResponse)")
                             completion(deleteFoodResponse.success)
                         } catch {
-                            print("Failed to parse DeleteFoodResponse: \(error.localizedDescription)")
                             completion(false)
                         }
                     } else {
-                        print("Failed to delete food. Status code: \(response.statusCode)")
                         completion(false)
                     }
                 }
             }
         } catch {
-            print("Failed to serialize DeleteFoodRequest: \(error.localizedDescription)")
             completion(false)
         }
     }
+    
     func getRecommendation(days: Int32, completion: @escaping (String) -> Void) {
-        print("Starting getRecommendation() with days: \(days)...")
-
         var recommendationRequest = Eater_RecommendationRequest()
         recommendationRequest.days = days
 
@@ -219,7 +188,6 @@ class GRPCService {
             let requestBody = try recommendationRequest.serializedData()
 
             guard var request = createRequest(endpoint: "get_recommendation", httpMethod: "POST", body: requestBody) else {
-                print("Failed to create request for getRecommendation()")
                 completion("")
                 return
             }
@@ -227,37 +195,29 @@ class GRPCService {
 
             sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
                 if let error = error {
-                    print("Error getting recommendation: \(error.localizedDescription)")
                     completion("")
                     return
                 }
 
                 if let response = response as? HTTPURLResponse {
-                    print("Response status code: \(response.statusCode)")
                     if response.statusCode == 200, let data = data {
                         do {
                             let recommendationResponse = try Eater_RecommendationResponse(serializedBytes: data)
-                            print("Recommendation response: \(recommendationResponse)")
                             completion(recommendationResponse.recommendation)
                         } catch {
-                            print("Failed to parse RecommendationResponse: \(error.localizedDescription)")
                             completion("")
                         }
                     } else {
-                        print("Failed to get recommendation. Status code: \(response.statusCode)")
                         completion("")
                     }
                 }
             }
         } catch {
-            print("Failed to serialize RecommendationRequest: \(error.localizedDescription)")
             completion("")
         }
     }
     
     func deleteUser(email: String, completion: @escaping (Bool) -> Void) {
-        print("Starting deleteUser() with email: \(email)...")
-
         var deleteUserRequest = Eater_DeleteUserRequest()
         deleteUserRequest.email = email
 
@@ -265,7 +225,6 @@ class GRPCService {
             let requestBody = try deleteUserRequest.serializedData()
 
             guard var request = createRequest(endpoint: "delete_user", httpMethod: "POST", body: requestBody) else {
-                print("Failed to create request for deleteUser()")
                 completion(false)
                 return
             }
@@ -273,30 +232,24 @@ class GRPCService {
 
             sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
                 if let error = error {
-                    print("Error deleting user: \(error.localizedDescription)")
                     completion(false)
                     return
                 }
 
                 if let response = response as? HTTPURLResponse {
-                    print("Response status code: \(response.statusCode)")
                     if response.statusCode == 200, let data = data {
                         do {
                             let deleteUserResponse = try Eater_DeleteUserResponse(serializedBytes: data)
-                            print("Delete user response: \(deleteUserResponse)")
                             completion(deleteUserResponse.success)
                         } catch {
-                            print("Failed to parse DeleteUserResponse: \(error.localizedDescription)")
                             completion(false)
                         }
                     } else {
-                        print("Failed to delete user. Status code: \(response.statusCode)")
                         completion(false)
                     }
                 }
             }
         } catch {
-            print("Failed to serialize DeleteUserRequest: \(error.localizedDescription)")
             completion(false)
         }
     }

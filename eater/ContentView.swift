@@ -156,14 +156,11 @@ struct ContentView: View {
                 CameraButtonView(
                     isLoadingFoodPhoto: isLoadingFoodPhoto,
                     onPhotoSuccess: {
-                        print("ContentView: CameraButtonView onPhotoSuccess callback received")
                         fetchDataAfterFoodPhoto()
-                        print("ContentView: fetchDataAfterFoodPhoto() called")
                     },
                     onPhotoFailure: {
                         // Photo processing failed, no need to fetch data
                         isLoadingFoodPhoto = false
-                        print("Food photo processing failed")
                     },
                     onPhotoStarted: {
                         // Photo processing started
@@ -251,7 +248,7 @@ struct ContentView: View {
                 if success {
                     self.fetchData()
                 } else {
-                    print("Failed to delete product")
+                    // Failed to delete product
                 }
             }
         }
@@ -319,15 +316,13 @@ struct ContentView: View {
                 if success {
                     // Delete the local image as well
                     let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
-                    if !imageDeleted {
-                        print("Warning: Failed to delete local image for time: \(time)")
-                    }
+                    // No action needed if image deletion fails
                     
                     self.fetchDataWithCompletion {
                         self.deletingProductTime = nil
                     }
                 } else {
-                    print("Failed to delete product")
+                    // Failed to delete product
                     self.deletingProductTime = nil
                 }
             }
@@ -335,8 +330,6 @@ struct ContentView: View {
     }
 
     func fetchDataAfterFoodPhoto() {
-        print("ContentView: fetchDataAfterFoodPhoto - using cached data from ProductStorageService")
-        
         // The CameraView already fetched and processed the data, just use the cached version
         let (fetchedProducts, calories, weight) = ProductStorageService.shared.loadProducts()
         
@@ -345,7 +338,6 @@ struct ContentView: View {
             self.caloriesLeft = calories
             self.personWeight = Float(weight)
             self.isLoadingFoodPhoto = false
-            print("ContentView: fetchDataAfterFoodPhoto completed with \(fetchedProducts.count) products from cache")
         }
     }
 }

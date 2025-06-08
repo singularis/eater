@@ -110,7 +110,6 @@ final class AuthenticationService: ObservableObject {
         #endif
         
         guard let clientID = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String else {
-            print("❌ Missing GIDClientID")
             return
         }
         
@@ -127,7 +126,7 @@ final class AuthenticationService: ObservableObject {
                let rootVC = keyWindow.rootViewController {
                 startGoogleSignIn(with: rootVC)
             } else {
-                print("❌ Could not get root view controller")
+                // Could not get root view controller
             }
             return
         }
@@ -138,12 +137,10 @@ final class AuthenticationService: ObservableObject {
     private func startGoogleSignIn(with viewController: UIViewController) {
         GIDSignIn.sharedInstance.signIn(withPresenting: viewController) { [weak self] result, error in
             if let error = error {
-                print("❌ Google Sign-In error:", error.localizedDescription)
                 return
             }
             
             guard let email = result?.user.profile?.email else {
-                print("❌ No email found in Google Sign-In result")
                 return
             }
             
@@ -204,7 +201,7 @@ final class AuthenticationService: ObservableObject {
             UserDefaults.standard.set(token, forKey: "auth_token")
             isAuthenticated = true
             userEmail = email
-        } catch { print("JWT sign failed:", error) }
+        } catch { /* JWT sign failed */ }
     }
 
     private func validateAndSetToken(_ token: String) throws {

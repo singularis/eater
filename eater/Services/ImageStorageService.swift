@@ -19,7 +19,6 @@ class ImageStorageService {
     
     func saveImage(_ image: UIImage, forTime time: Int64) -> Bool {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            print("Failed to convert image to JPEG data")
             return false
         }
         
@@ -28,17 +27,14 @@ class ImageStorageService {
         
         do {
             try imageData.write(to: fileURL)
-            print("Successfully saved image for time: \(time)")
             return true
         } catch {
-            print("Failed to save image: \(error.localizedDescription)")
             return false
         }
     }
     
     func saveTemporaryImage(_ image: UIImage, forTime time: Int64) -> Bool {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            print("Failed to convert image to JPEG data")
             return false
         }
         
@@ -47,10 +43,8 @@ class ImageStorageService {
         
         do {
             try imageData.write(to: fileURL)
-            print("Successfully saved temporary image for time: \(time)")
             return true
         } catch {
-            print("Failed to save temporary image: \(error.localizedDescription)")
             return false
         }
     }
@@ -62,16 +56,13 @@ class ImageStorageService {
         let finalURL = imagesDirectory.appendingPathComponent(finalFilename)
         
         guard FileManager.default.fileExists(atPath: tempURL.path) else {
-            print("Temporary image not found for time: \(tempTime)")
             return false
         }
         
         do {
             try FileManager.default.moveItem(at: tempURL, to: finalURL)
-            print("Successfully moved image from temp_\(tempTime) to \(finalTime)")
             return true
         } catch {
-            print("Failed to move temporary image: \(error.localizedDescription)")
             return false
         }
     }
@@ -82,10 +73,8 @@ class ImageStorageService {
         
         do {
             try FileManager.default.removeItem(at: fileURL)
-            print("Successfully deleted temporary image for time: \(time)")
             return true
         } catch {
-            print("Failed to delete temporary image: \(error.localizedDescription)")
             return false
         }
     }
@@ -109,10 +98,8 @@ class ImageStorageService {
         
         do {
             try FileManager.default.removeItem(at: fileURL)
-            print("Successfully deleted image for time: \(time)")
             return true
         } catch {
-            print("Failed to delete image: \(error.localizedDescription)")
             return false
         }
     }
