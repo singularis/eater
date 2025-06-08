@@ -35,6 +35,23 @@ struct UserProfileView: View {
                     
                     Spacer()
                     
+                    // Logout Button
+                    Button(action: {
+                        logout()
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.right.square.fill")
+                            Text("Logout")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundColor(.black)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.yellow)
+                        .cornerRadius(10)
+                        .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                    }
+                    
                     // Delete Account Button
                     Button(action: {
                         showDeleteConfirmation = true
@@ -75,6 +92,14 @@ struct UserProfileView: View {
                 Text("Are you sure you want to delete your account? This will immediately remove all your data and preferences from this device and sign you out.")
             }
         }
+    }
+    
+    private func logout() {
+        // Sign out user and clear local data
+        authService.signOut()
+        
+        // Immediately dismiss the view - this will show the login view since user is no longer authenticated
+        dismiss()
     }
     
     private func deleteAccount() {
