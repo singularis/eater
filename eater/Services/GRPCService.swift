@@ -90,7 +90,7 @@ class GRPCService {
         }
     }
 
-    func sendPhoto(image: UIImage, photoType: String, completion: @escaping (Bool) -> Void) {
+    func sendPhoto(image: UIImage, photoType: String, timestampMillis: Int64? = nil, completion: @escaping (Bool) -> Void) {
         print("Starting sendPhoto() with image and type: \(photoType)...")
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             print("Failed to convert UIImage to Data.")
@@ -98,7 +98,13 @@ class GRPCService {
             return
         }
 
-        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let timestamp: String
+        if let timestampMillis = timestampMillis {
+            timestamp = String(timestampMillis)
+        } else {
+            timestamp = ISO8601DateFormatter().string(from: Date())
+        }
+        
         var photoMessage = Eater_PhotoMessage()
         photoMessage.time = timestamp
         photoMessage.photoData = imageData
@@ -134,8 +140,10 @@ class GRPCService {
                             }
                             completion(false)
                         } else {
+                            print("Calling completion(true) for successful photo processing")
                             completion(true)
                         }
+                        return
                     } else {
                         print("sendPhoto() failed. Status code: \(response.statusCode)")
                         DispatchQueue.main.async {

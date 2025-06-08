@@ -316,6 +316,12 @@ struct ContentView: View {
         GRPCService().deleteFood(time: Int64(time)) { success in
             DispatchQueue.main.async {
                 if success {
+                    // Delete the local image as well
+                    let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
+                    if !imageDeleted {
+                        print("Warning: Failed to delete local image for time: \(time)")
+                    }
+                    
                     self.fetchDataWithCompletion {
                         self.deletingProductTime = nil
                     }

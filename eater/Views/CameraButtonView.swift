@@ -128,6 +128,8 @@ struct CameraView: UIViewControllerRepresentable {
 
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         var parent: CameraView
+        var temporaryTimestamp: Int64?
+        
         init(_ parent: CameraView) { self.parent = parent }
 
         func imagePickerController(_ picker: UIImagePickerController,
@@ -139,13 +141,117 @@ struct CameraView: UIViewControllerRepresentable {
             }
 
             DispatchQueue.main.async { self.parent.onPhotoStarted?() }
+            
+            // Show loading overlay on top of picker instead of dismissing
+            showLoadingOverlay(on: picker)
 
-            GRPCService().sendPhoto(image: image, photoType: parent.photoType) { success in
+            let currentTimeMillis = Int64(Date().timeIntervalSince1970 * 1000)
+            self.temporaryTimestamp = currentTimeMillis
+            
+            let imageSaved = ImageStorageService.shared.saveTemporaryImage(image, forTime: currentTimeMillis)
+            if !imageSaved {
+                print("Warning: Failed to save temporary image locally")
+            }
+
+            GRPCService().sendPhoto(image: image, photoType: parent.photoType, timestampMillis: currentTimeMillis) { [weak self] success in
+                print("CameraView coordinator: GRPCService callback received with success=\(success)")
+                print("CameraView coordinator: self is \(self != nil ? "not nil" : "nil")")
+                
                 DispatchQueue.main.async {
-                    success ? self.parent.onPhotoSuccess?() : self.parent.onPhotoFailure?()
+                    print("CameraView coordinator: On main queue, about to handle result")
+                    
+                    // Dismiss picker now that processing is complete
+                    picker.dismiss(animated: true)
+                    
+                    if success {
+                        print("CameraView coordinator: Success=true, calling handlePhotoSuccess")
+                        self?.handlePhotoSuccess()
+                    } else {
+                        print("CameraView coordinator: Success=false, calling handlePhotoFailure")
+                        self?.handlePhotoFailure()
+                    }
                 }
             }
-            picker.dismiss(animated: true)
+        }
+        
+        private func showLoadingOverlay(on picker: UIImagePickerController) {
+            let overlay = UIView(frame: picker.view.bounds)
+            overlay.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+            overlay.tag = 999 // For easy removal later
+            
+            let activityIndicator = UIActivityIndicatorView(style: .large)
+            activityIndicator.color = .white
+            activityIndicator.center = overlay.center
+            activityIndicator.startAnimating()
+            
+            let label = UILabel()
+            label.text = "Analyzing food photo..."
+            label.textColor = .white
+            label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            label.textAlignment = .center
+            label.frame = CGRect(x: 0, y: activityIndicator.center.y + 40, width: overlay.bounds.width, height: 30)
+            
+            overlay.addSubview(activityIndicator)
+            overlay.addSubview(label)
+            picker.view.addSubview(overlay)
+        }
+        
+        private func handlePhotoSuccess() {
+            print("CameraView handlePhotoSuccess: Method called")
+            
+            guard let tempTimestamp = temporaryTimestamp else {
+                print("CameraView handlePhotoSuccess: No tempTimestamp, calling onPhotoFailure")
+                parent.onPhotoFailure?()
+                return
+            }
+            
+            print("CameraView handlePhotoSuccess: About to call original success callback")
+            
+            // Call the original success callback immediately
+            parent.onPhotoSuccess?()
+            
+            print("CameraView handlePhotoSuccess: Original success callback called")
+            
+            // Wait a moment for the UI update, then do image mapping
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                print("CameraView handlePhotoSuccess: Starting image mapping process...")
+                
+                // Fetch latest products to get the backend timestamp
+                GRPCService().fetchProducts { products, _, _ in
+                    DispatchQueue.main.async {
+                        // Find the newest product (highest timestamp)
+                        if let newestProduct = products.max(by: { $0.time < $1.time }) {
+                            print("CameraView handlePhotoSuccess: Found newest product with time: \(newestProduct.time)")
+                            
+                            // Move temporary image to final location
+                            let moved = ImageStorageService.shared.moveTemporaryImage(
+                                fromTime: tempTimestamp,
+                                toTime: newestProduct.time
+                            )
+                            
+                            if moved {
+                                print("Successfully mapped image from temp_\(tempTimestamp) to \(newestProduct.time)")
+                            } else {
+                                print("Failed to map image, deleting temporary image")
+                                ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+                            }
+                        } else {
+                            print("No products found, deleting temporary image")
+                            ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+                        }
+                        
+                        self?.temporaryTimestamp = nil
+                    }
+                }
+            }
+        }
+        
+        private func handlePhotoFailure() {
+            if let tempTimestamp = temporaryTimestamp {
+                ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+                temporaryTimestamp = nil
+            }
+            parent.onPhotoFailure?()
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -177,6 +283,8 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         var parent: PhotoLibraryView
+        var temporaryTimestamp: Int64?
+        
         init(_ parent: PhotoLibraryView) { self.parent = parent }
 
         func imagePickerController(_ picker: UIImagePickerController,
@@ -188,13 +296,117 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
             }
 
             DispatchQueue.main.async { self.parent.onPhotoStarted?() }
+            
+            // Show loading overlay on top of picker instead of dismissing
+            showLoadingOverlay(on: picker)
 
-            GRPCService().sendPhoto(image: image, photoType: parent.photoType) { success in
+            let currentTimeMillis = Int64(Date().timeIntervalSince1970 * 1000)
+            self.temporaryTimestamp = currentTimeMillis
+            
+            let imageSaved = ImageStorageService.shared.saveTemporaryImage(image, forTime: currentTimeMillis)
+            if !imageSaved {
+                print("Warning: Failed to save temporary image locally")
+            }
+
+            GRPCService().sendPhoto(image: image, photoType: parent.photoType, timestampMillis: currentTimeMillis) { [weak self] success in
+                print("PhotoLibraryView coordinator: GRPCService callback received with success=\(success)")
+                print("PhotoLibraryView coordinator: self is \(self != nil ? "not nil" : "nil")")
+                
                 DispatchQueue.main.async {
-                    success ? self.parent.onPhotoSuccess?() : self.parent.onPhotoFailure?()
+                    print("PhotoLibraryView coordinator: On main queue, about to handle result")
+                    
+                    // Dismiss picker now that processing is complete
+                    picker.dismiss(animated: true)
+                    
+                    if success {
+                        print("PhotoLibraryView coordinator: Success=true, calling handlePhotoSuccess")
+                        self?.handlePhotoSuccess()
+                    } else {
+                        print("PhotoLibraryView coordinator: Success=false, calling handlePhotoFailure")
+                        self?.handlePhotoFailure()
+                    }
                 }
             }
-            picker.dismiss(animated: true)
+        }
+        
+        private func showLoadingOverlay(on picker: UIImagePickerController) {
+            let overlay = UIView(frame: picker.view.bounds)
+            overlay.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+            overlay.tag = 999 // For easy removal later
+            
+            let activityIndicator = UIActivityIndicatorView(style: .large)
+            activityIndicator.color = .white
+            activityIndicator.center = overlay.center
+            activityIndicator.startAnimating()
+            
+            let label = UILabel()
+            label.text = "Analyzing food photo..."
+            label.textColor = .white
+            label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            label.textAlignment = .center
+            label.frame = CGRect(x: 0, y: activityIndicator.center.y + 40, width: overlay.bounds.width, height: 30)
+            
+            overlay.addSubview(activityIndicator)
+            overlay.addSubview(label)
+            picker.view.addSubview(overlay)
+        }
+        
+        private func handlePhotoSuccess() {
+            print("PhotoLibraryView handlePhotoSuccess: Method called")
+            
+            guard let tempTimestamp = temporaryTimestamp else {
+                print("PhotoLibraryView handlePhotoSuccess: No tempTimestamp, calling onPhotoFailure")
+                parent.onPhotoFailure?()
+                return
+            }
+            
+            print("PhotoLibraryView handlePhotoSuccess: About to call original success callback")
+            
+            // Call the original success callback immediately
+            parent.onPhotoSuccess?()
+            
+            print("PhotoLibraryView handlePhotoSuccess: Original success callback called")
+            
+            // Wait a moment for the UI update, then do image mapping
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                print("PhotoLibraryView handlePhotoSuccess: Starting image mapping process...")
+                
+                // Fetch latest products to get the backend timestamp
+                GRPCService().fetchProducts { products, _, _ in
+                    DispatchQueue.main.async {
+                        // Find the newest product (highest timestamp)
+                        if let newestProduct = products.max(by: { $0.time < $1.time }) {
+                            print("PhotoLibraryView handlePhotoSuccess: Found newest product with time: \(newestProduct.time)")
+                            
+                            // Move temporary image to final location
+                            let moved = ImageStorageService.shared.moveTemporaryImage(
+                                fromTime: tempTimestamp,
+                                toTime: newestProduct.time
+                            )
+                            
+                            if moved {
+                                print("Successfully mapped image from temp_\(tempTimestamp) to \(newestProduct.time)")
+                            } else {
+                                print("Failed to map image, deleting temporary image")
+                                ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+                            }
+                        } else {
+                            print("No products found, deleting temporary image")
+                            ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+                        }
+                        
+                        self?.temporaryTimestamp = nil
+                    }
+                }
+            }
+        }
+        
+        private func handlePhotoFailure() {
+            if let tempTimestamp = temporaryTimestamp {
+                ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+                temporaryTimestamp = nil
+            }
+            parent.onPhotoFailure?()
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
