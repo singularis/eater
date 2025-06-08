@@ -38,9 +38,13 @@ struct WeightCameraView: UIViewControllerRepresentable {
             }
 
             DispatchQueue.main.async { self.parent.onPhotoStarted?() }
+            
+            // Show loading overlay on top of picker instead of dismissing immediately
+            showLoadingOverlay(on: picker)
 
             GRPCService().sendPhoto(image: image, photoType: "weight_prompt") { [weak self] success in
                 DispatchQueue.main.async {
+                    // Dismiss picker after processing is complete
                     picker.dismiss(animated: true)
                     
                     if success {
@@ -50,6 +54,28 @@ struct WeightCameraView: UIViewControllerRepresentable {
                     }
                 }
             }
+        }
+        
+        private func showLoadingOverlay(on picker: UIImagePickerController) {
+            let overlay = UIView(frame: picker.view.bounds)
+            overlay.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+            overlay.tag = 999 // For easy removal later
+            
+            let activityIndicator = UIActivityIndicatorView(style: .large)
+            activityIndicator.color = .white
+            activityIndicator.center = overlay.center
+            activityIndicator.startAnimating()
+            
+            let label = UILabel()
+            label.text = "Reading weight scale..."
+            label.textColor = .white
+            label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            label.textAlignment = .center
+            label.frame = CGRect(x: 0, y: activityIndicator.center.y + 40, width: overlay.bounds.width, height: 30)
+            
+            overlay.addSubview(activityIndicator)
+            overlay.addSubview(label)
+            picker.view.addSubview(overlay)
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
