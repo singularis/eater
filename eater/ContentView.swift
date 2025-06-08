@@ -91,8 +91,7 @@ struct ContentView: View {
                     }
                     .position(x: 30, y: geo.size.height / 2)
                     .sheet(isPresented: $showCamera) {
-                        CameraView(
-                            photoType: "weight_prompt", 
+                        WeightCameraView(
                             onPhotoSuccess: {
                                 fetchDataWithWeightLoading()
                             },
@@ -157,7 +156,9 @@ struct ContentView: View {
                 CameraButtonView(
                     isLoadingFoodPhoto: isLoadingFoodPhoto,
                     onPhotoSuccess: {
+                        print("ContentView: CameraButtonView onPhotoSuccess callback received")
                         fetchDataAfterFoodPhoto()
+                        print("ContentView: fetchDataAfterFoodPhoto() called")
                     },
                     onPhotoFailure: {
                         // Photo processing failed, no need to fetch data
@@ -213,33 +214,33 @@ struct ContentView: View {
 
     func fetchDataWithLoading() {
         isLoadingData = true
-        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+        ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
-                products = fetchedProducts
-                caloriesLeft = calories
-                personWeight = weight
-                isLoadingData = false
+                self.products = fetchedProducts
+                self.caloriesLeft = calories
+                self.personWeight = weight
+                self.isLoadingData = false
             }
         }
     }
     
     func fetchDataWithWeightLoading() {
-        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+        ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
-                products = fetchedProducts
-                caloriesLeft = calories
-                personWeight = weight
-                isLoadingWeightPhoto = false
+                self.products = fetchedProducts
+                self.caloriesLeft = calories
+                self.personWeight = weight
+                self.isLoadingWeightPhoto = false
             }
         }
     }
     
     func fetchData() {
-        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+        ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
-                products = fetchedProducts
-                caloriesLeft = calories
-                personWeight = weight
+                self.products = fetchedProducts
+                self.caloriesLeft = calories
+                self.personWeight = weight
             }
         }
     }
@@ -257,7 +258,7 @@ struct ContentView: View {
     }
     
     func fetchDataWithCompletion(completion: @escaping () -> Void) {
-        GRPCService().fetchProducts { fetchedProducts, calories, weight in
+        ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
                 self.products = fetchedProducts
                 self.caloriesLeft = calories
@@ -334,13 +335,17 @@ struct ContentView: View {
     }
 
     func fetchDataAfterFoodPhoto() {
-        GRPCService().fetchProducts { fetchedProducts, calories, weight in
-            DispatchQueue.main.async {
-                self.products = fetchedProducts
-                self.caloriesLeft = calories
-                self.personWeight = weight
-                self.isLoadingFoodPhoto = false
-            }
+        print("ContentView: fetchDataAfterFoodPhoto - using cached data from ProductStorageService")
+        
+        // The CameraView already fetched and processed the data, just use the cached version
+        let (fetchedProducts, calories, weight) = ProductStorageService.shared.loadProducts()
+        
+        DispatchQueue.main.async {
+            self.products = fetchedProducts
+            self.caloriesLeft = calories
+            self.personWeight = Float(weight)
+            self.isLoadingFoodPhoto = false
+            print("ContentView: fetchDataAfterFoodPhoto completed with \(fetchedProducts.count) products from cache")
         }
     }
 }

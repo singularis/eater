@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-struct Product: Identifiable {
+struct Product: Identifiable, Codable {
     let id = UUID()
     let time: Int64
     let name: String
@@ -9,11 +9,25 @@ struct Product: Identifiable {
     let weight: Int
     let ingredients: [String]
     
+    // Custom initializer for creating products
+    init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String]) {
+        self.time = time
+        self.name = name
+        self.calories = calories
+        self.weight = weight
+        self.ingredients = ingredients
+    }
+    
     var image: UIImage? {
         return ImageStorageService.shared.loadImage(forTime: time)
     }
     
     var hasImage: Bool {
         return ImageStorageService.shared.imageExists(forTime: time)
+    }
+    
+    // Codable implementation
+    private enum CodingKeys: String, CodingKey {
+        case time, name, calories, weight, ingredients
     }
 }

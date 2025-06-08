@@ -11,6 +11,15 @@ struct CameraButtonView: View {
     var onPhotoSuccess: (() -> Void)?
     var onPhotoFailure: (() -> Void)?
     var onPhotoStarted: (() -> Void)?
+    
+    init(isLoadingFoodPhoto: Bool, onPhotoSuccess: (() -> Void)?, onPhotoFailure: (() -> Void)?, onPhotoStarted: (() -> Void)?) {
+        self.isLoadingFoodPhoto = isLoadingFoodPhoto
+        self.onPhotoSuccess = onPhotoSuccess
+        self.onPhotoFailure = onPhotoFailure
+        self.onPhotoStarted = onPhotoStarted
+        
+        print("CameraButtonView init: onPhotoSuccess = \(onPhotoSuccess != nil ? "not nil" : "nil")")
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -50,6 +59,8 @@ struct CameraButtonView: View {
 
                 Button(action: {
                     if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        print("CameraButtonView: Camera button tapped, showing camera sheet")
+                        print("CameraButtonView: onPhotoSuccess before sheet = \(onPhotoSuccess != nil ? "not nil" : "nil")")
                         showCamera = true
                     } else {
                         cameraUnavailableAlert = true
@@ -77,20 +88,24 @@ struct CameraButtonView: View {
         .frame(height: 100)
 
         .sheet(isPresented: $showCamera) {
-            CameraView(
-                photoType: "default_prompt",
-                onPhotoSuccess: { onPhotoSuccess?() },
-                onPhotoFailure: { onPhotoFailure?() },
-                onPhotoStarted: { onPhotoStarted?() }
+            let _ = print("CameraButtonView: Sheet opening, setting callbacks in manager")
+            let _ = CameraCallbackManager.shared.setCallbacks(
+                onPhotoSuccess: onPhotoSuccess,
+                onPhotoFailure: onPhotoFailure,
+                onPhotoStarted: onPhotoStarted
             )
+            
+            return CameraView(photoType: "default_prompt")
         }
         .sheet(isPresented: $showPhotoLibrary) {
-            PhotoLibraryView(
-                photoType: "default_prompt",
-                onPhotoSuccess: { onPhotoSuccess?() },
-                onPhotoFailure: { onPhotoFailure?() },
-                onPhotoStarted: { onPhotoStarted?() }
+            let _ = print("CameraButtonView: Photo library sheet opening, setting callbacks in manager")
+            let _ = CameraCallbackManager.shared.setCallbacks(
+                onPhotoSuccess: onPhotoSuccess,
+                onPhotoFailure: onPhotoFailure,
+                onPhotoStarted: onPhotoStarted
             )
+            
+            return PhotoLibraryView(photoType: "default_prompt")
         }
         .alert("Camera Unavailable", isPresented: $cameraUnavailableAlert) {
             Button("OK") { }
@@ -108,11 +123,15 @@ struct CameraButtonView: View {
 // MARK: - Camera View
 struct CameraView: UIViewControllerRepresentable {
     var photoType: String
-    var onPhotoSuccess: (() -> Void)?
-    var onPhotoFailure: (() -> Void)?
-    var onPhotoStarted: (() -> Void)?
+
+    init(photoType: String) {
+        self.photoType = photoType
+        print("CameraView init: photoType = \(photoType)")
+    }
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
+        print("CameraView makeUIViewController called")
+        
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.delegate = context.coordinator
@@ -124,23 +143,37 @@ struct CameraView: UIViewControllerRepresentable {
 
     func updateUIViewController(_: UIImagePickerController, context _: Context) {}
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator { 
+        print("CameraView makeCoordinator: Called!")
+        
+        let coordinator = Coordinator(self)
+        print("CameraView makeCoordinator: Coordinator created and returned")
+        return coordinator
+    }
 
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         var parent: CameraView
         var temporaryTimestamp: Int64?
         
-        init(_ parent: CameraView) { self.parent = parent }
+        init(_ parent: CameraView) { 
+            print("CameraView Coordinator: Starting init")
+            
+            self.parent = parent 
+            
+            super.init()
+            
+            print("CameraView Coordinator: Init completed")
+        }
 
         func imagePickerController(_ picker: UIImagePickerController,
                                    didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             guard let image = info[.originalImage] as? UIImage else {
-                DispatchQueue.main.async { self.parent.onPhotoFailure?() }
+                DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoFailure() }
                 picker.dismiss(animated: true)
                 return
             }
 
-            DispatchQueue.main.async { self.parent.onPhotoStarted?() }
+            DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoStarted() }
             
             // Show loading overlay on top of picker instead of dismissing
             showLoadingOverlay(on: picker)
@@ -201,48 +234,24 @@ struct CameraView: UIViewControllerRepresentable {
             
             guard let tempTimestamp = temporaryTimestamp else {
                 print("CameraView handlePhotoSuccess: No tempTimestamp, calling onPhotoFailure")
-                parent.onPhotoFailure?()
+                CameraCallbackManager.shared.callPhotoFailure()
                 return
             }
             
-            print("CameraView handlePhotoSuccess: About to call original success callback")
+            print("CameraView handlePhotoSuccess: Using ProductStorageService to fetch and map image")
             
-            // Call the original success callback immediately
-            parent.onPhotoSuccess?()
-            
-            print("CameraView handlePhotoSuccess: Original success callback called")
-            
-            // Wait a moment for the UI update, then do image mapping
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                print("CameraView handlePhotoSuccess: Starting image mapping process...")
+            // Use the new unified approach: fetch + map + store + callback
+            ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) { [weak self] products, calories, weight in
+                print("CameraView handlePhotoSuccess: ProductStorageService completed, calling success callback")
+                print("CameraView handlePhotoSuccess: About to call CameraCallbackManager.callPhotoSuccess()")
                 
-                // Fetch latest products to get the backend timestamp
-                GRPCService().fetchProducts { products, _, _ in
-                    DispatchQueue.main.async {
-                        // Find the newest product (highest timestamp)
-                        if let newestProduct = products.max(by: { $0.time < $1.time }) {
-                            print("CameraView handlePhotoSuccess: Found newest product with time: \(newestProduct.time)")
-                            
-                            // Move temporary image to final location
-                            let moved = ImageStorageService.shared.moveTemporaryImage(
-                                fromTime: tempTimestamp,
-                                toTime: newestProduct.time
-                            )
-                            
-                            if moved {
-                                print("Successfully mapped image from temp_\(tempTimestamp) to \(newestProduct.time)")
-                            } else {
-                                print("Failed to map image, deleting temporary image")
-                                ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
-                            }
-                        } else {
-                            print("No products found, deleting temporary image")
-                            ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
-                        }
-                        
-                        self?.temporaryTimestamp = nil
-                    }
-                }
+                // Call the success callback through the manager
+                CameraCallbackManager.shared.callPhotoSuccess()
+                
+                print("CameraView handlePhotoSuccess: CameraCallbackManager.callPhotoSuccess() called")
+                
+                self?.temporaryTimestamp = nil
+                print("CameraView handlePhotoSuccess: handlePhotoSuccess method completed")
             }
         }
         
@@ -251,7 +260,7 @@ struct CameraView: UIViewControllerRepresentable {
                 ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
                 temporaryTimestamp = nil
             }
-            parent.onPhotoFailure?()
+            CameraCallbackManager.shared.callPhotoFailure()
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -263,11 +272,15 @@ struct CameraView: UIViewControllerRepresentable {
 // MARK: - Photo Library View
 struct PhotoLibraryView: UIViewControllerRepresentable {
     var photoType: String
-    var onPhotoSuccess: (() -> Void)?
-    var onPhotoFailure: (() -> Void)?
-    var onPhotoStarted: (() -> Void)?
+
+    init(photoType: String) {
+        self.photoType = photoType
+        print("PhotoLibraryView init: photoType = \(photoType)")
+    }
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
+        print("PhotoLibraryView makeUIViewController called")
+        
         let picker = UIImagePickerController()
         picker.sourceType = .photoLibrary
         picker.delegate = context.coordinator
@@ -279,23 +292,37 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
     func updateUIViewController(_: UIImagePickerController, context _: Context) {}
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator { 
+        print("PhotoLibraryView makeCoordinator: Called!")
+        
+        let coordinator = Coordinator(self)
+        print("PhotoLibraryView makeCoordinator: Coordinator created and returned")
+        return coordinator
+    }
 
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         var parent: PhotoLibraryView
         var temporaryTimestamp: Int64?
         
-        init(_ parent: PhotoLibraryView) { self.parent = parent }
+        init(_ parent: PhotoLibraryView) { 
+            print("PhotoLibraryView Coordinator: Starting init")
+            
+            self.parent = parent 
+            
+            super.init()
+            
+            print("PhotoLibraryView Coordinator: Init completed")
+        }
 
         func imagePickerController(_ picker: UIImagePickerController,
                                    didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             guard let image = info[.originalImage] as? UIImage else {
-                DispatchQueue.main.async { self.parent.onPhotoFailure?() }
+                DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoFailure() }
                 picker.dismiss(animated: true)
                 return
             }
 
-            DispatchQueue.main.async { self.parent.onPhotoStarted?() }
+            DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoStarted() }
             
             // Show loading overlay on top of picker instead of dismissing
             showLoadingOverlay(on: picker)
@@ -356,48 +383,24 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
             
             guard let tempTimestamp = temporaryTimestamp else {
                 print("PhotoLibraryView handlePhotoSuccess: No tempTimestamp, calling onPhotoFailure")
-                parent.onPhotoFailure?()
+                CameraCallbackManager.shared.callPhotoFailure()
                 return
             }
             
-            print("PhotoLibraryView handlePhotoSuccess: About to call original success callback")
+            print("PhotoLibraryView handlePhotoSuccess: Using ProductStorageService to fetch and map image")
             
-            // Call the original success callback immediately
-            parent.onPhotoSuccess?()
-            
-            print("PhotoLibraryView handlePhotoSuccess: Original success callback called")
-            
-            // Wait a moment for the UI update, then do image mapping
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                print("PhotoLibraryView handlePhotoSuccess: Starting image mapping process...")
+            // Use the new unified approach: fetch + map + store + callback
+            ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) { [weak self] products, calories, weight in
+                print("PhotoLibraryView handlePhotoSuccess: ProductStorageService completed, calling success callback")
+                print("PhotoLibraryView handlePhotoSuccess: About to call CameraCallbackManager.callPhotoSuccess()")
                 
-                // Fetch latest products to get the backend timestamp
-                GRPCService().fetchProducts { products, _, _ in
-                    DispatchQueue.main.async {
-                        // Find the newest product (highest timestamp)
-                        if let newestProduct = products.max(by: { $0.time < $1.time }) {
-                            print("PhotoLibraryView handlePhotoSuccess: Found newest product with time: \(newestProduct.time)")
-                            
-                            // Move temporary image to final location
-                            let moved = ImageStorageService.shared.moveTemporaryImage(
-                                fromTime: tempTimestamp,
-                                toTime: newestProduct.time
-                            )
-                            
-                            if moved {
-                                print("Successfully mapped image from temp_\(tempTimestamp) to \(newestProduct.time)")
-                            } else {
-                                print("Failed to map image, deleting temporary image")
-                                ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
-                            }
-                        } else {
-                            print("No products found, deleting temporary image")
-                            ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
-                        }
-                        
-                        self?.temporaryTimestamp = nil
-                    }
-                }
+                // Call the success callback through the manager
+                CameraCallbackManager.shared.callPhotoSuccess()
+                
+                print("PhotoLibraryView handlePhotoSuccess: CameraCallbackManager.callPhotoSuccess() called")
+                
+                self?.temporaryTimestamp = nil
+                print("PhotoLibraryView handlePhotoSuccess: handlePhotoSuccess method completed")
             }
         }
         
@@ -406,7 +409,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
                 ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
                 temporaryTimestamp = nil
             }
-            parent.onPhotoFailure?()
+            CameraCallbackManager.shared.callPhotoFailure()
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
