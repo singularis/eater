@@ -12,11 +12,13 @@ struct UserProfileView: View {
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 30) {
-                    // User Icon
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(.white)
-                        .padding(.top, 50)
+                    // User Profile Picture
+                    ProfileImageView(
+                        profilePictureURL: authService.userProfilePictureURL,
+                        size: 80,
+                        fallbackIconColor: .white
+                    )
+                    .padding(.top, 50)
                     
                     // User Email
                     VStack(spacing: 10) {
@@ -130,7 +132,10 @@ struct UserProfileView: View {
     UserProfileView()
         .environmentObject({
             let authService = AuthenticationService()
-            authService.setPreviewState(email: "preview@example.com")
+            authService.setPreviewState(
+                email: "preview@example.com",
+                profilePictureURL: "https://lh3.googleusercontent.com/a/default-user=s120-c"
+            )
             return authService
         }())
 } 

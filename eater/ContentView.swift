@@ -32,16 +32,18 @@ struct ContentView: View {
             VStack(spacing: 3) {
                 // Top bar with user icon and date
                 HStack {
-                    // User Icon
+                    // User Profile Picture
                     Button(action: {
                         showUserProfile = true
                     }) {
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 30))
-                            .foregroundColor(.white)
-                            .background(Color.gray.opacity(0.3))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
+                        ProfileImageView(
+                            profilePictureURL: authService.userProfilePictureURL,
+                            size: 30,
+                            fallbackIconColor: .white
+                        )
+                        .background(Color.gray.opacity(0.3))
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
                     }
                     
                     Spacer()
@@ -368,7 +370,10 @@ private let dateFormatter: DateFormatter = {
     ContentView()
         .environmentObject({
             let authService = AuthenticationService()
-            authService.setPreviewState(email: "preview@example.com")
+            authService.setPreviewState(
+                email: "preview@example.com",
+                profilePictureURL: "https://lh3.googleusercontent.com/a/default-user=s120-c"
+            )
             return authService
         }())
 }

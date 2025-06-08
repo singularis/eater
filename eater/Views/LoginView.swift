@@ -30,7 +30,7 @@ struct LoginView: View {
                     #if targetEnvironment(simulator)
                     // Simulator fallback - simulate successful sign in
                     Task { @MainActor in
-                        authService.generateAndStoreToken(for: "simulator_apple_user@privaterelay.appleid.com")
+                        authService.generateAndStoreToken(for: "simulator_apple_user@privaterelay.appleid.com", profilePictureURL: nil)
                     }
                     return
                     #endif
@@ -40,7 +40,8 @@ struct LoginView: View {
                             if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
                                 // Use the email if provided, otherwise create a placeholder
                                 let email = appleIDCredential.email ?? "apple_user_\(appleIDCredential.user)@privaterelay.appleid.com"
-                                authService.generateAndStoreToken(for: email)
+                                // Apple doesn't provide profile pictures, so we pass nil
+                                authService.generateAndStoreToken(for: email, profilePictureURL: nil)
                             }
                         case .failure(let error):
                             // Only log non-cancellation errors

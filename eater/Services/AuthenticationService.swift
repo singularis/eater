@@ -79,6 +79,7 @@ private struct JWT {
 final class AuthenticationService: ObservableObject {
     @Published var isAuthenticated = false
     @Published var userEmail: String?
+    @Published var userProfilePictureURL: String?
 
     private let secretKey: String
 
@@ -95,7 +96,10 @@ final class AuthenticationService: ObservableObject {
         // restore token
         if let token = UserDefaults.standard.string(forKey: "auth_token") {
             do { try validateAndSetToken(token) }
-            catch { UserDefaults.standard.removeObject(forKey: "auth_token") }
+            catch { 
+                UserDefaults.standard.removeObject(forKey: "auth_token")
+                UserDefaults.standard.removeObject(forKey: "profile_picture_url")
+            }
         }
     }
 
@@ -104,7 +108,7 @@ final class AuthenticationService: ObservableObject {
         #if DEBUG
         // In preview mode, simulate successful sign in
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
-            generateAndStoreToken(for: "preview@example.com")
+            generateAndStoreToken(for: "preview@example.com", profilePictureURL: nil)
             return
         }
         #endif
@@ -144,22 +148,25 @@ final class AuthenticationService: ObservableObject {
                 return
             }
             
-            self?.generateAndStoreToken(for: email)
+            let profilePictureURL = result?.user.profile?.imageURL(withDimension: 120)?.absoluteString
+            self?.generateAndStoreToken(for: email, profilePictureURL: profilePictureURL)
         }
     }
-
-
 
     func signOut() {
         GIDSignIn.sharedInstance.signOut()
         clearAllUserData()
         isAuthenticated = false
         userEmail = nil
+        userProfilePictureURL = nil
     }
     
     func clearAllUserData() {
         // Remove authentication token
         UserDefaults.standard.removeObject(forKey: "auth_token")
+        
+        // Remove profile picture URL
+        UserDefaults.standard.removeObject(forKey: "profile_picture_url")
         
         // Remove user preferences
         UserDefaults.standard.removeObject(forKey: "softLimit")
@@ -182,16 +189,18 @@ final class AuthenticationService: ObservableObject {
         // Reset authentication state
         isAuthenticated = false
         userEmail = nil
+        userProfilePictureURL = nil
     }
     
     // Preview helper method
-    func setPreviewState(email: String) {
+    func setPreviewState(email: String, profilePictureURL: String? = nil) {
         isAuthenticated = true
         userEmail = email
+        userProfilePictureURL = profilePictureURL
     }
 
     // MARK: Token Management
-    func generateAndStoreToken(for email: String) {
+    func generateAndStoreToken(for email: String, profilePictureURL: String?) {
         do {
             let token = try JWT.signHS256(
                 payload: ["sub": email, "iat": Int(Date().timeIntervalSince1970)],
@@ -199,8 +208,14 @@ final class AuthenticationService: ObservableObject {
                 expInterval: 20_000 * 3600
             )
             UserDefaults.standard.set(token, forKey: "auth_token")
+            if let profilePictureURL = profilePictureURL {
+                UserDefaults.standard.set(profilePictureURL, forKey: "profile_picture_url")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "profile_picture_url")
+            }
             isAuthenticated = true
             userEmail = email
+            userProfilePictureURL = profilePictureURL
         } catch { /* JWT sign failed */ }
     }
 
@@ -209,6 +224,7 @@ final class AuthenticationService: ObservableObject {
         guard let email = obj["sub"] as? String else { throw JWTError.malformed }
         isAuthenticated = true
         userEmail = email
+        userProfilePictureURL = UserDefaults.standard.string(forKey: "profile_picture_url")
     }
 }
 
