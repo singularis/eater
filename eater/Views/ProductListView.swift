@@ -4,6 +4,7 @@ struct ProductListView: View {
     let products: [Product]
     let onRefresh: () -> Void
     let onDelete: (Int64) -> Void
+    let onModify: (Int64, String, Int32) -> Void
     let deletingProductTime: Int64?
 
     var sortedProducts: [Product] {
@@ -56,6 +57,11 @@ struct ProductListView: View {
                 }
                 .padding(.vertical, 8)
                 .opacity(deletingProductTime == product.time ? 0.6 : 1.0)
+                .onTapGesture {
+                    AlertHelper.showPortionSelectionAlert(foodName: product.name) { percentage in
+                        onModify(product.time, product.name, percentage)
+                    }
+                }
                 .swipeActions {
                     Button {
                         onDelete(product.time)

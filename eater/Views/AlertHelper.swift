@@ -40,4 +40,38 @@ class AlertHelper {
         
         showAlert(title: "Health Recommendation", message: fullMessage, completion: completion)
     }
+    
+    static func showPortionSelectionAlert(foodName: String, onPortionSelected: @escaping (Int32) -> Void) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootViewController = window.rootViewController
+        else {
+            print("Failed to get rootViewController to present the alert.")
+            return
+        }
+
+        let alert = UIAlertController(
+            title: "Modify Portion",
+            message: "How much of '\(foodName)' did you actually eat?",
+            preferredStyle: .alert
+        )
+
+        // Add percentage options
+        let portions = [
+            (title: "100% - Full portion", percentage: Int32(100)),
+            (title: "75% - Three quarters", percentage: Int32(75)),
+            (title: "50% - Half portion", percentage: Int32(50)),
+            (title: "25% - Quarter portion", percentage: Int32(25))
+        ]
+
+        for portion in portions {
+            alert.addAction(UIAlertAction(title: portion.title, style: .default) { _ in
+                onPortionSelected(portion.percentage)
+            })
+        }
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        rootViewController.present(alert, animated: true)
+    }
 }

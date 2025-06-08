@@ -253,4 +253,43 @@ class GRPCService {
             completion(false)
         }
     }
+    
+    func modifyFoodRecord(time: Int64, userEmail: String, percentage: Int32, completion: @escaping (Bool) -> Void) {
+        var modifyFoodRequest = Eater_ModifyFoodRecordRequest()
+        modifyFoodRequest.time = time
+        modifyFoodRequest.userEmail = userEmail
+        modifyFoodRequest.percentage = percentage
+
+        do {
+            let requestBody = try modifyFoodRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "modify_food_record", httpMethod: "POST", body: requestBody) else {
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            let modifyFoodResponse = try Eater_ModifyFoodRecordResponse(serializedBytes: data)
+                            completion(modifyFoodResponse.success)
+                        } catch {
+                            completion(false)
+                        }
+                    } else {
+                        completion(false)
+                    }
+                }
+            }
+        } catch {
+            completion(false)
+        }
+    }
 }

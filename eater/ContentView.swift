@@ -151,6 +151,7 @@ struct ContentView: View {
                     products: products, 
                     onRefresh: fetchDataWithLoading, 
                     onDelete: deleteProductWithLoading,
+                    onModify: modifyProductPortion,
                     deletingProductTime: deletingProductTime
                 )
                 .padding(.top, 3)
@@ -340,6 +341,34 @@ struct ContentView: View {
             self.caloriesLeft = calories
             self.personWeight = Float(weight)
             self.isLoadingFoodPhoto = false
+        }
+    }
+    
+    func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
+        guard let userEmail = authService.userEmail else {
+            AlertHelper.showAlert(title: "Error", message: "Unable to modify food portion. Please sign in again.")
+            return
+        }
+        
+        GRPCService().modifyFoodRecord(time: time, userEmail: userEmail, percentage: percentage) { success in
+            DispatchQueue.main.async {
+                if success {
+                    // Show success message
+                    AlertHelper.showAlert(
+                        title: "Portion Updated", 
+                        message: "Successfully updated '\(foodName)' to \(percentage)% portion."
+                    ) {
+                        // Refresh data after successful modification
+                        self.fetchData()
+                    }
+                } else {
+                    // Show error message
+                    AlertHelper.showAlert(
+                        title: "Update Failed", 
+                        message: "Failed to update the food portion. Please try again."
+                    )
+                }
+            }
         }
     }
 }
