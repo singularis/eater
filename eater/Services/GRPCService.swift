@@ -111,27 +111,60 @@ class GRPCService {
                 }
 
                 if let response = response as? HTTPURLResponse {
-                    if response.statusCode == 200, let data = data, let confirmationText = String(data: data, encoding: .utf8) {
-                        if confirmationText.lowercased().contains("not a") {
-                            DispatchQueue.main.async {
-                                if photoType == "weight_prompt" {
-                                    AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure the scale display is clearly visible and well-lit.")
-                                } else {
-                                    AlertHelper.showAlert(title: "Food Not Recognized", message: confirmationText)
+                    // Debug logging
+                    print("📱 Photo Response - Status: \(response.statusCode), PhotoType: \(photoType)")
+                    if let data = data, let responseText = String(data: data, encoding: .utf8) {
+                        print("📱 Response Body: \(responseText)")
+                    }
+                    
+                    if response.statusCode >= 200 && response.statusCode < 300 {
+                        // Success case - but still check for error messages in response body
+                        if let data = data, let confirmationText = String(data: data, encoding: .utf8) {
+                            let lowerText = confirmationText.lowercased()
+                            if lowerText.contains("error") || lowerText.contains("not a") || lowerText.contains("invalid") {
+                                DispatchQueue.main.async {
+                                    if photoType == "weight_prompt" {
+                                        AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on")
+                                    } else {
+                                        AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                                    }
                                 }
+                                completion(false)
+                            } else {
+                                completion(true)
                             }
-                            completion(false)
                         } else {
                             completion(true)
                         }
-                        return
                     } else {
+                        // ANY non-2xx status code - ALWAYS show popup
+                        print("📱 ERROR: Non-2xx status code \(response.statusCode), showing popup...")
+                        
                         DispatchQueue.main.async {
+                            print("📱 ERROR: About to show alert on main queue...")
+                            
                             if photoType == "weight_prompt" {
-                                AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display is clearly visible\n• The lighting is good\n• The scale is on a flat surface\n• The display is not blurry")
+                                print("📱 ERROR: Weight prompt error")
+                                // Weight processing failed
+                                if let data = data, let responseText = String(data: data, encoding: .utf8) {
+                                    print("📱 ERROR: Weight error with response: \(responseText)")
+                                    AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on\n\nError: \(responseText)")
+                                } else {
+                                    print("📱 ERROR: Weight error without response text")
+                                    AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on")
+                                }
                             } else {
-                                AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                                print("📱 ERROR: Food prompt error (photoType: \(photoType))")
+                                // Food processing failed - ALWAYS show popup for non-2xx
+                                if let data = data, let responseText = String(data: data, encoding: .utf8) {
+                                    print("📱 ERROR: Food error with response: \(responseText)")
+                                    AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.\n\nError: \(responseText)")
+                                } else {
+                                    print("📱 ERROR: Food error without response text")
+                                    AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                                }
                             }
+                            print("📱 ERROR: Alert should have been triggered!")
                         }
                         completion(false)
                     }
@@ -290,6 +323,54 @@ class GRPCService {
             }
         } catch {
             completion(false)
+        }
+    }
+    
+    func fetchCustomDateFood(date: String, completion: @escaping ([Product], Int, Float) -> Void) {
+        var customDateRequest = Eater_CustomDateFoodRequest()
+        customDateRequest.date = date
+
+        do {
+            let requestBody = try customDateRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "get_food_custom_date", httpMethod: "POST", body: requestBody) else {
+                completion([], 0, 0)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion([], 0, 0)
+                    return
+                }
+
+                guard let data = data else {
+                    completion([], 0, 0)
+                    return
+                }
+
+                do {
+                    let customDateFood = try Eater_CustomDateFoodResponse(serializedBytes: data)
+                    let products = customDateFood.dishesForDate.map { dish in
+                        Product(
+                            time: dish.time,
+                            name: dish.dishName,
+                            calories: Int(dish.estimatedAvgCalories),
+                            weight: Int(dish.totalAvgWeight),
+                            ingredients: dish.ingredients
+                        )
+                    }
+                    let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
+                    let personWeight = Float(customDateFood.personWeight)
+
+                    completion(products, remainingCalories, personWeight)
+                } catch {
+                    completion([], 0, 0)
+                }
+            }
+        } catch {
+            completion([], 0, 0)
         }
     }
 }

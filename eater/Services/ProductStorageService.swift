@@ -59,10 +59,19 @@ class ProductStorageService {
                     )
                 }
                 
-                // Save products locally
+                // Save products locally (only for today's data)
                 self?.saveProducts(products, calories: calories, weight: weight)
                 
                 // Return the processed data
+                completion(products, calories, weight)
+            }
+        }
+    }
+    
+    func fetchAndProcessCustomDateProducts(date: String, completion: @escaping ([Product], Int, Float) -> Void) {
+        GRPCService().fetchCustomDateFood(date: date) { products, calories, weight in
+            DispatchQueue.main.async {
+                // Don't save custom date data to cache - only today's data should be cached
                 completion(products, calories, weight)
             }
         }

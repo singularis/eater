@@ -6,7 +6,6 @@ class AlertHelper {
               let window = windowScene.windows.first,
               let rootViewController = window.rootViewController
         else {
-            print("Failed to get rootViewController to present the alert.")
             completion?()
             return
         }
@@ -30,7 +29,49 @@ class AlertHelper {
         alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
             completion?()
         })
-        rootViewController.present(alert, animated: true)
+        
+        // Find the topmost view controller that can present
+        presentAlert(alert, from: rootViewController)
+    }
+    
+    private static func presentAlert(_ alert: UIAlertController, from viewController: UIViewController, retryCount: Int = 0) {
+        // Find a suitable view controller for presentation
+        var presentingViewController = viewController
+        
+        // If the root view controller is presenting something, check if it's dismissing
+        if let presentedVC = presentingViewController.presentedViewController {
+            let presentedVCType = String(describing: type(of: presentedVC))
+            
+            // If it's a PresentationHostingController (SwiftUI sheet), dismiss it first then present alert
+            if presentedVCType.contains("PresentationHostingController") {
+                // Dismiss the sheet and then present the alert
+                presentedVC.dismiss(animated: true) {
+                    DispatchQueue.main.async {
+                        viewController.present(alert, animated: true)
+                    }
+                }
+                return
+            } else {
+                // For other presentations, traverse to the top
+                presentingViewController = presentedVC
+            }
+        }
+        
+        // Check if we can present
+        if presentingViewController.presentedViewController == nil {
+            presentingViewController.present(alert, animated: true)
+        } else {
+            // If we've tried too many times, just present anyway on root
+            if retryCount >= 4 {
+                viewController.present(alert, animated: true)
+                return
+            }
+            
+            // Wait a bit and try again
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                presentAlert(alert, from: viewController, retryCount: retryCount + 1)
+            }
+        }
     }
     
     static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
