@@ -25,7 +25,9 @@ struct UserProfileView: View {
                     ProfileImageView(
                         profilePictureURL: authService.userProfilePictureURL,
                         size: 80,
-                        fallbackIconColor: .white
+                        fallbackIconColor: .white,
+                        userName: authService.userName,
+                        userEmail: authService.userEmail
                     )
                     
                     // User Information

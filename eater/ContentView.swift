@@ -143,7 +143,9 @@ struct ContentView: View {
             ProfileImageView(
                 profilePictureURL: authService.userProfilePictureURL,
                 size: 30,
-                fallbackIconColor: .white
+                fallbackIconColor: .white,
+                userName: authService.userName,
+                userEmail: authService.userEmail
             )
             .background(Color.gray.opacity(0.3))
             .clipShape(Circle())
