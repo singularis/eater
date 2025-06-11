@@ -41,7 +41,7 @@ private struct JWT {
             .replacingOccurrences(of: "=", with: "")
     }
     
-    private static func b64urlDecode(_ str: String) -> Data? {
+    static func b64urlDecode(_ str: String) -> Data? {
         var s = str.replacingOccurrences(of: "-", with: "+")
                    .replacingOccurrences(of: "_", with: "/")
         let padding = 4 - s.count % 4
@@ -118,7 +118,7 @@ final class AuthenticationService: NSObject, ObservableObject {
     private func extractEmailFromAppleToken(_ tokenString: String) -> String? {
         let parts = tokenString.split(separator: ".")
         guard parts.count > 1,
-              let payloadData = Data(base64Encoded: String(parts[1])),
+              let payloadData = JWT.b64urlDecode(String(parts[1])),
               let json = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
               let email = json["email"] as? String else {
             return nil
