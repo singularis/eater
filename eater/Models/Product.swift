@@ -19,7 +19,13 @@ struct Product: Identifiable, Codable {
     }
     
     var image: UIImage? {
-        return ImageStorageService.shared.loadImage(forTime: time)
+        // First try to load by timestamp
+        if let image = ImageStorageService.shared.loadImage(forTime: time) {
+            return image
+        }
+        
+        // Fallback: try to load by name
+        return ImageStorageService.shared.loadImageByName(name)
     }
     
     var hasImage: Bool {

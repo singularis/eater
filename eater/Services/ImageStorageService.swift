@@ -109,4 +109,45 @@ class ImageStorageService {
         let fileURL = imagesDirectory.appendingPathComponent(filename)
         return FileManager.default.fileExists(atPath: fileURL.path)
     }
+    
+    // MARK: - Load by Name (Fallback)
+    
+    func loadImageByName(_ name: String) -> UIImage? {
+        // Clean the name to make it a valid filename
+        let cleanName = name.replacingOccurrences(of: "[^a-zA-Z0-9\\s]", with: "", options: .regularExpression)
+            .replacingOccurrences(of: " ", with: "_")
+            .lowercased()
+        
+        let filename = "\(cleanName).jpg"
+        let fileURL = imagesDirectory.appendingPathComponent(filename)
+        
+        guard FileManager.default.fileExists(atPath: fileURL.path),
+              let imageData = try? Data(contentsOf: fileURL),
+              let image = UIImage(data: imageData) else {
+            return nil
+        }
+        
+        return image
+    }
+    
+    func saveImageByName(_ image: UIImage, name: String) -> Bool {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            return false
+        }
+        
+        // Clean the name to make it a valid filename
+        let cleanName = name.replacingOccurrences(of: "[^a-zA-Z0-9\\s]", with: "", options: .regularExpression)
+            .replacingOccurrences(of: " ", with: "_")
+            .lowercased()
+        
+        let filename = "\(cleanName).jpg"
+        let fileURL = imagesDirectory.appendingPathComponent(filename)
+        
+        do {
+            try imageData.write(to: fileURL)
+            return true
+        } catch {
+            return false
+        }
+    }
 } 

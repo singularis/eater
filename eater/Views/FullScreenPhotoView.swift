@@ -4,9 +4,17 @@ struct FullScreenPhotoView: View {
     let image: UIImage?
     let foodName: String
     @Binding var isPresented: Bool
+    let onDismiss: (() -> Void)?
     @State private var scale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastScaleValue: CGFloat = 1.0
+    
+    init(image: UIImage?, foodName: String, isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
+        self.image = image
+        self.foodName = foodName
+        self._isPresented = isPresented
+        self.onDismiss = onDismiss
+    }
     
     var body: some View {
         ZStack {
@@ -25,7 +33,11 @@ struct FullScreenPhotoView: View {
                     Spacer()
                     
                     Button(action: {
-                        isPresented = false
+                        if let dismiss = onDismiss {
+                            dismiss()
+                        } else {
+                            isPresented = false
+                        }
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
@@ -72,6 +84,7 @@ struct FullScreenPhotoView: View {
                                             }
                                         }
                                     },
+                                
                                 DragGesture()
                                     .onChanged { value in
                                         if scale > 1.0 {

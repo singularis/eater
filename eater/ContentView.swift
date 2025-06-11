@@ -1,5 +1,11 @@
 import SwiftUI
 
+struct FullScreenPhotoData: Identifiable {
+    let id = UUID()
+    let image: UIImage?
+    let foodName: String
+}
+
 struct ContentView: View {
     @EnvironmentObject var authService: AuthenticationService
     @State private var products: [Product] = []
@@ -29,10 +35,8 @@ struct ContentView: View {
     @State private var isLoadingFoodPhoto = false
     @State private var deletingProductTime: Int64? = nil
     
-    // Full-screen photo states
-    @State private var showFullScreenPhoto = false
-    @State private var fullScreenImage: UIImage? = nil
-    @State private var fullScreenFoodName: String = ""
+    // Full-screen photo states  
+    @State private var fullScreenPhotoData: FullScreenPhotoData? = nil
     
     var body: some View {
         ZStack {
@@ -100,12 +104,15 @@ struct ContentView: View {
                     }
                 )
             }
-            .sheet(isPresented: $showFullScreenPhoto) {
+            .sheet(item: $fullScreenPhotoData) { photoData in
                 FullScreenPhotoView(
-                    image: fullScreenImage,
-                    foodName: fullScreenFoodName,
-                    isPresented: $showFullScreenPhoto
-                )
+                    image: photoData.image,
+                    foodName: photoData.foodName,
+                    isPresented: .constant(true)
+                ) {
+                    // Custom dismiss action
+                    fullScreenPhotoData = nil
+                }
             }
             .overlay(
                 OnboardingView(isPresented: $showOnboarding)
@@ -473,9 +480,7 @@ struct ContentView: View {
     }
     
     func showFullScreenPhoto(image: UIImage?, foodName: String) {
-        fullScreenImage = image
-        fullScreenFoodName = foodName
-        showFullScreenPhoto = true
+        fullScreenPhotoData = FullScreenPhotoData(image: image, foodName: foodName)
     }
 
     // MARK: - Helper Methods

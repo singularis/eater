@@ -25,7 +25,9 @@ struct ProductListView: View {
                             .clipped()
                             .cornerRadius(8)
                             .onTapGesture {
-                                onPhotoTap(image, product.name)
+                                if deletingProductTime != product.time {
+                                    onPhotoTap(image, product.name)
+                                }
                             }
                     } else {
                         RoundedRectangle(cornerRadius: 8)
@@ -36,7 +38,11 @@ struct ProductListView: View {
                                     .foregroundColor(.gray)
                             )
                             .onTapGesture {
-                                onPhotoTap(nil, product.name)
+                                if deletingProductTime != product.time {
+                                    // Try to get image using fallback mechanism
+                                    let image = product.image
+                                    onPhotoTap(image, product.name)
+                                }
                             }
                     }
                     

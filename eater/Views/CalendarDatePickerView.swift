@@ -6,8 +6,7 @@ struct CalendarDatePickerView: View {
     let onDateSelected: (String) -> Void
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
+        VStack(spacing: 20) {
                 Text("Select Date")
                     .font(.title2)
                     .fontWeight(.bold)
@@ -21,42 +20,46 @@ struct CalendarDatePickerView: View {
                     displayedComponents: [.date]
                 )
                 .datePickerStyle(GraphicalDatePickerStyle())
+                .frame(height: 400) // Fixed height to prevent UICalendarView warnings
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(12)
                 .padding()
                 
                 HStack(spacing: 20) {
-                    Button("Cancel") {
+                    Button(action: {
                         isPresented = false
+                    }) {
+                        Text("Cancel")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.gray.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.gray.opacity(0.8))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .buttonStyle(PlainButtonStyle()) // Prevent default button behavior
                     
-                    Button("Select") {
+                    Button(action: {
                         let dateFormatter = DateFormatter()
                         dateFormatter.dateFormat = "dd-MM-yyyy"
                         let dateString = dateFormatter.string(from: selectedDate)
                         
                         // Just call the callback - let parent handle dismissal
                         onDateSelected(dateString)
+                    }) {
+                        Text("Select")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue.opacity(0.9))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue.opacity(0.9))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .buttonStyle(PlainButtonStyle()) // Prevent default button behavior
                 }
                 .padding(.horizontal)
-                .padding(.bottom)
-                
-                Spacer()
-            }
-            .background(Color.black)
-            .navigationBarHidden(true)
+                .padding(.bottom, 20)
         }
+        .background(Color.black)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
