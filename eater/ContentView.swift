@@ -38,6 +38,11 @@ struct ContentView: View {
     // Full-screen photo states  
     @State private var fullScreenPhotoData: FullScreenPhotoData? = nil
     
+    // Weight input states
+    @State private var showWeightActionSheet = false
+    @State private var showManualWeightEntry = false
+    @State private var manualWeightInput = ""
+    
     var body: some View {
         ZStack {
             Color.black
@@ -216,7 +221,7 @@ struct ContentView: View {
     
     private func weightButton(geo: GeometryProxy) -> some View {
         Button(action: {
-            showCamera = true
+            showWeightActionSheet = true
         }) {
             ZStack {
                 if isLoadingWeightPhoto {
@@ -234,6 +239,18 @@ struct ContentView: View {
             .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
         }
         .position(x: 30, y: geo.size.height / 2)
+        .confirmationDialog("Record Weight", isPresented: $showWeightActionSheet, titleVisibility: .visible) {
+            Button("Take Photo") {
+                showCamera = true
+            }
+            Button("Manual Entry") {
+                manualWeightInput = ""
+                showManualWeightEntry = true
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Choose how you'd like to record your weight")
+        }
         .sheet(isPresented: $showCamera) {
             WeightCameraView(
                 onPhotoSuccess: {
@@ -248,6 +265,16 @@ struct ContentView: View {
                     isLoadingWeightPhoto = true
                 }
             )
+        }
+        .alert("Enter Weight", isPresented: $showManualWeightEntry) {
+            TextField("Weight (kg)", text: $manualWeightInput)
+                .keyboardType(.decimalPad)
+            Button("Submit") {
+                submitManualWeight()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Enter your weight in kilograms")
         }
     }
     
@@ -483,6 +510,34 @@ struct ContentView: View {
     
     func showFullScreenPhoto(image: UIImage?, foodName: String) {
         fullScreenPhotoData = FullScreenPhotoData(image: image, foodName: foodName)
+    }
+    
+    func submitManualWeight() {
+        guard let weight = Float(manualWeightInput), weight > 0 else {
+            AlertHelper.showAlert(title: "Invalid Weight", message: "Please enter a valid weight in kilograms.")
+            return
+        }
+        
+        guard let userEmail = authService.userEmail else {
+            AlertHelper.showAlert(title: "Error", message: "Unable to submit weight. Please sign in again.")
+            return
+        }
+        
+        isLoadingWeightPhoto = true
+        
+        GRPCService().sendManualWeight(weight: weight, userEmail: userEmail) { success in
+            DispatchQueue.main.async {
+                self.isLoadingWeightPhoto = false
+                
+                if success {
+                    // Always return to today after manual weight entry
+                    self.returnToToday()
+                    AlertHelper.showAlert(title: "Weight Recorded", message: "Your weight has been successfully recorded.")
+                } else {
+                    AlertHelper.showAlert(title: "Error", message: "Failed to record your weight. Please try again.")
+                }
+            }
+        }
     }
 
     // MARK: - Helper Methods

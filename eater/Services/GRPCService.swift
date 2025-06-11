@@ -373,4 +373,42 @@ class GRPCService {
             completion([], 0, 0)
         }
     }
+    
+    func sendManualWeight(weight: Float, userEmail: String, completion: @escaping (Bool) -> Void) {
+        var manualWeightRequest = Eater_ManualWeightRequest()
+        manualWeightRequest.weight = weight
+        manualWeightRequest.userEmail = userEmail
+
+        do {
+            let requestBody = try manualWeightRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "manual_weight", httpMethod: "POST", body: requestBody) else {
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            let manualWeightResponse = try Eater_ManualWeightResponse(serializedBytes: data)
+                            completion(manualWeightResponse.success)
+                        } catch {
+                            completion(false)
+                        }
+                    } else {
+                        completion(false)
+                    }
+                }
+            }
+        } catch {
+            completion(false)
+        }
+    }
 }

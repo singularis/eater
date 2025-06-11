@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package Eater;
+
+message ManualWeightRequest {
+  float weight = 1;
+  string user_email = 2;
+}
+
+message ManualWeightResponse {
+  bool success = 1;
+}
+
+service EaterService {
+  rpc ManualWeight (ManualWeightRequest) returns (ManualWeightResponse);
+} 
