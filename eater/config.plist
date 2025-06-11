@@ -2,9 +2,5 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>API_TOKEN</key>
-	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDI3NTUwNDQsImlhdCI6MTczMDc1NTA0NCwic3ViIjoic2luZ3VsYXJpcyJ9.QODbhHzxK5Ejsluc6gfhoZ4M5nptCXkrZvNO1V6yLj8</string>
-	<key>EATER_SECRET_KEY</key>
-	<string>StingSecertGeneratorSalt</string>
 </dict>
 </plist>

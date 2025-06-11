@@ -94,12 +94,13 @@ struct HealthDisclaimerView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                         
-                        VStack(alignment: .leading, spacing: 8) {
+                                                VStack(alignment: .leading, spacing: 8) {
                             Text("• Calorie Tracking: Estimates based on visual food analysis")
                             Text("• Nutritional Analysis: Macronutrient breakdown using AI image recognition")
-                            Text("• Dietary Recommendations: General suggestions based on nutritional guidelines")
+                            Text("• Dietary Recommendations: General suggestions based on nutritional guidelines")  
                             Text("• Weight Tracking: User-input data for personal monitoring")
-                            Text("• Calorie Limits: Default values based on general dietary guidelines")
+                            Text("• Calorie Limits: Default values or personalized calculations based on health data")
+                            Text("• Personalized Plans: Optional BMR-based calorie recommendations using user health data")
                         }
                         .font(.body)
                     }

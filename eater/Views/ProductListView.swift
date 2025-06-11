@@ -5,6 +5,7 @@ struct ProductListView: View {
     let onRefresh: () -> Void
     let onDelete: (Int64) -> Void
     let onModify: (Int64, String, Int32) -> Void
+    let onPhotoTap: (UIImage?, String) -> Void
     let deletingProductTime: Int64?
 
     var sortedProducts: [Product] {
@@ -15,7 +16,7 @@ struct ProductListView: View {
         List {
             ForEach(sortedProducts) { product in
                 HStack(spacing: 12) {
-                    // Food photo
+                    // Food photo - clickable for full screen
                     if let image = product.image {
                         Image(uiImage: image)
                             .resizable()
@@ -23,6 +24,9 @@ struct ProductListView: View {
                             .frame(width: 80, height: 80)
                             .clipped()
                             .cornerRadius(8)
+                            .onTapGesture {
+                                onPhotoTap(image, product.name)
+                            }
                     } else {
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color.gray.opacity(0.2))
@@ -31,8 +35,12 @@ struct ProductListView: View {
                                 Image(systemName: "photo")
                                     .foregroundColor(.gray)
                             )
+                            .onTapGesture {
+                                onPhotoTap(nil, product.name)
+                            }
                     }
                     
+                    // Food details - clickable for portion modification
                     VStack(alignment: .leading, spacing: 4) {
                         Text(product.name)
                             .font(.headline)
@@ -46,6 +54,11 @@ struct ProductListView: View {
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
+                    .onTapGesture {
+                        AlertHelper.showPortionSelectionAlert(foodName: product.name, originalWeight: product.weight) { percentage in
+                            onModify(product.time, product.name, percentage)
+                        }
+                    }
                     
                     Spacer()
                     
@@ -57,11 +70,6 @@ struct ProductListView: View {
                 }
                 .padding(.vertical, 8)
                 .opacity(deletingProductTime == product.time ? 0.6 : 1.0)
-                .onTapGesture {
-                    AlertHelper.showPortionSelectionAlert(foodName: product.name) { percentage in
-                        onModify(product.time, product.name, percentage)
-                    }
-                }
                 .swipeActions {
                     Button {
                         onDelete(product.time)

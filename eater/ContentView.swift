@@ -29,6 +29,11 @@ struct ContentView: View {
     @State private var isLoadingFoodPhoto = false
     @State private var deletingProductTime: Int64? = nil
     
+    // Full-screen photo states
+    @State private var showFullScreenPhoto = false
+    @State private var fullScreenImage: UIImage? = nil
+    @State private var fullScreenFoodName: String = ""
+    
     var body: some View {
         ZStack {
             Color.black
@@ -44,6 +49,7 @@ struct ContentView: View {
                     onRefresh: refreshAction, 
                     onDelete: deleteProductWithLoading,
                     onModify: modifyProductPortion,
+                    onPhotoTap: showFullScreenPhoto,
                     deletingProductTime: deletingProductTime
                 )
                 .padding(.top, 3)
@@ -66,12 +72,17 @@ struct ContentView: View {
                     TextField("Hard Limit", text: $tempHardLimit)
                         .keyboardType(.numberPad)
                 }
-                Button("Save") {
+                Button("Save Manual Limits") {
                     saveLimits()
+                }
+                if UserDefaults.standard.bool(forKey: "hasUserHealthData") {
+                    Button("Use Health-Based Calculation") {
+                        resetToHealthBasedLimits()
+                    }
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Set your daily calorie soft limit (yellow warning) and hard limit (red warning).\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice. Tap the info button for sources and disclaimers.")
+                Text("Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice.")
             }
             .sheet(isPresented: $showUserProfile) {
                 UserProfileView()
@@ -87,6 +98,13 @@ struct ContentView: View {
                     onDateSelected: { dateString in
                         fetchCustomDateData(dateString: dateString)
                     }
+                )
+            }
+            .sheet(isPresented: $showFullScreenPhoto) {
+                FullScreenPhotoView(
+                    image: fullScreenImage,
+                    foodName: fullScreenFoodName,
+                    isPresented: $showFullScreenPhoto
                 )
             }
             .overlay(
@@ -302,10 +320,17 @@ struct ContentView: View {
         isLoadingData = true
         ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
+                let previousWeight = self.personWeight
                 self.products = fetchedProducts
                 self.caloriesLeft = calories
                 self.personWeight = weight
                 self.isLoadingData = false
+                
+                // Recalculate calories if weight changed and user has health data
+                let userDefaults = UserDefaults.standard
+                if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
+                    self.recalculateCalorieLimitsFromHealthData()
+                }
             }
         }
     }
@@ -315,9 +340,16 @@ struct ContentView: View {
     func fetchData() {
         ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
+                let previousWeight = self.personWeight
                 self.products = fetchedProducts
                 self.caloriesLeft = calories
                 self.personWeight = weight
+                
+                // Recalculate calories if weight changed and user has health data
+                let userDefaults = UserDefaults.standard
+                if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
+                    self.recalculateCalorieLimitsFromHealthData()
+                }
             }
         }
     }
@@ -379,10 +411,17 @@ struct ContentView: View {
         
         ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: dateString) { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
+                let previousWeight = self.personWeight
                 self.products = fetchedProducts
                 self.caloriesLeft = calories
                 self.personWeight = weight
                 self.isLoadingData = false
+                
+                // Recalculate calories if weight changed and user has health data
+                let userDefaults = UserDefaults.standard
+                if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
+                    self.recalculateCalorieLimitsFromHealthData()
+                }
             }
         }
     }
@@ -432,6 +471,12 @@ struct ContentView: View {
             }
         }
     }
+    
+    func showFullScreenPhoto(image: UIImage?, foodName: String) {
+        fullScreenImage = image
+        fullScreenFoodName = foodName
+        showFullScreenPhoto = true
+    }
 
     // MARK: - Helper Methods
 
@@ -447,15 +492,22 @@ struct ContentView: View {
 
     private func loadLimitsFromUserDefaults() {
         let userDefaults = UserDefaults.standard
-        let savedSoftLimit = userDefaults.integer(forKey: "softLimit")
-        let savedHardLimit = userDefaults.integer(forKey: "hardLimit")
         
-        // Only use saved values if they exist (not 0)
-        if savedSoftLimit > 0 {
-            softLimit = savedSoftLimit
-        }
-        if savedHardLimit > 0 {
-            hardLimit = savedHardLimit
+        // Check if user has health data and recalculate if needed
+        if userDefaults.bool(forKey: "hasUserHealthData") {
+            recalculateCalorieLimitsFromHealthData()
+        } else {
+            // Use saved limits or defaults
+            let savedSoftLimit = userDefaults.integer(forKey: "softLimit")
+            let savedHardLimit = userDefaults.integer(forKey: "hardLimit")
+            
+            // Only use saved values if they exist (not 0)
+            if savedSoftLimit > 0 {
+                softLimit = savedSoftLimit
+            }
+            if savedHardLimit > 0 {
+                hardLimit = savedHardLimit
+            }
         }
     }
 
@@ -473,10 +525,103 @@ struct ContentView: View {
         softLimit = newSoftLimit
         hardLimit = newHardLimit
         
-        // Save to UserDefaults
+        // Save to UserDefaults and mark as manually set
         let userDefaults = UserDefaults.standard
         userDefaults.set(softLimit, forKey: "softLimit")
         userDefaults.set(hardLimit, forKey: "hardLimit")
+        userDefaults.set(true, forKey: "hasManualCalorieLimits") // Mark as manually set
+    }
+    
+    private func resetToHealthBasedLimits() {
+        let userDefaults = UserDefaults.standard
+        userDefaults.set(false, forKey: "hasManualCalorieLimits") // Remove manual override
+        recalculateCalorieLimitsFromHealthData() // Recalculate from health data
+    }
+    
+    private func recalculateCalorieLimitsFromHealthData() {
+        let userDefaults = UserDefaults.standard
+        
+        // Don't override manually set calorie limits
+        let hasManualCalorieLimits = userDefaults.bool(forKey: "hasManualCalorieLimits")
+        if hasManualCalorieLimits {
+            return
+        }
+        
+        let height = userDefaults.double(forKey: "userHeight")
+        var weight = userDefaults.double(forKey: "userWeight")
+        let age = userDefaults.integer(forKey: "userAge")
+        let isMale = userDefaults.bool(forKey: "userIsMale")
+        let activityLevel = userDefaults.string(forKey: "userActivityLevel") ?? "Sedentary"
+        
+        // Use current weight from the app if available and different from stored
+        if personWeight > 0 {
+            let currentWeight = Double(personWeight)
+            if abs(currentWeight - weight) > 0.1 { // If weight has changed significantly
+                weight = currentWeight
+                userDefaults.set(weight, forKey: "userWeight") // Update stored weight
+            }
+        }
+        
+        guard height > 0, weight > 0, age > 0 else { return }
+        
+        // Calculate optimal weight using BMI (21.5 - middle of healthy range)
+        let heightInMeters = height / 100.0
+        let optimalWeight = 21.5 * heightInMeters * heightInMeters
+        
+        // Calculate BMR using Mifflin-St Jeor Equation
+        let bmr: Double
+        if isMale {
+            bmr = 10 * weight + 6.25 * height - 5 * Double(age) + 5
+        } else {
+            bmr = 10 * weight + 6.25 * height - 5 * Double(age) - 161
+        }
+        
+        // Activity multipliers
+        let activityMultiplier: Double
+        switch activityLevel {
+        case "Sedentary":
+            activityMultiplier = 1.2
+        case "Lightly Active":
+            activityMultiplier = 1.375
+        case "Moderately Active":
+            activityMultiplier = 1.55
+        case "Very Active":
+            activityMultiplier = 1.725
+        case "Extremely Active":
+            activityMultiplier = 1.9
+        default:
+            activityMultiplier = 1.2
+        }
+        
+        // Calculate TDEE (Total Daily Energy Expenditure)
+        let tdee = bmr * activityMultiplier
+        
+        // Adjust calories based on weight goal
+        let weightDifference = weight - optimalWeight
+        let calorieAdjustment: Double
+        
+        if abs(weightDifference) < 2 {
+            // Maintain current weight
+            calorieAdjustment = 0
+        } else if weightDifference > 0 {
+            // Lose weight - safe deficit of 500 calories per day
+            calorieAdjustment = -500
+        } else {
+            // Gain weight - safe surplus of 300 calories per day
+            calorieAdjustment = 300
+        }
+        
+        let recommendedCalories = Int(tdee + calorieAdjustment)
+        
+        // Update the calorie limits
+        softLimit = recommendedCalories
+        hardLimit = Int(Double(recommendedCalories) * 1.15) // 15% above recommendation
+        
+        // Save updated values
+        userDefaults.set(softLimit, forKey: "softLimit")
+        userDefaults.set(hardLimit, forKey: "hardLimit")
+        userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
+        userDefaults.set(optimalWeight, forKey: "userOptimalWeight")
     }
 }
 

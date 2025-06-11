@@ -82,7 +82,7 @@ class AlertHelper {
         showAlert(title: "Health Recommendation", message: fullMessage, completion: completion)
     }
     
-    static func showPortionSelectionAlert(foodName: String, onPortionSelected: @escaping (Int32) -> Void) {
+    static func showPortionSelectionAlert(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void) {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first,
               let rootViewController = window.rootViewController
@@ -93,17 +93,18 @@ class AlertHelper {
 
         let alert = UIAlertController(
             title: "Modify Portion",
-            message: "How much of '\(foodName)' did you actually eat?",
+            message: "How much of '\(foodName)' did you actually eat?\nOriginal weight: \(originalWeight)g",
             preferredStyle: .alert
         )
 
-        // Add percentage options
+        // Add percentage options with calculated weights
         let portions = [
-            (title: "200% - Double portion", percentage: Int32(200)),
-            (title: "150% - One and a half portion", percentage: Int32(150)),
-            (title: "75% - Three quarters", percentage: Int32(75)),
-            (title: "50% - Half portion", percentage: Int32(50)),
-            (title: "25% - Quarter portion", percentage: Int32(25))
+            (title: "200% (\(originalWeight * 2)g) - Double portion", percentage: Int32(200)),
+            (title: "150% (\(originalWeight * 3 / 2)g) - One and a half portion", percentage: Int32(150)),
+            (title: "125% (\(originalWeight * 5 / 4)g) - One and a quarter portion", percentage: Int32(125)),
+            (title: "75% (\(originalWeight * 3 / 4)g) - Three quarters", percentage: Int32(75)),
+            (title: "50% (\(originalWeight / 2)g) - Half portion", percentage: Int32(50)),
+            (title: "25% (\(originalWeight / 4)g) - Quarter portion", percentage: Int32(25))
         ]
 
         for portion in portions {
@@ -114,7 +115,7 @@ class AlertHelper {
 
         // Add custom option
         alert.addAction(UIAlertAction(title: "Custom...", style: .default) { _ in
-            showCustomPortionAlert(foodName: foodName, onPortionSelected: onPortionSelected)
+            showCustomPortionAlert(foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
         })
 
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
@@ -122,7 +123,7 @@ class AlertHelper {
         rootViewController.present(alert, animated: true)
     }
     
-    static func showCustomPortionAlert(foodName: String, onPortionSelected: @escaping (Int32) -> Void) {
+    static func showCustomPortionAlert(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void) {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first,
               let rootViewController = window.rootViewController
@@ -131,7 +132,7 @@ class AlertHelper {
             return
         }
 
-        let customPortionVC = CustomPortionViewController(foodName: foodName, onPortionSelected: onPortionSelected)
+        let customPortionVC = CustomPortionViewController(foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
         let navController = UINavigationController(rootViewController: customPortionVC)
         navController.modalPresentationStyle = .pageSheet
         
@@ -147,12 +148,14 @@ class AlertHelper {
 // Custom view controller for portion selection
 private class CustomPortionViewController: UIViewController {
     private let foodName: String
+    private let originalWeight: Int
     private let onPortionSelected: (Int32) -> Void
     private var scrollView: UIScrollView!
     private var stackView: UIStackView!
     
-    init(foodName: String, onPortionSelected: @escaping (Int32) -> Void) {
+    init(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void) {
         self.foodName = foodName
+        self.originalWeight = originalWeight
         self.onPortionSelected = onPortionSelected
         super.init(nibName: nil, bundle: nil)
     }
@@ -192,7 +195,7 @@ private class CustomPortionViewController: UIViewController {
         
         // Add title label
         let titleLabel = UILabel()
-        titleLabel.text = "Select the percentage of '\(foodName)' you ate:"
+        titleLabel.text = "Select the amount of '\(foodName)' you ate:\nOriginal weight: \(originalWeight)g"
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 0
@@ -207,10 +210,11 @@ private class CustomPortionViewController: UIViewController {
         // Create percentage options from 10% to 300% in 10% increments
         let percentageOptions = stride(from: 10, through: 300, by: 10).map { Int32($0) }
         
-        // Add percentage buttons
+        // Add percentage buttons with calculated weights
         for percentage in percentageOptions {
+            let calculatedWeight = Int(Double(originalWeight) * Double(percentage) / 100.0)
             let button = UIButton(type: .system)
-            button.setTitle("\(percentage)%", for: .normal)
+            button.setTitle("\(percentage)% (\(calculatedWeight)g)", for: .normal)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
             button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
             button.layer.cornerRadius = 12
