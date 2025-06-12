@@ -36,27 +36,30 @@ struct StatisticsView: View {
                         }
                     } else {
                         VStack(spacing: 0) {
-                            // Top content - flexible
-                            ScrollView {
-                                VStack(spacing: 12) {
-                                    // Period Selection
-                                    periodSelectionView
-                                    
-                                    // Chart Type Selection
-                                    chartTypeSelectionView
-                                    
-                                    // Main Chart
-                                    chartView
-                                        .frame(height: geometry.size.height * 0.5)
-                                }
+                            // Period Selection
+                            periodSelectionView
                                 .padding(.horizontal, 16)
                                 .padding(.top, 5)
+                            
+                            // Chart Type Selection
+                            chartTypeSelectionView
+                                .padding(.vertical, 8)
+                            
+                            // Main content area
+                            ScrollView {
+                                VStack(spacing: 12) {
+                                    // Main Chart
+                                    chartView
+                                        .frame(height: geometry.size.height * 0.4)
+                                }
+                                .padding(.horizontal, 16)
                             }
                             
                             // Summary Stats - fixed height
                             summaryStatsView
                                 .frame(height: geometry.size.height * 0.2)
                                 .padding(.horizontal, 16)
+                                .padding(.bottom, 8)
                         }
                     }
                 }
@@ -102,7 +105,9 @@ struct StatisticsView: View {
             HStack(spacing: 12) {
                 ForEach(ChartType.allCases, id: \.self) { chartType in
                     Button(action: {
-                        selectedChart = chartType
+                        withAnimation {
+                            selectedChart = chartType
+                        }
                     }) {
                         Text(chartType.rawValue)
                             .font(.caption)
@@ -117,6 +122,7 @@ struct StatisticsView: View {
             }
             .padding(.horizontal, 16)
         }
+        .frame(height: 44)
     }
     
     @ViewBuilder
@@ -394,32 +400,29 @@ struct StatisticsView: View {
         let averages = statisticsService.calculateAverages(from: statistics)
         let validDays = statistics.filter { $0.hasData }.count
         
-        return VStack(alignment: .leading, spacing: 15) {
-            Text("Insights Overview")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.bottom, 5)
-            
-            VStack(spacing: 12) {
-                insightCard(title: "Active Days", value: "\(validDays)/\(statistics.count)")
-                insightCard(title: "Avg Daily Calories", value: "\(Int(averages.avgCalories)) kcal")
-                insightCard(title: "Avg Food Weight", value: "\(Int(averages.avgWeight)) g")
-                insightCard(title: "Avg Protein", value: "\(Int(averages.avgProteins)) g")
-                insightCard(title: "Avg Fiber", value: "\(Int(averages.avgFiber)) g")
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                Text("Insights Overview")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.bottom, 5)
                 
-                if averages.avgPersonWeight > 0 {
-                    insightCard(title: "Avg Body Weight", value: String(format: "%.1f kg", averages.avgPersonWeight))
+                VStack(spacing: 12) {
+                    insightCard(title: "Active Days", value: "\(validDays)/\(statistics.count)")
+                    insightCard(title: "Avg Daily Calories", value: "\(Int(averages.avgCalories)) kcal")
+                    insightCard(title: "Avg Food Weight", value: "\(Int(averages.avgWeight)) g")
+                    insightCard(title: "Avg Protein", value: "\(Int(averages.avgProteins)) g")
+                    insightCard(title: "Avg Fiber", value: "\(Int(averages.avgFiber)) g")
+                    
+                    if averages.avgPersonWeight > 0 {
+                        insightCard(title: "Avg Body Weight", value: String(format: "%.1f kg", averages.avgPersonWeight))
+                    }
                 }
-                
-                // Add spacer to fill remaining space
-                Spacer()
             }
-            
-            Spacer()
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 4)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 4)
     }
     
     private func insightCard(title: String, value: String) -> some View {
