@@ -374,6 +374,61 @@ class GRPCService {
         }
     }
     
+    func fetchStatisticsData(date: String, completion: @escaping (DailyStatistics?) -> Void) {
+        var customDateRequest = Eater_CustomDateFoodRequest()
+        customDateRequest.date = date
+
+        do {
+            let requestBody = try customDateRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "get_food_custom_date", httpMethod: "POST", body: requestBody) else {
+                completion(nil)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion(nil)
+                    return
+                }
+
+                guard let data = data else {
+                    completion(nil)
+                    return
+                }
+
+                do {
+                    let customDateFood = try Eater_CustomDateFoodResponse(serializedBytes: data)
+                    
+                    // Parse date string to Date object
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "dd-MM-yyyy"
+                    let parsedDate = dateFormatter.date(from: date) ?? Date()
+                    
+                    let dailyStats = DailyStatistics(
+                        date: parsedDate,
+                        dateString: date,
+                        totalCalories: Int(customDateFood.totalForDay.totalCalories),
+                        totalFoodWeight: Int(customDateFood.totalForDay.totalAvgWeight),
+                        personWeight: customDateFood.personWeight,
+                        proteins: customDateFood.totalForDay.contains.proteins,
+                        fats: customDateFood.totalForDay.contains.fats,
+                        carbohydrates: customDateFood.totalForDay.contains.carbohydrates,
+                        sugar: customDateFood.totalForDay.contains.sugar,
+                        numberOfMeals: customDateFood.dishesForDate.count
+                    )
+
+                    completion(dailyStats)
+                } catch {
+                    completion(nil)
+                }
+            }
+        } catch {
+            completion(nil)
+        }
+    }
+    
     func sendManualWeight(weight: Float, userEmail: String, completion: @escaping (Bool) -> Void) {
         var manualWeightRequest = Eater_ManualWeightRequest()
         manualWeightRequest.weight = weight

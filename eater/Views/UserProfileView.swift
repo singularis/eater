@@ -13,6 +13,7 @@ struct UserProfileView: View {
     @State private var userAge: Int = 0
     @State private var userOptimalWeight: Double = 0
     @State private var userRecommendedCalories: Int = 0
+    @State private var showStatistics = false
     
     var body: some View {
         NavigationView {
@@ -67,6 +68,24 @@ struct UserProfileView: View {
                                         .background(Color.gray.opacity(0.3))
                                         .cornerRadius(8)
                                 }
+                            }
+                            
+                            // Statistics Button
+                            Button(action: {
+                                showStatistics = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "chart.line.uptrend.xyaxis")
+                                    Text("View Statistics")
+                                        .fontWeight(.semibold)
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
                             }
                             
                             // Health Data Section
@@ -223,6 +242,9 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showHealthSettings) {
                 HealthSettingsView(isPresented: $showHealthSettings)
+            }
+            .sheet(isPresented: $showStatistics) {
+                StatisticsView(isPresented: $showStatistics)
             }
             .onChange(of: showHealthSettings) { _, newValue in
                 if !newValue { // Sheet was dismissed
