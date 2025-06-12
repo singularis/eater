@@ -442,7 +442,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     func deleteProductWithLoading(time: Int64) {
         deletingProductTime = time
         GRPCService().deleteFood(time: Int64(time)) { success in
@@ -510,7 +510,7 @@ struct ContentView: View {
         currentViewingDateString = ""
         fetchDataWithLoading()
     }
-
+    
     func showFullScreenPhoto(image: UIImage?, foodName: String) {
         fullScreenPhotoData = FullScreenPhotoData(image: image, foodName: foodName)
     }

@@ -278,50 +278,72 @@ struct StatisticsView: View {
             }
         }
         
-        return Chart(statistics) { stat in
-            BarMark(
-                x: .value("Date", stat.date),
-                y: .value("Proteins", stat.proteins)
-            )
-            .foregroundStyle(Color.red)
-            
-            BarMark(
-                x: .value("Date", stat.date),
-                y: .value("Fats", stat.fats)
-            )
-            .foregroundStyle(Color.yellow)
-            
-            BarMark(
-                x: .value("Date", stat.date),
-                y: .value("Carbs", stat.carbohydrates)
-            )
-            .foregroundStyle(Color.blue)
-            
-            BarMark(
-                x: .value("Date", stat.date),
-                y: .value("Fiber", stat.fiber)
-            )
-            .foregroundStyle(Color.green)
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(Color.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(Color.white)
-                    .font(.caption)
+        return VStack(spacing: 16) {
+            Chart(statistics) { stat in
+                BarMark(
+                    x: .value("Date", stat.date),
+                    y: .value("Proteins", stat.proteins)
+                )
+                .foregroundStyle(Color.red)
+                
+                BarMark(
+                    x: .value("Date", stat.date),
+                    y: .value("Fats", stat.fats)
+                )
+                .foregroundStyle(Color.yellow)
+                
+                BarMark(
+                    x: .value("Date", stat.date),
+                    y: .value("Carbs", stat.carbohydrates)
+                )
+                .foregroundStyle(Color.blue)
+                
+                BarMark(
+                    x: .value("Date", stat.date),
+                    y: .value("Fiber", stat.fiber)
+                )
+                .foregroundStyle(Color.green)
             }
-        }
-        .chartYAxis {
-            AxisMarks { _ in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(Color.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(Color.white)
-                    .font(.caption)
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.gray.opacity(0.3))
+                    AxisValueLabel()
+                        .foregroundStyle(Color.white)
+                        .font(.caption)
+                }
             }
+            .chartYAxis {
+                AxisMarks { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.gray.opacity(0.3))
+                    AxisValueLabel()
+                        .foregroundStyle(Color.white)
+                        .font(.caption)
+                }
+            }
+            .frame(height: 300)
+            
+            // Legend
+            HStack(spacing: 16) {
+                ForEach([
+                    ("Proteins", Color.red),
+                    ("Fats", Color.yellow),
+                    ("Carbs", Color.blue),
+                    ("Fiber", Color.green)
+                ], id: \.0) { item in
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(item.1)
+                            .frame(width: 8, height: 8)
+                        Text(item.0)
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .padding(.horizontal)
         }
-        .frame(height: 300)
     }
     
     private var trendsView: some View {
