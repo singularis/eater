@@ -16,169 +16,189 @@ struct UserProfileView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                Color.black
-                    .edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 30) {
-                    // User Profile Picture
-                    ProfileImageView(
-                        profilePictureURL: authService.userProfilePictureURL,
-                        size: 80,
-                        fallbackIconColor: .white,
-                        userName: authService.userName,
-                        userEmail: authService.userEmail
-                    )
+            GeometryReader { geometry in
+                ZStack {
+                    Color.black
+                        .edgesIgnoringSafeArea(.all)
                     
-                    // User Information
-                    VStack(spacing: 15) {
-                        // User Name
-                        if let userName = authService.userName, !userName.isEmpty {
-                            VStack(spacing: 8) {
-                                Text("Name")
-                                    .font(.headline)
-                                    .foregroundColor(.gray)
+                    ScrollView {
+                        VStack(spacing: geometry.size.height < 700 ? 15 : 25) {
+                            // User Profile Picture
+                            ProfileImageView(
+                                profilePictureURL: authService.userProfilePictureURL,
+                                size: geometry.size.height < 700 ? 60 : 80,
+                                fallbackIconColor: .white,
+                                userName: authService.userName,
+                                userEmail: authService.userEmail
+                            )
+                            
+                            // User Information
+                            VStack(spacing: geometry.size.height < 700 ? 8 : 15) {
+                                // User Name
+                                if let userName = authService.userName, !userName.isEmpty {
+                                    VStack(spacing: 5) {
+                                        Text("Name")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                        
+                                        Text(userName)
+                                            .font(geometry.size.height < 700 ? .title2 : .title)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, geometry.size.height < 700 ? 8 : 12)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                }
                                 
-                                Text(userName)
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.blue.opacity(0.3))
-                                    .cornerRadius(10)
-                            }
-                        }
-                        
-                        // User Email
-                        VStack(spacing: 8) {
-                            Text("Email")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                            
-                            Text(authService.userEmail ?? "No email")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.gray.opacity(0.3))
-                                .cornerRadius(10)
-                        }
-                    }
-                    
-                    // Health Data Section
-                    if hasHealthData {
-                        VStack(spacing: 15) {
-                            Text("Your Health Profile")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            VStack(spacing: 10) {
-                                HStack {
-                                    Text("Height:")
+                                // User Email
+                                VStack(spacing: 5) {
+                                    Text("Email")
+                                        .font(.caption)
                                         .foregroundColor(.gray)
-                                    Spacer()
-                                    Text("\(userHeight, specifier: "%.0f") cm")
+                                    
+                                    Text(authService.userEmail ?? "No email")
+                                        .font(geometry.size.height < 700 ? .body : .title2)
+                                        .fontWeight(.semibold)
                                         .foregroundColor(.white)
-                                        .fontWeight(.semibold)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, geometry.size.height < 700 ? 8 : 12)
+                                        .background(Color.gray.opacity(0.3))
+                                        .cornerRadius(8)
                                 }
-                                .padding(.horizontal)
-                                
-                                HStack {
-                                    Text("Target Weight:")
+                            }
+                            
+                            // Health Data Section
+                            if hasHealthData {
+                                VStack(spacing: 10) {
+                                    Text("Your Health Profile")
+                                        .font(geometry.size.height < 700 ? .title3 : .title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                    
+                                    VStack(spacing: 8) {
+                                        HStack {
+                                            Text("Height:")
+                                                .font(.subheadline)
+                                                .foregroundColor(.gray)
+                                            Spacer()
+                                            Text("\(userHeight, specifier: "%.0f") cm")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white)
+                                                .fontWeight(.semibold)
+                                        }
+                                        .padding(.horizontal)
+                                        
+                                        HStack {
+                                            Text("Target Weight:")
+                                                .font(.subheadline)
+                                                .foregroundColor(.gray)
+                                            Spacer()
+                                            Text("\(userOptimalWeight, specifier: "%.1f") kg")
+                                                .font(.subheadline)
+                                                .foregroundColor(.green)
+                                                .fontWeight(.semibold)
+                                        }
+                                        .padding(.horizontal)
+                                        
+                                        HStack {
+                                            Text("Daily Calorie Target:")
+                                                .font(.subheadline)
+                                                .foregroundColor(.gray)
+                                            Spacer()
+                                            Text("\(userRecommendedCalories) kcal")
+                                                .font(.subheadline)
+                                                .foregroundColor(.orange)
+                                                .fontWeight(.semibold)
+                                        }
+                                        .padding(.horizontal)
+                                    }
+                                    .padding(12)
+                                    .background(Color.gray.opacity(0.2))
+                                    .cornerRadius(10)
+                                    
+                                    Button("Update Health Settings") {
+                                        showHealthSettings = true
+                                    }
+                                    .foregroundColor(.blue)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.white.opacity(0.9))
+                                    .cornerRadius(8)
+                                }
+                            } else {
+                                VStack(spacing: 10) {
+                                    Text("Personalize Your Experience")
+                                        .font(geometry.size.height < 700 ? .title3 : .title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                    
+                                    Text("Set up your health profile to get personalized calorie recommendations")
+                                        .font(.subheadline)
                                         .foregroundColor(.gray)
-                                    Spacer()
-                                    Text("\(userOptimalWeight, specifier: "%.1f") kg")
-                                        .foregroundColor(.green)
-                                        .fontWeight(.semibold)
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Button("Setup Health Profile") {
+                                        showHealthSettings = true
+                                    }
+                                    .foregroundColor(.blue)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.white.opacity(0.9))
+                                    .cornerRadius(8)
                                 }
-                                .padding(.horizontal)
+                            }
+                            
+                            // Button Section
+                            VStack(spacing: 12) {
+                                // Logout Button
+                                Button(action: {
+                                    logout()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.right.square.fill")
+                                        Text("Logout")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundColor(.black)
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.yellow)
+                                    .cornerRadius(8)
+                                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                                }
                                 
-                                HStack {
-                                    Text("Daily Calorie Target:")
-                                        .foregroundColor(.gray)
-                                    Spacer()
-                                    Text("\(userRecommendedCalories) kcal")
-                                        .foregroundColor(.orange)
-                                        .fontWeight(.semibold)
+                                // Delete Account Button
+                                Button(action: {
+                                    showDeleteConfirmation = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "trash.fill")
+                                        Text("Delete Account")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.red)
+                                    .cornerRadius(8)
+                                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
                                 }
-                                .padding(.horizontal)
                             }
-                            .padding()
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(12)
-                            
-                            Button("Update Health Settings") {
-                                showHealthSettings = true
-                            }
-                            .foregroundColor(.blue)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.white.opacity(0.9))
-                            .cornerRadius(10)
                         }
-                    } else {
-                        VStack(spacing: 15) {
-                            Text("Personalize Your Experience")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            Text("Set up your health profile to get personalized calorie recommendations")
-                                .font(.body)
-                                .foregroundColor(.gray)
-                                .multilineTextAlignment(.center)
-                            
-                            Button("Setup Health Profile") {
-                                showHealthSettings = true
-                            }
-                            .foregroundColor(.blue)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.white.opacity(0.9))
-                            .cornerRadius(10)
-                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
                     }
-                    
-                    Spacer()
-                    
-                    // Logout Button
-                    Button(action: {
-                        logout()
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.right.square.fill")
-                            Text("Logout")
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(.black)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.yellow)
-                        .cornerRadius(10)
-                        .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
-                    }
-                    
-                    // Delete Account Button
-                    Button(action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "trash.fill")
-                            Text("Delete Account")
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red)
-                        .cornerRadius(10)
-                        .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
-                    }
-                    
-                    Spacer()
                 }
-                .padding()
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)

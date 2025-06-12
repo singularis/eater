@@ -69,6 +69,18 @@ private struct JWT {
         }
         return obj
     }
+    
+    // More lenient validation that allows expired tokens
+    static func validateTokenStructure(token: String) -> [String: Any]? {
+        let parts = token.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3 else { return nil }
+        
+        guard let payloadData = b64urlDecode(String(parts[1])),
+              let obj = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
+        else { return nil }
+        
+        return obj
+    }
 }
 
 // MARK: - AuthenticationService
@@ -95,14 +107,8 @@ final class AuthenticationService: NSObject, ObservableObject {
 
         super.init()
         
-        // Restore stored authentication
-        if let token = UserDefaults.standard.string(forKey: "auth_token") {
-            do { 
-                try validateStoredToken(token)
-            } catch { 
-                clearAllUserData()
-            }
-        }
+        // Restore stored authentication with improved logic
+        restoreAuthenticationState()
     }
 
     // MARK: - Helper Methods
@@ -127,8 +133,9 @@ final class AuthenticationService: NSObject, ObservableObject {
     }
     
     private func updateAuthenticationState(with response: TokenResponse) {
-        // Store data
+        // Store data persistently
         UserDefaults.standard.set(response.token, forKey: "auth_token")
+        UserDefaults.standard.set(response.userEmail, forKey: "user_email") // Store email separately
         
         if let userName = response.userName {
             UserDefaults.standard.set(userName, forKey: "user_name")
@@ -142,12 +149,43 @@ final class AuthenticationService: NSObject, ObservableObject {
             UserDefaults.standard.removeObject(forKey: "profile_picture_url")
         }
         
+        // Ensure UserDefaults are written to disk immediately
+        UserDefaults.standard.synchronize()
+        
         // Update UI state
         isAuthenticated = true
         userEmail = response.userEmail
         userName = response.userName
         userProfilePictureURL = response.profilePictureURL
         isLoading = false
+    }
+
+    private func restoreAuthenticationState() {
+        // First, try to restore user data from UserDefaults
+        let storedEmail = UserDefaults.standard.string(forKey: "user_email")
+        let storedName = UserDefaults.standard.string(forKey: "user_name")
+        let storedProfileURL = UserDefaults.standard.string(forKey: "profile_picture_url")
+        let storedToken = UserDefaults.standard.string(forKey: "auth_token")
+        
+        // If we have basic user data, restore the session
+        if let email = storedEmail {
+            isAuthenticated = true
+            userEmail = email
+            userName = storedName
+            userProfilePictureURL = storedProfileURL
+            
+            // Try to validate the token if it exists, but don't fail the session if it's invalid
+            if let token = storedToken {
+                do {
+                    try validateStoredToken(token)
+                    print("✅ Token validation successful")
+                } catch {
+                    print("⚠️ Token validation failed: \(error). User remains logged in but may need to re-authenticate for secure operations.")
+                    // Keep the user logged in but mark that token needs refresh
+                    // You could add a flag here to indicate token needs refresh
+                }
+            }
+        }
     }
 
     // MARK: - Network Layer
@@ -294,7 +332,7 @@ final class AuthenticationService: NSObject, ObservableObject {
     }
     
     func clearAllUserData() {
-        let keys = ["auth_token", "user_name", "profile_picture_url", "softLimit", "hardLimit", "hasSeenOnboarding"]
+        let keys = ["auth_token", "user_email", "user_name", "profile_picture_url", "softLimit", "hardLimit", "hasSeenOnboarding"]
         keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
         UserDefaults.standard.synchronize()
     }
@@ -322,6 +360,23 @@ final class AuthenticationService: NSObject, ObservableObject {
         return UserDefaults.standard.string(forKey: "auth_token")
     }
     
+    func isTokenValidForSecureOperations() -> Bool {
+        guard let token = UserDefaults.standard.string(forKey: "auth_token") else {
+            return false
+        }
+        
+        do {
+            _ = try JWT.verifyHS256(token: token, secret: secretKey)
+            return true
+        } catch {
+            return false
+        }
+    }
+    
+    func requiresFreshAuthentication() -> Bool {
+        return !isTokenValidForSecureOperations()
+    }
+    
     func getGreeting() -> String {
         if let name = userName, !name.isEmpty {
             return "Hello \(name)"
@@ -333,16 +388,85 @@ final class AuthenticationService: NSObject, ObservableObject {
     }
     
     private func validateStoredToken(_ token: String) throws {
-        let obj = try JWT.verifyHS256(token: token, secret: secretKey)
-        
-        guard let email = obj["sub"] as? String else {
-            throw JWTError.malformed
+        do {
+            // First try strict validation
+            let obj = try JWT.verifyHS256(token: token, secret: secretKey)
+            
+            guard let email = obj["sub"] as? String else {
+                throw JWTError.malformed
+            }
+            
+            // Token is valid, update user data if needed
+            if userEmail == nil {
+                userEmail = email
+            }
+            if userName == nil {
+                userName = UserDefaults.standard.string(forKey: "user_name")
+            }
+            if userProfilePictureURL == nil {
+                userProfilePictureURL = UserDefaults.standard.string(forKey: "profile_picture_url")
+            }
+            
+        } catch JWTError.expired {
+            // Token is expired but structurally valid - try lenient validation
+            if let obj = JWT.validateTokenStructure(token: token),
+               let email = obj["sub"] as? String {
+                print("⚠️ Token is expired but structurally valid. User remains logged in.")
+                // Keep user logged in but they may need to re-authenticate for secure operations
+                if userEmail == nil {
+                    userEmail = email
+                }
+                if userName == nil {
+                    userName = UserDefaults.standard.string(forKey: "user_name")
+                }
+                if userProfilePictureURL == nil {
+                    userProfilePictureURL = UserDefaults.standard.string(forKey: "profile_picture_url")
+                }
+            } else {
+                throw JWTError.expired
+            }
+        } catch {
+            // Re-throw other errors (malformed, invalidSignature)
+            throw error
+        }
+    }
+    
+    // MARK: - Debug Methods
+    
+    func getTokenStatus() -> String {
+        guard let token = UserDefaults.standard.string(forKey: "auth_token") else {
+            return "No token stored"
         }
         
-        isAuthenticated = true
-        userEmail = email
-        userName = UserDefaults.standard.string(forKey: "user_name")
-        userProfilePictureURL = UserDefaults.standard.string(forKey: "profile_picture_url")
+        do {
+            let obj = try JWT.verifyHS256(token: token, secret: secretKey)
+            if let exp = obj["exp"] as? TimeInterval {
+                let expirationDate = Date(timeIntervalSince1970: exp)
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                formatter.timeStyle = .short
+                return "Token valid until: \(formatter.string(from: expirationDate))"
+            } else {
+                return "Token valid (no expiration)"
+            }
+        } catch JWTError.expired {
+            if let obj = JWT.validateTokenStructure(token: token),
+               let exp = obj["exp"] as? TimeInterval {
+                let expirationDate = Date(timeIntervalSince1970: exp)
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                formatter.timeStyle = .short
+                return "Token expired on: \(formatter.string(from: expirationDate))"
+            } else {
+                return "Token expired"
+            }
+        } catch JWTError.invalidSignature {
+            return "Token has invalid signature"
+        } catch JWTError.malformed {
+            return "Token is malformed"
+        } catch {
+            return "Token validation error: \(error)"
+        }
     }
 }
 
