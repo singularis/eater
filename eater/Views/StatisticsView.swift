@@ -370,7 +370,7 @@ struct StatisticsView: View {
     
     private var insightsView: some View {
         let averages = statisticsService.calculateAverages(from: statistics)
-        let validDays = statistics.filter { $0.totalCalories > 0 || $0.personWeight > 0 }.count
+        let validDays = statistics.filter { $0.hasData }.count
         
         return VStack(alignment: .leading, spacing: 15) {
             Text("Insights Overview")

@@ -371,8 +371,6 @@ struct ContentView: View {
         }
     }
     
-
-    
     func fetchData() {
         ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
@@ -402,13 +400,57 @@ struct ContentView: View {
         }
     }
     
-
-
+    func fetchDataAfterFoodPhoto() {
+        // Clear today's statistics cache since new food was added
+        StatisticsService.shared.clearExpiredCache()
+        
+        // Always return to today after submitting food photo
+        returnToToday()
+        
+        DispatchQueue.main.async {
+            self.isLoadingFoodPhoto = false
+        }
+    }
+    
+    func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
+        guard let userEmail = authService.userEmail else {
+            AlertHelper.showAlert(title: "Error", message: "Unable to modify food portion. Please sign in again.")
+            return
+        }
+        
+        GRPCService().modifyFoodRecord(time: time, userEmail: userEmail, percentage: percentage) { success in
+            DispatchQueue.main.async {
+                if success {
+                    // Clear today's statistics cache since food was modified
+                    StatisticsService.shared.clearExpiredCache()
+                    
+                    // Show success message
+                    AlertHelper.showAlert(
+                        title: "Portion Updated", 
+                        message: "Successfully updated '\(foodName)' to \(percentage)% portion."
+                    ) {
+                        // Always return to today after modifying food portion
+                        self.returnToToday()
+                    }
+                } else {
+                    // Show error message
+                    AlertHelper.showAlert(
+                        title: "Update Failed", 
+                        message: "Failed to update the food portion. Please try again."
+                    )
+                }
+            }
+        }
+    }
+    
     func deleteProductWithLoading(time: Int64) {
         deletingProductTime = time
         GRPCService().deleteFood(time: Int64(time)) { success in
             DispatchQueue.main.async {
                 if success {
+                    // Clear today's statistics cache since food was deleted
+                    StatisticsService.shared.clearExpiredCache()
+                    
                     // Delete the local image as well
                     let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
                     // No action needed if image deletion fails
@@ -462,8 +504,6 @@ struct ContentView: View {
         }
     }
     
-
-    
     func returnToToday() {
         isViewingCustomDate = false
         currentViewingDate = ""
@@ -471,43 +511,6 @@ struct ContentView: View {
         fetchDataWithLoading()
     }
 
-    func fetchDataAfterFoodPhoto() {
-        // Always return to today after submitting food photo
-        returnToToday()
-        
-        DispatchQueue.main.async {
-            self.isLoadingFoodPhoto = false
-        }
-    }
-    
-    func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
-        guard let userEmail = authService.userEmail else {
-            AlertHelper.showAlert(title: "Error", message: "Unable to modify food portion. Please sign in again.")
-            return
-        }
-        
-        GRPCService().modifyFoodRecord(time: time, userEmail: userEmail, percentage: percentage) { success in
-            DispatchQueue.main.async {
-                if success {
-                    // Show success message
-                    AlertHelper.showAlert(
-                        title: "Portion Updated", 
-                        message: "Successfully updated '\(foodName)' to \(percentage)% portion."
-                    ) {
-                        // Always return to today after modifying food portion
-                        self.returnToToday()
-                    }
-                } else {
-                    // Show error message
-                    AlertHelper.showAlert(
-                        title: "Update Failed", 
-                        message: "Failed to update the food portion. Please try again."
-                    )
-                }
-            }
-        }
-    }
-    
     func showFullScreenPhoto(image: UIImage?, foodName: String) {
         fullScreenPhotoData = FullScreenPhotoData(image: image, foodName: foodName)
     }
@@ -530,6 +533,9 @@ struct ContentView: View {
                 self.isLoadingWeightPhoto = false
                 
                 if success {
+                    // Clear today's statistics cache since weight was updated
+                    StatisticsService.shared.clearExpiredCache()
+                    
                     // Always return to today after manual weight entry
                     self.returnToToday()
                     AlertHelper.showAlert(title: "Weight Recorded", message: "Your weight has been successfully recorded.")

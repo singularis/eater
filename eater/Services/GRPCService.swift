@@ -406,17 +406,32 @@ class GRPCService {
                     dateFormatter.dateFormat = "dd-MM-yyyy"
                     let parsedDate = dateFormatter.date(from: date) ?? Date()
                     
+                    // Determine if this day has actual data
+                    let totalCalories = Int(customDateFood.totalForDay.totalCalories)
+                    let totalWeight = Int(customDateFood.totalForDay.totalAvgWeight)
+                    let numberOfMeals = customDateFood.dishesForDate.count
+                    let personWeight = customDateFood.personWeight
+                    let proteins = customDateFood.totalForDay.contains.proteins
+                    let fats = customDateFood.totalForDay.contains.fats
+                    let carbs = customDateFood.totalForDay.contains.carbohydrates
+                    
+                    // A day has data if it has actual food records OR meaningful nutritional data
+                    // Don't rely on totalWeight alone as it can be a server default value
+                    let hasActualData = numberOfMeals > 0 || 
+                                                                              (totalCalories > 0 && (proteins > 0 || fats > 0 || carbs > 0))
+                    
                     let dailyStats = DailyStatistics(
                         date: parsedDate,
                         dateString: date,
-                        totalCalories: Int(customDateFood.totalForDay.totalCalories),
-                        totalFoodWeight: Int(customDateFood.totalForDay.totalAvgWeight),
-                        personWeight: customDateFood.personWeight,
-                        proteins: customDateFood.totalForDay.contains.proteins,
-                        fats: customDateFood.totalForDay.contains.fats,
-                        carbohydrates: customDateFood.totalForDay.contains.carbohydrates,
+                        totalCalories: totalCalories,
+                        totalFoodWeight: totalWeight,
+                        personWeight: personWeight,
+                        proteins: proteins,
+                        fats: fats,
+                        carbohydrates: carbs,
                         sugar: customDateFood.totalForDay.contains.sugar,
-                        numberOfMeals: customDateFood.dishesForDate.count
+                        numberOfMeals: numberOfMeals,
+                        hasData: hasActualData // Only true if there's meaningful data
                     )
 
                     completion(dailyStats)

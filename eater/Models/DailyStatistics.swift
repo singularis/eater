@@ -12,8 +12,9 @@ struct DailyStatistics: Identifiable {
     let carbohydrates: Double // in grams
     let sugar: Double // in grams
     let numberOfMeals: Int
+    let hasData: Bool // Indicates if this day has actual data vs empty placeholder
     
-    init(date: Date, dateString: String, totalCalories: Int, totalFoodWeight: Int, personWeight: Float, proteins: Double, fats: Double, carbohydrates: Double, sugar: Double, numberOfMeals: Int) {
+    init(date: Date, dateString: String, totalCalories: Int, totalFoodWeight: Int, personWeight: Float, proteins: Double, fats: Double, carbohydrates: Double, sugar: Double, numberOfMeals: Int, hasData: Bool = true) {
         self.date = date
         self.dateString = dateString
         self.totalCalories = totalCalories
@@ -24,6 +25,7 @@ struct DailyStatistics: Identifiable {
         self.carbohydrates = carbohydrates
         self.sugar = sugar
         self.numberOfMeals = numberOfMeals
+        self.hasData = hasData
     }
     
     // Computed properties for additional insights

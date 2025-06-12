@@ -210,6 +210,9 @@ struct CameraView: UIViewControllerRepresentable {
                 return
             }
             
+            // Clear today's statistics cache since new food was added
+            StatisticsService.shared.clearExpiredCache()
+            
             // Use the new unified approach: fetch + map + store + callback
             ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) { [weak self] products, calories, weight in
                 // Call the success callback through the manager
@@ -328,6 +331,9 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
                 CameraCallbackManager.shared.callPhotoFailure()
                 return
             }
+            
+            // Clear today's statistics cache since new food was added
+            StatisticsService.shared.clearExpiredCache()
             
             // Use the new unified approach: fetch + map + store + callback
             ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) { [weak self] products, calories, weight in

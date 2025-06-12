@@ -48,6 +48,8 @@ struct WeightCameraView: UIViewControllerRepresentable {
                     picker.dismiss(animated: true)
                     
                     if success {
+                        // Clear today's statistics cache since weight was updated
+                        StatisticsService.shared.clearExpiredCache()
                         self?.parent.onPhotoSuccess?()
                     } else {
                         self?.parent.onPhotoFailure?()

@@ -258,6 +258,9 @@ struct UserProfileView: View {
     }
     
     private func logout() {
+        // Clear statistics cache before logging out
+        StatisticsService.shared.clearCache()
+        
         // Sign out user and clear local data
         authService.signOut()
         
@@ -270,6 +273,9 @@ struct UserProfileView: View {
             AlertHelper.showAlert(title: "Error", message: "No user email found. Please try signing in again.")
             return 
         }
+        
+        // Clear statistics cache before deleting account
+        StatisticsService.shared.clearCache()
         
         // Immediately delete account and clear all user data from device
         authService.deleteAccountAndClearData()

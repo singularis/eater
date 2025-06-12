@@ -5,6 +5,7 @@ class StatisticsService {
     private init() {}
     
     private let grpcService = GRPCService()
+    private let cacheService = StatisticsCacheService.shared
     
     func fetchStatisticsForPeriod(
         period: StatisticsPeriod,
@@ -14,47 +15,104 @@ class StatisticsService {
         let endDate = Date()
         let startDate = calendar.date(byAdding: .day, value: -period.days + 1, to: endDate) ?? endDate
         
-        var allStatistics: [DailyStatistics] = []
-        let dispatchGroup = DispatchGroup()
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "dd-MM-yyyy"
         
         // Generate all dates in the period
+        var allDateStrings: [String] = []
         var currentDate = startDate
         while currentDate <= endDate {
             let dateString = dateFormatter.string(from: currentDate)
-            
-            dispatchGroup.enter()
-            grpcService.fetchStatisticsData(date: dateString) { [weak self] dailyStats in
-                defer { dispatchGroup.leave() }
-                
-                if let stats = dailyStats {
-                    allStatistics.append(stats)
-                } else {
-                    // Create empty stats for days with no data
-                    let emptyStats = DailyStatistics(
-                        date: currentDate,
-                        dateString: dateString,
-                        totalCalories: 0,
-                        totalFoodWeight: 0,
-                        personWeight: 0,
-                        proteins: 0,
-                        fats: 0,
-                        carbohydrates: 0,
-                        sugar: 0,
-                        numberOfMeals: 0
-                    )
-                    allStatistics.append(emptyStats)
-                }
-            }
-            
+            allDateStrings.append(dateString)
             currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
         }
         
-        dispatchGroup.notify(queue: .main) {
-            // Sort by date to ensure proper order
-            let sortedStats = allStatistics.sorted { $0.date < $1.date }
+        // Clean up expired cache entries first
+        cacheService.clearExpiredCache()
+        
+        // ONE-TIME FIX: Clear cache if it contains data with incorrect hasData logic
+        let hasCacheFix = UserDefaults.standard.bool(forKey: "hasDataLogicCacheFix")
+        if !hasCacheFix {
+            cacheService.clearAllCache()
+            UserDefaults.standard.set(true, forKey: "hasDataLogicCacheFix")
+        }
+        
+        // Get cached statistics
+        let cachedStatistics = cacheService.getCachedStatistics(for: allDateStrings)
+        
+        // Find missing dates that need to be fetched
+        let missingDateStrings = cacheService.getMissingDates(from: allDateStrings)
+        
+        if missingDateStrings.isEmpty {
+            // All data is cached, return immediately
+            let sortedStats = cachedStatistics.sorted { $0.date < $1.date }
             completion(sortedStats)
+            return
+        }
+        
+        // Fetch missing data from server
+        fetchMissingStatistics(dateStrings: missingDateStrings) { [weak self] newStatistics in
+            guard let self = self else { return }
+            
+            // Cache the new data
+            for stats in newStatistics {
+                self.cacheService.cacheStatistics(stats, for: stats.dateString)
+            }
+            
+            // Combine cached and new data
+            let allStatistics = cachedStatistics + newStatistics
+            
+            // Create empty stats for any remaining missing dates
+            let allStatsDateStrings = Set(allStatistics.map { $0.dateString })
+            let emptyStats = allDateStrings.compactMap { dateString -> DailyStatistics? in
+                guard !allStatsDateStrings.contains(dateString) else { return nil }
+                
+                let date = dateFormatter.date(from: dateString) ?? Date()
+                return DailyStatistics(
+                    date: date,
+                    dateString: dateString,
+                    totalCalories: 0,
+                    totalFoodWeight: 0,
+                    personWeight: 0,
+                    proteins: 0,
+                    fats: 0,
+                    carbohydrates: 0,
+                    sugar: 0,
+                    numberOfMeals: 0,
+                    hasData: false // Mark as placeholder data
+                )
+            }
+            
+            // Combine all data and sort by date
+            let finalStatistics = (allStatistics + emptyStats).sorted { $0.date < $1.date }
+            
+            DispatchQueue.main.async {
+                completion(finalStatistics)
+            }
+        }
+    }
+    
+    private func fetchMissingStatistics(
+        dateStrings: [String],
+        completion: @escaping ([DailyStatistics]) -> Void
+    ) {
+        var fetchedStatistics: [DailyStatistics] = []
+        let dispatchGroup = DispatchGroup()
+        
+        for dateString in dateStrings {
+            dispatchGroup.enter()
+            
+            grpcService.fetchStatisticsData(date: dateString) { dailyStats in
+                defer { dispatchGroup.leave() }
+                
+                if let stats = dailyStats {
+                    fetchedStatistics.append(stats)
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
+            completion(fetchedStatistics)
         }
     }
     
@@ -68,7 +126,7 @@ class StatisticsService {
         avgCarbs: Double,
         avgFiber: Double
     ) {
-        let validStats = statistics.filter { $0.totalCalories > 0 || $0.personWeight > 0 }
+        let validStats = statistics.filter { $0.hasData }
         guard !validStats.isEmpty else {
             return (0, 0, 0, 0, 0, 0, 0)
         }
@@ -101,9 +159,9 @@ class StatisticsService {
     ) {
         guard statistics.count >= 2 else { return (0, 0, 0) }
         
-        let validCaloriesStats = statistics.filter { $0.totalCalories > 0 }
-        let validWeightStats = statistics.filter { $0.totalFoodWeight > 0 }
-        let validPersonWeightStats = statistics.filter { $0.personWeight > 0 }
+        let validCaloriesStats = statistics.filter { $0.hasData && $0.totalCalories > 0 }
+        let validWeightStats = statistics.filter { $0.hasData && $0.totalFoodWeight > 0 }
+        let validPersonWeightStats = statistics.filter { $0.hasData && $0.personWeight > 0 }
         
         func calculateTrend<T: Numeric>(_ values: [T]) -> Double {
             guard values.count >= 2 else { return 0 }
@@ -132,5 +190,19 @@ class StatisticsService {
         let personWeightTrend = calculateTrend(validPersonWeightStats.map { $0.personWeight })
         
         return (caloriesTrend, weightTrend, Double(personWeightTrend))
+    }
+    
+    // MARK: - Cache Management
+    
+    func getCacheInfo() -> (totalEntries: Int, cacheSize: Int) {
+        return cacheService.getCacheInfo()
+    }
+    
+    func clearCache() {
+        cacheService.clearAllCache()
+    }
+    
+    func clearExpiredCache() {
+        cacheService.clearExpiredCache()
     }
 } 
