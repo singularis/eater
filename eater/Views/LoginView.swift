@@ -14,7 +14,7 @@ struct LoginView: View {
                 .frame(width: 100, height: 100)
                 .foregroundColor(.blue)
             
-            Text("Welcome to Eateris")
+            Text("Welcome to Eateria")
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
