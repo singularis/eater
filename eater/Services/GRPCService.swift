@@ -401,12 +401,10 @@ class GRPCService {
                 do {
                     let customDateFood = try Eater_CustomDateFoodResponse(serializedBytes: data)
                     
-                    // Parse date string to Date object
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateFormat = "dd-MM-yyyy"
                     let parsedDate = dateFormatter.date(from: date) ?? Date()
                     
-                    // Determine if this day has actual data
                     let totalCalories = Int(customDateFood.totalForDay.totalCalories)
                     let totalWeight = Int(customDateFood.totalForDay.totalAvgWeight)
                     let numberOfMeals = customDateFood.dishesForDate.count
@@ -415,10 +413,7 @@ class GRPCService {
                     let fats = customDateFood.totalForDay.contains.fats
                     let carbs = customDateFood.totalForDay.contains.carbohydrates
                     
-                    // A day has data if it has actual food records OR meaningful nutritional data
-                    // Don't rely on totalWeight alone as it can be a server default value
-                    let hasActualData = numberOfMeals > 0 || 
-                                                                              (totalCalories > 0 && (proteins > 0 || fats > 0 || carbs > 0))
+                    let hasActualData = numberOfMeals > 0 || (totalCalories > 0 && (proteins > 0 || fats > 0 || carbs > 0))
                     
                     let dailyStats = DailyStatistics(
                         date: parsedDate,
@@ -431,7 +426,7 @@ class GRPCService {
                         carbohydrates: carbs,
                         sugar: customDateFood.totalForDay.contains.sugar,
                         numberOfMeals: numberOfMeals,
-                        hasData: hasActualData // Only true if there's meaningful data
+                        hasData: hasActualData
                     )
 
                     completion(dailyStats)
@@ -479,6 +474,62 @@ class GRPCService {
             }
         } catch {
             completion(false)
+        }
+    }
+
+    func fetchTodayStatistics(completion: @escaping (DailyStatistics?) -> Void) {
+        guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
+            completion(nil)
+            return
+        }
+
+        sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
+            if let error = error {
+                completion(nil)
+                return
+            }
+
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+
+            do {
+                let todayFood = try TodayFood(serializedBytes: data)
+                
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "dd-MM-yyyy"
+                let todayString = dateFormatter.string(from: Date())
+                
+                let totalCalories = Int(todayFood.totalForDay.totalCalories)
+                let totalWeight = Int(todayFood.totalForDay.totalAvgWeight)
+                let numberOfMeals = todayFood.dishesToday.count
+                let personWeight = todayFood.personWeight
+                let proteins = todayFood.totalForDay.contains.proteins
+                let fats = todayFood.totalForDay.contains.fats
+                let carbs = todayFood.totalForDay.contains.carbohydrates
+                let sugar = todayFood.totalForDay.contains.sugar
+                
+                let hasActualData = numberOfMeals > 0 || (totalCalories > 0 && (proteins > 0 || fats > 0 || carbs > 0))
+                
+                let dailyStats = DailyStatistics(
+                    date: Date(),
+                    dateString: todayString,
+                    totalCalories: totalCalories,
+                    totalFoodWeight: totalWeight,
+                    personWeight: personWeight,
+                    proteins: proteins,
+                    fats: fats,
+                    carbohydrates: carbs,
+                    sugar: sugar,
+                    numberOfMeals: numberOfMeals,
+                    hasData: hasActualData
+                )
+
+                completion(dailyStats)
+            } catch {
+                completion(nil)
+            }
         }
     }
 }

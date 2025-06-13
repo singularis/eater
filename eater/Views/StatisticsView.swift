@@ -45,19 +45,19 @@ struct StatisticsView: View {
                             chartTypeSelectionView
                                 .padding(.vertical, 8)
                             
-                            // Main content area
+                            // Main content area - reduced spacing
                             ScrollView {
-                                VStack(spacing: 12) {
-                                    // Main Chart
+                                VStack(spacing: 8) {
+                                    // Main Chart - increased height for better visibility
                                     chartView
-                                        .frame(height: geometry.size.height * 0.4)
+                                        .frame(height: geometry.size.height * 0.5)
                                 }
                                 .padding(.horizontal, 16)
                             }
                             
-                            // Summary Stats - fixed height
+                            // Summary Stats - reduced height to give more space to chart
                             summaryStatsView
-                                .frame(height: geometry.size.height * 0.2)
+                                .frame(height: geometry.size.height * 0.15)
                                 .padding(.horizontal, 16)
                                 .padding(.bottom, 8)
                         }
@@ -127,14 +127,8 @@ struct StatisticsView: View {
     
     @ViewBuilder
     private var chartView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Only show title for chart types, not for insights or trends
-            if selectedChart != .insights && selectedChart != .trends {
-                Text(selectedChart.rawValue)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-            }
+        VStack(alignment: .leading, spacing: 5) {
+            // Removed redundant titles since chart type is already highlighted above
             
             switch selectedChart {
             case .calories:
@@ -151,7 +145,7 @@ struct StatisticsView: View {
                 insightsView
             }
         }
-        .padding()
+        .padding(12)
         .background(Color.gray.opacity(0.1))
         .cornerRadius(12)
     }
@@ -193,47 +187,104 @@ struct StatisticsView: View {
     }
     
     private var personWeightChart: some View {
-        let validWeightStats = statistics.filter { $0.personWeight > 0 }
+        let allWeightStats = statistics.filter { $0.personWeight > 0 }
+        let uniqueWeights = Set(allWeightStats.map { $0.personWeight })
+        let validWeightStats: [DailyStatistics]
         
-        return Chart(validWeightStats) { stat in
-            LineMark(
-                x: .value("Date", stat.date),
-                y: .value("Weight", stat.personWeight)
-            )
-            .foregroundStyle(Color.green)
-            .lineStyle(StrokeStyle(lineWidth: 2))
+        if uniqueWeights.count <= 1 && !allWeightStats.isEmpty {
+            let today = Date()
+            let calendar = Calendar.current
+            let todayStats = allWeightStats.first { calendar.isDate($0.date, inSameDayAs: today) }
             
-            PointMark(
-                x: .value("Date", stat.date),
-                y: .value("Weight", stat.personWeight)
+            if let todayStats = todayStats {
+                validWeightStats = [todayStats]
+            } else {
+                validWeightStats = [allWeightStats.max(by: { $0.date < $1.date })!]
+            }
+        } else {
+            validWeightStats = allWeightStats
+        }
+        
+        let weights = validWeightStats.map { Double($0.personWeight) }
+        let minWeight = weights.min() ?? 0
+        let maxWeight = weights.max() ?? 0
+        let weightRange = maxWeight - minWeight
+        
+        let padding: Double
+        if weightRange == 0 {
+            padding = max(minWeight * 0.05, 2.0)
+        } else {
+            padding = max(weightRange * 0.2, 1.0)
+        }
+        
+        let yAxisMin = max(0, minWeight - padding)
+        let yAxisMax = maxWeight + padding
+        
+        return VStack(alignment: .leading, spacing: 10) {
+            if validWeightStats.count == 1 {
+                let isToday = Calendar.current.isDate(validWeightStats[0].date, inSameDayAs: Date())
+                Text("\(isToday ? "Current" : "Latest") Weight: \(String(format: "%.1f", validWeightStats[0].personWeight)) kg")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.bottom, 5)
+            }
+            
+            Chart(validWeightStats) { stat in
+                if validWeightStats.count == 1 {
+                    PointMark(
+                        x: .value("Date", stat.date),
+                        y: .value("Weight", stat.personWeight)
+                    )
+                    .foregroundStyle(Color.green)
+                    .symbolSize(100)
+                } else {
+                    LineMark(
+                        x: .value("Date", stat.date),
+                        y: .value("Weight", stat.personWeight)
+                    )
+                    .foregroundStyle(Color.green)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+                    
+                    PointMark(
+                        x: .value("Date", stat.date),
+                        y: .value("Weight", stat.personWeight)
+                    )
+                    .foregroundStyle(Color.green)
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.gray.opacity(0.3))
+                    AxisValueLabel()
+                        .foregroundStyle(Color.white)
+                        .font(.caption)
+                }
+            }
+            .chartYAxis {
+                AxisMarks { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.gray.opacity(0.3))
+                    AxisValueLabel()
+                        .foregroundStyle(Color.white)
+                        .font(.caption)
+                }
+            }
+            .chartYScale(domain: yAxisMin...yAxisMax)
+            .frame(height: validWeightStats.count == 1 ? 200 : 300)
+            .overlay(
+                validWeightStats.isEmpty ? 
+                VStack {
+                    Text("No weight data available")
+                        .foregroundColor(.gray)
+                        .font(.subheadline)
+                    Text("Submit weight via camera or manual entry")
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                        .padding(.top, 2)
+                } : nil
             )
-            .foregroundStyle(Color.green)
         }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(Color.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(Color.white)
-                    .font(.caption)
-            }
-        }
-        .chartYAxis {
-            AxisMarks { _ in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(Color.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(Color.white)
-                    .font(.caption)
-            }
-        }
-        .frame(height: 300)
-        .overlay(
-            validWeightStats.isEmpty ? 
-            Text("No weight data available")
-                .foregroundColor(.gray)
-                .font(.subheadline) : nil
-        )
     }
     
     private var foodWeightChart: some View {
@@ -450,7 +501,7 @@ struct StatisticsView: View {
     private var summaryStatsView: some View {
         let averages = statisticsService.calculateAverages(from: statistics)
         
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 6) {
             Text("Summary (\(selectedPeriod.rawValue))")
                 .font(.subheadline)
                 .fontWeight(.semibold)
@@ -463,8 +514,8 @@ struct StatisticsView: View {
                 summaryCard(title: "Avg Fiber", value: "\(Int(averages.avgFiber))", subtitle: "g/day")
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .background(Color.gray.opacity(0.1))
         .cornerRadius(12)
     }

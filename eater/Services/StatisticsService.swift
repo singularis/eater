@@ -99,14 +99,28 @@ class StatisticsService {
         var fetchedStatistics: [DailyStatistics] = []
         let dispatchGroup = DispatchGroup()
         
+        let todayDateFormatter = DateFormatter()
+        todayDateFormatter.dateFormat = "dd-MM-yyyy"
+        let todayString = todayDateFormatter.string(from: Date())
+        
         for dateString in dateStrings {
             dispatchGroup.enter()
             
-            grpcService.fetchStatisticsData(date: dateString) { dailyStats in
-                defer { dispatchGroup.leave() }
-                
-                if let stats = dailyStats {
-                    fetchedStatistics.append(stats)
+            if dateString == todayString {
+                grpcService.fetchTodayStatistics { dailyStats in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let stats = dailyStats {
+                        fetchedStatistics.append(stats)
+                    }
+                }
+            } else {
+                grpcService.fetchStatisticsData(date: dateString) { dailyStats in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let stats = dailyStats {
+                        fetchedStatistics.append(stats)
+                    }
                 }
             }
         }
