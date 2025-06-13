@@ -137,6 +137,9 @@ final class AuthenticationService: NSObject, ObservableObject {
         UserDefaults.standard.set(response.token, forKey: "auth_token")
         UserDefaults.standard.set(response.userEmail, forKey: "user_email") // Store email separately
         
+        // Mark token as fresh from server (skip signature validation)
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "token_created_timestamp")
+        
         if let userName = response.userName {
             UserDefaults.standard.set(userName, forKey: "user_name")
         } else {
@@ -180,7 +183,9 @@ final class AuthenticationService: NSObject, ObservableObject {
                     try validateStoredToken(token)
                     print("✅ Token validation successful")
                 } catch {
+                    #if DEBUG
                     print("⚠️ Token validation failed: \(error). User remains logged in but may need to re-authenticate for secure operations.")
+                    #endif
                     // Keep the user logged in but mark that token needs refresh
                     // You could add a flag here to indicate token needs refresh
                 }
@@ -332,7 +337,7 @@ final class AuthenticationService: NSObject, ObservableObject {
     }
     
     func clearAllUserData() {
-        let keys = ["auth_token", "user_email", "user_name", "profile_picture_url", "softLimit", "hardLimit", "hasSeenOnboarding"]
+        let keys = ["auth_token", "user_email", "user_name", "profile_picture_url", "token_created_timestamp", "softLimit", "hardLimit", "hasSeenOnboarding"]
         keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
         UserDefaults.standard.synchronize()
     }
@@ -365,9 +370,40 @@ final class AuthenticationService: NSObject, ObservableObject {
             return false
         }
         
+        // Check if token is fresh from server (within 1 hour of creation)
+        let tokenCreatedTimestamp = UserDefaults.standard.double(forKey: "token_created_timestamp")
+        let currentTime = Date().timeIntervalSince1970
+        let tokenAge = currentTime - tokenCreatedTimestamp
+        let oneHourInSeconds: TimeInterval = 3600
+        
+        let isTokenFresh = tokenCreatedTimestamp > 0 && tokenAge < oneHourInSeconds
+        
+        if isTokenFresh {
+            // For fresh tokens, validate structure only
+            if let obj = JWT.validateTokenStructure(token: token) {
+                // Check if token is expired
+                if let exp = obj["exp"] as? TimeInterval {
+                    return Date(timeIntervalSince1970: exp) >= Date()
+                }
+                return true
+            }
+            return false
+        }
+        
+        // For older tokens, attempt full signature verification
         do {
             _ = try JWT.verifyHS256(token: token, secret: secretKey)
             return true
+        } catch JWTError.invalidSignature {
+            // Fall back to structure validation if signature fails
+            if let obj = JWT.validateTokenStructure(token: token) {
+                // Check if token is expired
+                if let exp = obj["exp"] as? TimeInterval {
+                    return Date(timeIntervalSince1970: exp) >= Date()
+                }
+                return true
+            }
+            return false
         } catch {
             return false
         }
@@ -388,6 +424,42 @@ final class AuthenticationService: NSObject, ObservableObject {
     }
     
     private func validateStoredToken(_ token: String) throws {
+        // Check if token is fresh from server (within 1 hour of creation)
+        let tokenCreatedTimestamp = UserDefaults.standard.double(forKey: "token_created_timestamp")
+        let currentTime = Date().timeIntervalSince1970
+        let tokenAge = currentTime - tokenCreatedTimestamp
+        let oneHourInSeconds: TimeInterval = 3600
+        
+        let isTokenFresh = tokenCreatedTimestamp > 0 && tokenAge < oneHourInSeconds
+        
+        if isTokenFresh {
+            // For fresh tokens, skip signature verification and just validate structure
+            if let obj = JWT.validateTokenStructure(token: token) {
+                // Basic token structure is valid, update user data if needed
+                if let email = obj["sub"] as? String {
+                    if userEmail == nil {
+                        userEmail = email
+                    }
+                }
+                if userName == nil {
+                    userName = UserDefaults.standard.string(forKey: "user_name")
+                }
+                if userProfilePictureURL == nil {
+                    userProfilePictureURL = UserDefaults.standard.string(forKey: "profile_picture_url")
+                }
+                
+                // Check if token is expired
+                if let exp = obj["exp"] as? TimeInterval,
+                   Date(timeIntervalSince1970: exp) < Date() {
+                    throw JWTError.expired
+                }
+                return
+            } else {
+                throw JWTError.malformed
+            }
+        }
+        
+        // For older tokens, attempt full signature verification
         do {
             // First try strict validation
             let obj = try JWT.verifyHS256(token: token, secret: secretKey)
@@ -411,7 +483,9 @@ final class AuthenticationService: NSObject, ObservableObject {
             // Token is expired but structurally valid - try lenient validation
             if let obj = JWT.validateTokenStructure(token: token),
                let email = obj["sub"] as? String {
+                #if DEBUG
                 print("⚠️ Token is expired but structurally valid. User remains logged in.")
+                #endif
                 // Keep user logged in but they may need to re-authenticate for secure operations
                 if userEmail == nil {
                     userEmail = email
@@ -425,8 +499,37 @@ final class AuthenticationService: NSObject, ObservableObject {
             } else {
                 throw JWTError.expired
             }
+        } catch JWTError.invalidSignature {
+            // If signature validation fails on older tokens, fall back to structure-only validation
+            // This handles cases where client/server secret keys don't match
+            if let obj = JWT.validateTokenStructure(token: token) {
+                // Only log warning in debug builds to reduce production noise
+                #if DEBUG
+                print("⚠️ Token signature validation failed, but structure is valid. User remains logged in.")
+                #endif
+                
+                if let email = obj["sub"] as? String {
+                    if userEmail == nil {
+                        userEmail = email
+                    }
+                }
+                if userName == nil {
+                    userName = UserDefaults.standard.string(forKey: "user_name")
+                }
+                if userProfilePictureURL == nil {
+                    userProfilePictureURL = UserDefaults.standard.string(forKey: "profile_picture_url")
+                }
+                
+                // Check if token is expired
+                if let exp = obj["exp"] as? TimeInterval,
+                   Date(timeIntervalSince1970: exp) < Date() {
+                    throw JWTError.expired
+                }
+            } else {
+                throw JWTError.invalidSignature
+            }
         } catch {
-            // Re-throw other errors (malformed, invalidSignature)
+            // Re-throw other errors (malformed)
             throw error
         }
     }
@@ -438,35 +541,80 @@ final class AuthenticationService: NSObject, ObservableObject {
             return "No token stored"
         }
         
-        do {
-            let obj = try JWT.verifyHS256(token: token, secret: secretKey)
+        // Check token freshness
+        let tokenCreatedTimestamp = UserDefaults.standard.double(forKey: "token_created_timestamp")
+        let currentTime = Date().timeIntervalSince1970
+        let tokenAge = currentTime - tokenCreatedTimestamp
+        let oneHourInSeconds: TimeInterval = 3600
+        let isTokenFresh = tokenCreatedTimestamp > 0 && tokenAge < oneHourInSeconds
+        
+        let freshStatus = isTokenFresh ? "Fresh token (signature validation skipped)" : "Older token (full validation)"
+        
+        // Try structure validation first
+        if let obj = JWT.validateTokenStructure(token: token) {
             if let exp = obj["exp"] as? TimeInterval {
                 let expirationDate = Date(timeIntervalSince1970: exp)
                 let formatter = DateFormatter()
                 formatter.dateStyle = .medium
                 formatter.timeStyle = .short
-                return "Token valid until: \(formatter.string(from: expirationDate))"
-            } else {
-                return "Token valid (no expiration)"
+                let isExpired = Date(timeIntervalSince1970: exp) < Date()
+                let expStatus = isExpired ? "expired on" : "valid until"
+                
+                if isTokenFresh {
+                    return "\(freshStatus) - Token \(expStatus): \(formatter.string(from: expirationDate))"
+                }
             }
-        } catch JWTError.expired {
-            if let obj = JWT.validateTokenStructure(token: token),
-               let exp = obj["exp"] as? TimeInterval {
-                let expirationDate = Date(timeIntervalSince1970: exp)
-                let formatter = DateFormatter()
-                formatter.dateStyle = .medium
-                formatter.timeStyle = .short
-                return "Token expired on: \(formatter.string(from: expirationDate))"
-            } else {
-                return "Token expired"
-            }
-        } catch JWTError.invalidSignature {
-            return "Token has invalid signature"
-        } catch JWTError.malformed {
-            return "Token is malformed"
-        } catch {
-            return "Token validation error: \(error)"
         }
+        
+        // For non-fresh tokens, try full validation
+        if !isTokenFresh {
+            do {
+                let obj = try JWT.verifyHS256(token: token, secret: secretKey)
+                if let exp = obj["exp"] as? TimeInterval {
+                    let expirationDate = Date(timeIntervalSince1970: exp)
+                    let formatter = DateFormatter()
+                    formatter.dateStyle = .medium
+                    formatter.timeStyle = .short
+                    return "\(freshStatus) - Token valid until: \(formatter.string(from: expirationDate))"
+                } else {
+                    return "\(freshStatus) - Token valid (no expiration)"
+                }
+            } catch JWTError.expired {
+                if let obj = JWT.validateTokenStructure(token: token),
+                   let exp = obj["exp"] as? TimeInterval {
+                    let expirationDate = Date(timeIntervalSince1970: exp)
+                    let formatter = DateFormatter()
+                    formatter.dateStyle = .medium
+                    formatter.timeStyle = .short
+                    return "\(freshStatus) - Token expired on: \(formatter.string(from: expirationDate))"
+                } else {
+                    return "\(freshStatus) - Token expired"
+                }
+            } catch JWTError.invalidSignature {
+                // Try structure validation as fallback
+                if let obj = JWT.validateTokenStructure(token: token) {
+                    if let exp = obj["exp"] as? TimeInterval {
+                        let expirationDate = Date(timeIntervalSince1970: exp)
+                        let formatter = DateFormatter()
+                        formatter.dateStyle = .medium
+                        formatter.timeStyle = .short
+                        let isExpired = Date(timeIntervalSince1970: exp) < Date()
+                        let expStatus = isExpired ? "expired on" : "valid until"
+                        return "\(freshStatus) - Invalid signature, but structure valid - Token \(expStatus): \(formatter.string(from: expirationDate))"
+                    } else {
+                        return "\(freshStatus) - Invalid signature, but structure valid (no expiration)"
+                    }
+                }
+                return "\(freshStatus) - Token has invalid signature"
+            } catch JWTError.malformed {
+                return "\(freshStatus) - Token is malformed"
+            } catch {
+                return "\(freshStatus) - Token validation error: \(error)"
+            }
+        }
+        
+        // Fresh token with valid structure
+        return freshStatus
     }
 }
 

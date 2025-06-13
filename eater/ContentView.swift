@@ -516,7 +516,10 @@ struct ContentView: View {
     }
     
     func submitManualWeight() {
-        guard let weight = Float(manualWeightInput), weight > 0 else {
+        // Normalize decimal separator (replace comma with dot for proper Float parsing)
+        let normalizedInput = manualWeightInput.replacingOccurrences(of: ",", with: ".")
+        
+        guard let weight = Float(normalizedInput), weight > 0 else {
             AlertHelper.showAlert(title: "Invalid Weight", message: "Please enter a valid weight in kilograms.")
             return
         }
