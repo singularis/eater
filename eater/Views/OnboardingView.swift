@@ -31,7 +31,7 @@ struct OnboardingView: View {
     
     let steps: [OnboardingStep] = [
         OnboardingStep(
-            title: "Welcome to Eater! 🍎",
+            title: "Welcome to Eateria! 🍎",
             description: "Your smart food companion that helps you track calories, monitor weight, and make healthier choices. Let's take a quick tour!",
             anchor: "welcome",
             icon: "hand.wave.fill"
