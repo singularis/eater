@@ -88,15 +88,17 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            // Gradient background
-            LinearGradient(
-                gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 0) {
+            // Don't show anything if user has already seen onboarding
+            if !hasSeenOnboarding {
+                // Gradient background
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
+                
+                VStack(spacing: 0) {
                 // Header with progress and skip
                 HStack {
                     Button("Skip") {
@@ -145,9 +147,16 @@ struct OnboardingView: View {
                 
                 Spacer()
                 
-                // Navigation buttons
-                navigationButtonsView
-                .padding(.bottom, 50)
+                    // Navigation buttons
+                    navigationButtonsView
+                    .padding(.bottom, 50)
+                }
+            }
+        }
+        .onAppear {
+            // Automatically dismiss if user has already seen onboarding
+            if hasSeenOnboarding {
+                isPresented = false
             }
         }
         .alert("Skip Onboarding?", isPresented: $showingSkipConfirmation) {
@@ -410,7 +419,8 @@ struct OnboardingView: View {
                 // Last screen - show both options
                 VStack(spacing: 12) {
                     Button(action: {
-                        // Just dismiss without setting hasSeenOnboarding
+                        // Mark onboarding as seen when user completes it
+                        hasSeenOnboarding = true
                         withAnimation(.easeInOut(duration: 0.5)) {
                             isPresented = false
                         }
