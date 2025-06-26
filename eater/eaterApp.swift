@@ -2,7 +2,7 @@ import SwiftUI
 import GoogleSignIn
 
 @main
-struct AppNameApp: App {
+struct EateriaApp: App {
     @StateObject private var authService = AuthenticationService()
     
     var body: some Scene {
