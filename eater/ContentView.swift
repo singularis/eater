@@ -43,6 +43,10 @@ struct ContentView: View {
     @State private var showManualWeightEntry = false
     @State private var manualWeightInput = ""
     
+    // Daily refresh states
+    @State private var dailyRefreshTimer: Timer?
+    @State private var lastKnownUTCDate: String = ""
+    
     var body: some View {
         ZStack {
             Color.black
@@ -69,9 +73,13 @@ struct ContentView: View {
             .onAppear {
                 loadLimitsFromUserDefaults()
                 fetchDataWithLoading()
+                setupDailyRefreshTimer()
                 if !hasSeenOnboarding {
                     showOnboarding = true
                 }
+            }
+            .onDisappear {
+                stopDailyRefreshTimer()
             }
             .padding()
             .alert("Set Calorie Limits", isPresented: $showLimitsAlert) {
@@ -693,6 +701,48 @@ struct ContentView: View {
         userDefaults.set(hardLimit, forKey: "hardLimit")
         userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
         userDefaults.set(optimalWeight, forKey: "userOptimalWeight")
+    }
+
+        // MARK: - Daily Refresh Methods
+    
+    private func setupDailyRefreshTimer() {
+        // Initialize the last known UTC date
+        lastKnownUTCDate = getCurrentUTCDateString()
+        
+        // Set up timer to check for UTC date changes every 30 seconds
+        dailyRefreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
+            checkForUTCDateChange()
+        }
+    }
+    
+    private func stopDailyRefreshTimer() {
+        dailyRefreshTimer?.invalidate()
+        dailyRefreshTimer = nil
+    }
+    
+    private func getCurrentUTCDateString() -> String {
+        let formatter = DateFormatter()
+        formatter.timeZone = TimeZone(abbreviation: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+    
+    private func checkForUTCDateChange() {
+        let currentUTCDate = getCurrentUTCDateString()
+        
+        if currentUTCDate != lastKnownUTCDate {
+            print("UTC date changed from \(lastKnownUTCDate) to \(currentUTCDate) - refreshing data")
+            lastKnownUTCDate = currentUTCDate
+            
+            // Only refresh if we're viewing today's data (not a custom date)
+            if !isViewingCustomDate {
+                // Clear statistics cache to ensure fresh data
+                StatisticsService.shared.clearExpiredCache()
+                
+                // Fetch fresh data for the new day
+                fetchDataWithLoading()
+            }
+        }
     }
 }
 
