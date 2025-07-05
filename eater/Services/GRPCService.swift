@@ -532,4 +532,43 @@ class GRPCService {
             }
         }
     }
+    
+    func submitFeedback(time: String, userEmail: String, feedback: String, completion: @escaping (Bool) -> Void) {
+        var feedbackRequest = Eater_FeedbackRequest()
+        feedbackRequest.time = time
+        feedbackRequest.userEmail = userEmail
+        feedbackRequest.feedback = feedback
+
+        do {
+            let requestBody = try feedbackRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "feedback", httpMethod: "POST", body: requestBody) else {
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            let feedbackResponse = try Eater_FeedbackResponse(serializedBytes: data)
+                            completion(feedbackResponse.success)
+                        } catch {
+                            completion(false)
+                        }
+                    } else {
+                        completion(false)
+                    }
+                }
+            }
+        } catch {
+            completion(false)
+        }
+    }
 }

@@ -14,6 +14,7 @@ struct UserProfileView: View {
     @State private var userOptimalWeight: Double = 0
     @State private var userRecommendedCalories: Int = 0
     @State private var showStatistics = false
+    @State private var showFeedback = false
     
     var body: some View {
         NavigationView {
@@ -84,6 +85,24 @@ struct UserProfileView: View {
                                 .padding(.vertical, 12)
                                 .frame(maxWidth: .infinity)
                                 .background(Color.blue)
+                                .cornerRadius(8)
+                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                            }
+                            
+                            // Feedback Button
+                            Button(action: {
+                                showFeedback = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "message.fill")
+                                    Text("Share Feedback")
+                                        .fontWeight(.semibold)
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.green)
                                 .cornerRadius(8)
                                 .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
                             }
@@ -245,6 +264,9 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showStatistics) {
                 StatisticsView(isPresented: $showStatistics)
+            }
+            .sheet(isPresented: $showFeedback) {
+                FeedbackView(isPresented: $showFeedback)
             }
             .onChange(of: showHealthSettings) { _, newValue in
                 if !newValue { // Sheet was dismissed
