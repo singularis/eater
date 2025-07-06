@@ -34,6 +34,7 @@ struct ContentView: View {
     @State private var isLoadingWeightPhoto = false
     @State private var isLoadingFoodPhoto = false
     @State private var deletingProductTime: Int64? = nil
+    @State private var isFetchingData = false // Flag to prevent multiple simultaneous data fetches
     
     // Full-screen photo states  
     @State private var fullScreenPhotoData: FullScreenPhotoData? = nil
@@ -262,6 +263,10 @@ struct ContentView: View {
         .sheet(isPresented: $showCamera) {
             WeightCameraView(
                 onPhotoSuccess: {
+                    // Clear both caches since weight was updated
+                    StatisticsService.shared.clearExpiredCache()
+                    ProductStorageService.shared.clearCache()
+                    
                     // Always return to today after weight photo
                     returnToToday()
                     isLoadingWeightPhoto = false
@@ -353,6 +358,12 @@ struct ContentView: View {
     
     private var refreshAction: () -> Void {
         {
+            // User-initiated refresh should force a network call and return to today
+            guard !isFetchingData else { return }
+            
+            // Clear cache to force fresh data
+            ProductStorageService.shared.clearCache()
+            
             // Always return to today when user pulls to refresh
             returnToToday()
         }
@@ -361,7 +372,58 @@ struct ContentView: View {
     // MARK: - Data Fetching Methods
 
     func fetchDataWithLoading() {
-        isLoadingData = true
+        // Prevent multiple simultaneous data fetches
+        guard !isFetchingData else { return }
+        
+        // Try to load cached data first for instant display
+        if let (cachedProducts, cachedCalories, cachedWeight) = ProductStorageService.shared.getCachedDataIfFresh() {
+            // Update UI immediately with cached data
+            self.products = cachedProducts
+            self.caloriesLeft = cachedCalories
+            self.personWeight = cachedWeight
+            
+            // Check if cache is relatively recent (less than 30 minutes)
+            if !ProductStorageService.shared.isDataStale(maxAgeMinutes: 30) {
+                // Cache is very fresh, no need to show loading or fetch new data
+                return
+            }
+            
+            // Cache is fresh but getting older, refresh in background without loading indicator
+            isFetchingData = true
+            ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) { fetchedProducts, calories, weight in
+                DispatchQueue.main.async {
+                    let previousWeight = self.personWeight
+                    self.products = fetchedProducts
+                    self.caloriesLeft = calories
+                    self.personWeight = weight
+                    self.isFetchingData = false
+                    
+                    // Recalculate calories if weight changed and user has health data
+                    let userDefaults = UserDefaults.standard
+                    if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
+                        self.recalculateCalorieLimitsFromHealthData()
+                    }
+                }
+            }
+            return
+        }
+        
+        // No fresh cache available - try fallback to slightly stale data while loading
+        if let (fallbackProducts, fallbackCalories, fallbackWeight) = ProductStorageService.shared.getCachedDataAsFallback() {
+            // Show stale data immediately for better UX
+            self.products = fallbackProducts
+            self.caloriesLeft = fallbackCalories
+            self.personWeight = fallbackWeight
+            
+            // Show a subtle loading indicator since we're using stale data
+            isLoadingData = true
+        } else {
+            // No cached data at all, show full loading
+            isLoadingData = true
+        }
+        
+        // Fetch fresh data from network
+        isFetchingData = true
         ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
                 let previousWeight = self.personWeight
@@ -369,6 +431,7 @@ struct ContentView: View {
                 self.caloriesLeft = calories
                 self.personWeight = weight
                 self.isLoadingData = false
+                self.isFetchingData = false
                 
                 // Recalculate calories if weight changed and user has health data
                 let userDefaults = UserDefaults.standard
@@ -380,12 +443,18 @@ struct ContentView: View {
     }
     
     func fetchData() {
+        // Prevent multiple simultaneous data fetches
+        guard !isFetchingData else { return }
+        
+        isFetchingData = true
+        // For background updates, always try cache first
         ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
             DispatchQueue.main.async {
                 let previousWeight = self.personWeight
                 self.products = fetchedProducts
                 self.caloriesLeft = calories
                 self.personWeight = weight
+                self.isFetchingData = false
                 
                 // Recalculate calories if weight changed and user has health data
                 let userDefaults = UserDefaults.standard
@@ -412,6 +481,9 @@ struct ContentView: View {
         // Clear today's statistics cache since new food was added
         StatisticsService.shared.clearExpiredCache()
         
+        // Clear products cache to force fresh data since new food was added
+        ProductStorageService.shared.clearCache()
+        
         // Always return to today after submitting food photo
         returnToToday()
         
@@ -429,8 +501,9 @@ struct ContentView: View {
         GRPCService().modifyFoodRecord(time: time, userEmail: userEmail, percentage: percentage) { success in
             DispatchQueue.main.async {
                 if success {
-                    // Clear today's statistics cache since food was modified
+                    // Clear both caches since food was modified
                     StatisticsService.shared.clearExpiredCache()
+                    ProductStorageService.shared.clearCache()
                     
                     // Show success message
                     AlertHelper.showAlert(
@@ -456,8 +529,9 @@ struct ContentView: View {
         GRPCService().deleteFood(time: Int64(time)) { success in
             DispatchQueue.main.async {
                 if success {
-                    // Clear today's statistics cache since food was deleted
+                    // Clear both caches since food was deleted
                     StatisticsService.shared.clearExpiredCache()
+                    ProductStorageService.shared.clearCache()
                     
                     // Delete the local image as well
                     let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
@@ -544,8 +618,9 @@ struct ContentView: View {
                 self.isLoadingWeightPhoto = false
                 
                 if success {
-                    // Clear today's statistics cache since weight was updated
+                    // Clear both caches since weight was updated
                     StatisticsService.shared.clearExpiredCache()
+                    ProductStorageService.shared.clearCache()
                     
                     // Always return to today after manual weight entry
                     self.returnToToday()
@@ -709,9 +784,10 @@ struct ContentView: View {
         // Initialize the last known UTC date
         lastKnownUTCDate = getCurrentUTCDateString()
         
-        // Set up timer to check for UTC date changes every 30 seconds
-        dailyRefreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
-            checkForUTCDateChange()
+        // Set up timer to check for UTC date changes every 5 minutes instead of 30 seconds
+        // This is much more efficient and still catches date changes promptly
+        dailyRefreshTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { _ in
+            self.checkForUTCDateChange()
         }
     }
     
@@ -736,10 +812,11 @@ struct ContentView: View {
             
             // Only refresh if we're viewing today's data (not a custom date)
             if !isViewingCustomDate {
-                // Clear statistics cache to ensure fresh data
+                // Clear both ProductStorageService and StatisticsService caches for the new day
+                ProductStorageService.shared.clearCache()
                 StatisticsService.shared.clearExpiredCache()
                 
-                // Fetch fresh data for the new day
+                // Fetch fresh data for the new day (this will use loading indicator since cache was cleared)
                 fetchDataWithLoading()
             }
         }

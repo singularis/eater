@@ -46,7 +46,18 @@ class ProductStorageService {
     
     // MARK: - Fetch and Process with Image Mapping
     
-    func fetchAndProcessProducts(tempImageTime: Int64? = nil, completion: @escaping ([Product], Int, Float) -> Void) {
+    func fetchAndProcessProducts(tempImageTime: Int64? = nil, forceRefresh: Bool = false, completion: @escaping ([Product], Int, Float) -> Void) {
+        // Check cache first unless force refresh is requested
+        if !forceRefresh && !isDataStale() {
+            let (cachedProducts, cachedCalories, cachedWeight) = loadProducts()
+            if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
+                // Return cached data immediately for better performance
+                completion(cachedProducts, cachedCalories, cachedWeight)
+                return
+            }
+        }
+        
+        // Cache is stale or empty, or force refresh requested - fetch from network
         GRPCService().fetchProducts { [weak self] products, calories, weight in
             DispatchQueue.main.async {
                 // If we have a temporary image, map it to the newest product
@@ -86,10 +97,34 @@ class ProductStorageService {
         userDefaults.removeObject(forKey: lastUpdateKey)
     }
     
-    func isDataStale(maxAgeMinutes: Double = 5) -> Bool {
+    func isDataStale(maxAgeMinutes: Double = 60) -> Bool {
         let lastUpdate = userDefaults.double(forKey: lastUpdateKey)
+        if lastUpdate == 0 { return true }
         let ageMinutes = (Date().timeIntervalSince1970 - lastUpdate) / 60
         return ageMinutes > maxAgeMinutes
+    }
+    
+    // Fast method to get cached data if available and fresh
+    func getCachedDataIfFresh() -> ([Product], Int, Float)? {
+        guard !isDataStale() else { return nil }
+        let (products, calories, weight) = loadProducts()
+        // Only return if we have actual data
+        if !products.isEmpty || calories > 0 || weight > 0 {
+            return (products, calories, weight)
+        }
+        return nil
+    }
+    
+    // Fallback method to get cached data even if slightly stale (for better UX when network is slow)
+    func getCachedDataAsFallback(maxStaleHours: Double = 12) -> ([Product], Int, Float)? {
+        let maxStaleMinutes = maxStaleHours * 60
+        guard !isDataStale(maxAgeMinutes: maxStaleMinutes) else { return nil }
+        let (products, calories, weight) = loadProducts()
+        // Only return if we have actual data
+        if !products.isEmpty || calories > 0 || weight > 0 {
+            return (products, calories, weight)
+        }
+        return nil
     }
 }
 
