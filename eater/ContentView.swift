@@ -419,7 +419,7 @@ struct ContentView: View {
             isLoadingData = true
         } else {
             // No cached data at all, show full loading
-            isLoadingData = true
+        isLoadingData = true
         }
         
         // Fetch fresh data from network
@@ -481,10 +481,11 @@ struct ContentView: View {
         // Clear today's statistics cache since new food was added
         StatisticsService.shared.clearExpiredCache()
         
-        // Clear products cache to force fresh data since new food was added
-        ProductStorageService.shared.clearCache()
+        // Note: ProductStorageService cache is already updated by the fetchAndProcessProducts call
+        // that handles the image mapping, so no need to clear it here
         
         // Always return to today after submitting food photo
+        // This will call fetchDataWithLoading() which will show the fresh cached data with the new food item
         returnToToday()
         
         DispatchQueue.main.async {

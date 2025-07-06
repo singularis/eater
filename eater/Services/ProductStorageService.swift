@@ -47,8 +47,12 @@ class ProductStorageService {
     // MARK: - Fetch and Process with Image Mapping
     
     func fetchAndProcessProducts(tempImageTime: Int64? = nil, forceRefresh: Bool = false, completion: @escaping ([Product], Int, Float) -> Void) {
-        // Check cache first unless force refresh is requested
-        if !forceRefresh && !isDataStale() {
+        // When tempImageTime is provided, we MUST force refresh to get the latest data from backend
+        // and properly map the temporary image to the newest product timestamp
+        let shouldForceRefresh = forceRefresh || (tempImageTime != nil)
+        
+        // Check cache first unless force refresh is requested or we have a temp image to map
+        if !shouldForceRefresh && !isDataStale() {
             let (cachedProducts, cachedCalories, cachedWeight) = loadProducts()
             if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
                 // Return cached data immediately for better performance
@@ -57,7 +61,7 @@ class ProductStorageService {
             }
         }
         
-        // Cache is stale or empty, or force refresh requested - fetch from network
+        // Cache is stale, empty, force refresh requested, or we need to map temp image - fetch from network
         GRPCService().fetchProducts { [weak self] products, calories, weight in
             DispatchQueue.main.async {
                 // If we have a temporary image, map it to the newest product
