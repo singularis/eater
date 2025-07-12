@@ -27,6 +27,8 @@ struct ContentView: View {
     @State private var isViewingCustomDate = false
     @State private var currentViewingDate = ""
     @State private var currentViewingDateString = "" // Original format dd-MM-yyyy
+    @State private var showRecommendation = false
+    @State private var recommendationText = ""
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
     
     // New loading states
@@ -47,6 +49,12 @@ struct ContentView: View {
     // Daily refresh states
     @State private var dailyRefreshTimer: Timer?
     @State private var lastKnownUTCDate: String = ""
+    
+    // Sport calories states
+    @State private var showSportCaloriesAlert = false
+    @State private var sportCaloriesInput = ""
+    @State private var todaySportCalories = 0
+    @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate: String = ""
     
     var body: some View {
         ZStack {
@@ -73,6 +81,7 @@ struct ContentView: View {
             }
             .onAppear {
                 loadLimitsFromUserDefaults()
+                loadTodaySportCalories()
                 fetchDataWithLoading()
                 setupDailyRefreshTimer()
                 if !hasSeenOnboarding {
@@ -109,6 +118,9 @@ struct ContentView: View {
             .sheet(isPresented: $showHealthDisclaimer) {
                 HealthDisclaimerView()
             }
+            .sheet(isPresented: $showRecommendation) {
+                RecommendationView(recommendationText: recommendationText)
+            }
             .sheet(isPresented: $showCalendarPicker) {
                 CalendarDatePickerView(
                     selectedDate: $selectedDate,
@@ -137,16 +149,19 @@ struct ContentView: View {
             LoadingOverlay(isVisible: isLoadingFoodPhoto, message: "Analyzing food photo...")
         }
     }
-    
-    // MARK: - View Components
-    
+        
     private var topBarView: some View {
-        HStack {
-            profileButton
-            Spacer()
+        ZStack {
             dateDisplayView
-            Spacer()
-            healthInfoButton
+            
+            HStack {
+                profileButton
+                Spacer()
+                HStack(spacing: 24) {
+                    healthInfoButton
+                    sportButton
+                }
+            }
         }
     }
     
@@ -217,6 +232,30 @@ struct ContentView: View {
                 .background(Color.white.opacity(0.9))
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+        }
+    }
+    
+    private var sportButton: some View {
+        Button(action: {
+            sportCaloriesInput = ""
+            showSportCaloriesAlert = true
+        }) {
+            Image(systemName: "figure.run")
+                .font(.system(size: 24))
+                .foregroundColor(.orange)
+                .background(Color.white.opacity(0.9))
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+        }
+        .alert("Sport Calories Bonus", isPresented: $showSportCaloriesAlert) {
+            TextField("Calories burned (e.g., 300)", text: $sportCaloriesInput)
+                .keyboardType(.numberPad)
+            Button("Add to Today's Limit") {
+                submitSportCalories()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Enter the number of calories you burned during your workout. This will be added to your daily calorie limit for today only.")
         }
     }
     
@@ -292,9 +331,10 @@ struct ContentView: View {
     }
     
     private func caloriesButton(geo: GeometryProxy) -> some View {
-        Text("Calories: \(softLimit-caloriesLeft)")
+        let adjustedSoftLimit = getAdjustedSoftLimit()
+        return Text("Calories: \(adjustedSoftLimit-caloriesLeft)")
             .font(.system(size: 22, weight: .semibold, design: .rounded))
-            .foregroundColor(getColor(for: caloriesLeft))
+            .foregroundColor(getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit))
             .padding()
             .background(Color.gray.opacity(0.8))
             .cornerRadius(16)
@@ -327,8 +367,9 @@ struct ContentView: View {
             isLoadingRecommendation = true
             GRPCService().getRecommendation(days: 7) { recommendation in
                 DispatchQueue.main.async {
-                    AlertHelper.showHealthRecommendation(recommendation: recommendation)
-                    isLoadingRecommendation = false
+                    self.recommendationText = recommendation
+                    self.showRecommendation = true
+                    self.isLoadingRecommendation = false
                     // Return to today after getting recommendation
                     if self.isViewingCustomDate {
                         self.returnToToday()
@@ -633,10 +674,28 @@ struct ContentView: View {
         }
     }
 
+    func submitSportCalories() {
+        guard let calories = Int(sportCaloriesInput), calories > 0 else {
+            AlertHelper.showAlert(title: "Invalid Calories", message: "Please enter a valid number of calories burned.")
+            return
+        }
+        
+        // Store sport calories for today only
+        let todayString = getCurrentUTCDateString()
+        todaySportCalories = calories
+        todaySportCaloriesDate = todayString
+        
+        // Clear the input field
+        sportCaloriesInput = ""
+        
+        // Show success message
+        AlertHelper.showAlert(title: "Sport Calories Added", message: "Added \(calories) calories to your daily limit for today.")
+    }
+
     // MARK: - Helper Methods
 
-    private func getColor(for value: Int) -> Color {
-        if value < softLimit {
+    private func getColor(for value: Int, adjustedSoftLimit: Int) -> Color {
+        if value < adjustedSoftLimit {
             return .green
         } else if value < hardLimit {
             return .yellow
@@ -779,6 +838,33 @@ struct ContentView: View {
         userDefaults.set(optimalWeight, forKey: "userOptimalWeight")
     }
 
+    private func getAdjustedSoftLimit() -> Int {
+        let todayString = getCurrentUTCDateString()
+        
+        // Check if sport calories were added for today
+        if todaySportCaloriesDate == todayString && todaySportCalories > 0 {
+            return softLimit + todaySportCalories
+        }
+        
+        return softLimit
+    }
+
+    private func loadTodaySportCalories() {
+        let todayString = getCurrentUTCDateString()
+        
+        // Check if we have sport calories stored for today
+        if todaySportCaloriesDate == todayString {
+            // Sport calories are already loaded and valid for today
+            return
+        }
+        
+        // If it's a new day, reset sport calories
+        if todaySportCaloriesDate != todayString {
+            todaySportCalories = 0
+            todaySportCaloriesDate = ""
+        }
+    }
+
         // MARK: - Daily Refresh Methods
     
     private func setupDailyRefreshTimer() {
@@ -810,6 +896,10 @@ struct ContentView: View {
         if currentUTCDate != lastKnownUTCDate {
             print("UTC date changed from \(lastKnownUTCDate) to \(currentUTCDate) - refreshing data")
             lastKnownUTCDate = currentUTCDate
+            
+            // Reset sport calories for the new day
+            todaySportCalories = 0
+            todaySportCaloriesDate = ""
             
             // Only refresh if we're viewing today's data (not a custom date)
             if !isViewingCustomDate {
