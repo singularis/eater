@@ -696,11 +696,11 @@ struct ContentView: View {
 
     private func getColor(for value: Int, adjustedSoftLimit: Int) -> Color {
         if value < adjustedSoftLimit {
-            return .green
+            return Color(red: 0.2, green: 0.7, blue: 0.3) // Softer, more pleasant green
         } else if value < hardLimit {
-            return .yellow
+            return Color(red: 0.9, green: 0.6, blue: 0.1) // Warm amber instead of bright yellow
         } else {
-            return .red
+            return Color(red: 0.8, green: 0.4, blue: 0.2) // Warm orange-red instead of harsh red
         }
     }
 
