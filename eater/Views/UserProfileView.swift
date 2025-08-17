@@ -15,6 +15,7 @@ struct UserProfileView: View {
     @State private var userRecommendedCalories: Int = 0
     @State private var showStatistics = false
     @State private var showFeedback = false
+    @State private var showAddFriends = false
     
     var body: some View {
         NavigationView {
@@ -103,6 +104,24 @@ struct UserProfileView: View {
                                 .padding(.vertical, 12)
                                 .frame(maxWidth: .infinity)
                                 .background(Color.green)
+                                .cornerRadius(8)
+                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                            }
+                            
+                            // Add Friends Button
+                            Button(action: {
+                                showAddFriends = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "person.crop.circle.badge.plus")
+                                    Text("Add Friends")
+                                        .fontWeight(.semibold)
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.purple)
                                 .cornerRadius(8)
                                 .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
                             }
@@ -267,6 +286,9 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showFeedback) {
                 FeedbackView(isPresented: $showFeedback)
+            }
+            .sheet(isPresented: $showAddFriends) {
+                AddFriendsView(isPresented: $showAddFriends)
             }
             .onChange(of: showHealthSettings) { _, newValue in
                 if !newValue { // Sheet was dismissed
