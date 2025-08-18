@@ -7,6 +7,7 @@ struct ProductListView: View {
     let onModify: (Int64, String, Int32) -> Void
     let onPhotoTap: (UIImage?, String) -> Void
     let deletingProductTime: Int64?
+    let onShareSuccess: () -> Void
 
     var sortedProducts: [Product] {
         products.sorted { $0.time > $1.time }
@@ -61,9 +62,9 @@ struct ProductListView: View {
                             .lineLimit(2)
                     }
                     .onTapGesture {
-                        AlertHelper.showPortionSelectionAlert(foodName: product.name, originalWeight: product.weight) { percentage in
+                        AlertHelper.showPortionSelectionAlert(foodName: product.name, originalWeight: product.weight, time: product.time, onPortionSelected: { percentage in
                             onModify(product.time, product.name, percentage)
-                        }
+                        }, onShareSuccess: onShareSuccess)
                     }
                     
                     Spacer()

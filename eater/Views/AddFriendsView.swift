@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct AddFriendsView: View {
-    @EnvironmentObject var authService: AuthenticationService
     @Binding var isPresented: Bool
 
     @State private var query: String = ""
@@ -10,6 +9,7 @@ struct AddFriendsView: View {
     @State private var isConnected: Bool = false
     @State private var isAuthenticated: Bool = false
     @State private var isSearching: Bool = false
+    @State private var isAddingFriend: Bool = false
 
     @State private var socket: FriendsSearchWebSocket? = nil
 
@@ -39,6 +39,7 @@ struct AddFriendsView: View {
                                     Text(email)
                                 }
                             }
+                            .disabled(isAddingFriend)
                         }
                     }
                     .listStyle(.plain)
@@ -52,11 +53,30 @@ struct AddFriendsView: View {
                 Spacer()
             }
             .padding()
+            .disabled(isAddingFriend)
+            .overlay(
+                Group {
+                    if isAddingFriend {
+                        ZStack {
+                            Color.black.opacity(0.3).ignoresSafeArea()
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                Text("Adding friend...")
+                                    .foregroundColor(.white)
+                            }
+                            .padding(20)
+                            .background(Color.black.opacity(0.6))
+                            .cornerRadius(12)
+                        }
+                    }
+                }
+            )
             .navigationTitle("Add Friends")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") { isPresented = false }
+                        .disabled(isAddingFriend)
                 }
             }
             .onAppear { setupSocket() }
@@ -65,7 +85,7 @@ struct AddFriendsView: View {
     }
 
     private func setupSocket() {
-        let socket = FriendsSearchWebSocket(tokenProvider: { authService.getAuthToken() })
+        let socket = FriendsSearchWebSocket(tokenProvider: { UserDefaults.standard.string(forKey: "auth_token") })
         self.socket = socket
         socket.onStateChange = { state in
             switch state {
@@ -125,10 +145,18 @@ struct AddFriendsView: View {
     }
 
     private func select(email: String) {
-        // TODO: Implement friend request/send invitation API call when backend is ready.
-        // For now, just show a confirmation and close the sheet.
-        AlertHelper.showAlert(title: "Requested", message: "Friend request sent to \(email)")
-        isPresented = false
+        isAddingFriend = true
+        GRPCService().addFriend(email: email) { success in
+            DispatchQueue.main.async {
+                isAddingFriend = false
+                if success {
+                    AlertHelper.showAlert(title: "You have a new friend!", message: "\(email) added to your friends list")
+                } else {
+                    AlertHelper.showAlert(title: "Failed", message: "Could not send a friend request to \(email)")
+                }
+                isPresented = false
+            }
+        }
     }
 }
 

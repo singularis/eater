@@ -571,4 +571,104 @@ class GRPCService {
             completion(false)
         }
     }
+
+    func addFriend(email: String, completion: @escaping (Bool) -> Void) {
+        var addFriendRequest = Eater_AddFriendRequest()
+        addFriendRequest.email = email
+
+        do {
+            let requestBody = try addFriendRequest.serializedData()
+
+            guard var request = createRequest(endpoint: "autocomplete/addfriend", httpMethod: "POST", body: requestBody) else {
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion(false)
+                    return
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    if response.statusCode == 200, let data = data {
+                        do {
+                            let addFriendResponse = try Eater_AddFriendResponse(serializedBytes: data)
+                            completion(addFriendResponse.success)
+                        } catch {
+                            completion(false)
+                        }
+                    } else {
+                        completion(false)
+                    }
+                }
+            }
+        } catch {
+            completion(false)
+        }
+    }
+
+    func getFriends(offset: Int = 0, limit: Int = 5, completion: @escaping ([String], Int) -> Void) {
+        // Backend returns full list via GET; we will slice client-side using offset/limit
+        guard let request = createRequest(endpoint: "autocomplete/getfriend", httpMethod: "GET") else {
+            completion([], 0)
+            return
+        }
+        sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+            if let _ = error {
+                completion([], 0)
+                return
+            }
+            if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data {
+                do {
+                    let resp = try Eater_GetFriendsResponse(serializedBytes: data)
+                    let allEmails = resp.friends.map { $0.email }
+                    let total = Int(resp.count)
+                    let start = max(0, min(offset, allEmails.count))
+                    let end = max(start, min(start + max(0, limit), allEmails.count))
+                    let slice = Array(allEmails[start..<end])
+                    completion(slice, total)
+                } catch {
+                    completion([], 0)
+                }
+            } else {
+                completion([], 0)
+            }
+        }
+    }
+
+    func shareFood(time: Int64, fromEmail: String, toEmail: String, percentage: Int32, completion: @escaping (Bool) -> Void) {
+        var req = Eater_ShareFoodRequest()
+        req.time = time
+        req.fromEmail = fromEmail
+        req.toEmail = toEmail
+        req.percentage = percentage
+        do {
+            let body = try req.serializedData()
+            guard var request = createRequest(endpoint: "autocomplete/sharefood", httpMethod: "POST", body: body) else {
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let error = error {
+                    completion(false)
+                    return
+                }
+                if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data {
+                    do {
+                        let resp = try Eater_ShareFoodResponse(serializedBytes: data)
+                        completion(resp.success)
+                    } catch {
+                        completion(false)
+                    }
+                } else {
+                    completion(false)
+                }
+            }
+        } catch {
+            completion(false)
+        }
+    }
 }

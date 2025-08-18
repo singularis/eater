@@ -74,6 +74,26 @@ class AlertHelper {
         }
     }
     
+    private static func presentShareFriendsController(foodName: String, time: Int64, onShareSuccess: (() -> Void)?) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootViewController = window.rootViewController else { return }
+        let vc = ShareFoodViewController(foodName: foodName, time: time)
+        vc.onShareSuccess = onShareSuccess
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .pageSheet
+        if let sheet = nav.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        rootViewController.present(nav, animated: true)
+    }
+
+    // Public helper to show the "Share food with friend" sheet directly
+    static func showShareFriends(foodName: String, time: Int64, onShareSuccess: (() -> Void)? = nil) {
+        presentShareFriendsController(foodName: foodName, time: time, onShareSuccess: onShareSuccess)
+    }
+    
     static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
         let disclaimerText = "\n\n⚠️ HEALTH DISCLAIMER:\nThis information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.\n\nSources: USDA FoodData Central, Dietary Guidelines for Americans"
         
@@ -82,7 +102,7 @@ class AlertHelper {
         showAlert(title: "Health Recommendation", message: fullMessage, completion: completion)
     }
     
-    static func showPortionSelectionAlert(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void) {
+    static func showPortionSelectionAlert(foodName: String, originalWeight: Int, time: Int64, onPortionSelected: @escaping (Int32) -> Void, onShareSuccess: (() -> Void)? = nil) {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first,
               let rootViewController = window.rootViewController
@@ -112,6 +132,15 @@ class AlertHelper {
                 onPortionSelected(portion.percentage)
             })
         }
+
+        // Share food with friend action (visually highlighted)
+        let shareTitle = "Share food with friend"
+        let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
+            presentShareFriendsController(foodName: foodName, time: time, onShareSuccess: onShareSuccess)
+        }
+        // Make action title green (private API key path, commonly works in UIKit alerts)
+        shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
+        alert.addAction(shareAction)
 
         // Add custom option
         alert.addAction(UIAlertAction(title: "Custom...", style: .default) { _ in

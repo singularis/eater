@@ -72,7 +72,12 @@ struct ContentView: View {
                     onDelete: deleteProductWithLoading,
                     onModify: modifyProductPortion,
                     onPhotoTap: showFullScreenPhoto,
-                    deletingProductTime: deletingProductTime
+                    deletingProductTime: deletingProductTime,
+                    onShareSuccess: {
+                        StatisticsService.shared.clearExpiredCache()
+                        ProductStorageService.shared.clearCache()
+                        self.returnToToday()
+                    }
                 )
                 .padding(.top, 3)
 
@@ -577,11 +582,11 @@ struct ContentView: View {
                     
                     // Delete the local image as well
                     let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
-                    // No action needed if image deletion fails
                     
-                    // Always return to today after deleting food
-                    self.returnToToday()
                     self.deletingProductTime = nil
+                    AlertHelper.showAlert(title: "Removed", message: "Food item was removed.") {
+                        self.returnToToday()
+                    }
                 } else {
                     // Failed to delete product
                     self.deletingProductTime = nil
