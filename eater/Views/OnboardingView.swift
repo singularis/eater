@@ -49,6 +49,12 @@ struct OnboardingView: View {
             icon: "chart.line.uptrend.xyaxis"
         ),
         OnboardingStep(
+            title: "Share Meals with Friends 🤝",
+            description: "Add friends and share your dishes right from the list. Pick how much they ate (25%, 50%, 75% or custom) and we’ll handle the rest.",
+            anchor: "share",
+            icon: "person.2.fill"
+        ),
+        OnboardingStep(
             title: "Get Personalized Insights 💡",
             description: "View your trends, manage your profile, and access health information - all designed to help you reach your wellness goals.",
             anchor: "insights",
