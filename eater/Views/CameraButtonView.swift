@@ -215,6 +215,8 @@ struct CameraView: UIViewControllerRepresentable {
             
             // Use the new unified approach: fetch + map + store + callback
             ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) { [weak self] products, calories, weight in
+                // Record that user snapped food today and cancel remaining reminders
+                NotificationService.shared.recordFoodSnap()
                 // Call the success callback through the manager
                 CameraCallbackManager.shared.callPhotoSuccess()
                 
@@ -337,6 +339,8 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
             
             // Use the new unified approach: fetch + map + store + callback
             ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) { [weak self] products, calories, weight in
+                // Record that user snapped food today and cancel remaining reminders
+                NotificationService.shared.recordFoodSnap()
                 // Call the success callback through the manager
                 CameraCallbackManager.shared.callPhotoSuccess()
                 

@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleSignIn
+import UserNotifications
 
 @main
 struct AppNameApp: App {
@@ -11,9 +12,15 @@ struct AppNameApp: App {
                 ContentView()
                     .preferredColorScheme(.dark)
                     .environmentObject(authService)
+                    .onAppear {
+                        NotificationService.shared.initializeOnLaunch()
+                    }
             } else {
                 LoginView()
                     .environmentObject(authService)
+                    .onAppear {
+                        NotificationService.shared.initializeOnLaunch()
+                    }
             }
         }
     }

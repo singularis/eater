@@ -12,6 +12,7 @@ struct OnboardingView: View {
     @State private var currentStep = 0
     @State private var showingSkipConfirmation = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
+    @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(forKey: "notificationsEnabled")
     
     // Health data collection state
     @State private var height: String = ""
@@ -85,6 +86,12 @@ struct OnboardingView: View {
             icon: "exclamationmark.triangle.fill"
         ),
         OnboardingStep(
+            title: "Stay on Track with Gentle Reminders ⏰",
+            description: "Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We’ll only remind you if you haven’t snapped food yet.",
+            anchor: "notifications_setup",
+            icon: "bell.badge.fill"
+        ),
+        OnboardingStep(
             title: "You're All Set! 🎉",
             description: "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed.",
             anchor: "complete",
@@ -147,6 +154,8 @@ struct OnboardingView: View {
                     healthFormView
                 } else if steps[currentStep].anchor == "health_results" {
                     healthResultsView
+                } else if steps[currentStep].anchor == "notifications_setup" {
+                    notificationsSetupView
                 } else {
                     defaultStepView
                 }
@@ -230,6 +239,62 @@ struct OnboardingView: View {
                         .opacity(0.9)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.horizontal, 30)
+        }
+    }
+
+    private var notificationsSetupView: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "bell.badge.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.yellow)
+                .symbolEffect(.bounce, value: currentStep)
+
+            VStack(spacing: 12) {
+                Text("Stay on Track with Gentle Reminders ⏰")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Text("Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We’ll only remind you if you haven’t snapped food yet. You can change this later in settings.")
+                    .font(.body)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white)
+                    .opacity(0.9)
+                    .padding(.horizontal, 20)
+            }
+
+            VStack(spacing: 14) {
+                Button(action: {
+                    NotificationService.shared.requestAuthorizationAndEnable(true) { granted in
+                        notificationsEnabledLocal = granted
+                        withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
+                    }
+                }) {
+                    Text("Enable Reminders")
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.white)
+                        .cornerRadius(12)
+                }
+
+                Button(action: {
+                    NotificationService.shared.requestAuthorizationAndEnable(false)
+                    notificationsEnabledLocal = false
+                    withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
+                }) {
+                    Text("Not Now")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(12)
                 }
             }
             .padding(.horizontal, 30)
@@ -463,6 +528,9 @@ struct OnboardingView: View {
                 .padding(.horizontal, 30)
             } else if steps[currentStep].anchor == "health_setup" {
                 // Health setup screen - buttons are handled in the view itself
+                EmptyView()
+            } else if steps[currentStep].anchor == "notifications_setup" {
+                // Notifications setup screen - buttons handled in view
                 EmptyView()
             } else {
                 // Navigation buttons for other screens

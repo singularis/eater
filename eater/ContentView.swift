@@ -915,6 +915,9 @@ struct ContentView: View {
                 // Fetch fresh data for the new day (this will use loading indicator since cache was cleared)
                 fetchDataWithLoading()
             }
+
+            // Reschedule notifications for the new local day
+            NotificationService.shared.handleDayChangeIfNeeded()
         }
     }
 }
