@@ -88,6 +88,9 @@ struct ProductListView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .listStyle(.plain)
+        .padding(.top, -2)
         .refreshable {
             onRefresh()
         }

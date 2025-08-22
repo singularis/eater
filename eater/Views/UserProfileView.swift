@@ -16,6 +16,7 @@ struct UserProfileView: View {
     @State private var showStatistics = false
     @State private var showFeedback = false
     @State private var showAddFriends = false
+    @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified" // "simplified" or "full"
     
     var body: some View {
         NavigationView {
@@ -215,6 +216,21 @@ struct UserProfileView: View {
                             
                             // Button Section
                             VStack(spacing: 12) {
+                                // Data Display Mode Toggle
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Data Mode")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    Picker("Data Mode", selection: $dataDisplayMode) {
+                                        Text("Simplified").tag("simplified")
+                                        Text("Full").tag("full")
+                                    }
+                                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                    .controlSize(.large)
+                                    .pickerStyle(SegmentedPickerStyle())
+                                }
+                                .padding(.vertical, 8)
+                                
                                 // Logout Button
                                 Button(action: {
                                     logout()

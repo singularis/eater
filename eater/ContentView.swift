@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var showRecommendation = false
     @State private var recommendationText = ""
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
+    @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
     
     // New loading states
     @State private var isLoadingData = false
@@ -56,15 +57,26 @@ struct ContentView: View {
     @State private var todaySportCalories = 0
     @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate: String = ""
     
+    // Macros (full mode)
+    @State private var proteins: Double = 0
+    @State private var fats: Double = 0
+    @State private var carbs: Double = 0
+    @State private var sugar: Double = 0
+    private var hasMacrosData: Bool { (proteins + fats + carbs + sugar) > 0 }
+    
     var body: some View {
         ZStack {
             Color.black
                 .edgesIgnoringSafeArea(.all)
 
-            VStack(spacing: 3) {
+            VStack(spacing: 2) {
                 topBarView
                 statsButtonsView
                     .frame(height: 60)
+                // Macros line (only in Full mode and when we have data)
+                if dataDisplayMode == "full" && hasMacrosData {
+                    macrosLineView
+                }
 
                 ProductListView(
                     products: products, 
@@ -79,7 +91,7 @@ struct ContentView: View {
                         self.returnToToday()
                     }
                 )
-                .padding(.top, 3)
+                .padding(.top, 0)
 
                 cameraButtonView
                     .padding(.top, 10)
@@ -88,6 +100,7 @@ struct ContentView: View {
                 loadLimitsFromUserDefaults()
                 loadTodaySportCalories()
                 fetchDataWithLoading()
+                refreshMacrosForCurrentView()
                 setupDailyRefreshTimer()
                 if !hasSeenOnboarding {
                     showOnboarding = true
@@ -384,6 +397,33 @@ struct ContentView: View {
         }
     }
     
+    private var macrosLineView: some View {
+        let text = formattedMacrosLine()
+        return HStack {
+            Spacer(minLength: 0)
+            Text(text)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .minimumScaleFactor(0.85)
+                .foregroundColor(.white)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.gray.opacity(0.8))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+        .padding(.horizontal, -6)
+        .padding(.top, 6)
+    }
+    
+    private func formattedMacrosLine() -> String {
+        func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
+        return "PRO " + fmt1(proteins) + "g • FAT " + fmt1(fats) + "g • CARB " + fmt1(carbs) + "g • SUG " + fmt1(sugar) + "g"
+    }
+    
     private var cameraButtonView: some View {
         CameraButtonView(
             isLoadingFoodPhoto: isLoadingFoodPhoto,
@@ -449,6 +489,7 @@ struct ContentView: View {
                     if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
                         self.recalculateCalorieLimitsFromHealthData()
                     }
+                    self.refreshMacrosForCurrentView()
                 }
             }
             return
@@ -484,6 +525,7 @@ struct ContentView: View {
                 if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
                     self.recalculateCalorieLimitsFromHealthData()
                 }
+                self.refreshMacrosForCurrentView()
             }
         }
     }
@@ -507,6 +549,7 @@ struct ContentView: View {
                 if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
                     self.recalculateCalorieLimitsFromHealthData()
                 }
+                self.refreshMacrosForCurrentView()
             }
         }
     }
@@ -629,6 +672,7 @@ struct ContentView: View {
                 if userDefaults.bool(forKey: "hasUserHealthData") && abs(previousWeight - weight) > 0.1 {
                     self.recalculateCalorieLimitsFromHealthData()
                 }
+                self.refreshMacrosForCurrentView()
             }
         }
     }
@@ -638,6 +682,7 @@ struct ContentView: View {
         currentViewingDate = ""
         currentViewingDateString = ""
         fetchDataWithLoading()
+        refreshMacrosForCurrentView()
     }
     
     func showFullScreenPhoto(image: UIImage?, foodName: String) {
@@ -870,6 +915,42 @@ struct ContentView: View {
         }
     }
 
+    private func refreshMacrosForCurrentView() {
+        if isViewingCustomDate, !currentViewingDateString.isEmpty {
+            GRPCService().fetchStatisticsData(date: currentViewingDateString) { dailyStats in
+                DispatchQueue.main.async {
+                    if let stats = dailyStats {
+                        self.proteins = stats.proteins
+                        self.fats = stats.fats
+                        self.carbs = stats.carbohydrates
+                        self.sugar = stats.sugar
+                    } else {
+                        self.proteins = 0
+                        self.fats = 0
+                        self.carbs = 0
+                        self.sugar = 0
+                    }
+                }
+            }
+        } else {
+            GRPCService().fetchTodayStatistics { dailyStats in
+                DispatchQueue.main.async {
+                    if let stats = dailyStats {
+                        self.proteins = stats.proteins
+                        self.fats = stats.fats
+                        self.carbs = stats.carbohydrates
+                        self.sugar = stats.sugar
+                    } else {
+                        self.proteins = 0
+                        self.fats = 0
+                        self.carbs = 0
+                        self.sugar = 0
+                    }
+                }
+            }
+        }
+    }
+    
         // MARK: - Daily Refresh Methods
     
     private func setupDailyRefreshTimer() {

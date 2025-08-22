@@ -13,6 +13,7 @@ struct OnboardingView: View {
     @State private var showingSkipConfirmation = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
     @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(forKey: "notificationsEnabled")
+    @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
     
     // Health data collection state
     @State private var height: String = ""
@@ -92,6 +93,12 @@ struct OnboardingView: View {
             icon: "bell.badge.fill"
         ),
         OnboardingStep(
+            title: "Choose Your Data Mode 📈",
+            description: "Pick how much detail you want to see. You can change this later in your profile.",
+            anchor: "data_mode",
+            icon: "slider.horizontal.3"
+        ),
+        OnboardingStep(
             title: "You're All Set! 🎉",
             description: "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed.",
             anchor: "complete",
@@ -156,6 +163,8 @@ struct OnboardingView: View {
                     healthResultsView
                 } else if steps[currentStep].anchor == "notifications_setup" {
                     notificationsSetupView
+                } else if steps[currentStep].anchor == "data_mode" {
+                    dataModeView
                 } else {
                     defaultStepView
                 }
@@ -298,6 +307,43 @@ struct OnboardingView: View {
                 }
             }
             .padding(.horizontal, 30)
+        }
+    }
+
+    private var dataModeView: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 60))
+                .foregroundColor(.white)
+                .symbolEffect(.bounce, value: currentStep)
+
+            VStack(spacing: 12) {
+                Text("Choose Your Data Mode 📈")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Text("Pick how much detail you want to see. You can change this later in your profile.")
+                    .font(.body)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white)
+                    .opacity(0.9)
+                    .padding(.horizontal, 20)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+
+                Picker("Mode", selection: $dataDisplayMode) {
+                    Text("Simplified").font(.system(size: 22, weight: .semibold, design: .rounded)).tag("simplified")
+                    Text("Full").font(.system(size: 22, weight: .semibold, design: .rounded)).tag("full")
+                }
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .controlSize(.large)
+                .pickerStyle(SegmentedPickerStyle())
+                .background(Color.white.opacity(0.15))
+                .cornerRadius(10)
+            }
         }
     }
     
