@@ -231,6 +231,24 @@ struct UserProfileView: View {
                                 }
                                 .padding(.vertical, 8)
                                 
+                                // Tutorial Button
+                                Button(action: {
+                                    showOnboarding = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "book.fill")
+                                        Text("Tutorial")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.orange)
+                                    .cornerRadius(8)
+                                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                                }
+
                                 // Logout Button
                                 Button(action: {
                                     logout()
