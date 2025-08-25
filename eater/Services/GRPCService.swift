@@ -671,4 +671,65 @@ class GRPCService {
             completion(false)
         }
     }
+
+    // MARK: - Alcohol
+
+    func fetchAlcoholLatest(completion: @escaping (Eater_GetAlcoholLatestResponse?) -> Void) {
+        guard var request = createRequest(endpoint: "alcohol_latest", httpMethod: "GET") else {
+            completion(nil)
+            return
+        }
+        request.addValue("application/grpc+proto", forHTTPHeaderField: "Accept")
+
+        sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+            if let _ = error {
+                completion(nil)
+                return
+            }
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            do {
+                let resp = try Eater_GetAlcoholLatestResponse(serializedBytes: data)
+                completion(resp)
+            } catch {
+                completion(nil)
+            }
+        }
+    }
+
+    func fetchAlcoholRange(startDateDDMMYYYY: String, endDateDDMMYYYY: String, completion: @escaping (Eater_GetAlcoholRangeResponse?) -> Void) {
+        var req = Eater_GetAlcoholRangeRequest()
+        req.startDate = startDateDDMMYYYY
+        req.endDate = endDateDDMMYYYY
+        do {
+            let body = try req.serializedData()
+            guard var request = createRequest(endpoint: "alcohol_range", httpMethod: "POST", body: body) else {
+                completion(nil)
+                return
+            }
+            request.addValue("application/grpc+proto", forHTTPHeaderField: "Content-Type")
+            request.addValue("application/grpc+proto", forHTTPHeaderField: "Accept")
+
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let _ = error {
+                    completion(nil)
+                    return
+                }
+                guard let data = data else {
+                    completion(nil)
+                    return
+                }
+                do {
+                    let resp = try Eater_GetAlcoholRangeResponse(serializedBytes: data)
+                    completion(resp)
+                } catch {
+                    completion(nil)
+                }
+            }
+        } catch {
+            completion(nil)
+        }
+    }
 }

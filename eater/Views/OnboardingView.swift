@@ -51,6 +51,12 @@ struct OnboardingView: View {
             icon: "chart.line.uptrend.xyaxis"
         ),
         OnboardingStep(
+            title: "Alcohol Tracking 🍷",
+            description: "See your alcohol history on a calendar. Dots mark days you drank (bigger dot = more drinks). The top wineglass changes color by recency: red (today/last week), yellow (last month), green (older). Tap it to open the calendar.",
+            anchor: "alcohol",
+            icon: "wineglass.fill"
+        ),
+        OnboardingStep(
             title: "Share Meals with Friends 🤝",
             description: "Add friends and share your dishes right from the list. Pick how much they ate (25%, 50%, 75% or custom) and we’ll handle the rest.",
             anchor: "share",

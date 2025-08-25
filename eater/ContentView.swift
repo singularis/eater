@@ -29,6 +29,10 @@ struct ContentView: View {
     @State private var currentViewingDateString = "" // Original format dd-MM-yyyy
     @State private var showRecommendation = false
     @State private var recommendationText = ""
+    // Alcohol states
+    @State private var showAlcoholCalendar = false
+    @State private var alcoholIconColor: Color = .green
+    @State private var lastAlcoholEventDate: Date? = nil
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
     @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
     
@@ -105,6 +109,7 @@ struct ContentView: View {
                 if !hasSeenOnboarding {
                     showOnboarding = true
                 }
+                fetchAlcoholStatus()
             }
             .onDisappear {
                 stopDailyRefreshTimer()
@@ -173,7 +178,10 @@ struct ContentView: View {
             dateDisplayView
             
             HStack {
-                profileButton
+                HStack(spacing: 24) {
+                    profileButton
+                    alcoholButton
+                }
                 Spacer()
                 HStack(spacing: 24) {
                     healthInfoButton
@@ -197,6 +205,38 @@ struct ContentView: View {
             .background(Color.gray.opacity(0.3))
             .clipShape(Circle())
             .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
+        }
+    }
+    
+    private var alcoholButton: some View {
+        Button(action: {
+            showAlcoholCalendar = true
+        }) {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [alcoholIconColor.opacity(0.9), alcoholIconColor.opacity(0.3)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                    .shadow(color: alcoholIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
+
+                Image(systemName: "wineglass")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(alcoholIconColor)
+            }
+            .frame(width: 36, height: 36)
+            .contentShape(Circle())
+        }
+        .sheet(isPresented: $showAlcoholCalendar) {
+            AlcoholCalendarView(isPresented: $showAlcoholCalendar)
         }
     }
     
@@ -244,12 +284,28 @@ struct ContentView: View {
         Button(action: {
             showHealthDisclaimer = true
         }) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 24))
-                .foregroundColor(.blue)
-                .background(Color.white.opacity(0.9))
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.blue.opacity(0.9), Color.blue.opacity(0.3)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                    .shadow(color: Color.blue.opacity(0.4), radius: 6, x: 0, y: 3)
+
+                Image(systemName: "info.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color.blue)
+            }
+            .frame(width: 36, height: 36)
+            .contentShape(Circle())
         }
     }
     
@@ -258,12 +314,28 @@ struct ContentView: View {
             sportCaloriesInput = ""
             showSportCaloriesAlert = true
         }) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 24))
-                .foregroundColor(.orange)
-                .background(Color.white.opacity(0.9))
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.orange.opacity(0.9), Color.orange.opacity(0.3)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                    .shadow(color: Color.orange.opacity(0.4), radius: 6, x: 0, y: 3)
+
+                Image(systemName: "figure.run")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color.orange)
+            }
+            .frame(width: 36, height: 36)
+            .contentShape(Circle())
         }
         .alert("Sport Calories Bonus", isPresented: $showSportCaloriesAlert) {
             TextField("Calories burned (e.g., 300)", text: $sportCaloriesInput)
@@ -948,6 +1020,73 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+    }
+    
+    // MARK: - Alcohol Helpers
+    private func fetchAlcoholStatus() {
+        GRPCService().fetchAlcoholLatest { resp in
+            DispatchQueue.main.async {
+                updateAlcoholIconColor(fromLatest: resp)
+            }
+        }
+    }
+    
+    private func updateAlcoholIconColor(fromLatest resp: Eater_GetAlcoholLatestResponse?) {
+        guard let resp = resp else {
+            alcoholIconColor = .green
+            return
+        }
+        // If any drink today, set lastAlcoholEventDate to today
+        if resp.todaySummary.totalDrinks > 0 {
+            lastAlcoholEventDate = Date()
+            alcoholIconColor = .red
+            return
+        }
+        // Otherwise, try to infer recentness via range of last 30 days
+        let cal = Calendar.current
+        let end = Date()
+        guard let start = cal.date(byAdding: .day, value: -30, to: end) else {
+            alcoholIconColor = .green
+            return
+        }
+        let fmt = DateFormatter()
+        fmt.dateFormat = "dd-MM-yyyy"
+        let startStr = fmt.string(from: start)
+        let endStr = fmt.string(from: end)
+        GRPCService().fetchAlcoholRange(startDateDDMMYYYY: startStr, endDateDDMMYYYY: endStr) { rangeResp in
+            DispatchQueue.main.async {
+                if let rangeResp = rangeResp, let last = mostRecentAlcoholDate(events: rangeResp.events) {
+                    lastAlcoholEventDate = last
+                    alcoholIconColor = colorForLastAlcoholDate(last)
+                } else {
+                    lastAlcoholEventDate = nil
+                    alcoholIconColor = .green
+                }
+            }
+        }
+    }
+    
+    private func mostRecentAlcoholDate(events: [Eater_AlcoholEvent]) -> Date? {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        var latest: Date? = nil
+        for e in events {
+            if let d = fmt.date(from: e.date) {
+                if latest == nil || d > latest! { latest = d }
+            }
+        }
+        return latest
+    }
+    
+    private func colorForLastAlcoholDate(_ last: Date) -> Color {
+        let days = Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 999
+        if days <= 7 {
+            return .red
+        } else if days <= 30 {
+            return Color.yellow
+        } else {
+            return .green
         }
     }
     
