@@ -16,6 +16,7 @@ struct OnboardingView: View {
     @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
     @EnvironmentObject var languageService: LanguageService
     @State private var selectedLanguageDisplay: String = ""
+    @State private var selectedLanguageCode: String = ""
     
     // Health data collection state
     @State private var height: String = ""
@@ -58,62 +59,62 @@ struct OnboardingView: View {
             icon: "globe"
         ),
         OnboardingStep(
-            title: "Welcome to Eateria! 🍎",
-            description: "Your smart food companion that helps you track calories, monitor weight, and make healthier choices. Let's take a quick tour!",
+            title: loc("onboarding.welcome.title", "Welcome to Eateria! 🍎"),
+            description: loc("onboarding.welcome.desc", "Your smart food companion that helps you track calories, monitor weight, and make healthier choices. Let's take a quick tour!"),
             anchor: "welcome",
             icon: "hand.wave.fill"
         ),
         OnboardingStep(
-            title: "Smart Food Recognition 📸",
-            description: "Simply take a photo of your food and our AI will automatically identify it and log the calories. No more manual searching!",
+            title: loc("onboarding.recognition.title", "Smart Food Recognition 📸"),
+            description: loc("onboarding.recognition.desc", "Simply take a photo of your food and our AI will automatically identify it and log the calories. No more manual searching!"),
             anchor: "addfood",
             icon: "camera.fill"
         ),
         OnboardingStep(
-            title: "Track Your Progress 📊",
-            description: "Monitor your daily calories with our color-coded system and track your weight by photographing your scale. Everything is automated!",
+            title: loc("onboarding.tracking.title", "Track Your Progress 📊"),
+            description: loc("onboarding.tracking.desc", "Monitor your daily calories with our color-coded system and track your weight by photographing your scale. Everything is automated!"),
             anchor: "tracking",
             icon: "chart.line.uptrend.xyaxis"
         ),
         OnboardingStep(
-            title: "Alcohol Tracking 🍷",
-            description: "See your alcohol history on a calendar. Dots mark days you drank (bigger dot = more drinks). The top wineglass changes color by recency: red (today/last week), yellow (last month), green (older). Tap it to open the calendar.",
+            title: loc("onboarding.alcohol.title", "Alcohol Tracking 🍷"),
+            description: loc("onboarding.alcohol.desc", "See your alcohol history on a calendar. Dots mark days you drank (bigger dot = more drinks). The top wineglass changes color by recency: red (today/last week), yellow (last month), green (older). Tap it to open the calendar."),
             anchor: "alcohol",
             icon: "wineglass.fill"
         ),
         OnboardingStep(
-            title: "Share Meals with Friends 🤝",
-            description: "Add friends and share your dishes right from the list. Pick how much they ate (25%, 50%, 75% or custom) and we’ll handle the rest.",
+            title: loc("onboarding.friends.title", "Share Meals with Friends 🤝"),
+            description: loc("onboarding.friends.desc", "Add friends and share your dishes right from the list. Pick how much they ate (25%, 50%, 75% or custom) and we'll handle the rest."),
             anchor: "share",
             icon: "person.2.fill"
         ),
         OnboardingStep(
-            title: "Get Personalized Insights 💡",
-            description: "View your trends, manage your profile, and access health information - all designed to help you reach your wellness goals.",
+            title: loc("onboarding.insights.title", "Get Personalized Insights 💡"),
+            description: loc("onboarding.insights.desc", "View your trends, manage your profile, and access health information - all designed to help you reach your wellness goals."),
             anchor: "insights",
             icon: "lightbulb.fill"
         ),
         OnboardingStep(
-            title: "Personalized Health Setup 📋",
-            description: "For the best experience, we can calculate personalized calorie recommendations based on your health data. This is completely optional!",
+            title: loc("onboarding.health_setup.title", "Personalized Health Setup 📋"),
+            description: loc("onboarding.health_setup.desc", "For the best experience, we can calculate personalized calorie recommendations based on your health data. This is completely optional!"),
             anchor: "health_setup",
             icon: "person.crop.circle.fill"
         ),
         OnboardingStep(
-            title: "Your Health Data 📝",
-            description: "Please provide your basic health information to get personalized recommendations.",
+            title: loc("onboarding.health_form.title", "Your Health Data 📝"),
+            description: loc("onboarding.health_form.desc", "Please provide your basic health information to get personalized recommendations."),
             anchor: "health_form",
             icon: "heart.fill"
         ),
         OnboardingStep(
-            title: "Your Personalized Plan 🎯",
-            description: "Based on your data, here are your personalized recommendations for optimal health.",
+            title: loc("onboarding.health_results.title", "Your Personalized Plan 🎯"),
+            description: loc("onboarding.health_results.desc", "Based on your data, here are your personalized recommendations for optimal health."),
             anchor: "health_results",
             icon: "target"
         ),
         OnboardingStep(
-            title: "Important Health Disclaimer ⚠️",
-            description: "This app is for informational purposes only and not a substitute for professional medical advice. Always consult healthcare providers for personalized dietary guidance and medical decisions.",
+            title: loc("onboarding.disclaimer.title", "Important Health Disclaimer ⚠️"),
+            description: loc("onboarding.disclaimer.desc", "This app is for informational purposes only and not a substitute for professional medical advice. Always consult healthcare providers for personalized dietary guidance and medical decisions."),
             anchor: "disclaimer",
             icon: "exclamationmark.triangle.fill"
         ),
@@ -130,8 +131,8 @@ struct OnboardingView: View {
             icon: "slider.horizontal.3"
         ),
         OnboardingStep(
-            title: "You're All Set! 🎉",
-            description: "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed.",
+            title: loc("onboarding.complete.title", "You're All Set! 🎉"),
+            description: loc("onboarding.complete.desc", "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed."),
             anchor: "complete",
             icon: "checkmark.circle.fill"
         )
@@ -207,35 +208,21 @@ struct OnboardingView: View {
                     .padding(.bottom, 50)
             }
         }
-        .id(languageService.currentCode)
         .onAppear {
-            // Preselect device language if available
-            if selectedLanguageDisplay.isEmpty {
-                let list = languageService.loadAvailableLanguages()
-                if let deviceCode = Locale.preferredLanguages.first.flatMap({ Locale(identifier: $0).language.languageCode?.identifier }) {
-                    let normalized = LanguageService.normalize(code: deviceCode)
-                    // Try to find matching display name
-                    let preferred = Locale(identifier: "en")
-                    let deviceName = preferred.localizedString(forLanguageCode: normalized)?.capitalized
-                    if let dn = deviceName, let match = list.first(where: { $0.caseInsensitiveCompare(dn) == .orderedSame }) {
-                        selectedLanguageDisplay = match
-                    }
-                }
-                if selectedLanguageDisplay.isEmpty {
-                    selectedLanguageDisplay = languageService.currentDisplayName
-                }
-            }
+            // Preselect current app language
+            selectedLanguageCode = languageService.currentCode
+            selectedLanguageDisplay = languageService.nativeName(for: languageService.currentCode)
         }
-        .alert("Skip Onboarding?", isPresented: $showingSkipConfirmation) {
-            Button("Continue Tutorial", role: .cancel) { }
-            Button("Skip") {
+        .alert(loc("onboarding.skip.title", "Skip Onboarding?"), isPresented: $showingSkipConfirmation) {
+            Button(loc("onboarding.skip.continue", "Continue Tutorial"), role: .cancel) { }
+            Button(loc("onboarding.skip.skip", "Skip")) {
                 // Fallback to English if skipping
                 LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
                 withAnimation(.easeInOut(duration: 0.5)) {
                     isPresented = false
                 }
             }
-            Button("Skip & Don't Show Again") {
+            Button(loc("onboarding.skip.dontshow", "Skip & Don't Show Again")) {
                 hasSeenOnboarding = true
                 // Fallback to English
                 LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
@@ -244,12 +231,12 @@ struct OnboardingView: View {
                 }
             }
         } message: {
-            Text("You can always access this tutorial later from your profile settings.")
+            Text(loc("onboarding.skip.message", "You can always access this tutorial later from your profile settings."))
         }
-        .alert("Invalid Health Data", isPresented: $showingHealthDataAlert) {
-            Button("OK", role: .cancel) { }
+        .alert(loc("health.invalid.title", "Invalid Health Data"), isPresented: $showingHealthDataAlert) {
+            Button(loc("common.ok", "OK"), role: .cancel) { }
         } message: {
-            Text("Please provide valid values for height (cm), weight (kg), and age (years).")
+            Text(loc("health.invalid.msg", "Please provide valid values for height (cm), weight (kg), and age (years)."))
         }
     }
     private var languageSelectionView: some View {
@@ -272,7 +259,7 @@ struct OnboardingView: View {
                     ForEach(items, id: \.code) { item in
                         Button(action: {
                             selectedLanguageDisplay = item.nativeName
-                            languageService.setLanguage(code: item.code, displayName: item.nativeName) { _ in }
+                            selectedLanguageCode = item.code
                         }) {
                             HStack {
                                 Text(item.flag)
@@ -295,36 +282,67 @@ struct OnboardingView: View {
             }
             .frame(maxHeight: 350)
 
-            HStack(spacing: 12) {
-                Button(action: {
-                    // Skip -> default to English
-                    languageService.setLanguage(code: "en", syncWithBackend: true) { _ in }
-                    withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
-                }) {
-                    Text(loc("onboarding.skip", "Skip"))
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(10)
-                }
 
-                Button(action: {
-                    let lc = languageService.code(for: selectedLanguageDisplay)
-                    languageService.setLanguage(code: lc, syncWithBackend: true) { _ in }
-                    withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
-                }) {
-                    Text(loc("onboarding.continue", "Continue"))
-                        .font(.headline)
-                        .foregroundColor(.blue)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white)
-                        .cornerRadius(10)
-                }
-            }
-            .padding(.horizontal, 20)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func localizedTitle(for anchor: String) -> String {
+        switch anchor {
+        case "welcome":
+            return loc("onboarding.welcome.title", "Welcome to Eateria! 🍎")
+        case "addfood":
+            return loc("onboarding.recognition.title", "Smart Food Recognition 📸")
+        case "tracking":
+            return loc("onboarding.tracking.title", "Track Your Progress 📊")
+        case "alcohol":
+            return loc("onboarding.alcohol.title", "Alcohol Tracking 🍷")
+        case "share":
+            return loc("onboarding.friends.title", "Share Meals with Friends 🤝")
+        case "insights":
+            return loc("onboarding.insights.title", "Get Personalized Insights 💡")
+        case "health_setup":
+            return loc("onboarding.health_setup.title", "Personalized Health Setup 📋")
+        case "health_form":
+            return loc("onboarding.health_form.title", "Your Health Data 📝")
+        case "health_results":
+            return loc("onboarding.health_results.title", "Your Personalized Plan 🎯")
+        case "disclaimer":
+            return loc("onboarding.disclaimer.title", "Important Health Disclaimer ⚠️")
+        case "complete":
+            return loc("onboarding.complete.title", "You're All Set! 🎉")
+        default:
+            return steps[currentStep].title
+        }
+    }
+    
+    private func localizedDescription(for anchor: String) -> String {
+        switch anchor {
+        case "welcome":
+            return loc("onboarding.welcome.desc", "Your smart food companion that helps you track calories, monitor weight, and make healthier choices. Let's take a quick tour!")
+        case "addfood":
+            return loc("onboarding.recognition.desc", "Simply take a photo of your food and our AI will automatically identify it and log the calories. No more manual searching!")
+        case "tracking":
+            return loc("onboarding.tracking.desc", "Monitor your daily calories with our color-coded system and track your weight by photographing your scale. Everything is automated!")
+        case "alcohol":
+            return loc("onboarding.alcohol.desc", "See your alcohol history on a calendar. Dots mark days you drank (bigger dot = more drinks). The top wineglass changes color by recency: red (today/last week), yellow (last month), green (older). Tap it to open the calendar.")
+        case "share":
+            return loc("onboarding.friends.desc", "Add friends and share your dishes right from the list. Pick how much they ate (25%, 50%, 75% or custom) and we'll handle the rest.")
+        case "insights":
+            return loc("onboarding.insights.desc", "View your trends, manage your profile, and access health information - all designed to help you reach your wellness goals.")
+        case "health_setup":
+            return loc("onboarding.health_setup.desc", "For the best experience, we can calculate personalized calorie recommendations based on your health data. This is completely optional!")
+        case "health_form":
+            return loc("onboarding.health_form.desc", "Please provide your basic health information to get personalized recommendations.")
+        case "health_results":
+            return loc("onboarding.health_results.desc", "Based on your data, here are your personalized recommendations for optimal health.")
+        case "disclaimer":
+            return loc("onboarding.disclaimer.desc", "This app is for informational purposes only and not a substitute for professional medical advice. Always consult healthcare providers for personalized dietary guidance and medical decisions.")
+        case "complete":
+            return loc("onboarding.complete.desc", "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed.")
+        default:
+            return steps[currentStep].description
         }
     }
     
@@ -339,7 +357,7 @@ struct OnboardingView: View {
                 .symbolEffect(.bounce, value: currentStep)
             
             VStack(spacing: 16) {
-                Text(steps[currentStep].title)
+                Text(localizedTitle(for: steps[currentStep].anchor))
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(steps[currentStep].anchor == "disclaimer" ? .yellow : .white)
@@ -347,7 +365,7 @@ struct OnboardingView: View {
                 
                 // Special styling for disclaimer text
                 if steps[currentStep].anchor == "disclaimer" {
-                    Text(steps[currentStep].description)
+                    Text(localizedDescription(for: steps[currentStep].anchor))
                         .font(.body)
                         .fontWeight(.medium)
                         .multilineTextAlignment(.center)
@@ -363,7 +381,7 @@ struct OnboardingView: View {
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    Text(steps[currentStep].description)
+                    Text(localizedDescription(for: steps[currentStep].anchor))
                         .font(.body)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.white)
@@ -494,7 +512,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 30)
             
             VStack(spacing: 16) {
-                Button("Yes, Let's Personalize") {
+                Button(loc("onboarding.personalize", "Yes, Let's Personalize")) {
                     agreedToProvideData = true
                     withAnimation(.easeInOut(duration: 0.3)) {
                         currentStep += 1
@@ -507,7 +525,7 @@ struct OnboardingView: View {
                 .background(Color.white)
                 .cornerRadius(12)
                 
-                Button("Skip This Step") {
+                Button(loc("onboarding.skip_step", "Skip This Step")) {
                     agreedToProvideData = false
                     // Skip to disclaimer (skip health form and results)
                     withAnimation(.easeInOut(duration: 0.3)) {
@@ -540,7 +558,7 @@ struct OnboardingView: View {
             
             VStack(spacing: 16) {
                 HStack {
-                    Text("Height (cm):")
+                    Text(loc("health.height", "Height (cm):"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     TextField("175", text: $height)
@@ -549,7 +567,7 @@ struct OnboardingView: View {
                 }
                 
                 HStack {
-                    Text("Weight (kg):")
+                    Text(loc("health.weight", "Weight (kg):"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     TextField("70", text: $weight)
@@ -558,7 +576,7 @@ struct OnboardingView: View {
                 }
                 
                 HStack {
-                    Text("Age (years):")
+                    Text(loc("health.age", "Age (years):"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     TextField("25", text: $age)
@@ -567,18 +585,18 @@ struct OnboardingView: View {
                 }
                 
                 HStack {
-                    Text("Gender:")
+                    Text(loc("health.gender", "Gender:"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     Picker("Gender", selection: $isMale) {
-                        Text("Male").tag(true)
-                        Text("Female").tag(false)
+                        Text(loc("health.gender.male", "Male")).tag(true)
+                        Text(loc("health.gender.female", "Female")).tag(false)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Activity Level:")
+                    Text(loc("health.activity", "Activity Level:"))
                         .foregroundColor(.white)
                     Picker("Activity Level", selection: $activityLevel) {
                         ForEach(activityLevels, id: \.self) { level in
@@ -609,10 +627,10 @@ struct OnboardingView: View {
             
             VStack(spacing: 16) {
                 VStack(spacing: 8) {
-                    Text("🎯 Optimal Weight")
+                    Text(loc("health.optimal_weight", "🎯 Optimal Weight"))
                         .font(.headline)
                         .foregroundColor(.green)
-                    Text("\(optimalWeight, specifier: "%.1f") kg")
+                    Text("\(optimalWeight, specifier: "%.1f") \(loc("units.kg", "kg"))")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
@@ -622,10 +640,10 @@ struct OnboardingView: View {
                 .cornerRadius(12)
                 
                 VStack(spacing: 8) {
-                    Text("🔥 Daily Calorie Target")
+                    Text(loc("health.daily_calorie", "🔥 Daily Calorie Target"))
                         .font(.headline)
                         .foregroundColor(.orange)
-                    Text("\(recommendedCalories) kcal")
+                    Text("\(recommendedCalories) \(loc("units.kcal", "kcal"))")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
@@ -635,7 +653,7 @@ struct OnboardingView: View {
                 .cornerRadius(12)
                 
                 VStack(spacing: 8) {
-                    Text("⏰ Estimated Timeline")
+                    Text(loc("health.estimated_timeline", "⏰ Estimated Timeline"))
                         .font(.headline)
                         .foregroundColor(.blue)
                     Text(timeToOptimalWeight)
@@ -664,7 +682,7 @@ struct OnboardingView: View {
                             isPresented = false
                         }
                     }) {
-                        Text("Get Started")
+                        Text(loc("onboarding.getstarted", "Get Started"))
                             .font(.headline)
                             .foregroundColor(.blue)
                             .frame(maxWidth: .infinity)
@@ -679,7 +697,7 @@ struct OnboardingView: View {
                             isPresented = false
                         }
                     }) {
-                        Text("Don't show again")
+                        Text(loc("onboarding.dontshowagain", "Don't show again"))
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(.yellow)
@@ -700,6 +718,47 @@ struct OnboardingView: View {
             } else if steps[currentStep].anchor == "notifications_setup" {
                 // Notifications setup screen - buttons handled in view
                 EmptyView()
+            } else if steps[currentStep].anchor == "language" {
+                // Language selection screen - uses standard navigation
+                HStack(spacing: 20) {
+                    if currentStep > 0 {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                currentStep -= 1
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "chevron.left")
+                                Text(loc("common.back", "Previous"))
+                            }
+                            .foregroundColor(.white)
+                            .opacity(0.8)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        // Apply selected language before proceeding
+                        let lc = selectedLanguageCode.isEmpty ? languageService.currentCode : selectedLanguageCode
+                        languageService.setLanguage(code: lc, syncWithBackend: true) { _ in }
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            currentStep += 1
+                        }
+                    }) {
+                        HStack {
+                            Text(loc("onboarding.next", "Next"))
+                            Image(systemName: "chevron.right")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.white)
+                        .cornerRadius(25)
+                    }
+                }
+                .padding(.horizontal, 30)
             } else {
                 // Navigation buttons for other screens
                 HStack(spacing: 20) {
@@ -711,7 +770,7 @@ struct OnboardingView: View {
                         }) {
                             HStack {
                                 Image(systemName: "chevron.left")
-                                Text("Previous")
+                                Text(loc("common.back", "Previous"))
                             }
                             .foregroundColor(.white)
                             .opacity(0.8)
@@ -760,11 +819,11 @@ struct OnboardingView: View {
     private func getNextButtonText() -> String {
         switch steps[currentStep].anchor {
         case "disclaimer":
-            return "I Understand"
+            return loc("onboarding.understand", "I Understand")
         case "health_form":
-            return "Calculate My Plan"
+            return loc("health.calc_plan", "Calculate My Plan")
         default:
-            return "Next"
+            return loc("onboarding.next", "Next")
         }
     }
     
@@ -839,17 +898,17 @@ struct OnboardingView: View {
         if abs(weightDifference) < 2 {
             // Maintain current weight
             calorieAdjustment = 0
-            timeToOptimalWeight = "You are at optimal weight!"
+            timeToOptimalWeight = loc("health.goal.maintain", "You are at optimal weight!")
         } else if weightDifference > 0 {
             // Lose weight - safe deficit of 500 calories per day
             calorieAdjustment = -500
             let weeksToGoal = Int(ceil(abs(weightDifference) * 2)) // ~0.5kg per week
-            timeToOptimalWeight = "\(weeksToGoal) weeks to reach optimal weight"
+            timeToOptimalWeight = String(format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeksToGoal)
         } else {
             // Gain weight - safe surplus of 300 calories per day
             calorieAdjustment = 300
             let weeksToGoal = Int(ceil(abs(weightDifference) * 4)) // ~0.25kg per week
-            timeToOptimalWeight = "\(weeksToGoal) weeks to reach optimal weight"
+            timeToOptimalWeight = String(format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeksToGoal)
         }
         
         recommendedCalories = Int(tdee + calorieAdjustment)

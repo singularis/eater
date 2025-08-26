@@ -302,17 +302,17 @@ struct HealthSettingsView: View {
         if abs(weightDifference) < 2 {
             // Maintain current weight
             calorieAdjustment = 0
-            timeToOptimalWeight = "You are at optimal weight!"
+            timeToOptimalWeight = loc("health.goal.maintain", "You are at optimal weight!")
         } else if weightDifference > 0 {
             // Lose weight - safe deficit of 500 calories per day
             calorieAdjustment = -500
             let weeksToGoal = Int(ceil(abs(weightDifference) * 2)) // ~0.5kg per week
-            timeToOptimalWeight = "\(weeksToGoal) weeks to reach optimal weight"
+            timeToOptimalWeight = String(format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeksToGoal)
         } else {
             // Gain weight - safe surplus of 300 calories per day
             calorieAdjustment = 300
             let weeksToGoal = Int(ceil(abs(weightDifference) * 4)) // ~0.25kg per week
-            timeToOptimalWeight = "\(weeksToGoal) weeks to reach optimal weight"
+            timeToOptimalWeight = String(format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeksToGoal)
         }
         
         recommendedCalories = Int(tdee + calorieAdjustment)

@@ -15,11 +15,18 @@ final class LanguageService: ObservableObject {
         // Load stored or detect device preferred language
         if let stored = defaults.string(forKey: languageKey), !stored.isEmpty {
             currentCode = stored
-            currentDisplayName = defaults.string(forKey: displayNameKey) ?? stored
+            // Prefer native name for consistent display across app restarts
+            let native = LanguageService.nativeNameStatic(for: stored)
+            currentDisplayName = native
+            defaults.set(native, forKey: displayNameKey)
+            defaults.synchronize()
         } else if let deviceCode = Locale.preferredLanguages.first.flatMap({ Locale(identifier: $0).language.languageCode?.identifier }) {
             let normalized = LanguageService.normalize(code: deviceCode)
             currentCode = normalized
-            currentDisplayName = Locale.current.localizedString(forLanguageCode: normalized) ?? normalized
+            currentDisplayName = LanguageService.nativeNameStatic(for: normalized)
+            defaults.set(normalized, forKey: languageKey)
+            defaults.set(currentDisplayName, forKey: displayNameKey)
+            defaults.synchronize()
         } else {
             currentCode = "en"
             currentDisplayName = "English"
@@ -75,12 +82,25 @@ final class LanguageService: ObservableObject {
         return norm.uppercased()
     }
 
+    // Static variant safe for use during initialization
+    static func nativeNameStatic(for code: String) -> String {
+        let norm = LanguageService.normalize(code: code)
+        if let name = Locale(identifier: norm).localizedString(forLanguageCode: norm) {
+            return name.capitalized
+        }
+        if let name = Locale.current.localizedString(forLanguageCode: norm) {
+            return name.capitalized
+        }
+        return norm.uppercased()
+    }
+
     func setLanguage(code: String, displayName: String? = nil, syncWithBackend: Bool = true, completion: ((Bool) -> Void)? = nil) {
         let normalized = LanguageService.normalize(code: code)
         DispatchQueue.main.async {
             self.objectWillChange.send()
             self.currentCode = normalized
-            self.currentDisplayName = displayName ?? (Locale.current.localizedString(forLanguageCode: normalized) ?? self.nativeName(for: normalized))
+            // Always use native name unless explicitly provided
+            self.currentDisplayName = displayName ?? self.nativeName(for: normalized)
             self.defaults.set(normalized, forKey: self.languageKey)
             self.defaults.set(self.currentDisplayName, forKey: self.displayNameKey)
             self.defaults.synchronize()
@@ -95,9 +115,9 @@ final class LanguageService: ObservableObject {
                 // Fallback to English
                 DispatchQueue.main.async {
                     self.currentCode = "en"
-                    self.currentDisplayName = "English"
+                    self.currentDisplayName = self.nativeName(for: "en")
                     self.defaults.set("en", forKey: self.languageKey)
-                    self.defaults.set("English", forKey: self.displayNameKey)
+                    self.defaults.set(self.currentDisplayName, forKey: self.displayNameKey)
                     self.defaults.synchronize()
                 }
             } else {
