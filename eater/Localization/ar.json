@@ -51,6 +51,11 @@
   "fs.hint": "انقر مرتين للإعادة تعيين • اقرص للتكبير • اسحب للتحريك",
   "fs.no_photo": "لا توجد صورة متاحة",
   "health.activity": "مستوى النشاط:",
+  "health.activity.sedentary": "مستقر",
+  "health.activity.lightly": "نشط قليلاً",
+  "health.activity.moderately": "نشط معتدل",
+  "health.activity.very": "نشط جداً",
+  "health.activity.extremely": "نشط للغاية",
   "health.age": "العمر (سنوات):",
   "health.calc_plan": "احسب خطتي",
   "health.daily_calorie": "🔥 الهدف اليومي للسعرات",

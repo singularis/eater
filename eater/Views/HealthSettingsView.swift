@@ -17,6 +17,23 @@ struct HealthSettingsView: View {
     
     let activityLevels = ["Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extremely Active"]
     
+    func localizedActivityLevel(_ level: String) -> String {
+        switch level {
+        case "Sedentary":
+            return loc("health.activity.sedentary", "Sedentary")
+        case "Lightly Active":
+            return loc("health.activity.lightly", "Lightly Active")
+        case "Moderately Active":
+            return loc("health.activity.moderately", "Moderately Active")
+        case "Very Active":
+            return loc("health.activity.very", "Very Active")
+        case "Extremely Active":
+            return loc("health.activity.extremely", "Extremely Active")
+        default:
+            return level
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -126,7 +143,7 @@ struct HealthSettingsView: View {
                         .foregroundColor(.white)
                     Picker(loc("health.activity", "Activity Level:"), selection: $activityLevel) {
                         ForEach(activityLevels, id: \.self) { level in
-                            Text(level).tag(level)
+                            Text(localizedActivityLevel(level)).tag(level)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
