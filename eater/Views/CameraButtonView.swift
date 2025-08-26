@@ -37,7 +37,7 @@ struct CameraButtonView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "photo.fill")
                             .font(.system(size: 18))
-                        Text("Upload")
+                        Text(loc("camera.upload", "Upload"))
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
@@ -65,7 +65,7 @@ struct CameraButtonView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 20))
-                        Text("Take Food Photo")
+                        Text(loc("camera.takefood", "Take Food Photo"))
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -101,15 +101,15 @@ struct CameraButtonView: View {
             
             return PhotoLibraryView(photoType: "default_prompt")
         }
-        .alert("Camera Unavailable", isPresented: $cameraUnavailableAlert) {
-            Button("OK") { }
+        .alert(loc("camera.unavailable.title", "Camera Unavailable"), isPresented: $cameraUnavailableAlert) {
+            Button(loc("common.ok", "OK")) { }
         } message: {
-            Text("Your device does not have a camera.")
+            Text(loc("camera.unavailable.msg", "Your device does not have a camera."))
         }
-        .alert("Photo Library Unavailable", isPresented: $photoLibraryUnavailableAlert) {
-            Button("OK") { }
+        .alert(loc("library.unavailable.title", "Photo Library Unavailable"), isPresented: $photoLibraryUnavailableAlert) {
+            Button(loc("common.ok", "OK")) { }
         } message: {
-            Text("Photo library is not available.")
+            Text(loc("library.unavailable.msg", "Photo library is not available."))
         }
     }
 }

@@ -109,7 +109,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     private func scheduleReminder(at date: Date, label: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Eateria Reminder"
+        content.title = loc("notif.title", "Eateria Reminder")
         content.body = makeReminderBody()
         content.sound = .default
 
@@ -121,7 +121,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     private func makeReminderBody() -> String {
         let prefix = "Reminder to snap your food to maintain healthy habits."
-        if let quote = FoodQuotes.all.randomElement() {
+        let quotes = FoodQuotesLocalized.quotes(for: LanguageService.shared.currentCode)
+        if let quote = quotes.randomElement() {
             return "\(prefix) \"\(quote)\""
         }
         return prefix

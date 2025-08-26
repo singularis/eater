@@ -52,7 +52,8 @@ struct ProductListView: View {
                         Text(product.name)
                             .font(.headline)
                         
-                        Text("\(product.calories) kcal • \(product.weight)g")
+                        let details = "\(product.calories) \(loc("units.kcal", "kcal")) • \(product.weight)\(loc("units.gram_suffix", "g"))"
+                        Text(details)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
@@ -81,7 +82,7 @@ struct ProductListView: View {
                     Button {
                         onDelete(product.time)
                     } label: {
-                        Text("Remove")
+                        Text(loc("common.remove", "Remove"))
                     }
                     .tint(.red)
                     .disabled(deletingProductTime == product.time)

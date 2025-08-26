@@ -8,13 +8,13 @@ struct RecommendationView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text("Health Recommendation")
+                    Text(loc("rec.title", "Health Recommendation"))
                         .font(.title)
                         .fontWeight(.bold)
                         .padding(.bottom, 10)
                     
                     Group {
-                        Text("Your Personalized Recommendation")
+                        Text(loc("rec.subtitle", "Your Personalized Recommendation"))
                             .font(.headline)
                             .fontWeight(.semibold)
                         
@@ -24,12 +24,12 @@ struct RecommendationView: View {
                     }
                     
                     Group {
-                        Text("Important Health Disclaimer")
+                        Text(loc("rec.disclaimer.title", "Important Health Disclaimer"))
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(.orange)
                         
-                        Text("⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.")
+                        Text(loc("rec.disclaimer.text", "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."))
                             .font(.body)
                             .padding()
                             .background(Color.orange.opacity(0.1))
@@ -37,31 +37,31 @@ struct RecommendationView: View {
                     }
                     
                     Group {
-                        Text("Data Sources")
+                        Text(loc("rec.sources", "Data Sources"))
                             .font(.headline)
                             .fontWeight(.semibold)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("• USDA FoodData Central")
-                            Text("• Dietary Guidelines for Americans")
-                            Text("• Evidence-based nutritional research")
+                            Text(loc("rec.src.usda", "• USDA FoodData Central"))
+                            Text(loc("rec.src.guidelines", "• Dietary Guidelines for Americans"))
+                            Text(loc("rec.src.research", "• Evidence-based nutritional research"))
                         }
                         .font(.body)
                         .foregroundColor(.secondary)
                     }
                     
-                    Text("Generated on: \(Date().formatted(date: .abbreviated, time: .shortened))")
+                    Text(loc("rec.generated_on", "Generated on:") + " " + Date().formatted(date: .abbreviated, time: .shortened))
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 20)
                 }
                 .padding()
             }
-            .navigationTitle("Health Recommendation")
+            .navigationTitle(loc("rec.title", "Health Recommendation"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(loc("common.done", "Done")) {
                         dismiss()
                     }
                 }

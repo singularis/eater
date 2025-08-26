@@ -14,6 +14,8 @@ struct OnboardingView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
     @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(forKey: "notificationsEnabled")
     @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
+    @EnvironmentObject var languageService: LanguageService
+    @State private var selectedLanguageDisplay: String = ""
     
     // Health data collection state
     @State private var height: String = ""
@@ -32,6 +34,12 @@ struct OnboardingView: View {
     let activityLevels = ["Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extremely Active"]
     
     let steps: [OnboardingStep] = [
+        OnboardingStep(
+            title: "Choose Language 🌐",
+            description: "Pick your preferred language. You can change it later in the tutorial.",
+            anchor: "language",
+            icon: "globe"
+        ),
         OnboardingStep(
             title: "Welcome to Eateria! 🍎",
             description: "Your smart food companion that helps you track calories, monitor weight, and make healthier choices. Let's take a quick tour!",
@@ -114,20 +122,18 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            // Don't show anything if user has already seen onboarding
-            if !hasSeenOnboarding {
-                // Gradient background
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 0) {
+            // Gradient background
+            LinearGradient(
+                gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 0) {
                 // Header with progress and skip
                 HStack {
-                    Button("Skip") {
+                    Button(loc("onboarding.skip", "Skip")) {
                         showingSkipConfirmation = true
                     }
                     .foregroundColor(.white)
@@ -161,7 +167,9 @@ struct OnboardingView: View {
                 Spacer()
                 
                 // Main content
-                if steps[currentStep].anchor == "health_setup" {
+                if steps[currentStep].anchor == "language" {
+                    languageSelectionView
+                } else if steps[currentStep].anchor == "health_setup" {
                     healthSetupView
                 } else if steps[currentStep].anchor == "health_form" {
                     healthFormView
@@ -180,24 +188,40 @@ struct OnboardingView: View {
                     // Navigation buttons
                     navigationButtonsView
                     .padding(.bottom, 50)
-                }
             }
         }
+        .id(languageService.currentCode)
         .onAppear {
-            // Automatically dismiss if user has already seen onboarding
-            if hasSeenOnboarding {
-                isPresented = false
+            // Preselect device language if available
+            if selectedLanguageDisplay.isEmpty {
+                let list = languageService.loadAvailableLanguages()
+                if let deviceCode = Locale.preferredLanguages.first.flatMap({ Locale(identifier: $0).language.languageCode?.identifier }) {
+                    let normalized = LanguageService.normalize(code: deviceCode)
+                    // Try to find matching display name
+                    let preferred = Locale(identifier: "en")
+                    let deviceName = preferred.localizedString(forLanguageCode: normalized)?.capitalized
+                    if let dn = deviceName, let match = list.first(where: { $0.caseInsensitiveCompare(dn) == .orderedSame }) {
+                        selectedLanguageDisplay = match
+                    }
+                }
+                if selectedLanguageDisplay.isEmpty {
+                    selectedLanguageDisplay = languageService.currentDisplayName
+                }
             }
         }
         .alert("Skip Onboarding?", isPresented: $showingSkipConfirmation) {
             Button("Continue Tutorial", role: .cancel) { }
             Button("Skip") {
+                // Fallback to English if skipping
+                LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
                 withAnimation(.easeInOut(duration: 0.5)) {
                     isPresented = false
                 }
             }
             Button("Skip & Don't Show Again") {
                 hasSeenOnboarding = true
+                // Fallback to English
+                LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
                 withAnimation(.easeInOut(duration: 0.5)) {
                     isPresented = false
                 }
@@ -209,6 +233,81 @@ struct OnboardingView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Please provide valid values for height (cm), weight (kg), and age (years).")
+        }
+    }
+    private var languageSelectionView: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "globe")
+                .font(.system(size: 60))
+                .foregroundColor(.white)
+                .symbolEffect(.bounce, value: currentStep)
+
+            Text(loc("onboarding.language.title", "Choose Language 🌐"))
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+
+            // Use discovered languages from Localization folder
+            let items = languageService.availableLanguagesDetailed()
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 8) {
+                    ForEach(items, id: \.code) { item in
+                        Button(action: {
+                            selectedLanguageDisplay = item.nativeName
+                            languageService.setLanguage(code: item.code, displayName: item.nativeName) { _ in }
+                        }) {
+                            HStack {
+                                Text(item.flag)
+                                Text(item.nativeName)
+                                    .fontWeight(item.nativeName == selectedLanguageDisplay ? .bold : .regular)
+                                Spacer()
+                                if item.nativeName == selectedLanguageDisplay {
+                                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 12)
+                            .background(item.nativeName == selectedLanguageDisplay ? Color.white.opacity(0.2) : Color.white.opacity(0.1))
+                            .cornerRadius(10)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+            .frame(maxHeight: 350)
+
+            HStack(spacing: 12) {
+                Button(action: {
+                    // Skip -> default to English
+                    languageService.setLanguage(code: "en", syncWithBackend: true) { _ in }
+                    withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
+                }) {
+                    Text(loc("onboarding.skip", "Skip"))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(10)
+                }
+
+                Button(action: {
+                    let lc = languageService.code(for: selectedLanguageDisplay)
+                    languageService.setLanguage(code: lc, syncWithBackend: true) { _ in }
+                    withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
+                }) {
+                    Text(loc("onboarding.continue", "Continue"))
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.white)
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.horizontal, 20)
         }
     }
     
@@ -268,13 +367,13 @@ struct OnboardingView: View {
                 .symbolEffect(.bounce, value: currentStep)
 
             VStack(spacing: 12) {
-                Text("Stay on Track with Gentle Reminders ⏰")
+                Text(loc("onboarding.notifications.title", "Stay on Track with Gentle Reminders ⏰"))
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
 
-                Text("Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We’ll only remind you if you haven’t snapped food yet. You can change this later in settings.")
+                Text(loc("onboarding.notifications.desc", "Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We’ll only remind you if you haven’t snapped food yet. You can change this later in settings."))
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
@@ -289,7 +388,7 @@ struct OnboardingView: View {
                         withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
                     }
                 }) {
-                    Text("Enable Reminders")
+                    Text(loc("onboarding.notifications.enable", "Enable Reminders"))
                         .font(.headline)
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity)
@@ -303,7 +402,7 @@ struct OnboardingView: View {
                     notificationsEnabledLocal = false
                     withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
                 }) {
-                    Text("Not Now")
+                    Text(loc("onboarding.notifications.notnow", "Not Now"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -324,13 +423,13 @@ struct OnboardingView: View {
                 .symbolEffect(.bounce, value: currentStep)
 
             VStack(spacing: 12) {
-                Text("Choose Your Data Mode 📈")
+                Text(loc("onboarding.datamode.title", "Choose Your Data Mode 📈"))
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
 
-                Text("Pick how much detail you want to see. You can change this later in your profile.")
+                Text(loc("onboarding.datamode.desc", "Pick how much detail you want to see. You can change this later in your profile."))
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
@@ -341,8 +440,8 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 10) {
 
                 Picker("Mode", selection: $dataDisplayMode) {
-                    Text("Simplified").font(.system(size: 22, weight: .semibold, design: .rounded)).tag("simplified")
-                    Text("Full").font(.system(size: 22, weight: .semibold, design: .rounded)).tag("full")
+                    Text(loc("common.simplified", "Simplified")).font(.system(size: 22, weight: .semibold, design: .rounded)).tag("simplified")
+                    Text(loc("common.full", "Full")).font(.system(size: 22, weight: .semibold, design: .rounded)).tag("full")
                 }
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .controlSize(.large)

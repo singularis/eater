@@ -26,7 +26,7 @@ class AlertHelper {
             alert.setValue(mutableAttributedMessage, forKey: "attributedMessage")
         }
 
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: loc("common.ok", "OK"), style: .default) { _ in
             completion?()
         })
         
@@ -112,19 +112,19 @@ class AlertHelper {
         }
 
         let alert = UIAlertController(
-            title: "Modify Portion",
-            message: "How much of '\(foodName)' did you actually eat?\nOriginal weight: \(originalWeight)g",
+            title: loc("portion.modify.title", "Modify Portion"),
+            message: String(format: loc("portion.modify.msg", "How much of '%@' did you actually eat?\nOriginal weight: %dg"), foodName, originalWeight),
             preferredStyle: .alert
         )
 
         // Add percentage options with calculated weights
         let portions = [
-            (title: "200% (\(originalWeight * 2)g) - Double portion", percentage: Int32(200)),
-            (title: "150% (\(originalWeight * 3 / 2)g) - One and a half portion", percentage: Int32(150)),
-            (title: "125% (\(originalWeight * 5 / 4)g) - One and a quarter portion", percentage: Int32(125)),
-            (title: "75% (\(originalWeight * 3 / 4)g) - Three quarters", percentage: Int32(75)),
-            (title: "50% (\(originalWeight / 2)g) - Half portion", percentage: Int32(50)),
-            (title: "25% (\(originalWeight / 4)g) - Quarter portion", percentage: Int32(25))
+            (title: String(format: loc("portion.200", "200%% (%dg) - Double portion"), originalWeight * 2), percentage: Int32(200)),
+            (title: String(format: loc("portion.150", "150%% (%dg) - One and a half portion"), originalWeight * 3 / 2), percentage: Int32(150)),
+            (title: String(format: loc("portion.125", "125%% (%dg) - One and a quarter portion"), originalWeight * 5 / 4), percentage: Int32(125)),
+            (title: String(format: loc("portion.75", "75%% (%dg) - Three quarters"), originalWeight * 3 / 4), percentage: Int32(75)),
+            (title: String(format: loc("portion.50", "50%% (%dg) - Half portion"), originalWeight / 2), percentage: Int32(50)),
+            (title: String(format: loc("portion.25", "25%% (%dg) - Quarter portion"), originalWeight / 4), percentage: Int32(25))
         ]
 
         for portion in portions {
@@ -134,7 +134,7 @@ class AlertHelper {
         }
 
         // Share food with friend action (visually highlighted)
-        let shareTitle = "Share food with friend"
+        let shareTitle = loc("portion.share", "Share food with friend")
         let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
             presentShareFriendsController(foodName: foodName, time: time, onShareSuccess: onShareSuccess)
         }
@@ -143,11 +143,11 @@ class AlertHelper {
         alert.addAction(shareAction)
 
         // Add custom option
-        alert.addAction(UIAlertAction(title: "Custom...", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: loc("portion.custom", "Custom..."), style: .default) { _ in
             showCustomPortionAlert(foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
         })
 
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
         
         rootViewController.present(alert, animated: true)
     }
@@ -199,7 +199,7 @@ private class CustomPortionViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Custom Portion"
+        title = loc("portion.custom.title", "Custom Portion")
         view.backgroundColor = .systemBackground
         
         // Add cancel button
@@ -224,7 +224,7 @@ private class CustomPortionViewController: UIViewController {
         
         // Add title label
         let titleLabel = UILabel()
-        titleLabel.text = "Select the amount of '\(foodName)' you ate:\nOriginal weight: \(originalWeight)g"
+        titleLabel.text = String(format: loc("portion.custom.msg", "Select the amount of '%@' you ate:\nOriginal weight: %dg"), foodName, originalWeight)
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 0

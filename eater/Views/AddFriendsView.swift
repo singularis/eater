@@ -5,7 +5,7 @@ struct AddFriendsView: View {
 
     @State private var query: String = ""
     @State private var suggestions: [String] = []
-    @State private var statusText: String = "Type at least 3 letters to search"
+    @State private var statusText: String = loc("search.type3", "Type at least 3 letters to search")
     @State private var isConnected: Bool = false
     @State private var isAuthenticated: Bool = false
     @State private var isSearching: Bool = false
@@ -16,7 +16,7 @@ struct AddFriendsView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 12) {
-                TextField("Search by email...", text: $query)
+                TextField(loc("friends.search.placeholder", "Search by email..."), text: $query)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
                     .padding(12)
@@ -61,7 +61,7 @@ struct AddFriendsView: View {
                             Color.black.opacity(0.3).ignoresSafeArea()
                             VStack(spacing: 12) {
                                 ProgressView()
-                                Text("Adding friend...")
+                                Text(loc("overlay.adding_friend", "Adding friend..."))
                                     .foregroundColor(.white)
                             }
                             .padding(20)
@@ -71,11 +71,11 @@ struct AddFriendsView: View {
                     }
                 }
             )
-            .navigationTitle("Add Friends")
+            .navigationTitle(loc("nav.addfriends", "Add Friends"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") { isPresented = false }
+                    Button(loc("common.close", "Close")) { isPresented = false }
                         .disabled(isAddingFriend)
                 }
             }
@@ -91,13 +91,13 @@ struct AddFriendsView: View {
             switch state {
             case .connecting:
                 isConnected = false
-                statusText = "Connecting..."
+                statusText = loc("search.connecting", "Connecting...")
             case .connected:
                 isConnected = true
-                statusText = "Connected. Authenticating..."
+                statusText = loc("search.connected_authenticating", "Connected. Authenticating...")
             case .authenticated:
                 isAuthenticated = true
-                statusText = suggestions.isEmpty ? "Type at least 3 letters to search" : statusText
+                statusText = suggestions.isEmpty ? loc("search.type3", "Type at least 3 letters to search") : statusText
             case .failed(let message):
                 isConnected = false
                 isAuthenticated = false
@@ -105,14 +105,14 @@ struct AddFriendsView: View {
             case .disconnected:
                 isConnected = false
                 isAuthenticated = false
-                statusText = suggestions.isEmpty ? "Disconnected" : statusText
+                statusText = suggestions.isEmpty ? loc("search.disconnected", "Disconnected") : statusText
             }
         }
         socket.onResults = { emails in
             isSearching = false
             suggestions = emails
             if emails.isEmpty {
-                statusText = "No emails found"
+                statusText = loc("search.no_emails", "No emails found")
             }
         }
     }
@@ -120,7 +120,7 @@ struct AddFriendsView: View {
     private func teardownSocket() {
         socket?.disconnect()
         suggestions = []
-        statusText = "Type at least 3 letters to search"
+        statusText = loc("search.type3", "Type at least 3 letters to search")
         isSearching = false
         isConnected = false
         isAuthenticated = false
@@ -131,7 +131,7 @@ struct AddFriendsView: View {
         let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.count < 3 {
             suggestions = []
-            statusText = "Type at least 3 letters to search"
+            statusText = loc("search.type3", "Type at least 3 letters to search")
             return
         }
         isSearching = true
@@ -150,9 +150,9 @@ struct AddFriendsView: View {
             DispatchQueue.main.async {
                 isAddingFriend = false
                 if success {
-                    AlertHelper.showAlert(title: "You have a new friend!", message: "\(email) added to your friends list")
+                    AlertHelper.showAlert(title: loc("friends.add.success.title", "You have a new friend!"), message: String(format: loc("friends.add.success.msg", "%@ added to your friends list"), email))
                 } else {
-                    AlertHelper.showAlert(title: "Failed", message: "Could not send a friend request to \(email)")
+                    AlertHelper.showAlert(title: loc("friends.add.fail.title", "Failed"), message: String(format: loc("friends.add.fail.msg", "Could not send a friend request to %@"), email))
                 }
                 isPresented = false
             }

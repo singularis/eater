@@ -38,11 +38,11 @@ struct HealthSettingsView: View {
                     .padding()
                 }
             }
-            .navigationTitle(showResults ? "Your Plan" : "Health Settings")
+            .navigationTitle(showResults ? loc("health.plan.title", "Your Plan") : loc("nav.health_settings", "Health Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button(loc("common.cancel", "Cancel")) {
                         isPresented = false
                     }
                     .foregroundColor(.white)
@@ -50,7 +50,7 @@ struct HealthSettingsView: View {
                 
                 if showResults {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Save") {
+                        Button(loc("common.save", "Save")) {
                             saveHealthData()
                             isPresented = false
                         }
@@ -63,10 +63,10 @@ struct HealthSettingsView: View {
         .onAppear {
             loadExistingData()
         }
-        .alert("Invalid Health Data", isPresented: $showingHealthDataAlert) {
-            Button("OK", role: .cancel) { }
+        .alert(loc("health.invalid.title", "Invalid Health Data"), isPresented: $showingHealthDataAlert) {
+            Button(loc("common.ok", "OK"), role: .cancel) { }
         } message: {
-            Text("Please provide valid values for height (cm), weight (kg), and age (years).")
+            Text(loc("health.invalid.msg", "Please provide valid values for height (cm), weight (kg), and age (years)."))
         }
     }
     
@@ -76,7 +76,7 @@ struct HealthSettingsView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.red)
             
-            Text("Update Your Health Data")
+            Text(loc("health.update.title", "Update Your Health Data"))
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
@@ -84,7 +84,7 @@ struct HealthSettingsView: View {
             
             VStack(spacing: 16) {
                 HStack {
-                    Text("Height (cm):")
+                    Text(loc("health.height", "Height (cm):"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     TextField("175", text: $height)
@@ -93,7 +93,7 @@ struct HealthSettingsView: View {
                 }
                 
                 HStack {
-                    Text("Weight (kg):")
+                    Text(loc("health.weight", "Weight (kg):"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     TextField("70", text: $weight)
@@ -102,7 +102,7 @@ struct HealthSettingsView: View {
                 }
                 
                 HStack {
-                    Text("Age (years):")
+                    Text(loc("health.age", "Age (years):"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
                     TextField("25", text: $age)
@@ -111,20 +111,20 @@ struct HealthSettingsView: View {
                 }
                 
                 HStack {
-                    Text("Gender:")
+                    Text(loc("health.gender", "Gender:"))
                         .foregroundColor(.white)
                         .frame(width: 100, alignment: .leading)
-                    Picker("Gender", selection: $isMale) {
-                        Text("Male").tag(true)
-                        Text("Female").tag(false)
+                    Picker(loc("health.gender", "Gender:"), selection: $isMale) {
+                        Text(loc("health.gender.male", "Male")).tag(true)
+                        Text(loc("health.gender.female", "Female")).tag(false)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Activity Level:")
+                    Text(loc("health.activity", "Activity Level:"))
                         .foregroundColor(.white)
-                    Picker("Activity Level", selection: $activityLevel) {
+                    Picker(loc("health.activity", "Activity Level:"), selection: $activityLevel) {
                         ForEach(activityLevels, id: \.self) { level in
                             Text(level).tag(level)
                         }
@@ -134,7 +134,7 @@ struct HealthSettingsView: View {
                     .cornerRadius(8)
                 }
                 
-                Button("Calculate My Plan") {
+                Button(loc("health.calc_plan", "Calculate My Plan")) {
                     if validateAndCalculateHealthData() {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             showResults = true
@@ -160,7 +160,7 @@ struct HealthSettingsView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.green)
             
-            Text("Your Updated Plan")
+            Text(loc("health.updated_plan", "Your Updated Plan"))
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
@@ -168,7 +168,7 @@ struct HealthSettingsView: View {
             
             VStack(spacing: 16) {
                 VStack(spacing: 8) {
-                    Text("🎯 Optimal Weight")
+                    Text(loc("health.optimal_weight", "🎯 Optimal Weight"))
                         .font(.headline)
                         .foregroundColor(.green)
                     Text("\(optimalWeight, specifier: "%.1f") kg")
@@ -181,7 +181,7 @@ struct HealthSettingsView: View {
                 .cornerRadius(12)
                 
                 VStack(spacing: 8) {
-                    Text("🔥 Daily Calorie Target")
+                    Text(loc("health.daily_calorie", "🔥 Daily Calorie Target"))
                         .font(.headline)
                         .foregroundColor(.orange)
                     Text("\(recommendedCalories) kcal")
@@ -194,7 +194,7 @@ struct HealthSettingsView: View {
                 .cornerRadius(12)
                 
                 VStack(spacing: 8) {
-                    Text("⏰ Estimated Timeline")
+                    Text(loc("health.estimated_timeline", "⏰ Estimated Timeline"))
                         .font(.headline)
                         .foregroundColor(.blue)
                     Text(timeToOptimalWeight)
@@ -207,7 +207,7 @@ struct HealthSettingsView: View {
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(12)
                 
-                Button("Back to Edit") {
+                Button(loc("common.back_to_edit", "Back to Edit")) {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         showResults = false
                     }

@@ -17,6 +17,8 @@ struct UserProfileView: View {
     @State private var showFeedback = false
     @State private var showAddFriends = false
     @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified" // "simplified" or "full"
+    @EnvironmentObject var languageService: LanguageService
+    @State private var showLanguagePicker = false
     
     var body: some View {
         NavigationView {
@@ -41,7 +43,7 @@ struct UserProfileView: View {
                                 // User Name
                                 if let userName = authService.userName, !userName.isEmpty {
                                     VStack(spacing: 5) {
-                                        Text("Name")
+                                        Text(loc("profile.name", "Name"))
                                             .font(.caption)
                                             .foregroundColor(.gray)
                                         
@@ -58,7 +60,7 @@ struct UserProfileView: View {
                                 
                                 // User Email
                                 VStack(spacing: 5) {
-                                    Text("Email")
+                                    Text(loc("profile.email", "Email"))
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                     
@@ -79,7 +81,7 @@ struct UserProfileView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "chart.line.uptrend.xyaxis")
-                                    Text("View Statistics")
+                                    Text(loc("profile.viewstats", "View Statistics"))
                                         .fontWeight(.semibold)
                                 }
                                 .font(.subheadline)
@@ -97,7 +99,7 @@ struct UserProfileView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "message.fill")
-                                    Text("Share Feedback")
+                                    Text(loc("profile.sharefeedback", "Share Feedback"))
                                         .fontWeight(.semibold)
                                 }
                                 .font(.subheadline)
@@ -115,7 +117,7 @@ struct UserProfileView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "person.crop.circle.badge.plus")
-                                    Text("Add Friends")
+                                    Text(loc("profile.addfriends", "Add Friends"))
                                         .fontWeight(.semibold)
                                 }
                                 .font(.subheadline)
@@ -130,14 +132,14 @@ struct UserProfileView: View {
                             // Health Data Section
                             if hasHealthData {
                                 VStack(spacing: 10) {
-                                    Text("Your Health Profile")
+                                    Text(loc("profile.healthprofile", "Your Health Profile"))
                                         .font(geometry.size.height < 700 ? .title3 : .title2)
                                         .fontWeight(.bold)
                                         .foregroundColor(.white)
                                     
                                     VStack(spacing: 8) {
                                         HStack {
-                                            Text("Height:")
+                                            Text(loc("health.height.label", "Height:"))
                                                 .font(.subheadline)
                                                 .foregroundColor(.gray)
                                             Spacer()
@@ -149,7 +151,7 @@ struct UserProfileView: View {
                                         .padding(.horizontal)
                                         
                                         HStack {
-                                            Text("Target Weight:")
+                                            Text(loc("profile.targetweight", "Target Weight:"))
                                                 .font(.subheadline)
                                                 .foregroundColor(.gray)
                                             Spacer()
@@ -161,7 +163,7 @@ struct UserProfileView: View {
                                         .padding(.horizontal)
                                         
                                         HStack {
-                                            Text("Daily Calorie Target:")
+                                            Text(loc("profile.dailycalorie", "Daily Calorie Target:"))
                                                 .font(.subheadline)
                                                 .foregroundColor(.gray)
                                             Spacer()
@@ -176,7 +178,7 @@ struct UserProfileView: View {
                                     .background(Color.gray.opacity(0.2))
                                     .cornerRadius(10)
                                     
-                                    Button("Update Health Settings") {
+                                    Button(loc("health.update.title", "Update Health Settings")) {
                                         showHealthSettings = true
                                     }
                                     .foregroundColor(.blue)
@@ -190,17 +192,17 @@ struct UserProfileView: View {
                                 }
                             } else {
                                 VStack(spacing: 10) {
-                                    Text("Personalize Your Experience")
+                                    Text(loc("profile.personalize", "Personalize Your Experience"))
                                         .font(geometry.size.height < 700 ? .title3 : .title2)
                                         .fontWeight(.bold)
                                         .foregroundColor(.white)
                                     
-                                    Text("Set up your health profile to get personalized calorie recommendations")
+                                    Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
                                         .multilineTextAlignment(.center)
                                     
-                                    Button("Setup Health Profile") {
+                                    Button(loc("health.update.title", "Setup Health Profile")) {
                                         showHealthSettings = true
                                     }
                                     .foregroundColor(.blue)
@@ -216,14 +218,40 @@ struct UserProfileView: View {
                             
                             // Button Section
                             VStack(spacing: 12) {
+                                // Language Picker
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(loc("profile.language", "Language"))
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    Button(action: { showLanguagePicker = true }) {
+                                        let flag = languageService.flagEmoji(forLanguageCode: languageService.currentCode)
+                                        HStack {
+                                            Text(flag)
+                                            Text(languageService.currentDisplayName)
+                                                .fontWeight(.semibold)
+                                            Spacer()
+                                            Image(systemName: "chevron.right").foregroundColor(.white.opacity(0.6))
+                                        }
+                                        .padding(.vertical, 10)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.2))
+                                        .cornerRadius(8)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                                .sheet(isPresented: $showLanguagePicker) {
+                                    LanguageSelectionSheet(isPresented: $showLanguagePicker)
+                                        .environmentObject(languageService)
+                                }
+                                
                                 // Data Display Mode Toggle
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Data Mode")
+                                    Text(loc("profile.datamode", "Data Mode"))
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                     Picker("Data Mode", selection: $dataDisplayMode) {
-                                        Text("Simplified").tag("simplified")
-                                        Text("Full").tag("full")
+                                        Text(loc("common.simplified", "Simplified")).tag("simplified")
+                                        Text(loc("common.full", "Full")).tag("full")
                                     }
                                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                                     .controlSize(.large)
@@ -237,7 +265,7 @@ struct UserProfileView: View {
                                 }) {
                                     HStack {
                                         Image(systemName: "book.fill")
-                                        Text("Tutorial")
+                                        Text(loc("profile.tutorial", "Tutorial"))
                                             .fontWeight(.semibold)
                                     }
                                     .font(.subheadline)
@@ -255,7 +283,7 @@ struct UserProfileView: View {
                                 }) {
                                     HStack {
                                         Image(systemName: "arrow.right.square.fill")
-                                        Text("Logout")
+                                        Text(loc("profile.logout", "Logout"))
                                             .fontWeight(.semibold)
                                     }
                                     .font(.subheadline)
@@ -273,7 +301,7 @@ struct UserProfileView: View {
                                 }) {
                                     HStack {
                                         Image(systemName: "trash.fill")
-                                        Text("Delete Account")
+                                        Text(loc("profile.delete", "Delete Account"))
                                             .fontWeight(.semibold)
                                     }
                                     .font(.subheadline)
@@ -291,23 +319,23 @@ struct UserProfileView: View {
                     }
                 }
             }
-            .navigationTitle("Profile")
+            .navigationTitle(loc("nav.profile", "Profile"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
+                    Button(loc("common.close", "Close")) {
                         dismiss()
                     }
                     .foregroundColor(.white)
                 }
             }
-            .alert("Delete Account", isPresented: $showDeleteConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Delete", role: .destructive) {
+            .alert(loc("alert.delete.title", "Delete Account"), isPresented: $showDeleteConfirmation) {
+                Button(loc("common.cancel", "Cancel"), role: .cancel) { }
+                Button(loc("profile.delete", "Delete"), role: .destructive) {
                     deleteAccount()
                 }
             } message: {
-                Text("Are you sure you want to delete your account? This will immediately remove all your data and preferences from this device and sign you out.")
+                Text(loc("alert.delete.message", "Are you sure you want to delete your account? This will immediately remove all your data and preferences from this device and sign you out."))
             }
             .sheet(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
@@ -332,6 +360,7 @@ struct UserProfileView: View {
             .onAppear {
                 loadHealthData()
             }
+            .id(languageService.currentCode)
         }
     }
     

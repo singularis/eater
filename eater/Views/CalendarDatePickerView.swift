@@ -7,7 +7,7 @@ struct CalendarDatePickerView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-                Text("Select Date")
+                Text(loc("calendar.selectdate", "Select Date"))
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
@@ -29,7 +29,7 @@ struct CalendarDatePickerView: View {
                     Button(action: {
                         isPresented = false
                     }) {
-                        Text("Cancel")
+                        Text(loc("common.cancel", "Cancel"))
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.gray.opacity(0.8))
@@ -46,7 +46,7 @@ struct CalendarDatePickerView: View {
                         // Just call the callback - let parent handle dismissal
                         onDateSelected(dateString)
                     }) {
-                        Text("Select")
+                        Text(loc("common.select", "Select"))
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue.opacity(0.9))

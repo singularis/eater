@@ -732,4 +732,38 @@ class GRPCService {
             completion(nil)
         }
     }
+
+    // MARK: - Language
+
+    func setLanguage(userEmail: String, languageCode: String, completion: @escaping (Bool) -> Void) {
+        var req = Eater_SetLanguageRequest()
+        req.userEmail = userEmail
+        req.languageCode = languageCode
+        do {
+            let body = try req.serializedData()
+            guard var request = createRequest(endpoint: "set_language", httpMethod: "POST", body: body) else {
+                completion(false)
+                return
+            }
+            request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+            sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+                if let _ = error {
+                    completion(false)
+                    return
+                }
+                if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data {
+                    do {
+                        let resp = try Eater_SetLanguageResponse(serializedBytes: data)
+                        completion(resp.success)
+                    } catch {
+                        completion(false)
+                    }
+                } else {
+                    completion(false)
+                }
+            }
+        } catch {
+            completion(false)
+        }
+    }
 }

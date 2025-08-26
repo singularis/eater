@@ -19,12 +19,12 @@ struct FeedbackView: View {
                     VStack(spacing: 20) {
                         // Header
                         VStack(spacing: 10) {
-                            Text("Share Your Feedback")
+                            Text(loc("feedback.title", "Share Your Feedback"))
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                             
-                            Text("Help us improve your experience")
+                            Text(loc("feedback.subtitle", "Help us improve your experience"))
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                                 .multilineTextAlignment(.center)
@@ -33,13 +33,13 @@ struct FeedbackView: View {
                         
                         // Feedback text area
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Your Feedback")
+                            Text(loc("feedback.field.label", "Your Feedback"))
                                 .font(.headline)
                                 .foregroundColor(.white)
                             
                             ZStack(alignment: .topLeading) {
                                 if feedbackText.isEmpty {
-                                    Text("Tell us what you think about the app, any issues you've encountered, or features you'd like to see...")
+                                    Text(loc("feedback.placeholder", "Tell us what you think about the app, any issues you've encountered, or features you'd like to see..."))
                                         .foregroundColor(.gray)
                                         .font(.body)
                                         .padding(.horizontal, 12)
@@ -78,7 +78,7 @@ struct FeedbackView: View {
                                     Image(systemName: "paperplane.fill")
                                 }
                                 
-                                Text(isSubmitting ? "Submitting..." : "Submit Feedback")
+                                Text(isSubmitting ? loc("feedback.submitting", "Submitting...") : loc("feedback.submit", "Submit Feedback"))
                                     .fontWeight(.semibold)
                             }
                             .font(.subheadline)
@@ -95,7 +95,7 @@ struct FeedbackView: View {
                         Button(action: {
                             isPresented = false
                         }) {
-                            Text("Cancel")
+                            Text(loc("common.cancel", "Cancel"))
                                 .fontWeight(.medium)
                                 .foregroundColor(.gray)
                         }
@@ -105,7 +105,7 @@ struct FeedbackView: View {
                     .padding(.vertical, 10)
                 }
             }
-            .navigationTitle("Feedback")
+            .navigationTitle(loc("feedback.nav", "Feedback"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -117,15 +117,15 @@ struct FeedbackView: View {
                 }
             }
         }
-        .alert("Success", isPresented: $showSuccessAlert) {
-            Button("OK") {
+        .alert(loc("common.done", "Done"), isPresented: $showSuccessAlert) {
+            Button(loc("common.ok", "OK")) {
                 isPresented = false
             }
         } message: {
             Text(alertMessage)
         }
-        .alert("Error", isPresented: $showErrorAlert) {
-            Button("OK") { }
+        .alert(loc("common.error", "Error"), isPresented: $showErrorAlert) {
+            Button(loc("common.ok", "OK")) { }
         } message: {
             Text(alertMessage)
         }
@@ -137,7 +137,7 @@ struct FeedbackView: View {
         }
         
         guard let userEmail = authService.userEmail else {
-            alertMessage = "Unable to submit feedback. Please try signing in again."
+            alertMessage = loc("feedback.need_login", "Unable to submit feedback. Please try signing in again.")
             showErrorAlert = true
             return
         }
@@ -153,10 +153,10 @@ struct FeedbackView: View {
                 isSubmitting = false
                 
                 if success {
-                    alertMessage = "Thank you for your feedback! We appreciate your input and will use it to improve the app."
+                    alertMessage = loc("feedback.success", "Thank you for your feedback! We appreciate your input and will use it to improve the app.")
                     showSuccessAlert = true
                 } else {
-                    alertMessage = "Failed to submit feedback. Please check your internet connection and try again."
+                    alertMessage = loc("feedback.fail", "Failed to submit feedback. Please check your internet connection and try again.")
                     showErrorAlert = true
                 }
             }

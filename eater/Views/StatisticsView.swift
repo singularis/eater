@@ -30,7 +30,7 @@ struct StatisticsView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(1.5)
-                            Text("Loading statistics...")
+                            Text(loc("stats.loading", "Loading statistics..."))
                                 .foregroundColor(.white)
                                 .padding(.top)
                         }
@@ -64,11 +64,11 @@ struct StatisticsView: View {
                     }
                 }
             }
-            .navigationTitle("Statistics")
+            .navigationTitle(loc("nav.statistics", "Statistics"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
+                    Button(loc("common.close", "Close")) {
                         isPresented = false
                     }
                     .foregroundColor(.white)
@@ -82,7 +82,7 @@ struct StatisticsView: View {
     
     private var periodSelectionView: some View {
         VStack(spacing: 10) {
-            Text("Time Period")
+            Text(loc("stats.timeperiod", "Time Period"))
                 .font(.headline)
                 .foregroundColor(.white)
             

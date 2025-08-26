@@ -107,7 +107,7 @@ struct FullScreenPhotoView: View {
                             .font(.system(size: 80))
                             .foregroundColor(.gray)
                         
-                        Text("No photo available")
+                        Text(loc("fs.no_photo", "No photo available"))
                             .font(.title3)
                             .foregroundColor(.gray)
                     }
@@ -116,7 +116,7 @@ struct FullScreenPhotoView: View {
                 Spacer()
                 
                 // Instructions text
-                Text("Double tap to reset • Pinch to zoom • Drag to pan")
+                Text(loc("fs.hint", "Double tap to reset • Pinch to zoom • Drag to pan"))
                     .font(.caption)
                     .foregroundColor(.gray)
                     .padding(.bottom, 20)

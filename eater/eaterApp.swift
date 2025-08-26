@@ -12,12 +12,16 @@ struct AppNameApp: App {
                 ContentView()
                     .preferredColorScheme(.dark)
                     .environmentObject(authService)
+                    .environmentObject(LanguageService.shared)
+                    .id(LanguageService.shared.currentCode)
                     .onAppear {
                         NotificationService.shared.initializeOnLaunch()
                     }
             } else {
                 LoginView()
                     .environmentObject(authService)
+                    .environmentObject(LanguageService.shared)
+                    .id(LanguageService.shared.currentCode)
                     .onAppear {
                         NotificationService.shared.initializeOnLaunch()
                     }

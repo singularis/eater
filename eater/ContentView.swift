@@ -8,6 +8,7 @@ struct FullScreenPhotoData: Identifiable {
 
 struct ContentView: View {
     @EnvironmentObject var authService: AuthenticationService
+    @EnvironmentObject var languageService: LanguageService
     @State private var products: [Product] = []
     @State private var caloriesLeft: Int = 0
     @State private var personWeight: Float = 0
@@ -115,24 +116,24 @@ struct ContentView: View {
                 stopDailyRefreshTimer()
             }
             .padding()
-            .alert("Set Calorie Limits", isPresented: $showLimitsAlert) {
+            .alert(loc("limits.title", "Set Calorie Limits"), isPresented: $showLimitsAlert) {
                 VStack {
-                    TextField("Soft Limit", text: $tempSoftLimit)
+                    TextField(loc("limits.soft", "Soft Limit"), text: $tempSoftLimit)
                         .keyboardType(.numberPad)
-                    TextField("Hard Limit", text: $tempHardLimit)
+                    TextField(loc("limits.hard", "Hard Limit"), text: $tempHardLimit)
                         .keyboardType(.numberPad)
                 }
-                Button("Save Manual Limits") {
+                Button(loc("limits.save_manual", "Save Manual Limits")) {
                     saveLimits()
                 }
                 if UserDefaults.standard.bool(forKey: "hasUserHealthData") {
-                    Button("Use Health-Based Calculation") {
+                    Button(loc("limits.use_health", "Use Health-Based Calculation")) {
                         resetToHealthBasedLimits()
                     }
                 }
-                Button("Cancel", role: .cancel) { }
+                Button(loc("common.cancel", "Cancel"), role: .cancel) { }
             } message: {
-                Text("Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice.")
+                Text(loc("limits.msg", "Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice."))
             }
             .sheet(isPresented: $showUserProfile) {
                 UserProfileView()
@@ -165,12 +166,14 @@ struct ContentView: View {
             }
             .overlay(
                 OnboardingView(isPresented: $showOnboarding)
+                    .environmentObject(languageService)
                     .opacity(showOnboarding ? 1 : 0)
             )
             
             LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
             LoadingOverlay(isVisible: isLoadingFoodPhoto, message: "Analyzing food photo...")
         }
+        .id(languageService.currentCode)
     }
         
     private var topBarView: some View {
@@ -249,7 +252,7 @@ struct ContentView: View {
                         .foregroundColor(.white)
                     
                     if isViewingCustomDate {
-                        Text("Custom Date")
+                        Text(loc("date.custom", "Custom Date"))
                             .font(.system(size: 10, weight: .medium, design: .rounded))
                             .foregroundColor(.yellow)
                     }
@@ -263,7 +266,7 @@ struct ContentView: View {
                 
                 if isViewingCustomDate {
                     Button(action: returnToToday) {
-                        Text("Today")
+                        Text(loc("date.today", "Today"))
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundColor(.blue)
                             .padding(.horizontal, 8)
@@ -337,15 +340,15 @@ struct ContentView: View {
             .frame(width: 36, height: 36)
             .contentShape(Circle())
         }
-        .alert("Sport Calories Bonus", isPresented: $showSportCaloriesAlert) {
-            TextField("Calories burned (e.g., 300)", text: $sportCaloriesInput)
+        .alert(loc("sport.title", "Sport Calories Bonus"), isPresented: $showSportCaloriesAlert) {
+            TextField(loc("sport.placeholder", "Calories burned (e.g., 300)"), text: $sportCaloriesInput)
                 .keyboardType(.numberPad)
-            Button("Add to Today's Limit") {
+            Button(loc("sport.add", "Add to Today's Limit")) {
                 submitSportCalories()
             }
-            Button("Cancel", role: .cancel) { }
+            Button(loc("common.cancel", "Cancel"), role: .cancel) { }
         } message: {
-            Text("Enter the number of calories you burned during your workout. This will be added to your daily calorie limit for today only.")
+            Text(loc("sport.msg", "Enter the number of calories you burned during your workout. This will be added to your daily calorie limit for today only."))
         }
     }
     
@@ -377,17 +380,17 @@ struct ContentView: View {
             .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
         }
         .position(x: 30, y: geo.size.height / 2)
-        .confirmationDialog("Record Weight", isPresented: $showWeightActionSheet, titleVisibility: .visible) {
-            Button("Take Photo") {
+        .confirmationDialog(loc("weight.record.title", "Record Weight"), isPresented: $showWeightActionSheet, titleVisibility: .visible) {
+            Button(loc("weight.take_photo", "Take Photo")) {
                 showCamera = true
             }
-            Button("Manual Entry") {
+            Button(loc("weight.manual_entry", "Manual Entry")) {
                 manualWeightInput = ""
                 showManualWeightEntry = true
             }
-            Button("Cancel", role: .cancel) { }
+            Button(loc("common.cancel", "Cancel"), role: .cancel) { }
         } message: {
-            Text("Choose how you'd like to record your weight")
+            Text(loc("weight.record.msg", "Choose how you'd like to record your weight"))
         }
         .sheet(isPresented: $showCamera) {
             WeightCameraView(
@@ -408,15 +411,15 @@ struct ContentView: View {
                 }
             )
         }
-        .alert("Enter Weight", isPresented: $showManualWeightEntry) {
-            TextField("Weight (kg)", text: $manualWeightInput)
+        .alert(loc("weight.enter.title", "Enter Weight"), isPresented: $showManualWeightEntry) {
+            TextField(loc("weight.enter.placeholder", "Weight (kg)"), text: $manualWeightInput)
                 .keyboardType(.decimalPad)
-            Button("Submit") {
+            Button(loc("common.save", "Submit")) {
                 submitManualWeight()
             }
-            Button("Cancel", role: .cancel) { }
+            Button(loc("common.cancel", "Cancel"), role: .cancel) { }
         } message: {
-            Text("Enter your weight in kilograms")
+            Text(loc("weight.enter.msg", "Enter your weight in kilograms"))
         }
     }
     
@@ -443,7 +446,7 @@ struct ContentView: View {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
             } else {
-                Text("Tend")
+                Text(LanguageService.shared.shortTrendLabel())
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
             }
@@ -656,7 +659,7 @@ struct ContentView: View {
     
     func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
         guard let userEmail = authService.userEmail else {
-            AlertHelper.showAlert(title: "Error", message: "Unable to modify food portion. Please sign in again.")
+            AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("portion.modify.need_login", "Unable to modify food portion. Please sign in again."))
             return
         }
         
@@ -669,8 +672,8 @@ struct ContentView: View {
                     
                     // Show success message
                     AlertHelper.showAlert(
-                        title: "Portion Updated", 
-                        message: "Successfully updated '\(foodName)' to \(percentage)% portion."
+                        title: loc("portion.updated.title", "Portion Updated"), 
+                        message: String(format: loc("portion.updated.msg", "Successfully updated '%@' to %d%% portion."), foodName, percentage)
                     ) {
                         // Always return to today after modifying food portion
                         self.returnToToday()
@@ -678,8 +681,8 @@ struct ContentView: View {
                 } else {
                     // Show error message
                     AlertHelper.showAlert(
-                        title: "Update Failed", 
-                        message: "Failed to update the food portion. Please try again."
+                        title: loc("common.update_failed", "Update Failed"), 
+                        message: loc("portion.update_failed.msg", "Failed to update the food portion. Please try again.")
                     )
                 }
             }
@@ -699,7 +702,7 @@ struct ContentView: View {
                     let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
                     
                     self.deletingProductTime = nil
-                    AlertHelper.showAlert(title: "Removed", message: "Food item was removed.") {
+                    AlertHelper.showAlert(title: loc("common.removed", "Removed"), message: loc("food.removed.msg", "Food item was removed.")) {
                         self.returnToToday()
                     }
                 } else {
@@ -766,12 +769,12 @@ struct ContentView: View {
         let normalizedInput = manualWeightInput.replacingOccurrences(of: ",", with: ".")
         
         guard let weight = Float(normalizedInput), weight > 0 else {
-            AlertHelper.showAlert(title: "Invalid Weight", message: "Please enter a valid weight in kilograms.")
+            AlertHelper.showAlert(title: loc("weight.invalid.title", "Invalid Weight"), message: loc("weight.invalid.msg", "Please enter a valid weight in kilograms."))
             return
         }
         
         guard let userEmail = authService.userEmail else {
-            AlertHelper.showAlert(title: "Error", message: "Unable to submit weight. Please sign in again.")
+            AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("weight.need_login", "Unable to submit weight. Please sign in again."))
             return
         }
         
@@ -788,9 +791,9 @@ struct ContentView: View {
                     
                     // Always return to today after manual weight entry
                     self.returnToToday()
-                    AlertHelper.showAlert(title: "Weight Recorded", message: "Your weight has been successfully recorded.")
+                    AlertHelper.showAlert(title: loc("weight.recorded.title", "Weight Recorded"), message: loc("weight.recorded.msg", "Your weight has been successfully recorded."))
                 } else {
-                    AlertHelper.showAlert(title: "Error", message: "Failed to record your weight. Please try again.")
+                    AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("weight.record_failed.msg", "Failed to record your weight. Please try again."))
                 }
             }
         }
@@ -798,7 +801,7 @@ struct ContentView: View {
 
     func submitSportCalories() {
         guard let calories = Int(sportCaloriesInput), calories > 0 else {
-            AlertHelper.showAlert(title: "Invalid Calories", message: "Please enter a valid number of calories burned.")
+            AlertHelper.showAlert(title: loc("calories.invalid.title", "Invalid Calories"), message: loc("calories.invalid.msg", "Please enter a valid number of calories burned."))
             return
         }
         
@@ -811,7 +814,7 @@ struct ContentView: View {
         sportCaloriesInput = ""
         
         // Show success message
-        AlertHelper.showAlert(title: "Sport Calories Added", message: "Added \(calories) calories to your daily limit for today.")
+        AlertHelper.showAlert(title: loc("calories.added.title", "Sport Calories Added"), message: String(format: loc("calories.added.msg", "Added %d calories to your daily limit for today."), calories))
     }
 
     // MARK: - Helper Methods
@@ -854,7 +857,7 @@ struct ContentView: View {
               newHardLimit > 0,
               newSoftLimit <= newHardLimit else {
             // Show error if invalid input
-            AlertHelper.showAlert(title: "Invalid Input", message: "Please enter valid positive numbers. Soft limit must be less than or equal to hard limit.")
+            AlertHelper.showAlert(title: loc("limits.invalid_input_title", "Invalid Input"), message: loc("limits.invalid_input_msg", "Please enter valid positive numbers. Soft limit must be less than or equal to hard limit."))
             return
         }
         

@@ -19,7 +19,7 @@ struct AlcoholCalendarView: View {
             monthGrid
             Spacer(minLength: 0)
             Button(action: { isPresented = false }) {
-                Text("Close")
+                Text(loc("common.close", "Close"))
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.gray.opacity(0.8))
@@ -39,10 +39,10 @@ struct AlcoholCalendarView: View {
             fetchMonth()
         }
         .overlay(
-            LoadingOverlay(isVisible: isLoading, message: "Loading alcohol...")
+            LoadingOverlay(isVisible: isLoading, message: loc("overlay.loading_alcohol", "Loading alcohol..."))
         )
         .alert(detailsAlertTitle, isPresented: $showDetailsAlert) {
-            Button("OK", role: .cancel) { }
+            Button(loc("common.ok", "OK"), role: .cancel) { }
         } message: {
             Text(detailsAlertMessage)
         }

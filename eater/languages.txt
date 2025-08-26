@@ -1,0 +1,36 @@
+Arabic
+Belarusian
+Bulgarian
+Bengali
+Czech
+Danish
+German
+Greek
+English
+Spanish
+Estonian
+Finnish
+French
+Irish
+Hindi
+Croatian
+Hungarian
+Italian
+Japanese
+Korean
+Lithuanian
+Latvian
+Maltese
+Dutch
+Polish
+Portuguese
+Romanian
+Slovak
+Slovene (Slovenian)
+Swedish
+Thai
+Turkish
+Ukrainian
+Urdu
+Vietnamese
+Chinese (Mandarin)

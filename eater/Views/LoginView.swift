@@ -14,11 +14,11 @@ struct LoginView: View {
                 .frame(width: 100, height: 100)
                 .foregroundColor(.blue)
             
-            Text("Welcome to Eateria")
+            Text(loc("login.welcome", "Welcome to Eateria"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
-            Text("Sign in to continue")
+            Text(loc("login.subtitle", "Sign in to continue"))
                 .font(.subheadline)
                 .foregroundColor(.gray)
             
@@ -30,7 +30,7 @@ struct LoginView: View {
                     HStack {
                         Image(systemName: "applelogo")
                             .foregroundColor(.white)
-                        Text("Sign in with Apple")
+                        Text(loc("login.apple", "Sign in with Apple"))
                             .foregroundColor(.white)
                             .fontWeight(.medium)
                     }
