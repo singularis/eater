@@ -3,6 +3,15 @@ import SwiftUI
 struct HealthDisclaimerView: View {
     @Environment(\.dismiss) private var dismiss
     
+    private var appLocale: Locale { Locale(identifier: LanguageService.shared.currentCode) }
+    private var lastUpdatedText: String {
+        let df = DateFormatter()
+        df.locale = appLocale
+        df.dateStyle = .medium
+        df.timeStyle = .none
+        return loc("disc.updated", "Last Updated:") + " " + df.string(from: Date())
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -37,45 +46,63 @@ struct HealthDisclaimerView: View {
                         
                         VStack(alignment: .leading, spacing: 12) {
                             CitationView(
-                                title: "Nutritional Data",
-                                source: "USDA FoodData Central",
-                                url: "https://fdc.nal.usda.gov/",
-                                description: "Comprehensive nutrient database for food composition analysis"
+                                titleKey: "disc.src.nutrition.title",
+                                titleFallback: "Nutritional Data",
+                                sourceKey: "disc.src.nutrition.source",
+                                sourceFallback: "USDA FoodData Central",
+                                urlString: "https://fdc.nal.usda.gov/",
+                                descKey: "disc.src.nutrition.desc",
+                                descFallback: "Comprehensive nutrient database for food composition analysis"
                             )
                             
                             CitationView(
-                                title: "Dietary Guidelines",
-                                source: "U.S. Department of Health and Human Services",
-                                url: "https://www.dietaryguidelines.gov/",
-                                description: "Evidence-based nutritional guidance for Americans"
+                                titleKey: "disc.src.guidelines.title",
+                                titleFallback: "Dietary Guidelines",
+                                sourceKey: "disc.src.guidelines.source",
+                                sourceFallback: "U.S. Department of Health and Human Services",
+                                urlString: "https://www.dietaryguidelines.gov/",
+                                descKey: "disc.src.guidelines.desc",
+                                descFallback: "Evidence-based nutritional guidance for Americans"
                             )
                             
                             CitationView(
-                                title: "Caloric Requirements",
-                                source: "Institute of Medicine (IOM)",
-                                url: "https://www.nationalacademies.org/",
-                                description: "Dietary Reference Intakes for energy and macronutrients"
+                                titleKey: "disc.src.caloric.title",
+                                titleFallback: "Caloric Requirements",
+                                sourceKey: "disc.src.caloric.source",
+                                sourceFallback: "Institute of Medicine (IOM)",
+                                urlString: "https://www.nationalacademies.org/",
+                                descKey: "disc.src.caloric.desc",
+                                descFallback: "Dietary Reference Intakes for energy and macronutrients"
                             )
                             
                             CitationView(
-                                title: "Food Safety Information",
-                                source: "FDA - U.S. Food and Drug Administration",
-                                url: "https://www.fda.gov/food",
-                                description: "Food safety and nutrition labeling guidelines"
+                                titleKey: "disc.src.foodsafety.title",
+                                titleFallback: "Food Safety Information",
+                                sourceKey: "disc.src.foodsafety.source",
+                                sourceFallback: "FDA - U.S. Food and Drug Administration",
+                                urlString: "https://www.fda.gov/food",
+                                descKey: "disc.src.foodsafety.desc",
+                                descFallback: "Food safety and nutrition labeling guidelines"
                             )
                             
                             CitationView(
-                                title: "Nutritional Science Research",
-                                source: "American Journal of Clinical Nutrition",
-                                url: "https://academic.oup.com/ajcn",
-                                description: "Peer-reviewed research on nutrition and health"
+                                titleKey: "disc.src.research.title",
+                                titleFallback: "Nutritional Science Research",
+                                sourceKey: "disc.src.research.source",
+                                sourceFallback: "American Journal of Clinical Nutrition",
+                                urlString: "https://academic.oup.com/ajcn",
+                                descKey: "disc.src.research.desc",
+                                descFallback: "Peer-reviewed research on nutrition and health"
                             )
                             
                             CitationView(
-                                title: "Food Composition Database",
-                                source: "USDA National Nutrient Database",
-                                url: "https://www.ars.usda.gov/northeast-area/beltsville-md-bhnrc/beltsville-human-nutrition-research-center/methods-and-application-of-food-composition-laboratory/",
-                                description: "Standard reference for nutrient content of foods"
+                                titleKey: "disc.src.composition.title",
+                                titleFallback: "Food Composition Database",
+                                sourceKey: "disc.src.composition.source",
+                                sourceFallback: "USDA National Nutrient Database",
+                                urlString: "https://www.ars.usda.gov/northeast-area/beltsville-md-bhnrc/beltsville-human-nutrition-research-center/methods-and-application-of-food-composition-laboratory/",
+                                descKey: "disc.src.composition.desc",
+                                descFallback: "Standard reference for nutrient content of foods"
                             )
                         }
                     }
@@ -94,7 +121,7 @@ struct HealthDisclaimerView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                         
-                                                VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text(loc("disc.feature.calories", "• Calorie Tracking: Estimates based on visual food analysis"))
                             Text(loc("disc.feature.macros", "• Nutritional Analysis: Macronutrient breakdown using AI image recognition"))
                             Text(loc("disc.feature.recommendations", "• Dietary Recommendations: General suggestions based on nutritional guidelines"))  
@@ -105,18 +132,18 @@ struct HealthDisclaimerView: View {
                         .font(.body)
                     }
                     
-                    Text(loc("disc.updated", "Last Updated:") + " " + Date().formatted(date: .abbreviated, time: .omitted))
+                    Text(lastUpdatedText)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 20)
                 }
                 .padding()
             }
-            .navigationTitle("Health Information")
+            .navigationTitle(loc("disc.nav", "Health Information"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(loc("common.done", "Done")) {
                         dismiss()
                     }
                 }
@@ -126,27 +153,30 @@ struct HealthDisclaimerView: View {
 }
 
 struct CitationView: View {
-    let title: String
-    let source: String
-    let url: String
-    let description: String
+    let titleKey: String
+    let titleFallback: String
+    let sourceKey: String
+    let sourceFallback: String
+    let urlString: String
+    let descKey: String
+    let descFallback: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+            Text(loc(titleKey, titleFallback))
                 .font(.subheadline)
                 .fontWeight(.medium)
             
-            Text(source)
+            Text(loc(sourceKey, sourceFallback))
                 .font(.caption)
                 .foregroundColor(.blue)
                 .onTapGesture {
-                    if let url = URL(string: url) {
-                        UIApplication.shared.open(url)
+                    if let link = URL(string: urlString) {
+                        UIApplication.shared.open(link)
                     }
                 }
             
-            Text(description)
+            Text(loc(descKey, descFallback))
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

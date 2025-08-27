@@ -69,6 +69,14 @@ struct ContentView: View {
     @State private var sugar: Double = 0
     private var hasMacrosData: Bool { (proteins + fats + carbs + sugar) > 0 }
     
+    private var localizedDateFormatter: DateFormatter {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: languageService.currentCode)
+        df.dateStyle = .medium
+        df.timeStyle = .none
+        return df
+    }
+
     var body: some View {
         ZStack {
             Color.black
@@ -247,7 +255,7 @@ struct ContentView: View {
         VStack(spacing: 4) {
             HStack(spacing: 8) {
                 VStack(spacing: 2) {
-                    Text(isViewingCustomDate ? currentViewingDate : dateFormatter.string(from: date))
+                    Text(isViewingCustomDate ? currentViewingDate : localizedDateFormatter.string(from: date))
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     
@@ -725,6 +733,7 @@ struct ContentView: View {
         let inputFormatter = DateFormatter()
         inputFormatter.dateFormat = "dd-MM-yyyy"
         let displayFormatter = DateFormatter()
+        displayFormatter.locale = Locale(identifier: languageService.currentCode)
         displayFormatter.dateStyle = .medium
         displayFormatter.timeStyle = .none
         
@@ -1161,12 +1170,7 @@ struct SolidDarkBlueButtonStyle: ButtonStyle {
     }
 }
 
-private let dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    formatter.timeStyle = .none
-    return formatter
-}()
+// removed legacy dateFormatter; using localizedDateFormatter bound to app language
 
 #Preview {
     ContentView()

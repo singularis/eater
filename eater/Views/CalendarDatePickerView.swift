@@ -14,7 +14,7 @@ struct CalendarDatePickerView: View {
                     .padding(.top)
                 
                 DatePicker(
-                    "Select a date",
+                    loc("calendar.selectdate", "Select Date"),
                     selection: $selectedDate,
                     in: ...Date(),
                     displayedComponents: [.date]
@@ -24,6 +24,12 @@ struct CalendarDatePickerView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(12)
                 .padding()
+                .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
+                .environment(\.calendar, {
+                    var cal = Calendar.current
+                    cal.locale = Locale(identifier: LanguageService.shared.currentCode)
+                    return cal
+                }())
                 
                 HStack(spacing: 20) {
                     Button(action: {

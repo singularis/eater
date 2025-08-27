@@ -9,8 +9,27 @@ struct AlcoholCalendarView: View {
     @State private var showDetailsAlert: Bool = false
     @State private var detailsAlertTitle: String = ""
     @State private var detailsAlertMessage: String = ""
-    private let calendar = Calendar.current
-    private let weekdaySymbols = ["S", "M", "T", "W", "T", "F", "S"]
+    private var locale: Locale { Locale(identifier: LanguageService.shared.currentCode) }
+    private var calendar: Calendar {
+        var cal = Calendar.current
+        cal.locale = locale
+        return cal
+    }
+    private var weekdaySymbols: [String] {
+        let df = DateFormatter()
+        df.locale = locale
+        let base = df.veryShortStandaloneWeekdaySymbols
+            ?? df.veryShortWeekdaySymbols
+            ?? df.shortStandaloneWeekdaySymbols
+            ?? df.shortWeekdaySymbols
+            ?? ["S","M","T","W","T","F","S"]
+        // Reorder according to firstWeekday (DateFormatter symbols are Sunday-first)
+        let first = max(1, min(7, calendar.firstWeekday))
+        if first == 1 { return base }
+        let head = Array(base[(first-1)...])
+        let tail = Array(base[..<(first-1)])
+        return head + tail
+    }
     
     var body: some View {
         VStack(spacing: 12) {
@@ -162,7 +181,8 @@ struct AlcoholCalendarView: View {
     
     private func monthTitle(for date: Date) -> String {
         let fmt = DateFormatter()
-        fmt.dateFormat = "LLLL yyyy"
+        fmt.locale = locale
+        fmt.setLocalizedDateFormatFromTemplate("LLLL yyyy")
         return fmt.string(from: date)
     }
     
@@ -175,7 +195,7 @@ struct AlcoholCalendarView: View {
         // Previous month padding
         if let prevMonth = calendar.date(byAdding: .month, value: -1, to: firstDay) {
             let prevRange = calendar.range(of: .day, in: .month, for: prevMonth) ?? 1..<31
-            let padding = (firstWeekday + 6) % 7 // make Monday=0 alignment if needed; here keep Sunday first
+            let padding = (firstWeekday + 6) % 7 // keep Sunday-first layout
             let prevMonthComponents = calendar.dateComponents([.year, .month], from: prevMonth)
             for i in 0..<padding {
                 let dayNum = prevRange.count - padding + 1 + i
@@ -258,11 +278,12 @@ struct AlcoholCalendarView: View {
         out.dateFormat = "dd-MM-yyyy"
         return (out.string(from: first), out.string(from: last))
     }
-
+    
     private func prettyDate(fromYYYYMMDD s: String) -> String {
         let inFmt = DateFormatter()
         inFmt.dateFormat = "yyyy-MM-dd"
         let outFmt = DateFormatter()
+        outFmt.locale = locale
         outFmt.dateStyle = .medium
         outFmt.timeStyle = .none
         if let d = inFmt.date(from: s) {
@@ -270,7 +291,7 @@ struct AlcoholCalendarView: View {
         }
         return s
     }
-
+    
     private func formattedEventsList(_ events: [Eater_AlcoholEvent]) -> String {
         let timeFmt = DateFormatter()
         timeFmt.dateFormat = "HH:mm"
