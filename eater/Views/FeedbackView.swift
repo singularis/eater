@@ -109,7 +109,7 @@ struct FeedbackView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
+                    Button(loc("common.close", "Close")) {
                         isPresented = false
                     }
                     .foregroundColor(.white)

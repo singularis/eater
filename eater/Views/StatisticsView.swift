@@ -10,13 +10,51 @@ struct StatisticsView: View {
     
     private let statisticsService = StatisticsService.shared
     
-    enum ChartType: String, CaseIterable {
-        case insights = "Insights"
-        case calories = "Calories"
-        case macros = "Macronutrients"
-        case personWeight = "Body Weight"
-        case foodWeight = "Food Weight"
-        case trends = "Trends"
+    enum ChartType: CaseIterable {
+        case insights
+        case calories
+        case macros
+        case personWeight
+        case foodWeight
+        case trends
+    }
+
+    private func localizedChartTypeName(_ type: ChartType) -> String {
+        switch type {
+        case .insights: return loc("stats.chart.insights", "Insights")
+        case .calories: return loc("stats.chart.calories", "Calories")
+        case .macros: return loc("stats.chart.macros", "Macronutrients")
+        case .personWeight: return loc("stats.chart.personweight", "Body Weight")
+        case .foodWeight: return loc("stats.chart.foodweight", "Food Weight")
+        case .trends: return loc("stats.chart.trends", "Trends")
+        }
+    }
+
+    private func localizedPeriod(_ period: StatisticsPeriod) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = .full
+        formatter.maximumUnitCount = 1
+        formatter.zeroFormattingBehavior = .dropAll
+        // Set locale via calendar
+        var cal = Calendar.current
+        cal.locale = Locale(identifier: LanguageService.shared.currentCode)
+        formatter.calendar = cal
+        var comps = DateComponents()
+        switch period {
+        case .week:
+            comps.day = 7
+            formatter.allowedUnits = [.day]
+        case .month:
+            comps.day = 30
+            formatter.allowedUnits = [.day]
+        case .twoMonths:
+            comps.month = 2
+            formatter.allowedUnits = [.month]
+        case .threeMonths:
+            comps.month = 3
+            formatter.allowedUnits = [.month]
+        }
+        return formatter.string(from: comps) ?? period.rawValue
     }
     
     var body: some View {
@@ -78,6 +116,7 @@ struct StatisticsView: View {
                 loadData()
             }
         }
+        .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
     }
     
     private var periodSelectionView: some View {
@@ -88,7 +127,7 @@ struct StatisticsView: View {
             
             Picker("Period", selection: $selectedPeriod) {
                 ForEach(StatisticsPeriod.allCases, id: \.self) { period in
-                    Text(period.rawValue).tag(period)
+                    Text(localizedPeriod(period)).tag(period)
                 }
             }
             .pickerStyle(SegmentedPickerStyle())
@@ -109,7 +148,7 @@ struct StatisticsView: View {
                             selectedChart = chartType
                         }
                     }) {
-                        Text(chartType.rawValue)
+                        Text(localizedChartTypeName(chartType))
                             .font(.caption)
                             .fontWeight(.semibold)
                             .padding(.horizontal, 12)
@@ -153,15 +192,15 @@ struct StatisticsView: View {
     private var caloriesChart: some View {
         Chart(statistics) { stat in
             LineMark(
-                x: .value("Date", stat.date),
-                y: .value("Calories", stat.totalCalories)
+                x: .value(loc("stats.axis.date", "Date"), stat.date),
+                y: .value(loc("stats.axis.calories", "Calories"), stat.totalCalories)
             )
             .foregroundStyle(Color.orange)
             .lineStyle(StrokeStyle(lineWidth: 2))
             
             PointMark(
-                x: .value("Date", stat.date),
-                y: .value("Calories", stat.totalCalories)
+                x: .value(loc("stats.axis.date", "Date"), stat.date),
+                y: .value(loc("stats.axis.calories", "Calories"), stat.totalCalories)
             )
             .foregroundStyle(Color.orange)
         }
@@ -223,7 +262,8 @@ struct StatisticsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             if validWeightStats.count == 1 {
                 let isToday = Calendar.current.isDate(validWeightStats[0].date, inSameDayAs: Date())
-                Text("\(isToday ? "Current" : "Latest") Weight: \(String(format: "%.1f", validWeightStats[0].personWeight)) kg")
+                let prefix = isToday ? loc("stats.weight.current", "Current") : loc("stats.weight.latest", "Latest")
+                Text("\(prefix) \(loc("stats.axis.weight", "Weight")): \(String(format: "%.1f", validWeightStats[0].personWeight)) \(loc("units.kg", "kg"))")
                     .font(.headline)
                     .foregroundColor(.white)
                     .padding(.bottom, 5)
@@ -232,22 +272,22 @@ struct StatisticsView: View {
             Chart(validWeightStats) { stat in
                 if validWeightStats.count == 1 {
                     PointMark(
-                        x: .value("Date", stat.date),
-                        y: .value("Weight", stat.personWeight)
+                        x: .value(loc("stats.axis.date", "Date"), stat.date),
+                        y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
                     )
                     .foregroundStyle(Color.green)
                     .symbolSize(100)
                 } else {
                     LineMark(
-                        x: .value("Date", stat.date),
-                        y: .value("Weight", stat.personWeight)
+                        x: .value(loc("stats.axis.date", "Date"), stat.date),
+                        y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
                     )
                     .foregroundStyle(Color.green)
                     .lineStyle(StrokeStyle(lineWidth: 2))
                     
                     PointMark(
-                        x: .value("Date", stat.date),
-                        y: .value("Weight", stat.personWeight)
+                        x: .value(loc("stats.axis.date", "Date"), stat.date),
+                        y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
                     )
                     .foregroundStyle(Color.green)
                 }
@@ -275,10 +315,10 @@ struct StatisticsView: View {
             .overlay(
                 validWeightStats.isEmpty ? 
                 VStack {
-                    Text("No weight data available")
+                    Text(loc("stats.weight.empty.title", "No weight data available"))
                         .foregroundColor(.gray)
                         .font(.subheadline)
-                    Text("Submit weight via camera or manual entry")
+                    Text(loc("stats.weight.empty.subtitle", "Submit weight via camera or manual entry"))
                         .foregroundColor(.gray)
                         .font(.caption)
                         .padding(.top, 2)
@@ -290,8 +330,8 @@ struct StatisticsView: View {
     private var foodWeightChart: some View {
         Chart(statistics) { stat in
             BarMark(
-                x: .value("Date", stat.date),
-                y: .value("Food Weight", stat.totalFoodWeight)
+                x: .value(loc("stats.axis.date", "Date"), stat.date),
+                y: .value(loc("stats.axis.foodweight", "Food Weight"), stat.totalFoodWeight)
             )
             .foregroundStyle(Color.blue)
         }
@@ -319,10 +359,10 @@ struct StatisticsView: View {
     private var macronutrientsChart: some View {
         let macroData = statistics.map { stat in
             [
-                ("Proteins", stat.proteins, Color.red),
-                ("Fats", stat.fats, Color.yellow),
-                ("Carbs", stat.carbohydrates, Color.blue),
-                ("Fiber", stat.fiber, Color.green)
+                (loc("stats.axis.proteins", "Proteins"), stat.proteins, Color.red),
+                (loc("stats.axis.fats", "Fats"), stat.fats, Color.yellow),
+                (loc("stats.axis.carbs", "Carbs"), stat.carbohydrates, Color.blue),
+                (loc("stats.axis.fiber", "Fiber"), stat.fiber, Color.green)
             ]
         }.flatMap { dayData in
             dayData.enumerated().map { index, macro in
@@ -338,26 +378,26 @@ struct StatisticsView: View {
         return VStack(spacing: 16) {
             Chart(statistics) { stat in
                 BarMark(
-                    x: .value("Date", stat.date),
-                    y: .value("Proteins", stat.proteins)
+                    x: .value(loc("stats.axis.date", "Date"), stat.date),
+                    y: .value(loc("stats.axis.proteins", "Proteins"), stat.proteins)
                 )
                 .foregroundStyle(Color.red)
                 
                 BarMark(
-                    x: .value("Date", stat.date),
-                    y: .value("Fats", stat.fats)
+                    x: .value(loc("stats.axis.date", "Date"), stat.date),
+                    y: .value(loc("stats.axis.fats", "Fats"), stat.fats)
                 )
                 .foregroundStyle(Color.yellow)
                 
                 BarMark(
-                    x: .value("Date", stat.date),
-                    y: .value("Carbs", stat.carbohydrates)
+                    x: .value(loc("stats.axis.date", "Date"), stat.date),
+                    y: .value(loc("stats.axis.carbs", "Carbs"), stat.carbohydrates)
                 )
                 .foregroundStyle(Color.blue)
                 
                 BarMark(
-                    x: .value("Date", stat.date),
-                    y: .value("Fiber", stat.fiber)
+                    x: .value(loc("stats.axis.date", "Date"), stat.date),
+                    y: .value(loc("stats.axis.fiber", "Fiber"), stat.fiber)
                 )
                 .foregroundStyle(Color.green)
             }
@@ -384,10 +424,10 @@ struct StatisticsView: View {
             // Legend
             HStack(spacing: 16) {
                 ForEach([
-                    ("Proteins", Color.red),
-                    ("Fats", Color.yellow),
-                    ("Carbs", Color.blue),
-                    ("Fiber", Color.green)
+                    (loc("stats.axis.proteins", "Proteins"), Color.red),
+                    (loc("stats.axis.fats", "Fats"), Color.yellow),
+                    (loc("stats.axis.carbs", "Carbs"), Color.blue),
+                    (loc("stats.axis.fiber", "Fiber"), Color.green)
                 ], id: \.0) { item in
                     HStack(spacing: 4) {
                         Circle()
@@ -407,16 +447,16 @@ struct StatisticsView: View {
         let trends = statisticsService.calculateTrends(from: statistics)
         
         return VStack(alignment: .leading, spacing: 15) {
-            Text("Trend Analysis")
+            Text(loc("stats.trend.title", "Trend Analysis"))
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
                 .padding(.bottom, 5)
             
             VStack(spacing: 12) {
-                trendCard(title: "Calories Trend", value: trends.caloriesTrend, unit: "kcal", color: .orange)
-                trendCard(title: "Body Weight Trend", value: trends.personWeightTrend, unit: "kg", color: .green)
-                trendCard(title: "Food Weight Trend", value: trends.weightTrend, unit: "g", color: .blue)
+                trendCard(title: loc("stats.trend.calories", "Calories Trend"), value: trends.caloriesTrend, unit: loc("units.kcal", "kcal"), color: .orange)
+                trendCard(title: loc("stats.trend.body_weight", "Body Weight Trend"), value: trends.personWeightTrend, unit: loc("units.kg", "kg"), color: .green)
+                trendCard(title: loc("stats.trend.food_weight", "Food Weight Trend"), value: trends.weightTrend, unit: loc("units.g", "g"), color: .blue)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -453,21 +493,21 @@ struct StatisticsView: View {
         
         return ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                Text("Insights Overview")
+                Text(loc("stats.insights.title", "Insights Overview"))
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .padding(.bottom, 5)
                 
                 VStack(spacing: 12) {
-                    insightCard(title: "Active Days", value: "\(validDays)/\(statistics.count)")
-                    insightCard(title: "Avg Daily Calories", value: "\(Int(averages.avgCalories)) kcal")
-                    insightCard(title: "Avg Food Weight", value: "\(Int(averages.avgWeight)) g")
-                    insightCard(title: "Avg Protein", value: "\(Int(averages.avgProteins)) g")
-                    insightCard(title: "Avg Fiber", value: "\(Int(averages.avgFiber)) g")
+                    insightCard(title: loc("stats.insights.active_days", "Active Days"), value: "\(validDays)/\(statistics.count)")
+                    insightCard(title: loc("stats.insights.avg_daily_calories", "Avg Daily Calories"), value: "\(Int(averages.avgCalories)) \(loc("units.kcal", "kcal"))")
+                    insightCard(title: loc("stats.insights.avg_food_weight", "Avg Food Weight"), value: "\(Int(averages.avgWeight)) \(loc("units.g", "g"))")
+                    insightCard(title: loc("stats.insights.avg_protein", "Avg Protein"), value: "\(Int(averages.avgProteins)) \(loc("units.g", "g"))")
+                    insightCard(title: loc("stats.insights.avg_fiber", "Avg Fiber"), value: "\(Int(averages.avgFiber)) \(loc("units.g", "g"))")
                     
                     if averages.avgPersonWeight > 0 {
-                        insightCard(title: "Avg Body Weight", value: String(format: "%.1f kg", averages.avgPersonWeight))
+                        insightCard(title: loc("stats.insights.avg_body_weight", "Avg Body Weight"), value: String(format: "%.1f %@", averages.avgPersonWeight, loc("units.kg", "kg")))
                     }
                 }
             }
@@ -502,16 +542,16 @@ struct StatisticsView: View {
         let averages = statisticsService.calculateAverages(from: statistics)
         
         return VStack(alignment: .leading, spacing: 6) {
-            Text("Summary (\(selectedPeriod.rawValue))")
+            Text(String(format: loc("stats.summary.title_format", "Summary (%@)"), localizedPeriod(selectedPeriod)))
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
-                summaryCard(title: "Avg Calories", value: "\(Int(averages.avgCalories))", subtitle: "kcal/day")
-                summaryCard(title: "Avg Food", value: "\(Int(averages.avgWeight))", subtitle: "g/day")
-                summaryCard(title: "Avg Protein", value: "\(Int(averages.avgProteins))", subtitle: "g/day")
-                summaryCard(title: "Avg Fiber", value: "\(Int(averages.avgFiber))", subtitle: "g/day")
+                summaryCard(title: loc("stats.summary.avg_calories", "Avg Calories"), value: "\(Int(averages.avgCalories))", subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.kcal", "kcal")))
+                summaryCard(title: loc("stats.summary.avg_food", "Avg Food"), value: "\(Int(averages.avgWeight))", subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.g", "g")))
+                summaryCard(title: loc("stats.summary.avg_protein", "Avg Protein"), value: "\(Int(averages.avgProteins))", subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.g", "g")))
+                summaryCard(title: loc("stats.summary.avg_fiber", "Avg Fiber"), value: "\(Int(averages.avgFiber))", subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.g", "g")))
             }
         }
         .padding(.horizontal, 10)
