@@ -262,7 +262,7 @@
   "units.cm": "cm",
   "units.g": "g",
   "units.gram_suffix": "g",
-  "units.kcal": "kcal",
+  "units.kcal": "キロカロリー",
   "units.kg": "kg",
   "units.per_day_format": "%@/日",
   "weight.invalid.msg": "キログラムで有効な体重を入力してください。",

@@ -262,7 +262,7 @@
   "units.cm": "سم",
   "units.g": "غ",
   "units.gram_suffix": "غ",
-  "units.kcal": "سعرة حرارية",
+  "units.kcal": "كيلوكالوري",
   "units.kg": "كغ",
   "units.per_day_format": "%@/اليوم",
   "weight.invalid.msg": "يرجى إدخال وزن صالح بالكيلوغرام.",

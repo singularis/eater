@@ -262,7 +262,7 @@
   "units.cm": "ซม.",
   "units.g": "ก.",
   "units.gram_suffix": "ก.",
-  "units.kcal": "แคลอรี่",
+  "units.kcal": "กิโลแคลอรี",
   "units.kg": "กก.",
   "units.per_day_format": "%@/วัน",
   "weight.invalid.msg": "กรุณาใส่น้ำหนักที่ถูกต้องเป็นกิโลกรัม",

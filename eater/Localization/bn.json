@@ -262,7 +262,7 @@
   "units.cm": "সেমি",
   "units.g": "গ্রাম",
   "units.gram_suffix": "গ্রাম",
-  "units.kcal": "কিক্যাল",
+  "units.kcal": "কিলোক্যালোরি",
   "units.kg": "কেজি",
   "units.per_day_format": "%@/দিন",
   "weight.invalid.msg": "অনুগ্রহ করে কিলোগ্রামে বৈধ ওজন প্রবেশ করান।",

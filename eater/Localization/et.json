@@ -73,7 +73,7 @@
   "health.invalid.msg": "Please provide valid values for height (cm), weight (kg), and age (years).",
   "health.invalid.title": "Invalid Health Data",
   "health.optimal_weight": "🎯 Optimal Weight",
-  "health.plan.title": "Your Plan",
+  "health.plan.title": "Sinu plaan",
   "health.update.title": "Update Your Health Data",
   "health.updated_plan": "Your Updated Plan",
   "health.weight": "Weight (kg):",

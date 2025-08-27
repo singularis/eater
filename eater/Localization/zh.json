@@ -263,7 +263,7 @@
   "units.g": "克",
   "units.gram_suffix": "克",
   "units.kcal": "千卡",
-  "units.kg": "公斤",
+  "units.kg": "千克",
   "units.per_day_format": "%@/天",
   "weight.invalid.msg": "请输入有效的公斤体重。",
   "weight.invalid.title": "无效体重",

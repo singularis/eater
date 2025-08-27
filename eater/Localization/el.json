@@ -263,7 +263,7 @@
   "units.g": "γρ",
   "units.gram_suffix": "γρ",
   "units.kcal": "kcal",
-  "units.kg": "κγ",
+  "units.kg": "kg",
   "units.per_day_format": "%@/ημέρα",
   "weight.invalid.msg": "Παρακαλώ εισάγετε έγκυρο βάρος σε κιλά.",
   "weight.invalid.title": "Μη Έγκυρο Βάρος",
