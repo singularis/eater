@@ -433,7 +433,7 @@ struct ContentView: View {
     
     private func caloriesButton(geo: GeometryProxy) -> some View {
         let adjustedSoftLimit = getAdjustedSoftLimit()
-        return Text("Calories: \(adjustedSoftLimit-caloriesLeft)")
+        return Text("\(loc("calories.label", "Calories")): \(adjustedSoftLimit - caloriesLeft)")
             .font(.system(size: 22, weight: .semibold, design: .rounded))
             .foregroundColor(getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit))
             .padding()
@@ -454,7 +454,7 @@ struct ContentView: View {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
             } else {
-                Text(LanguageService.shared.shortTrendLabel())
+                Text(languageService.shortTrendLabel())
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
             }

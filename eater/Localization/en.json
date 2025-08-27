@@ -6,6 +6,7 @@
   "calories.added.title": "Sport Calories Added",
   "calories.invalid.msg": "Please enter a valid number of calories burned.",
   "calories.invalid.title": "Invalid Calories",
+  "calories.label": "Calories",
   "camera.takefood": "Take Food Photo",
   "camera.unavailable.msg": "Your device does not have a camera.",
   "camera.unavailable.title": "Camera Unavailable",

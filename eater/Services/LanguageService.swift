@@ -178,10 +178,10 @@ final class LanguageService: ObservableObject {
         // Provide 4-character abbreviations per language for UI consistency.
         // Use local-script where clear; otherwise use a Latin abbreviation.
         let map: [String: String] = [
-            "ar": "ترند",   // widely used borrowed form
+            "ar": "ترند",
             "be": "ТРЭН",
             "bg": "ТРЕН",
-            "bn": "TRND",
+            "bn": "ট্রেন",
             "cs": "TREN",
             "da": "TREN",
             "de": "TREN",
@@ -191,16 +191,16 @@ final class LanguageService: ObservableObject {
             "et": "TREN",
             "fi": "TREN",
             "fr": "TEND",
-            "ga": "TREN",
-            "hi": "TRND",
+            "ga": "TREO",
+            "hi": "ट्रेंड",
             "hr": "TREN",
             "hu": "TREN",
             "it": "TEND",
-            "ja": "トレンド",
-            "ko": "TREN",
+            "ja": "トレ",
+            "ko": "트렌",
             "lt": "TEND",
             "lv": "TEND",
-            "mt": "TREN",
+            "mt": "TEND",
             "nl": "TREN",
             "pl": "TREN",
             "pt": "TEND",
@@ -208,12 +208,12 @@ final class LanguageService: ObservableObject {
             "sk": "TREN",
             "sl": "TREN",
             "sv": "TREN",
-            "th": "TREN",
+            "th": "เทรน",
             "tr": "EĞİL",
             "uk": "ТРЕН",
-            "ur": "TRND",
+            "ur": "رجح",
             "vi": "XUHU",
-            "zh": "TREN"
+            "zh": "趋势"
         ]
         return map[currentCode] ?? "TRND"
     }
