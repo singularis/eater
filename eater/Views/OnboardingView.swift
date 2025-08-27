@@ -17,6 +17,7 @@ struct OnboardingView: View {
     @EnvironmentObject var languageService: LanguageService
     @State private var selectedLanguageDisplay: String = ""
     @State private var selectedLanguageCode: String = ""
+    @State private var isApplyingLanguage: Bool = false
     
     // Health data collection state
     @State private var height: String = ""
@@ -209,9 +210,11 @@ struct OnboardingView: View {
             }
         }
         .onAppear {
-            // Preselect current app language
-            selectedLanguageCode = languageService.currentCode
-            selectedLanguageDisplay = languageService.nativeName(for: languageService.currentCode)
+            // Only set language selection if not already set
+            if selectedLanguageCode.isEmpty {
+                selectedLanguageCode = languageService.currentCode
+                selectedLanguageDisplay = languageService.nativeName(for: languageService.currentCode)
+            }
         }
         .alert(loc("onboarding.skip.title", "Skip Onboarding?"), isPresented: $showingSkipConfirmation) {
             Button(loc("onboarding.skip.continue", "Continue Tutorial"), role: .cancel) { }
@@ -678,9 +681,17 @@ struct OnboardingView: View {
                     Button(action: {
                         // Mark onboarding as seen when user completes it
                         hasSeenOnboarding = true
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            isPresented = false
+                        
+                        // Sync with backend if we haven't already
+                        if !selectedLanguageCode.isEmpty {
+                            // The language was already applied locally, just sync with backend now
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                languageService.setLanguage(code: selectedLanguageCode, syncWithBackend: true) { _ in }
+                            }
                         }
+                        
+                        // Close the onboarding
+                        isPresented = false
                     }) {
                         Text(loc("onboarding.getstarted", "Get Started"))
                             .font(.headline)
@@ -693,9 +704,17 @@ struct OnboardingView: View {
                     
                     Button(action: {
                         hasSeenOnboarding = true
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            isPresented = false
+                        
+                        // Sync with backend if we haven't already
+                        if !selectedLanguageCode.isEmpty {
+                            // The language was already applied locally, just sync with backend now
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                languageService.setLanguage(code: selectedLanguageCode, syncWithBackend: true) { _ in }
+                            }
                         }
+                        
+                        // Close the onboarding
+                        isPresented = false
                     }) {
                         Text(loc("onboarding.dontshowagain", "Don't show again"))
                             .font(.headline)
@@ -739,10 +758,20 @@ struct OnboardingView: View {
                     Spacer()
                     
                     Button(action: {
-                        // Apply selected language before proceeding
+                        // Apply selected language and advance
                         let lc = selectedLanguageCode.isEmpty ? languageService.currentCode : selectedLanguageCode
-                        languageService.setLanguage(code: lc, syncWithBackend: true) { _ in }
-                        withAnimation(.easeInOut(duration: 0.3)) {
+                        
+                        // Apply the language change immediately but without backend sync
+                        if lc != languageService.currentCode {
+                            // Clear the localization cache to force reload with new language
+                            languageService.setLanguage(code: lc, syncWithBackend: false) { _ in }
+                        }
+                        
+                        // Store the selection for later backend sync
+                        selectedLanguageCode = lc
+                        
+                        // Small delay to let the language change settle, then advance
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             currentStep += 1
                         }
                     }) {

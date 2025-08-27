@@ -223,7 +223,10 @@ struct UserProfileView: View {
                                     Text(loc("profile.language", "Language"))
                                         .font(.caption)
                                         .foregroundColor(.gray)
-                                    Button(action: { showLanguagePicker = true }) {
+                                    Button(action: {
+                                        print("[UserProfileView] Language button tapped code=\(languageService.currentCode) name=\(languageService.currentDisplayName)")
+                                        showLanguagePicker = true
+                                    }) {
                                         let flag = languageService.flagEmoji(forLanguageCode: languageService.currentCode)
                                         HStack {
                                             Text(flag)
@@ -339,6 +342,7 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
+                    .interactiveDismissDisabled()
             }
             .sheet(isPresented: $showHealthSettings) {
                 HealthSettingsView(isPresented: $showHealthSettings)
@@ -360,7 +364,8 @@ struct UserProfileView: View {
             .onAppear {
                 loadHealthData()
             }
-            .id(languageService.currentCode)
+            // Avoid remounting the entire view while sheets are transitioning
+            // Removing id(languageService.currentCode) prevents presentation conflicts
         }
     }
     

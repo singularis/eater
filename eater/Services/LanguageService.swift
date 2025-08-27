@@ -14,6 +14,7 @@ final class LanguageService: ObservableObject {
     private init() {
         // Load stored or detect device preferred language
         if let stored = defaults.string(forKey: languageKey), !stored.isEmpty {
+            print("[LanguageService] init: using stored code=\(stored)")
             currentCode = stored
             // Prefer native name for consistent display across app restarts
             let native = LanguageService.nativeNameStatic(for: stored)
@@ -22,12 +23,14 @@ final class LanguageService: ObservableObject {
             defaults.synchronize()
         } else if let deviceCode = Locale.preferredLanguages.first.flatMap({ Locale(identifier: $0).language.languageCode?.identifier }) {
             let normalized = LanguageService.normalize(code: deviceCode)
+            print("[LanguageService] init: using device preferred code=\(deviceCode) normalized=\(normalized)")
             currentCode = normalized
             currentDisplayName = LanguageService.nativeNameStatic(for: normalized)
             defaults.set(normalized, forKey: languageKey)
             defaults.set(currentDisplayName, forKey: displayNameKey)
             defaults.synchronize()
         } else {
+            print("[LanguageService] init: fallback to en")
             currentCode = "en"
             currentDisplayName = "English"
         }
@@ -96,6 +99,7 @@ final class LanguageService: ObservableObject {
 
     func setLanguage(code: String, displayName: String? = nil, syncWithBackend: Bool = true, completion: ((Bool) -> Void)? = nil) {
         let normalized = LanguageService.normalize(code: code)
+        print("[LanguageService] setLanguage requested code=\(code) normalized=\(normalized) syncWithBackend=\(syncWithBackend)")
         DispatchQueue.main.async {
             self.objectWillChange.send()
             self.currentCode = normalized
@@ -104,16 +108,21 @@ final class LanguageService: ObservableObject {
             self.defaults.set(normalized, forKey: self.languageKey)
             self.defaults.set(self.currentDisplayName, forKey: self.displayNameKey)
             self.defaults.synchronize()
+            print("[LanguageService] setLanguage updated state code=\(self.currentCode) displayName=\(self.currentDisplayName)")
         }
 
         guard syncWithBackend, let email = UserDefaults.standard.string(forKey: "user_email") else {
+            print("[LanguageService] setLanguage skipping backend sync (no email or disabled)")
             completion?(true)
             return
         }
+        print("[LanguageService] setLanguage calling backend for email=\(email)")
         GRPCService().setLanguage(userEmail: email, languageCode: normalized) { success in
+            print("[LanguageService] backend setLanguage finished success=\(success)")
             if !success {
                 // Fallback to English
                 DispatchQueue.main.async {
+                    print("[LanguageService] backend failed, falling back to en")
                     self.currentCode = "en"
                     self.currentDisplayName = self.nativeName(for: "en")
                     self.defaults.set("en", forKey: self.languageKey)
@@ -121,7 +130,7 @@ final class LanguageService: ObservableObject {
                     self.defaults.synchronize()
                 }
             } else {
-                // removed debug print
+                // success
             }
             completion?(success)
         }
