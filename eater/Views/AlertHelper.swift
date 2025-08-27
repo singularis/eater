@@ -95,11 +95,15 @@ class AlertHelper {
     }
     
     static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
-        let disclaimerText = "\n\n⚠️ HEALTH DISCLAIMER:\nThis information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.\n\nSources: USDA FoodData Central, Dietary Guidelines for Americans"
-        
+        let header = loc("alert.health.disclaimer.header", "⚠️ HEALTH DISCLAIMER:")
+        let body = loc("alert.health.disclaimer.body", "This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.")
+        let sourcesLabel = loc("alert.health.sources.label", "Sources:")
+        let sourceUSDA = loc("alert.health.sources.usda", "USDA FoodData Central")
+        let sourceGuidelines = loc("alert.health.sources.guidelines", "Dietary Guidelines for Americans")
+        let disclaimerText = "\n\n" + header + "\n" + body + "\n\n" + sourcesLabel + " " + sourceUSDA + ", " + sourceGuidelines
         let fullMessage = recommendation + disclaimerText
-        
-        showAlert(title: "Health Recommendation", message: fullMessage, completion: completion)
+        let title = loc("health.recommendation.title", "Health Recommendation")
+        showAlert(title: title, message: fullMessage, completion: completion)
     }
     
     static func showPortionSelectionAlert(foodName: String, originalWeight: Int, time: Int64, onPortionSelected: @escaping (Int32) -> Void, onShareSuccess: (() -> Void)? = nil) {
@@ -204,7 +208,8 @@ private class CustomPortionViewController: UIViewController {
         
         // Add cancel button
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .cancel,
+            title: loc("common.cancel", "Cancel"),
+            style: .plain,
             target: self,
             action: #selector(cancelTapped)
         )
@@ -243,7 +248,8 @@ private class CustomPortionViewController: UIViewController {
         for percentage in percentageOptions {
             let calculatedWeight = Int(Double(originalWeight) * Double(percentage) / 100.0)
             let button = UIButton(type: .system)
-            button.setTitle("\(percentage)% (\(calculatedWeight)g)", for: .normal)
+            let optionTitle = String(format: loc("portion.custom.option", "%d%% (%dg)"), percentage, calculatedWeight)
+            button.setTitle(optionTitle, for: .normal)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
             button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
             button.layer.cornerRadius = 12

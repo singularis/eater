@@ -124,9 +124,9 @@ class GRPCService {
                             if lowerText.contains("error") || lowerText.contains("not a") || lowerText.contains("invalid") {
                                 DispatchQueue.main.async {
                                     if photoType == "weight_prompt" {
-                                        AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on")
+                                        AlertHelper.showAlert(title: loc("error.scale.title", "Scale Not Recognized"), message: loc("error.scale.msg", "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on"))
                                     } else {
-                                        AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                                        AlertHelper.showAlert(title: loc("error.food.title", "Food Not Recognized"), message: loc("error.food.msg", "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible."))
                                     }
                                 }
                                 completion(false)
@@ -148,20 +148,24 @@ class GRPCService {
                                 // Weight processing failed
                                 if let data = data, let responseText = String(data: data, encoding: .utf8) {
                                     print("📱 ERROR: Weight error with response: \(responseText)")
-                                    AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on\n\nError: \(responseText)")
+                                    let base = loc("error.scale.msg", "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on")
+                                    let msg = base + "\n\n" + loc("common.error", "Error") + ": " + responseText
+                                    AlertHelper.showAlert(title: loc("error.scale.title", "Scale Not Recognized"), message: msg)
                                 } else {
                                     print("📱 ERROR: Weight error without response text")
-                                    AlertHelper.showAlert(title: "Scale Not Recognized", message: "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on")
+                                    AlertHelper.showAlert(title: loc("error.scale.title", "Scale Not Recognized"), message: loc("error.scale.msg", "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on"))
                                 }
                             } else {
                                 print("📱 ERROR: Food prompt error (photoType: \(photoType))")
                                 // Food processing failed - ALWAYS show popup for non-2xx
                                 if let data = data, let responseText = String(data: data, encoding: .utf8) {
                                     print("📱 ERROR: Food error with response: \(responseText)")
-                                    AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.\n\nError: \(responseText)")
+                                    let base = loc("error.food.msg", "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                                    let msg = base + "\n\n" + loc("common.error", "Error") + ": " + responseText
+                                    AlertHelper.showAlert(title: loc("error.food.title", "Food Not Recognized"), message: msg)
                                 } else {
                                     print("📱 ERROR: Food error without response text")
-                                    AlertHelper.showAlert(title: "Food Not Recognized", message: "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible.")
+                                    AlertHelper.showAlert(title: loc("error.food.title", "Food Not Recognized"), message: loc("error.food.msg", "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible."))
                                 }
                             }
                             print("📱 ERROR: Alert should have been triggered!")

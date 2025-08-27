@@ -175,24 +175,91 @@ final class LanguageService: ObservableObject {
 
     // Short label for Trend: must be 4 letters, language aware
     func shortTrendLabel() -> String {
+        // Provide 4-character abbreviations per language for UI consistency.
+        // Use local-script where clear; otherwise use a Latin abbreviation.
         let map: [String: String] = [
-            "en": "Tend",
-            "es": "Tend",
-            "fr": "Tend",
-            "de": "Tend",
-            "it": "Tend",
-            "pt": "Tend",
-            "ru": "Tend",
-            "uk": "Tend",
-            "ja": "Tend",
-            "zh": "Tend",
-            "ar": "Tend"
+            "ar": "ترند",   // widely used borrowed form
+            "be": "ТРЭН",
+            "bg": "ТРЕН",
+            "bn": "TRND",
+            "cs": "TREN",
+            "da": "TREN",
+            "de": "TREN",
+            "el": "ΤΑΣΗ",
+            "en": "TRND",
+            "es": "TEND",
+            "et": "TREN",
+            "fi": "TREN",
+            "fr": "TEND",
+            "ga": "TREN",
+            "hi": "TRND",
+            "hr": "TREN",
+            "hu": "TREN",
+            "it": "TEND",
+            "ja": "トレンド",
+            "ko": "TREN",
+            "lt": "TEND",
+            "lv": "TEND",
+            "mt": "TREN",
+            "nl": "TREN",
+            "pl": "TREN",
+            "pt": "TEND",
+            "ro": "TEND",
+            "sk": "TREN",
+            "sl": "TREN",
+            "sv": "TREN",
+            "th": "TREN",
+            "tr": "EĞİL",
+            "uk": "ТРЕН",
+            "ur": "TRND",
+            "vi": "XUHU",
+            "zh": "TREN"
         ]
-        let label = map[currentCode] ?? "Tend"
-        if label.count == 4 { return label }
-        // Ensure 4 characters for consistency
-        let four = String(label.prefix(4))
-        return four.count == 4 ? four : "Tend"
+        return map[currentCode] ?? "TRND"
+    }
+
+    // 3-letter macro abbreviations by language (now driven by localization with fallback)
+    private func enforce3(_ s: String, fallback: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.count == 3 { return t }
+        if t.count > 3 { return String(t.prefix(3)) }
+        return fallback
+    }
+
+    func shortProteinLabel() -> String {
+        let localized = loc("macro.pro", "PRO")
+        if localized != "PRO" { return enforce3(localized, fallback: "PRO") }
+        let map: [String: String] = [
+            "ar": "برو","be": "БЯЛ","bg": "БЕЛ","cs": "BIL","da": "PRO","de": "EIW","el": "ΠΡΩ","en": "PRO","es": "PRO","et": "PRO","fi": "PRO","fr": "PRO","ga": "PRO","hr": "PRO","hu": "FEH","it": "PRO","ja": "PRO","ko": "PRO","lt": "BAL","lv": "OLB","mt": "PRO","nl": "EIW","pl": "BIA","pt": "PRO","ro": "PRO","sk": "BIE","sl": "BEL","sv": "PRO","th": "PRO","tr": "PRO","uk": "БІЛ","ur": "PRO","vi": "PRO","zh": "PRO"
+        ]
+        return (map[currentCode] ?? "PRO")
+    }
+
+    func shortFatLabel() -> String {
+        let localized = loc("macro.fat", "FAT")
+        if localized != "FAT" { return enforce3(localized, fallback: "FAT") }
+        let map: [String: String] = [
+            "ar": "دهو","be": "ТЛУ","bg": "МАЗ","cs": "TUK","da": "FED","de": "FET","el": "ΛΙΠ","en": "FAT","es": "GRA","et": "RAS","fi": "RAS","fr": "LIP","ga": "SAI","hr": "MAS","hu": "ZSI","it": "GRS","ja": "FAT","ko": "FAT","lt": "RIE","lv": "TAU","mt": "XAĦ","nl": "VET","pl": "TŁU","pt": "GRA","ro": "GRA","sk": "TUK","sl": "MAŠ","sv": "FET","th": "FAT","tr": "YAĞ","uk": "ЖИР","ur": "FAT","vi": "BÉO","zh": "FAT"
+        ]
+        return (map[currentCode] ?? "FAT")
+    }
+
+    func shortCarbLabel() -> String {
+        let localized = loc("macro.car", "CAR")
+        if localized != "CAR" { return enforce3(localized, fallback: "CAR") }
+        let map: [String: String] = [
+            "ar": "كرب","be": "ВУГ","bg": "ВЪГ","cs": "SAC","da": "KUL","de": "KOH","el": "ΥΔΑ","en": "CAR","es": "CAR","et": "SÜS","fi": "HII","fr": "GLU","ga": "CAR","hr": "UGL","hu": "SZÉ","it": "CAR","ja": "CAR","ko": "CAR","lt": "ANG","lv": "OGL","mt": "KAR","nl": "KOO","pl": "WEG","pt": "CAR","ro": "CAR","sk": "SAC","sl": "OGL","sv": "KOL","th": "CAR","tr": "KAR","uk": "ВУГ","ur": "CAR","vi": "CAR","zh": "CAR"
+        ]
+        return (map[currentCode] ?? "CAR")
+    }
+
+    func shortSugarLabel() -> String {
+        let localized = loc("macro.sug", "SUG")
+        if localized != "SUG" { return enforce3(localized, fallback: "SUG") }
+        let map: [String: String] = [
+            "ar": "سكر","be": "ЦУК","bg": "ЗАХ","cs": "CUK","da": "SUK","de": "ZUC","el": "ΣΑΚ","en": "SUG","es": "AZU","et": "SUH","fi": "SOK","fr": "SUC","ga": "SIÚ","hr": "ŠEĆ","hu": "CUK","it": "ZUC","ja": "SUG","ko": "SUG","lt": "CUK","lv": "CUK","mt": "ZOK","nl": "SUI","pl": "CUK","pt": "AÇU","ro": "ZAH","sk": "CUK","sl": "SLA","sv": "SOC","th": "SUG","tr": "ŞEK","uk": "ЦУК","ur": "SUG","vi": "SUG","zh": "SUG"
+        ]
+        return (map[currentCode] ?? "SUG")
     }
 
     func flagEmoji(forLanguageCode code: String) -> String {

@@ -69,7 +69,7 @@ struct WeightCameraView: UIViewControllerRepresentable {
             activityIndicator.startAnimating()
             
             let label = UILabel()
-            label.text = "Reading weight scale..."
+            label.text = loc("loading.scale", "Reading weight scale...")
             label.textColor = .white
             label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
             label.textAlignment = .center

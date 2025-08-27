@@ -178,8 +178,8 @@ struct ContentView: View {
                     .opacity(showOnboarding ? 1 : 0)
             )
             
-            LoadingOverlay(isVisible: isLoadingData, message: "Loading food data...")
-            LoadingOverlay(isVisible: isLoadingFoodPhoto, message: "Analyzing food photo...")
+            LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
+            LoadingOverlay(isVisible: isLoadingFoodPhoto, message: loc("loading.photo", "Analyzing food photo..."))
         }
         .id(languageService.currentCode)
     }
@@ -504,7 +504,15 @@ struct ContentView: View {
     
     private func formattedMacrosLine() -> String {
         func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
-        return "PRO " + fmt1(proteins) + "g • FAT " + fmt1(fats) + "g • CARB " + fmt1(carbs) + "g • SUG " + fmt1(sugar) + "g"
+        let pro = LanguageService.shared.shortProteinLabel()
+        let fat = LanguageService.shared.shortFatLabel()
+        let car = LanguageService.shared.shortCarbLabel()
+        let sug = LanguageService.shared.shortSugarLabel()
+        let grams = loc("units.g", "g")
+        return pro + " " + fmt1(proteins) + grams + " • " +
+               fat + " " + fmt1(fats) + grams + " • " +
+               car + " " + fmt1(carbs) + grams + " • " +
+               sug + " " + fmt1(sugar) + grams
     }
     
     private var cameraButtonView: some View {
