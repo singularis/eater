@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dก.) - สามในสี่",
   "portion.custom": "กำหนดเอง...",
   "portion.custom.msg": "เลือกปริมาณ '%@' ที่คุณกิน:\nน้ำหนักเดิม: %dก.",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dก.)",
   "portion.custom.title": "ส่วนอาหารกำหนดเอง",
   "portion.modify.msg": "คุณกิน '%@' จริงๆ เท่าไหร่?\nน้ำหนักเดิม: %dก.",
   "portion.modify.need_login": "ไม่สามารถแก้ไขส่วนอาหารได้ กรุณาเข้าสู่ระบบใหม่",

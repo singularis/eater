@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dг) - Тры чвэрці",
   "portion.custom": "Наладжваемы...",
   "portion.custom.msg": "Выберыце колькасць '%@', якую вы з'елі:\nПачатковая вага: %dг",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dг)",
   "portion.custom.title": "Наладжваемая порцыя",
   "portion.modify.msg": "Колькі з '%@' вы сапраўды з'елі?\nПачатковая вага: %dг",
   "portion.modify.need_login": "Немагчыма змяніць порцыю ежы. Калі ласка, увайдзіце зноў.",

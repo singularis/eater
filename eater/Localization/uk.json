@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dг) - Три чверті",
   "portion.custom": "Користувацька...",
   "portion.custom.msg": "Оберіть кількість '%@', яку ви з'їли:\nПочаткова вага: %dг",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dг)",
   "portion.custom.title": "Користувацька Порція",
   "portion.modify.msg": "Скільки з '%@' ви фактично з'їли?\nПочаткова вага: %dг",
   "portion.modify.need_login": "Не вдається змінити порцію їжі. Будь ласка, увійдіть знову.",

@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dग्राम) - तीन चौथाई",
   "portion.custom": "कस्टम...",
   "portion.custom.msg": "आपने जो '%@' खाया उसकी मात्रा चुनें:\nमूल वजन: %dग्राम",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dग्राम)",
   "portion.custom.title": "कस्टम हिस्सा",
   "portion.modify.msg": "आपने '%@' का कितना हिस्सा वास्तव में खाया?\nमूल वजन: %dग्राम",
   "portion.modify.need_login": "भोजन का हिस्सा संशोधित नहीं कर सकते। कृपया फिर से लॉगिन करें।",

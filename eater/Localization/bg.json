@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dг) - Три четвърти",
   "portion.custom": "Персонализирано...",
   "portion.custom.msg": "Изберете количеството '%@' което изядохте:\nОригинално тегло: %dг",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dг)",
   "portion.custom.title": "Персонализирана Порция",
   "portion.modify.msg": "Колко от '%@' наистина изядохте?\nОригинално тегло: %dг",
   "portion.modify.need_login": "Не може да се промени порцията храна. Моля, влезте отново.",

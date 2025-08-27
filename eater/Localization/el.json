@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dγρ) - Τρία τέταρτα",
   "portion.custom": "Προσαρμοσμένο...",
   "portion.custom.msg": "Επιλέξτε την ποσότητα '%@' που φάγατε:\nΑρχικό βάρος: %dγρ",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dγρ)",
   "portion.custom.title": "Προσαρμοσμένη Μερίδα",
   "portion.modify.msg": "Πόσο από το '%@' φάγατε πραγματικά;\nΑρχικό βάρος: %dγρ",
   "portion.modify.need_login": "Δεν είναι δυνατή η τροποποίηση της μερίδας φαγητού. Παρακαλώ συνδεθείτε ξανά.",

@@ -200,7 +200,7 @@
   "portion.75": "75%% (%d克) - 四分之三",
   "portion.custom": "自定义...",
   "portion.custom.msg": "选择您吃了多少 '%@'：\n原始重量：%d克",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%d克)",
   "portion.custom.title": "自定义份量",
   "portion.modify.msg": "您实际吃了多少 '%@'？\n原始重量：%d克",
   "portion.modify.need_login": "无法修改食物份量。请重新登录。",

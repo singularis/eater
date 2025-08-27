@@ -200,7 +200,7 @@
   "portion.75": "75%% (%dغ) - ثلاثة أرباع",
   "portion.custom": "مخصص...",
   "portion.custom.msg": "اختر كمية '%@' التي أكلتها:\nالوزن الأصلي: %dغ",
-  "portion.custom.option": "%d%% (%dg)",
+  "portion.custom.option": "%d%% (%dغ)",
   "portion.custom.title": "حصة مخصصة",
   "portion.modify.msg": "كم من '%@' أكلت فعلياً؟\nالوزن الأصلي: %dغ",
   "portion.modify.need_login": "لا يمكن تعديل حصة الطعام. يرجى تسجيل الدخول مرة أخرى.",
