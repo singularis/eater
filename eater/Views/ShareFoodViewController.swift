@@ -24,9 +24,9 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        title = "Share \(foodName)"
+        title = String(format: loc("share.title", "Share %@"), foodName)
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeTapped))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Add Friend", style: .plain, target: self, action: #selector(addFriendTapped))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: loc("friends.add", "Add Friend"), style: .plain, target: self, action: #selector(addFriendTapped))
 
         tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -92,7 +92,7 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     private func addLoadMoreIfNeeded() {
         if emails.count < totalCount {
             let footer = UIButton(type: .system)
-            footer.setTitle("More friends", for: .normal)
+            footer.setTitle(loc("friends.more", "More friends"), for: .normal)
             footer.addTarget(self, action: #selector(loadMoreTapped), for: .touchUpInside)
             footer.contentEdgeInsets = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
             footer.setTitleColor(view.tintColor, for: .normal)
