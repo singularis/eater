@@ -317,7 +317,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
             activityIndicator.startAnimating()
             
             let label = UILabel()
-            label.text = "Analyzing food photo..."
+            label.text = (loc("loading.photo", "Analyzing food photo..."))
             label.textColor = .white
             label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
             label.textAlignment = .center
