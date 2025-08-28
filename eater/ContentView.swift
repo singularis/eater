@@ -504,10 +504,10 @@ struct ContentView: View {
     
     private func formattedMacrosLine() -> String {
         func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
-        let pro = LanguageService.shared.shortProteinLabel()
-        let fat = LanguageService.shared.shortFatLabel()
-        let car = LanguageService.shared.shortCarbLabel()
-        let sug = LanguageService.shared.shortSugarLabel()
+        let pro = loc("macro.pro", "PRO")
+        let fat = loc("macro.fat", "FAT")
+        let car = loc("macro.car", "CAR")
+        let sug = loc("macro.sug", "SUG")
         let grams = loc("units.g", "g")
         return pro + " " + fmt1(proteins) + grams + " • " +
                fat + " " + fmt1(fats) + grams + " • " +

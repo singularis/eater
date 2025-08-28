@@ -50,7 +50,7 @@ struct RecommendationView: View {
                         .foregroundColor(.secondary)
                     }
                     
-                    Text(loc("rec.generated_on", "Generated on:") + " " + Date().formatted(date: .abbreviated, time: .shortened))
+                    Text(loc("rec.generated_on", "Generated on:") + " " + formatLocalizedDate(Date()))
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 20)
@@ -67,6 +67,14 @@ struct RecommendationView: View {
                 }
             }
         }
+    }
+    
+    private func formatLocalizedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: LanguageService.shared.currentCode)
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 
