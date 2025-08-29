@@ -33,6 +33,6 @@ struct LoadingOverlay: View {
 #Preview {
     ZStack {
         Color.gray
-        LoadingOverlay(isVisible: true, message: "Loading food data...")
+        LoadingOverlay(isVisible: true, message: loc("loading.food", "Loading food data..."))
     }
 } 
