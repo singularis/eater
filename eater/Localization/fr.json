@@ -148,6 +148,7 @@
   "nav.profile": "Profil",
   "nav.statistics": "Statistiques",
   "notif.title": "Rappel Eateria",
+  "notif.body": "Rappel de photographier votre nourriture pour maintenir des habitudes saines.",
   "onboarding.alcohol.desc": "Consultez votre historique de consommation d’alcool sur un calendrier. Des points marquent les jours où vous avez bu (plus le point est gros, plus vous avez bu). Le verre en haut change de couleur selon la récence : rouge (aujourd’hui/dernière semaine), jaune (le mois dernier), vert (plus ancien). Touchez-le pour ouvrir le calendrier.",
   "onboarding.alcohol.title": "Suivi de l’alcool 🍷",
   "onboarding.complete.desc": "Prêt à commencer ? Retrouvez le tutoriel dans les réglages à tout moment.",

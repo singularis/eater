@@ -148,6 +148,7 @@
   "nav.profile": "Profile",
   "nav.statistics": "Statistics",
   "notif.title": "Eateria Reminder",
+  "notif.body": "Reminder to snap your food to maintain healthy habits.",
   "onboarding.alcohol.desc": "See your alcohol history on a calendar. Dots mark days you drank (bigger dot = more drinks). The top wineglass changes color by recency: red (today/last week), yellow (last month), green (older). Tap it to open the calendar.",
   "onboarding.alcohol.title": "Alcohol Tracking 🍷",
   "onboarding.complete.desc": "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed.",

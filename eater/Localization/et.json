@@ -148,6 +148,7 @@
   "nav.profile": "Profiil",
   "nav.statistics": "Statistika",
   "notif.title": "Eateria Meeldetuletus",
+  "notif.body": "Meeldetuletus toidu pildistamiseks tervete harjumuste säilitamiseks.",
   "onboarding.alcohol.desc": "Vaata oma alkoholitarbimise ajalugu kalendris. Täpid märgivad päevi, mil jõid (suurem täpp = rohkem jooke). Ülemine veinipokaal muudab värvi hiljutisuse järgi: punane (täna/eelmine nädal), kollane (eelmine kuu), roheline (vanem). Puuduta seda kalendri avamiseks.",
   "onboarding.alcohol.title": "Alkoholi jälgimine 🍷",
   "onboarding.complete.desc": "Valmis alustama oma tervislikku teekonda? Vajadusel saad selle õpetuse alati oma profiili seadetes uuesti avada.",

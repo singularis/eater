@@ -148,6 +148,7 @@
   "nav.profile": "Profil",
   "nav.statistics": "Statistik",
   "notif.title": "Eateria Påminnelse",
+  "notif.body": "Påminnelse att fotografera din mat för att behålla hälsosamma vanor.",
   "onboarding.alcohol.desc": "Se din alkoholhistorik i en kalender. Prickar markerar dagar du drack (större prick = fler drinkar). Det översta vinglaset ändrar färg efter hur nyligen: rött (idag/senaste veckan), gult (senaste månaden), grönt (äldre). Tryck på det för att öppna kalendern.",
   "onboarding.alcohol.title": "Alkoholspårning 🍷",
   "onboarding.complete.desc": "Redo att börja din hälsosamma resa? Du kan alltid återvända till denna handledning från dina profilinställningar vid behov.",

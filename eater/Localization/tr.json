@@ -148,6 +148,7 @@
   "nav.profile": "Profil",
   "nav.statistics": "İstatistikler",
   "notif.title": "Eateria Hatırlatması",
+  "notif.body": "Sağlıklı alışkanlıkları korumak için yemeğinizi fotoğraflama hatırlatması.",
   "onboarding.alcohol.desc": "Alkol geçmişinizi bir takvimde görün. Noktalar içtiğiniz günleri gösterir (büyük nokta = daha fazla içki). Üstteki kadehin rengi yakınlığa göre değişir: kırmızı (bugün/son hafta), sarı (geçen ay), yeşil (daha eski). Takvimi açmak için ona dokunun.",
   "onboarding.alcohol.title": "Alkol Takibi 🍷",
   "onboarding.complete.desc": "Sağlıklı yolculuğunuza başlamaya hazır mısınız? Gerekirse bu eğitime profil ayarlarınızdan her zaman geri dönebilirsiniz.",

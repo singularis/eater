@@ -148,6 +148,7 @@
   "nav.profile": "Profiili",
   "nav.statistics": "Tilastot",
   "notif.title": "Eateria-muistutus",
+  "notif.body": "Muistutus ottaa kuva ruoastasi terveellisten tapojen ylläpitämiseksi.",
   "onboarding.alcohol.desc": "Näe alkoholihistoriasi kalenterista. Pisteet merkitsevät päiviä, jolloin joit (isompi piste = enemmän juomia). Yläreunan viinilasi vaihtaa väriä ajankohtaisuuden mukaan: punainen (tänään/viime viikko), keltainen (viime kuukausi), vihreä (vanhempi). Napauta sitä avataksesi kalenterin.",
   "onboarding.alcohol.title": "Alkoholin seuranta 🍷",
   "onboarding.complete.desc": "Valmis aloittamaan? Voit avata tämän opastuksen uudelleen profiiliasetuksista, jos tarvitset.",

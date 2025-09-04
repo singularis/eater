@@ -148,6 +148,7 @@
   "nav.profile": "Profils",
   "nav.statistics": "Statistika",
   "notif.title": "Eateria atgādinājums",
+  "notif.body": "Atgādinājums fotografēt ēdienu veselīgu paradumu uzturēšanai.",
   "onboarding.alcohol.desc": "Skatiet alkohola vēsturi kalendārā. Punkti atzīmē dienas, kad dzērāt (lielāks punkts = vairāk dzērienu). Augšā esošās vīna glāzes krāsa mainās atkarībā no nesenuma: sarkana (šodien/pēdējā nedēļa), dzeltena (pēdējais mēnesis), zaļa (senāk). Pieskarieties tai, lai atvērtu kalendāru.",
   "onboarding.alcohol.title": "Alkohola uzskaite 🍷",
   "onboarding.complete.desc": "Vai gatavi sākt ceļu uz veselīgākiem paradumiem? Ja vajag, šo pamācību varat vēlāk atvērt profila iestatījumos.",

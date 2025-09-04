@@ -148,6 +148,7 @@
   "nav.profile": "프로필",
   "nav.statistics": "통계",
   "notif.title": "Eateria 알림",
+  "notif.body": "건강한 습관을 유지하기 위해 음식 사진을 찍는 것을 잊지 마세요.",
   "onboarding.alcohol.desc": "달력에서 음주 기록을 확인하세요. 점으로 마신 날이 표시됩니다(점이 클수록 더 많이 마신 날입니다). 상단의 와인잔 아이콘은 최근 정도에 따라 색이 바뀝니다: 빨강(오늘/지난주), 노랑(지난달), 초록(그 이전). 탭하면 달력이 열립니다.",
   "onboarding.alcohol.title": "알코올 추적 🍷",
   "onboarding.complete.desc": "시작할 준비가 되셨나요? 설정에서 언제든지 튜토리얼 확인 가능.",

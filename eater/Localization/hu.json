@@ -148,6 +148,7 @@
   "nav.profile": "Profil",
   "nav.statistics": "Statisztikák",
   "notif.title": "Eateria emlékeztető",
+  "notif.body": "Emlékeztető az ételek lefotózására az egészséges szokások fennállása érdekében.",
   "onboarding.alcohol.desc": "Nézd meg az alkoholfogyasztási előzményeidet a naptárban. A pontok jelzik, mely napokon ittál (nagyobb pont = több ital). A felső borospohár színe az időbeliséget mutatja: piros (ma/elmúlt hét), sárga (elmúlt hónap), zöld (régebbi). Koppints rá a naptár megnyitásához.",
   "onboarding.alcohol.title": "Alkoholkövetés 🍷",
   "onboarding.complete.desc": "Készen állsz az egészséges útra? Ezt az oktatóanyagot bármikor újra megnyithatod a profilbeállításokból, ha szükséges.",

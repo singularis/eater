@@ -120,7 +120,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func makeReminderBody() -> String {
-        let prefix = "Reminder to snap your food to maintain healthy habits."
+        let prefix = loc("notif.body", "Reminder to snap your food to maintain healthy habits.")
         let quotes = FoodQuotesLocalized.quotes(for: LanguageService.shared.currentCode)
         if let quote = quotes.randomElement() {
             return "\(prefix) \"\(quote)\""

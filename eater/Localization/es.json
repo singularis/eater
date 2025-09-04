@@ -148,6 +148,7 @@
   "nav.profile": "Perfil",
   "nav.statistics": "Estadísticas",
   "notif.title": "Recordatorio de Eateria",
+  "notif.body": "Recordatorio para fotografiar tu comida y mantener hábitos saludables.",
   "onboarding.alcohol.desc": "Ve tu historial de alcohol en un calendario. Los puntos marcan los días que bebiste (punto más grande = más bebidas). La copa de vino de arriba cambia de color según la recencia: rojo (hoy/última semana), amarillo (último mes), verde (más antiguo). Tócala para abrir el calendario.",
   "onboarding.alcohol.title": "Seguimiento del alcohol 🍷",
   "onboarding.complete.desc": "¿Listo para comenzar tu camino saludable? Siempre puedes volver a ver este tutorial desde la configuración de tu perfil si lo necesitas.",

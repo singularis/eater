@@ -148,6 +148,7 @@
   "nav.profile": "个人资料",
   "nav.statistics": "统计",
   "notif.title": "Eateria 提醒",
+  "notif.body": "提醒您拍摄食物照片以保持健康习惯。",
   "onboarding.alcohol.desc": "在日历上查看您的饮酒历史。圆点标记您饮酒的日期（圆点越大 = 饮酒越多）。顶部的酒杯会按最近程度变色：红色（今天/上周）、黄色（上个月）、绿色（更早）。点按它可打开日历。",
   "onboarding.alcohol.title": "酒精跟踪 🍷",
   "onboarding.complete.desc": "准备开始了吗？可随时在设置中重新查看教程。",
