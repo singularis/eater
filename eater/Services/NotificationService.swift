@@ -7,6 +7,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     private let center = UNUserNotificationCenter.current()
     private let calendar = Calendar.current
     private let daysAheadToSchedule: Int = 14 // keep under iOS 64-pending limit (3/day * 14 = 42)
+    private var observers: [Any] = []
 
     // UserDefaults keys
     private let enabledKey = "notificationsEnabled"
@@ -25,6 +26,14 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     func initializeOnLaunch() {
         center.delegate = self
         if isEnabled { scheduleUpcomingReminders(daysAhead: daysAheadToSchedule) }
+        // React to app language changes so future notifications use localized quotes
+        let obs = NotificationCenter.default.addObserver(forName: .appLanguageChanged, object: nil, queue: .main) { [weak self] _ in
+            guard let self = self else { return }
+            if self.isEnabled {
+                self.scheduleUpcomingReminders(daysAhead: self.daysAheadToSchedule)
+            }
+        }
+        observers.append(obs)
     }
 
     var isEnabled: Bool {

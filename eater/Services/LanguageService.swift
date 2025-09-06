@@ -109,6 +109,8 @@ final class LanguageService: ObservableObject {
             self.defaults.set(self.currentDisplayName, forKey: self.displayNameKey)
             self.defaults.synchronize()
             print("[LanguageService] setLanguage updated state code=\(self.currentCode) displayName=\(self.currentDisplayName)")
+            // Notify observers (e.g., notification scheduling) that language changed
+            NotificationCenter.default.post(name: .appLanguageChanged, object: nil)
         }
 
         guard syncWithBackend, let email = UserDefaults.standard.string(forKey: "user_email") else {
@@ -128,6 +130,7 @@ final class LanguageService: ObservableObject {
                     self.defaults.set("en", forKey: self.languageKey)
                     self.defaults.set(self.currentDisplayName, forKey: self.displayNameKey)
                     self.defaults.synchronize()
+                    NotificationCenter.default.post(name: .appLanguageChanged, object: nil)
                 }
             } else {
                 // success
@@ -245,6 +248,10 @@ final class LanguageService: ObservableObject {
         }
         return String(scalars)
     }
+}
+
+extension Notification.Name {
+    static let appLanguageChanged = Notification.Name("appLanguageChanged")
 }
 
 
