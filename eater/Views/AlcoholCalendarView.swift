@@ -187,44 +187,48 @@ struct AlcoholCalendarView: View {
     }
     
     private func daysForMonthGrid(date: Date) -> [DayCell] {
-        let range = calendar.range(of: .day, in: .month, for: date) ?? 1..<31
-        let components = calendar.dateComponents([.year, .month], from: date)
-        let firstDay = calendar.date(from: components) ?? date
-        let firstWeekday = calendar.component(.weekday, from: firstDay) // 1..7, Sunday=1
+        let currentRange = calendar.range(of: .day, in: .month, for: date) ?? 1..<31
+        let currentMonthComponents = calendar.dateComponents([.year, .month], from: date)
+        let firstDayOfMonth = calendar.date(from: currentMonthComponents) ?? date
+        let firstWeekdayOfMonth = calendar.component(.weekday, from: firstDayOfMonth) // 1..7, Sunday=1
+        let weekStart = calendar.firstWeekday // 1..7
+
+        // Number of leading cells to align with locale's first weekday
+        let leading = (firstWeekdayOfMonth - weekStart + 7) % 7
+
         var days: [DayCell] = []
-        // Previous month padding
-        if let prevMonth = calendar.date(byAdding: .month, value: -1, to: firstDay) {
+
+        // Previous month padding (aligned to locale's first weekday)
+        if leading > 0, let prevMonth = calendar.date(byAdding: .month, value: -1, to: firstDayOfMonth) {
             let prevRange = calendar.range(of: .day, in: .month, for: prevMonth) ?? 1..<31
-            let padding = (firstWeekday + 6) % 7 // keep Sunday-first layout
             let prevMonthComponents = calendar.dateComponents([.year, .month], from: prevMonth)
-            for i in 0..<padding {
-                let dayNum = prevRange.count - padding + 1 + i
+            let startDay = prevRange.count - leading + 1
+            for dayNum in startDay...prevRange.count {
                 if let d = dateFrom(year: prevMonthComponents.year!, month: prevMonthComponents.month!, day: dayNum) {
                     days.append(makeDayCell(for: d, isCurrentMonth: false))
                 }
             }
         }
+
         // Current month
-        for day in range {
-            if let d = dateFrom(year: components.year!, month: components.month!, day: day) {
+        for day in currentRange {
+            if let d = dateFrom(year: currentMonthComponents.year!, month: currentMonthComponents.month!, day: day) {
                 days.append(makeDayCell(for: d, isCurrentMonth: true))
             }
         }
+
         // Next month padding to complete weeks
-        while days.count % 7 != 0 {
-            if let nextMonth = calendar.date(byAdding: .month, value: 1, to: firstDay) {
-                let nextCount = days.count - ((firstWeekday + 6) % 7) - (range.count)
-                let dayNum = nextCount + 1
-                let comps = calendar.dateComponents([.year, .month], from: nextMonth)
-                if let d = dateFrom(year: comps.year!, month: comps.month!, day: dayNum) {
+        let remainder = days.count % 7
+        if remainder != 0, let nextMonth = calendar.date(byAdding: .month, value: 1, to: firstDayOfMonth) {
+            let trailing = 7 - remainder
+            let nextComps = calendar.dateComponents([.year, .month], from: nextMonth)
+            for i in 1...trailing {
+                if let d = dateFrom(year: nextComps.year!, month: nextComps.month!, day: i) {
                     days.append(makeDayCell(for: d, isCurrentMonth: false))
-                } else {
-                    break
                 }
-            } else {
-                break
             }
         }
+
         return days
     }
     
