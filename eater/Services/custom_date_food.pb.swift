@@ -15,347 +15,349 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 struct Eater_CustomDateFoodRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Format: dd-mm-yyyy
-  var date: String = String()
+    /// Format: dd-mm-yyyy
+    var date: String = .init()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+    init() {}
 }
 
 struct Eater_CustomDateFoodResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  var dishesForDate: [Eater_Dish] = []
+    var dishesForDate: [Eater_Dish] = []
 
-  var totalForDay: Eater_TotalForDay {
-    get {return _totalForDay ?? Eater_TotalForDay()}
-    set {_totalForDay = newValue}
-  }
-  /// Returns true if `totalForDay` has been explicitly set.
-  var hasTotalForDay: Bool {return self._totalForDay != nil}
-  /// Clears the value of `totalForDay`. Subsequent reads from it will return its default value.
-  mutating func clearTotalForDay() {self._totalForDay = nil}
+    var totalForDay: Eater_TotalForDay {
+        get { return _totalForDay ?? Eater_TotalForDay() }
+        set { _totalForDay = newValue }
+    }
 
-  var personWeight: Float = 0
+    /// Returns true if `totalForDay` has been explicitly set.
+    var hasTotalForDay: Bool { return _totalForDay != nil }
+    /// Clears the value of `totalForDay`. Subsequent reads from it will return its default value.
+    mutating func clearTotalForDay() { _totalForDay = nil }
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var personWeight: Float = 0
 
-  init() {}
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  fileprivate var _totalForDay: Eater_TotalForDay? = nil
+    init() {}
+
+    fileprivate var _totalForDay: Eater_TotalForDay?
 }
 
 /// Reuse the existing Dish and TotalForDay messages
 struct Eater_Dish: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  var time: Int64 = 0
+    var time: Int64 = 0
 
-  var dishName: String = String()
+    var dishName: String = .init()
 
-  var estimatedAvgCalories: Int32 = 0
+    var estimatedAvgCalories: Int32 = 0
 
-  var ingredients: [String] = []
+    var ingredients: [String] = []
 
-  var totalAvgWeight: Int32 = 0
+    var totalAvgWeight: Int32 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+    init() {}
 }
 
 struct Eater_Contains: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  var carbohydrates: Double = 0
+    var carbohydrates: Double = 0
 
-  var fats: Double = 0
+    var fats: Double = 0
 
-  var proteins: Double = 0
+    var proteins: Double = 0
 
-  var sugar: Double = 0
+    var sugar: Double = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+    init() {}
 }
 
 struct Eater_TotalForDay: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  var contains: Eater_Contains {
-    get {return _contains ?? Eater_Contains()}
-    set {_contains = newValue}
-  }
-  /// Returns true if `contains` has been explicitly set.
-  var hasContains: Bool {return self._contains != nil}
-  /// Clears the value of `contains`. Subsequent reads from it will return its default value.
-  mutating func clearContains() {self._contains = nil}
+    var contains: Eater_Contains {
+        get { return _contains ?? Eater_Contains() }
+        set { _contains = newValue }
+    }
 
-  var totalAvgWeight: Int32 = 0
+    /// Returns true if `contains` has been explicitly set.
+    var hasContains: Bool { return _contains != nil }
+    /// Clears the value of `contains`. Subsequent reads from it will return its default value.
+    mutating func clearContains() { _contains = nil }
 
-  var totalCalories: Int32 = 0
+    var totalAvgWeight: Int32 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+    var totalCalories: Int32 = 0
 
-  init() {}
+    var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  fileprivate var _contains: Eater_Contains? = nil
+    init() {}
+
+    fileprivate var _contains: Eater_Contains?
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "eater"
+private let _protobuf_package = "eater"
 
 extension Eater_CustomDateFoodRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CustomDateFoodRequest"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "date"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".CustomDateFoodRequest"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "date"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.date) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &date)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.date.isEmpty {
-      try visitor.visitSingularStringField(value: self.date, fieldNumber: 1)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if !date.isEmpty {
+            try visitor.visitSingularStringField(value: date, fieldNumber: 1)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_CustomDateFoodRequest, rhs: Eater_CustomDateFoodRequest) -> Bool {
-    if lhs.date != rhs.date {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_CustomDateFoodRequest, rhs: Eater_CustomDateFoodRequest) -> Bool {
+        if lhs.date != rhs.date { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_CustomDateFoodResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CustomDateFoodResponse"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .standard(proto: "dishes_for_date"),
-    2: .standard(proto: "total_for_day"),
-    3: .standard(proto: "person_weight"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".CustomDateFoodResponse"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .standard(proto: "dishes_for_date"),
+        2: .standard(proto: "total_for_day"),
+        3: .standard(proto: "person_weight"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.dishesForDate) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._totalForDay) }()
-      case 3: try { try decoder.decodeSingularFloatField(value: &self.personWeight) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeRepeatedMessageField(value: &dishesForDate)
+            case 2: try decoder.decodeSingularMessageField(value: &_totalForDay)
+            case 3: try decoder.decodeSingularFloatField(value: &personWeight)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.dishesForDate.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.dishesForDate, fieldNumber: 1)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if !dishesForDate.isEmpty {
+            try visitor.visitRepeatedMessageField(value: dishesForDate, fieldNumber: 1)
+        }
+        try { if let v = self._totalForDay {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+        } }()
+        if personWeight.bitPattern != 0 {
+            try visitor.visitSingularFloatField(value: personWeight, fieldNumber: 3)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try { if let v = self._totalForDay {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    if self.personWeight.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.personWeight, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_CustomDateFoodResponse, rhs: Eater_CustomDateFoodResponse) -> Bool {
-    if lhs.dishesForDate != rhs.dishesForDate {return false}
-    if lhs._totalForDay != rhs._totalForDay {return false}
-    if lhs.personWeight != rhs.personWeight {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_CustomDateFoodResponse, rhs: Eater_CustomDateFoodResponse) -> Bool {
+        if lhs.dishesForDate != rhs.dishesForDate { return false }
+        if lhs._totalForDay != rhs._totalForDay { return false }
+        if lhs.personWeight != rhs.personWeight { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Dish"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "time"),
-    2: .standard(proto: "dish_name"),
-    3: .standard(proto: "estimated_avg_calories"),
-    4: .same(proto: "ingredients"),
-    5: .standard(proto: "total_avg_weight"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".Dish"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "time"),
+        2: .standard(proto: "dish_name"),
+        3: .standard(proto: "estimated_avg_calories"),
+        4: .same(proto: "ingredients"),
+        5: .standard(proto: "total_avg_weight"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.time) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.dishName) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.estimatedAvgCalories) }()
-      case 4: try { try decoder.decodeRepeatedStringField(value: &self.ingredients) }()
-      case 5: try { try decoder.decodeSingularInt32Field(value: &self.totalAvgWeight) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &time)
+            case 2: try decoder.decodeSingularStringField(value: &dishName)
+            case 3: try decoder.decodeSingularInt32Field(value: &estimatedAvgCalories)
+            case 4: try decoder.decodeRepeatedStringField(value: &ingredients)
+            case 5: try decoder.decodeSingularInt32Field(value: &totalAvgWeight)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.time != 0 {
-      try visitor.visitSingularInt64Field(value: self.time, fieldNumber: 1)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if time != 0 {
+            try visitor.visitSingularInt64Field(value: time, fieldNumber: 1)
+        }
+        if !dishName.isEmpty {
+            try visitor.visitSingularStringField(value: dishName, fieldNumber: 2)
+        }
+        if estimatedAvgCalories != 0 {
+            try visitor.visitSingularInt32Field(value: estimatedAvgCalories, fieldNumber: 3)
+        }
+        if !ingredients.isEmpty {
+            try visitor.visitRepeatedStringField(value: ingredients, fieldNumber: 4)
+        }
+        if totalAvgWeight != 0 {
+            try visitor.visitSingularInt32Field(value: totalAvgWeight, fieldNumber: 5)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if !self.dishName.isEmpty {
-      try visitor.visitSingularStringField(value: self.dishName, fieldNumber: 2)
-    }
-    if self.estimatedAvgCalories != 0 {
-      try visitor.visitSingularInt32Field(value: self.estimatedAvgCalories, fieldNumber: 3)
-    }
-    if !self.ingredients.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.ingredients, fieldNumber: 4)
-    }
-    if self.totalAvgWeight != 0 {
-      try visitor.visitSingularInt32Field(value: self.totalAvgWeight, fieldNumber: 5)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_Dish, rhs: Eater_Dish) -> Bool {
-    if lhs.time != rhs.time {return false}
-    if lhs.dishName != rhs.dishName {return false}
-    if lhs.estimatedAvgCalories != rhs.estimatedAvgCalories {return false}
-    if lhs.ingredients != rhs.ingredients {return false}
-    if lhs.totalAvgWeight != rhs.totalAvgWeight {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_Dish, rhs: Eater_Dish) -> Bool {
+        if lhs.time != rhs.time { return false }
+        if lhs.dishName != rhs.dishName { return false }
+        if lhs.estimatedAvgCalories != rhs.estimatedAvgCalories { return false }
+        if lhs.ingredients != rhs.ingredients { return false }
+        if lhs.totalAvgWeight != rhs.totalAvgWeight { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_Contains: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Contains"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "carbohydrates"),
-    2: .same(proto: "fats"),
-    3: .same(proto: "proteins"),
-    4: .same(proto: "sugar"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".Contains"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "carbohydrates"),
+        2: .same(proto: "fats"),
+        3: .same(proto: "proteins"),
+        4: .same(proto: "sugar"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularDoubleField(value: &self.carbohydrates) }()
-      case 2: try { try decoder.decodeSingularDoubleField(value: &self.fats) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.proteins) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.sugar) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularDoubleField(value: &carbohydrates)
+            case 2: try decoder.decodeSingularDoubleField(value: &fats)
+            case 3: try decoder.decodeSingularDoubleField(value: &proteins)
+            case 4: try decoder.decodeSingularDoubleField(value: &sugar)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.carbohydrates.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.carbohydrates, fieldNumber: 1)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if carbohydrates.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: carbohydrates, fieldNumber: 1)
+        }
+        if fats.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: fats, fieldNumber: 2)
+        }
+        if proteins.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: proteins, fieldNumber: 3)
+        }
+        if sugar.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: sugar, fieldNumber: 4)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.fats.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.fats, fieldNumber: 2)
-    }
-    if self.proteins.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.proteins, fieldNumber: 3)
-    }
-    if self.sugar.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.sugar, fieldNumber: 4)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_Contains, rhs: Eater_Contains) -> Bool {
-    if lhs.carbohydrates != rhs.carbohydrates {return false}
-    if lhs.fats != rhs.fats {return false}
-    if lhs.proteins != rhs.proteins {return false}
-    if lhs.sugar != rhs.sugar {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_Contains, rhs: Eater_Contains) -> Bool {
+        if lhs.carbohydrates != rhs.carbohydrates { return false }
+        if lhs.fats != rhs.fats { return false }
+        if lhs.proteins != rhs.proteins { return false }
+        if lhs.sugar != rhs.sugar { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_TotalForDay: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".TotalForDay"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "contains"),
-    2: .standard(proto: "total_avg_weight"),
-    3: .standard(proto: "total_calories"),
-  ]
+    static let protoMessageName: String = _protobuf_package + ".TotalForDay"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "contains"),
+        2: .standard(proto: "total_avg_weight"),
+        3: .standard(proto: "total_calories"),
+    ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._contains) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.totalAvgWeight) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.totalCalories) }()
-      default: break
-      }
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularMessageField(value: &_contains)
+            case 2: try decoder.decodeSingularInt32Field(value: &totalAvgWeight)
+            case 3: try decoder.decodeSingularInt32Field(value: &totalCalories)
+            default: break
+            }
+        }
     }
-  }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._contains {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.totalAvgWeight != 0 {
-      try visitor.visitSingularInt32Field(value: self.totalAvgWeight, fieldNumber: 2)
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        try { if let v = self._contains {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+        } }()
+        if totalAvgWeight != 0 {
+            try visitor.visitSingularInt32Field(value: totalAvgWeight, fieldNumber: 2)
+        }
+        if totalCalories != 0 {
+            try visitor.visitSingularInt32Field(value: totalCalories, fieldNumber: 3)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.totalCalories != 0 {
-      try visitor.visitSingularInt32Field(value: self.totalCalories, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  static func ==(lhs: Eater_TotalForDay, rhs: Eater_TotalForDay) -> Bool {
-    if lhs._contains != rhs._contains {return false}
-    if lhs.totalAvgWeight != rhs.totalAvgWeight {return false}
-    if lhs.totalCalories != rhs.totalCalories {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    static func == (lhs: Eater_TotalForDay, rhs: Eater_TotalForDay) -> Bool {
+        if lhs._contains != rhs._contains { return false }
+        if lhs.totalAvgWeight != rhs.totalAvgWeight { return false }
+        if lhs.totalCalories != rhs.totalCalories { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }

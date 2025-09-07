@@ -10,95 +10,99 @@
 
 import SwiftProtobuf
 
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 struct Eater_GetFriendsRequest: Sendable {
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-  init() {}
+    var unknownFields = SwiftProtobuf.UnknownStorage()
+    init() {}
 }
 
 struct Eater_Friend: Sendable {
-  var email: String = String()
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-  init() {}
+    var email: String = .init()
+    var unknownFields = SwiftProtobuf.UnknownStorage()
+    init() {}
 }
 
 struct Eater_GetFriendsResponse: Sendable {
-  var friends: [Eater_Friend] = []
-  var count: Int32 = 0
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-  init() {}
+    var friends: [Eater_Friend] = []
+    var count: Int32 = 0
+    var unknownFields = SwiftProtobuf.UnknownStorage()
+    init() {}
 }
 
-fileprivate let _protobuf_package = "Eater"
+private let _protobuf_package = "Eater"
 
 extension Eater_GetFriendsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetFriendsRequest"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [:]
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let _ = try decoder.nextFieldNumber() {}
-  }
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    try unknownFields.traverse(visitor: &visitor)
-  }
-  static func ==(lhs: Eater_GetFriendsRequest, rhs: Eater_GetFriendsRequest) -> Bool {
-    return lhs.unknownFields == rhs.unknownFields
-  }
+    static let protoMessageName: String = _protobuf_package + ".GetFriendsRequest"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [:]
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let _ = try decoder.nextFieldNumber() {}
+    }
+
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    static func == (lhs: Eater_GetFriendsRequest, rhs: Eater_GetFriendsRequest) -> Bool {
+        return lhs.unknownFields == rhs.unknownFields
+    }
 }
 
 extension Eater_Friend: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Friend"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "email"),
-  ]
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.email) }()
-      default: break
-      }
+    static let protoMessageName: String = _protobuf_package + ".Friend"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "email"),
+    ]
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &email)
+            default: break
+            }
+        }
     }
-  }
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.email.isEmpty { try visitor.visitSingularStringField(value: self.email, fieldNumber: 1) }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-  static func ==(lhs: Eater_Friend, rhs: Eater_Friend) -> Bool {
-    if lhs.email != rhs.email { return false }
-    if lhs.unknownFields != rhs.unknownFields { return false }
-    return true
-  }
+
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if !email.isEmpty { try visitor.visitSingularStringField(value: email, fieldNumber: 1) }
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    static func == (lhs: Eater_Friend, rhs: Eater_Friend) -> Bool {
+        if lhs.email != rhs.email { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_GetFriendsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetFriendsResponse"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "friends"),
-    2: .same(proto: "count"),
-  ]
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      switch fieldNumber {
-      case 1: try decoder.decodeRepeatedMessageField(value: &self.friends)
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.count) }()
-      default: break
-      }
+    static let protoMessageName: String = _protobuf_package + ".GetFriendsResponse"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "friends"),
+        2: .same(proto: "count"),
+    ]
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            switch fieldNumber {
+            case 1: try decoder.decodeRepeatedMessageField(value: &friends)
+            case 2: try decoder.decodeSingularInt32Field(value: &count)
+            default: break
+            }
+        }
     }
-  }
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.friends.isEmpty { try visitor.visitRepeatedMessageField(value: self.friends, fieldNumber: 1) }
-    if self.count != 0 { try visitor.visitSingularInt32Field(value: self.count, fieldNumber: 2) }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-  static func ==(lhs: Eater_GetFriendsResponse, rhs: Eater_GetFriendsResponse) -> Bool {
-    if lhs.friends != rhs.friends { return false }
-    if lhs.count != rhs.count { return false }
-    if lhs.unknownFields != rhs.unknownFields { return false }
-    return true
-  }
+
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if !friends.isEmpty { try visitor.visitRepeatedMessageField(value: friends, fieldNumber: 1) }
+        if count != 0 { try visitor.visitSingularInt32Field(value: count, fieldNumber: 2) }
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    static func == (lhs: Eater_GetFriendsResponse, rhs: Eater_GetFriendsResponse) -> Bool {
+        if lhs.friends != rhs.friends { return false }
+        if lhs.count != rhs.count { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
-
-

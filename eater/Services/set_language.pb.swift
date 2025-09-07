@@ -10,82 +10,80 @@
 
 import SwiftProtobuf
 
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
-fileprivate let _protobuf_package = "Eater"
+private let _protobuf_package = "Eater"
 
 public struct Eater_SetLanguageRequest: Sendable {
-  public var userEmail: String = String()
-  public var languageCode: String = String()
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-  public init() {}
+    public var userEmail: String = .init()
+    public var languageCode: String = .init()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public init() {}
 }
 
 public struct Eater_SetLanguageResponse: Sendable {
-  public var success: Bool = false
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-  public init() {}
+    public var success: Bool = false
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public init() {}
 }
 
 extension Eater_SetLanguageRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SetLanguageRequest"
-  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .standard(proto: "user_email"),
-    2: .standard(proto: "language_code"),
-  ]
+    public static let protoMessageName: String = _protobuf_package + ".SetLanguageRequest"
+    public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .standard(proto: "user_email"),
+        2: .standard(proto: "language_code"),
+    ]
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.userEmail) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.languageCode) }()
-      default: break
-      }
+    public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &userEmail)
+            case 2: try decoder.decodeSingularStringField(value: &languageCode)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.userEmail.isEmpty { try visitor.visitSingularStringField(value: self.userEmail, fieldNumber: 1) }
-    if !self.languageCode.isEmpty { try visitor.visitSingularStringField(value: self.languageCode, fieldNumber: 2) }
-    try unknownFields.traverse(visitor: &visitor)
-  }
+    public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if !userEmail.isEmpty { try visitor.visitSingularStringField(value: userEmail, fieldNumber: 1) }
+        if !languageCode.isEmpty { try visitor.visitSingularStringField(value: languageCode, fieldNumber: 2) }
+        try unknownFields.traverse(visitor: &visitor)
+    }
 
-  public static func ==(lhs: Eater_SetLanguageRequest, rhs: Eater_SetLanguageRequest) -> Bool {
-    if lhs.userEmail != rhs.userEmail { return false }
-    if lhs.languageCode != rhs.languageCode { return false }
-    if lhs.unknownFields != rhs.unknownFields { return false }
-    return true
-  }
+    public static func == (lhs: Eater_SetLanguageRequest, rhs: Eater_SetLanguageRequest) -> Bool {
+        if lhs.userEmail != rhs.userEmail { return false }
+        if lhs.languageCode != rhs.languageCode { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_SetLanguageResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SetLanguageResponse"
-  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "success"),
-  ]
+    public static let protoMessageName: String = _protobuf_package + ".SetLanguageResponse"
+    public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "success"),
+    ]
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      default: break
-      }
+    public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularBoolField(value: &success)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false { try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1) }
-    try unknownFields.traverse(visitor: &visitor)
-  }
+    public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if success != false { try visitor.visitSingularBoolField(value: success, fieldNumber: 1) }
+        try unknownFields.traverse(visitor: &visitor)
+    }
 
-  public static func ==(lhs: Eater_SetLanguageResponse, rhs: Eater_SetLanguageResponse) -> Bool {
-    if lhs.success != rhs.success { return false }
-    if lhs.unknownFields != rhs.unknownFields { return false }
-    return true
-  }
+    public static func == (lhs: Eater_SetLanguageResponse, rhs: Eater_SetLanguageResponse) -> Bool {
+        if lhs.success != rhs.success { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
-
-

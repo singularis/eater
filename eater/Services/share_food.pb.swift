@@ -10,86 +10,88 @@
 
 import SwiftProtobuf
 
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 struct Eater_ShareFoodRequest: Sendable {
-  var time: Int64 = 0
-  var fromEmail: String = String()
-  var toEmail: String = String()
-  var percentage: Int32 = 0
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-  init() {}
+    var time: Int64 = 0
+    var fromEmail: String = .init()
+    var toEmail: String = .init()
+    var percentage: Int32 = 0
+    var unknownFields = SwiftProtobuf.UnknownStorage()
+    init() {}
 }
 
 struct Eater_ShareFoodResponse: Sendable {
-  var success: Bool = false
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-  init() {}
+    var success: Bool = false
+    var unknownFields = SwiftProtobuf.UnknownStorage()
+    init() {}
 }
 
-fileprivate let _protobuf_package = "Eater"
+private let _protobuf_package = "Eater"
 
 extension Eater_ShareFoodRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".ShareFoodRequest"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "time"),
-    2: .same(proto: "from_email"),
-    3: .same(proto: "to_email"),
-    4: .same(proto: "percentage"),
-  ]
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.time) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.fromEmail) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.toEmail) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.percentage) }()
-      default: break
-      }
+    static let protoMessageName: String = _protobuf_package + ".ShareFoodRequest"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "time"),
+        2: .same(proto: "from_email"),
+        3: .same(proto: "to_email"),
+        4: .same(proto: "percentage"),
+    ]
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &time)
+            case 2: try decoder.decodeSingularStringField(value: &fromEmail)
+            case 3: try decoder.decodeSingularStringField(value: &toEmail)
+            case 4: try decoder.decodeSingularInt32Field(value: &percentage)
+            default: break
+            }
+        }
     }
-  }
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.time != 0 { try visitor.visitSingularInt64Field(value: self.time, fieldNumber: 1) }
-    if !self.fromEmail.isEmpty { try visitor.visitSingularStringField(value: self.fromEmail, fieldNumber: 2) }
-    if !self.toEmail.isEmpty { try visitor.visitSingularStringField(value: self.toEmail, fieldNumber: 3) }
-    if self.percentage != 0 { try visitor.visitSingularInt32Field(value: self.percentage, fieldNumber: 4) }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-  static func ==(lhs: Eater_ShareFoodRequest, rhs: Eater_ShareFoodRequest) -> Bool {
-    if lhs.time != rhs.time { return false }
-    if lhs.fromEmail != rhs.fromEmail { return false }
-    if lhs.toEmail != rhs.toEmail { return false }
-    if lhs.percentage != rhs.percentage { return false }
-    if lhs.unknownFields != rhs.unknownFields { return false }
-    return true
-  }
+
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if time != 0 { try visitor.visitSingularInt64Field(value: time, fieldNumber: 1) }
+        if !fromEmail.isEmpty { try visitor.visitSingularStringField(value: fromEmail, fieldNumber: 2) }
+        if !toEmail.isEmpty { try visitor.visitSingularStringField(value: toEmail, fieldNumber: 3) }
+        if percentage != 0 { try visitor.visitSingularInt32Field(value: percentage, fieldNumber: 4) }
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    static func == (lhs: Eater_ShareFoodRequest, rhs: Eater_ShareFoodRequest) -> Bool {
+        if lhs.time != rhs.time { return false }
+        if lhs.fromEmail != rhs.fromEmail { return false }
+        if lhs.toEmail != rhs.toEmail { return false }
+        if lhs.percentage != rhs.percentage { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Eater_ShareFoodResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".ShareFoodResponse"
-  static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "success"),
-  ]
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      default: break
-      }
+    static let protoMessageName: String = _protobuf_package + ".ShareFoodResponse"
+    static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+        1: .same(proto: "success"),
+    ]
+    mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularBoolField(value: &success)
+            default: break
+            }
+        }
     }
-  }
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false { try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1) }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-  static func ==(lhs: Eater_ShareFoodResponse, rhs: Eater_ShareFoodResponse) -> Bool {
-    if lhs.success != rhs.success { return false }
-    if lhs.unknownFields != rhs.unknownFields { return false }
-    return true
-  }
+
+    func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+        if success != false { try visitor.visitSingularBoolField(value: success, fieldNumber: 1) }
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    static func == (lhs: Eater_ShareFoodResponse, rhs: Eater_ShareFoodResponse) -> Bool {
+        if lhs.success != rhs.success { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
-
-
