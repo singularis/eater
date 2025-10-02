@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Kaalu salvestamine ebaõnnestus. Proovige uuesti.",
   "weight.recorded.msg": "Teie kaal on edukalt salvestatud.",
   "weight.recorded.title": "Kaal salvestatud",
-  "weight.take_photo": "Tee foto"
+  "weight.take_photo": "Tee foto",
+  "feedback.submitting": "Saadetakse...",
+  "feedback.success": "Täname tagasiside eest! Hindame teie panust ja kasutame seda rakenduse täiustamiseks.",
+  "feedback.fail": "Tagasiside saatmine ebaõnnestus. Palun kontrollige oma internetiühendust ja proovige uuesti.",
+  "feedback.need_login": "Tagasiside saatmine pole võimalik. Palun proovige uuesti sisse logida."
 }

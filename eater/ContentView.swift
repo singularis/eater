@@ -891,23 +891,27 @@ struct ContentView: View {
   }
 
   private func loadLimitsFromUserDefaults() {
-    let userDefaults = UserDefaults.standard
-
-    // Check if user has health data and recalculate if needed
-    if userDefaults.bool(forKey: "hasUserHealthData") {
-      recalculateCalorieLimitsFromHealthData()
+    // Prefer file-backed storage for persistence across sessions independent of memory pressure
+    if let stored = CalorieLimitsStorageService.shared.load() {
+      softLimit = stored.softLimit > 0 ? stored.softLimit : softLimit
+      hardLimit = stored.hardLimit > 0 ? stored.hardLimit : hardLimit
+      // Mirror the manual flag into UserDefaults for backward compatibility with existing checks
+      UserDefaults.standard.set(stored.hasManualCalorieLimits, forKey: "hasManualCalorieLimits")
     } else {
-      // Use saved limits or defaults
+      // Fallback to existing UserDefaults values if present (legacy)
+      let userDefaults = UserDefaults.standard
       let savedSoftLimit = userDefaults.integer(forKey: "softLimit")
       let savedHardLimit = userDefaults.integer(forKey: "hardLimit")
+      if savedSoftLimit > 0 { softLimit = savedSoftLimit }
+      if savedHardLimit > 0 { hardLimit = savedHardLimit }
+    }
 
-      // Only use saved values if they exist (not 0)
-      if savedSoftLimit > 0 {
-        softLimit = savedSoftLimit
-      }
-      if savedHardLimit > 0 {
-        hardLimit = savedHardLimit
-      }
+    // If health data exists and user has NOT manually overridden, recalc health-based
+    let hasHealth = UserDefaults.standard.bool(forKey: "hasUserHealthData")
+    let hasManual = CalorieLimitsStorageService.shared.load()?.hasManualCalorieLimits
+      ?? UserDefaults.standard.bool(forKey: "hasManualCalorieLimits")
+    if hasHealth && !hasManual {
+      recalculateCalorieLimitsFromHealthData()
     }
   }
 
@@ -931,16 +935,27 @@ struct ContentView: View {
     softLimit = newSoftLimit
     hardLimit = newHardLimit
 
-    // Save to UserDefaults and mark as manually set
+    // Persist to file and mirror to UserDefaults for legacy consumers
+    let limits = CalorieLimitsStorageService.Limits(
+      softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: true)
+    CalorieLimitsStorageService.shared.save(limits)
     let userDefaults = UserDefaults.standard
     userDefaults.set(softLimit, forKey: "softLimit")
     userDefaults.set(hardLimit, forKey: "hardLimit")
-    userDefaults.set(true, forKey: "hasManualCalorieLimits")  // Mark as manually set
+    userDefaults.set(true, forKey: "hasManualCalorieLimits")
   }
 
   private func resetToHealthBasedLimits() {
     let userDefaults = UserDefaults.standard
     userDefaults.set(false, forKey: "hasManualCalorieLimits")  // Remove manual override
+    // Also update file-backed store to reflect no manual override
+    let existing = CalorieLimitsStorageService.shared.load()
+    let limits = CalorieLimitsStorageService.Limits(
+      softLimit: existing?.softLimit ?? softLimit,
+      hardLimit: existing?.hardLimit ?? hardLimit,
+      hasManualCalorieLimits: false
+    )
+    CalorieLimitsStorageService.shared.save(limits)
     recalculateCalorieLimitsFromHealthData()  // Recalculate from health data
   }
 
@@ -948,7 +963,8 @@ struct ContentView: View {
     let userDefaults = UserDefaults.standard
 
     // Don't override manually set calorie limits
-    let hasManualCalorieLimits = userDefaults.bool(forKey: "hasManualCalorieLimits")
+    let hasManualCalorieLimits = CalorieLimitsStorageService.shared.load()?.hasManualCalorieLimits
+      ?? userDefaults.bool(forKey: "hasManualCalorieLimits")
     if hasManualCalorieLimits {
       return
     }
@@ -1023,7 +1039,9 @@ struct ContentView: View {
     softLimit = recommendedCalories
     hardLimit = Int(Double(recommendedCalories) * 1.15)  // 15% above recommendation
 
-    // Save updated values
+    // Save updated values (file + UserDefaults mirror)
+    CalorieLimitsStorageService.shared.save(
+      .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
     userDefaults.set(softLimit, forKey: "softLimit")
     userDefaults.set(hardLimit, forKey: "hardLimit")
     userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")

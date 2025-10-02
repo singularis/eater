@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Záznam hmotnosti selhal. Zkuste to znovu.",
   "weight.recorded.msg": "Vaše hmotnost byla úspěšně zaznamenána.",
   "weight.recorded.title": "Hmotnost zaznamenána",
-  "weight.take_photo": "Pořídit fotografii"
+  "weight.take_photo": "Pořídit fotografii",
+  "feedback.submitting": "Odesílání...",
+  "feedback.success": "Děkujeme za vaši zpětnou vazbu! Vážíme si vašeho názoru a použijeme ho ke zlepšení aplikace.",
+  "feedback.fail": "Nepodařilo se odeslat zpětnou vazbu. Zkontrolujte prosím připojení k internetu a zkuste to znovu.",
+  "feedback.need_login": "Nelze odeslat zpětnou vazbu. Zkuste se prosím znovu přihlásit."
 }

@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Kilo kaydı başarısız. Tekrar deneyin.",
   "weight.recorded.msg": "Kilonuz başarıyla kaydedildi.",
   "weight.recorded.title": "Kilo kaydedildi",
-  "weight.take_photo": "Fotoğraf çek"
+  "weight.take_photo": "Fotoğraf çek",
+  "feedback.submitting": "Gönderiliyor...",
+  "feedback.success": "Geri bildiriminiz için teşekkürler! Katkınızı takdir ediyoruz ve uygulamayı geliştirmek için kullanacağız.",
+  "feedback.fail": "Geri bildirim gönderilemedi. İnternet bağlantınızı kontrol edin ve tekrar deneyin.",
+  "feedback.need_login": "Geri bildirim gönderilemiyor. Lütfen tekrar giriş yapmayı deneyin."
 }

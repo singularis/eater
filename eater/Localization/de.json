@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Gewicht konnte nicht erfasst werden. Bitte erneut versuchen.",
   "weight.recorded.msg": "Ihr Gewicht wurde erfolgreich erfasst.",
   "weight.recorded.title": "Gewicht erfasst",
-  "weight.take_photo": "Foto aufnehmen"
+  "weight.take_photo": "Foto aufnehmen",
+  "feedback.submitting": "Wird gesendet...",
+  "feedback.success": "Vielen Dank für Ihr Feedback! Wir schätzen Ihren Beitrag und werden ihn nutzen, um die App zu verbessern.",
+  "feedback.fail": "Feedback konnte nicht gesendet werden. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+  "feedback.need_login": "Feedback kann nicht gesendet werden. Bitte melden Sie sich erneut an."
 }

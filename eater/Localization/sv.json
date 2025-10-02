@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Det gick inte att registrera vikten. Försök igen.",
   "weight.recorded.msg": "Din vikt har registrerats.",
   "weight.recorded.title": "Vikt registrerad",
-  "weight.take_photo": "Ta foto"
+  "weight.take_photo": "Ta foto",
+  "feedback.submitting": "Skickar...",
+  "feedback.success": "Tack för din feedback! Vi uppskattar ditt bidrag och kommer att använda det för att förbättra appen.",
+  "feedback.fail": "Misslyckades med att skicka feedback. Kontrollera din internetanslutning och försök igen.",
+  "feedback.need_login": "Kan inte skicka feedback. Försök logga in igen."
 }

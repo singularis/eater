@@ -148,7 +148,7 @@
   "nav.profile": "Profil",
   "nav.statistics": "Statistika",
   "notif.title": "Eateria Podsjetnik",
-  "notif.body": "Podsjetnik za fotografiranje hrane radi odr\u017eavanja zdravih navika.",
+  "notif.body": "Podsjetnik za fotografiranje hrane radi održavanja zdravih navika.",
   "onboarding.alcohol.desc": "Pregledajte svoju povijest konzumacije alkohola u kalendaru. Točkice označuju dane kada ste pili (veća točkica = više pića). Gornja čaša vina mijenja boju ovisno o vremenu: crvena (danas/prošli tjedan), žuta (prošli mjesec), zelena (starije). Dodirnite je za otvaranje kalendara.",
   "onboarding.alcohol.title": "Praćenje alkohola 🍷",
   "onboarding.complete.desc": "Spremni započeti svoje zdravo putovanje? Ovaj vodič uvijek možete ponovno otvoriti u postavkama profila ako zatreba.",
@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Zabilježavanje težine nije uspjelo. Pokušajte ponovno.",
   "weight.recorded.msg": "Vaša težina je uspješno zabilježena.",
   "weight.recorded.title": "Težina zabilježena",
-  "weight.take_photo": "Fotografiraj"
+  "weight.take_photo": "Fotografiraj",
+  "feedback.submitting": "Slanje...",
+  "feedback.success": "Hvala na vašoj povratnoj informaciji! Cijenimo vaš doprinos i koristit ćemo ga za poboljšanje aplikacije.",
+  "feedback.fail": "Neuspješno slanje povratne informacije. Molimo provjerite internetsku vezu i pokušajte ponovno.",
+  "feedback.need_login": "Nije moguće poslati povratnu informaciju. Molimo pokušajte se ponovno prijaviti."
 }

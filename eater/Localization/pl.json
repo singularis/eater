@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Nie udało się zapisać wagi. Spróbuj ponownie.",
   "weight.recorded.msg": "Twoja waga została pomyślnie zapisana.",
   "weight.recorded.title": "Waga zapisana",
-  "weight.take_photo": "Zrób zdjęcie"
+  "weight.take_photo": "Zrób zdjęcie",
+  "feedback.submitting": "Wysyłanie...",
+  "feedback.success": "Dziękujemy za opinię! Doceniamy Twój wkład i wykorzystamy go do ulepszenia aplikacji.",
+  "feedback.fail": "Nie udało się wysłać opinii. Sprawdź połączenie internetowe i spróbuj ponownie.",
+  "feedback.need_login": "Nie można wysłać opinii. Spróbuj ponownie się zalogować."
 }

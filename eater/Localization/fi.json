@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Painon tallennus epäonnistui. Yritä uudelleen.",
   "weight.recorded.msg": "Painosi on tallennettu onnistuneesti.",
   "weight.recorded.title": "Paino tallennettu",
-  "weight.take_photo": "Ota kuva"
+  "weight.take_photo": "Ota kuva",
+  "feedback.submitting": "Lähetetään...",
+  "feedback.success": "Kiitos palautteestasi! Arvostamme panostasi ja käytämme sitä sovelluksen parantamiseen.",
+  "feedback.fail": "Palautteen lähettäminen epäonnistui. Tarkista internetyhteytesi ja yritä uudelleen.",
+  "feedback.need_login": "Palautetta ei voi lähettää. Yritä kirjautua sisään uudelleen."
 }

@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Nu s-a putut înregistra greutatea. Încearcă din nou.",
   "weight.recorded.msg": "Greutatea ta a fost înregistrată cu succes.",
   "weight.recorded.title": "Greutate înregistrată",
-  "weight.take_photo": "Fă o fotografie"
+  "weight.take_photo": "Fă o fotografie",
+  "feedback.submitting": "Se trimite...",
+  "feedback.success": "Vă mulțumim pentru feedback! Apreciem contribuția dvs. și o vom folosi pentru a îmbunătăți aplicația.",
+  "feedback.fail": "Eșec la trimiterea feedback-ului. Verificați conexiunea la internet și încercați din nou.",
+  "feedback.need_login": "Nu se poate trimite feedback. Vă rugăm să încercați să vă conectați din nou."
 }

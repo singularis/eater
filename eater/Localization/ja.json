@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "体重の記録に失敗しました。もう一度お試しください。",
   "weight.recorded.msg": "体重が正常に記録されました。",
   "weight.recorded.title": "体重を記録しました",
-  "weight.take_photo": "写真を撮る"
+  "weight.take_photo": "写真を撮る",
+  "feedback.submitting": "送信中...",
+  "feedback.success": "フィードバックありがとうございます！ご意見を大切に受け止め、アプリの改善に活用いたします。",
+  "feedback.fail": "フィードバックの送信に失敗しました。インターネット接続を確認して、再度お試しください。",
+  "feedback.need_login": "フィードバックを送信できません。再度サインインをお試しください。"
 }

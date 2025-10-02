@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Kunne ikke registrere vægt. Prøv igen.",
   "weight.recorded.msg": "Din vægt blev registreret.",
   "weight.recorded.title": "Vægt registreret",
-  "weight.take_photo": "Tag foto"
+  "weight.take_photo": "Tag foto",
+  "feedback.submitting": "Sender...",
+  "feedback.success": "Tak for din feedback! Vi værdsætter dit input og vil bruge det til at forbedre appen.",
+  "feedback.fail": "Kunne ikke sende feedback. Tjek venligst din internetforbindelse og prøv igen.",
+  "feedback.need_login": "Kan ikke sende feedback. Prøv venligst at logge ind igen."
 }

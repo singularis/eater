@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Registrazione del peso non riuscita. Riprova.",
   "weight.recorded.msg": "Il tuo peso è stato registrato con successo.",
   "weight.recorded.title": "Peso registrato",
-  "weight.take_photo": "Scatta foto"
+  "weight.take_photo": "Scatta foto",
+  "feedback.submitting": "Invio in corso...",
+  "feedback.success": "Grazie per il tuo feedback! Apprezziamo il tuo contributo e lo useremo per migliorare l'app.",
+  "feedback.fail": "Invio del feedback fallito. Controlla la tua connessione internet e riprova.",
+  "feedback.need_login": "Impossibile inviare il feedback. Prova a effettuare nuovamente l'accesso."
 }

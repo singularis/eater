@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Ghi cân nặng thất bại. Vui lòng thử lại.",
   "weight.recorded.msg": "Cân nặng của bạn đã được ghi thành công.",
   "weight.recorded.title": "Đã ghi cân nặng",
-  "weight.take_photo": "Chụp ảnh"
+  "weight.take_photo": "Chụp ảnh",
+  "feedback.submitting": "Đang gửi...",
+  "feedback.success": "Cảm ơn bạn đã phản hồi! Chúng tôi đánh giá cao ý kiến của bạn và sẽ sử dụng nó để cải thiện ứng dụng.",
+  "feedback.fail": "Gửi phản hồi thất bại. Vui lòng kiểm tra kết nối internet và thử lại.",
+  "feedback.need_login": "Không thể gửi phản hồi. Vui lòng thử đăng nhập lại."
 }

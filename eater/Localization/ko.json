@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "체중 기록에 실패했습니다. 다시 시도하세요.",
   "weight.recorded.msg": "체중이 성공적으로 기록되었습니다.",
   "weight.recorded.title": "체중 기록됨",
-  "weight.take_photo": "사진 촬영"
+  "weight.take_photo": "사진 촬영",
+  "feedback.submitting": "제출 중...",
+  "feedback.success": "피드백을 주셔서 감사합니다! 귀하의 의견을 소중히 여기며 앱 개선에 활용하겠습니다.",
+  "feedback.fail": "피드백 제출에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.",
+  "feedback.need_login": "피드백을 제출할 수 없습니다. 다시 로그인해 주세요."
 }

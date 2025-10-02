@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "A testsúly rögzítése nem sikerült. Próbálja újra.",
   "weight.recorded.msg": "Testsúlyát sikeresen rögzítettük.",
   "weight.recorded.title": "Testsúly rögzítve",
-  "weight.take_photo": "Fénykép készítése"
+  "weight.take_photo": "Fénykép készítése",
+  "feedback.submitting": "Küldés...",
+  "feedback.success": "Köszönjük a visszajelzését! Értékeljük a hozzájárulását és felhasználjuk az alkalmazás javítására.",
+  "feedback.fail": "A visszajelzés küldése sikertelen. Kérjük, ellenőrizze internetkapcsolatát és próbálja újra.",
+  "feedback.need_login": "Nem sikerült elküldeni a visszajelzést. Kérjük, próbáljon újra bejelentkezni."
 }

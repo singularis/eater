@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Svara reģistrācija neizdevās. Mēģiniet vēlreiz.",
   "weight.recorded.msg": "Jūsu svars ir veiksmīgi reģistrēts.",
   "weight.recorded.title": "Svars reģistrēts",
-  "weight.take_photo": "Uzņemt foto"
+  "weight.take_photo": "Uzņemt foto",
+  "feedback.submitting": "Nosūta...",
+  "feedback.success": "Paldies par jūsu atsauksmi! Mēs novērtējam jūsu ieguldījumu un izmantosim to, lai uzlabotu lietotni.",
+  "feedback.fail": "Neizdevās nosūtīt atsauksmi. Lūdzu, pārbaudiet interneta savienojumu un mēģiniet vēlreiz.",
+  "feedback.need_login": "Nevar nosūtīt atsauksmi. Lūdzu, mēģiniet pieteikties vēlreiz."
 }

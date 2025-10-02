@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "记录体重失败。请重试。",
   "weight.recorded.msg": "您的体重已成功记录。",
   "weight.recorded.title": "体重已记录",
-  "weight.take_photo": "拍照"
+  "weight.take_photo": "拍照",
+  "feedback.submitting": "提交中...",
+  "feedback.success": "感谢您的反馈！我们重视您的意见并将用它来改进应用程序。",
+  "feedback.fail": "反馈提交失败。请检查您的网络连接并重试。",
+  "feedback.need_login": "无法提交反馈。请尝试重新登录。"
 }

@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Zabeležitev teže ni uspela. Poskusi znova.",
   "weight.recorded.msg": "Tvoja teža je bila uspešno zabeležena.",
   "weight.recorded.title": "Teža zabeležena",
-  "weight.take_photo": "Posnemi fotografijo"
+  "weight.take_photo": "Posnemi fotografijo",
+  "feedback.submitting": "Pošiljanje...",
+  "feedback.success": "Hvala za vašo povratno informacijo! Cenimo vaš prispevek in ga bomo uporabili za izboljšanje aplikacije.",
+  "feedback.fail": "Pošiljanje povratne informacije ni uspelo. Preverite internetno povezavo in poskusite znova.",
+  "feedback.need_login": "Ni mogoče poslati povratne informacije. Poskusite se ponovno prijaviti."
 }

@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Ir-reġistrazzjoni tal-piż falliet. Erġa’ pprova.",
   "weight.recorded.msg": "Il-piż tiegħek ġie rreġistrat b’suċċess.",
   "weight.recorded.title": "Il-piż irreġistrat",
-  "weight.take_photo": "Ħu ritratt"
+  "weight.take_photo": "Ħu ritratt",
+  "feedback.submitting": "Qed jintbagħat...",
+  "feedback.success": "Grazzi għall-feedback tiegħek! Napprezzaw il-kontribut tiegħek u se nużawh biex ntejbu l-app.",
+  "feedback.fail": "Ma rnexxielx jintbagħat il-feedback. Jekk jogħġbok iċċekkja l-konnessjoni tal-internet tiegħek u erġa' pprova.",
+  "feedback.need_login": "Ma jistax jintbagħat feedback. Jekk jogħġbok erġa' pprova tidħol."
 }

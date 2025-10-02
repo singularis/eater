@@ -148,7 +148,7 @@
   "nav.profile": "Profil",
   "nav.statistics": "Štatistiky",
   "notif.title": "Pripomienka Eateria",
-  "notif.body": "Pripomienka na fotografovanie jedla pre udr\u017eanie zdrav\u00fdch n\u00e1vykov.",
+  "notif.body": "Pripomienka na fotografovanie jedla pre udržanie zdravých návykov.",
   "onboarding.alcohol.desc": "Pozrite si svoju históriu alkoholu v kalendári. Bodky označujú dni, keď ste pili (väčšia bodka = viac drinkov). Horný pohár vína mení farbu podľa aktuálnosti: červená (dnes/posledný týždeň), žltá (posledný mesiac), zelená (staršie). Klepnutím naň otvoríte kalendár.",
   "onboarding.alcohol.title": "Sledovanie alkoholu 🍷",
   "onboarding.complete.desc": "Pripravení začať? Návod nájdete v nastaveniach kedykoľvek.",
@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Záznam hmotnosti zlyhal. Skúste znova.",
   "weight.recorded.msg": "Vaša hmotnosť bola úspešne zaznamenaná.",
   "weight.recorded.title": "Hmotnosť zaznamenaná",
-  "weight.take_photo": "Odfotiť"
+  "weight.take_photo": "Odfotiť",
+  "feedback.submitting": "Odosielanie...",
+  "feedback.success": "Ďakujeme za vašu spätnú väzbu! Ceníme si váš príspevok a použijeme ho na zlepšenie aplikácie.",
+  "feedback.fail": "Nepodarilo sa odoslať spätnú väzbu. Skontrolujte internetové pripojenie a skúste to znovu.",
+  "feedback.need_login": "Nie je možné odoslať spätnú väzbu. Skúste sa prosím znovu prihlásiť."
 }

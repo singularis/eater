@@ -309,5 +309,9 @@
   "weight.record_failed.msg": "Theip ar thaifeadadh meáchain. Déan iarracht arís.",
   "weight.recorded.msg": "Taifeadadh do mheáchan go rathúil.",
   "weight.recorded.title": "Meáchan taifeadta",
-  "weight.take_photo": "Tóg grianghraf"
+  "weight.take_photo": "Tóg grianghraf",
+  "feedback.submitting": "Á sheoladh...",
+  "feedback.success": "Go raibh maith agat as do aiseolas! Táimid buíoch as do chuid ionchur agus úsáidfimid é chun an aip a fheabhsú.",
+  "feedback.fail": "Theip ar an aiseolas a sheoladh. Seiceáil do nasc idirlín agus déan iarracht arís le do thoil.",
+  "feedback.need_login": "Ní féidir aiseolas a sheoladh. Déan iarracht ar logáil isteach arís le do thoil."
 }
