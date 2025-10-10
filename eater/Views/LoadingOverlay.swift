@@ -7,25 +7,25 @@ struct LoadingOverlay: View {
   var body: some View {
     if isVisible {
       ZStack {
-        Color.black.opacity(0.4)
+        Color.black.opacity(0.3)
           .edgesIgnoringSafeArea(.all)
 
         VStack(spacing: 16) {
           ProgressView()
-            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
             .scaleEffect(1.5)
 
           Text(message)
             .font(.system(size: 16, weight: .medium, design: .rounded))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .multilineTextAlignment(.center)
         }
         .padding(24)
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .background(AppTheme.surface)
+        .cornerRadius(AppTheme.cornerRadius)
+        .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
       }
-      .animation(.easeInOut(duration: 0.3), value: isVisible)
+      .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3), value: isVisible)
     }
   }
 }

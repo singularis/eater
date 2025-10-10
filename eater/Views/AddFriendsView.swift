@@ -15,42 +15,67 @@ struct AddFriendsView: View {
 
   var body: some View {
     NavigationView {
-      VStack(spacing: 12) {
+      ZStack {
+        AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
+        VStack(spacing: 12) {
         TextField(loc("friends.search.placeholder", "Search by email..."), text: $query)
           .textInputAutocapitalization(.never)
           .autocorrectionDisabled(true)
           .padding(12)
-          .background(Color(.secondarySystemBackground))
-          .cornerRadius(8)
+          .background(AppTheme.surface)
+          .cornerRadius(AppTheme.smallRadius)
           .onChange(of: query) { _, newValue in
             handleQueryChange(newValue)
           }
 
         if isSearching {
           ProgressView()
+            .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
         }
 
         if !suggestions.isEmpty {
           List {
             ForEach(suggestions, id: \.self) { email in
-              Button(action: { select(email: email) }) {
+              VStack(spacing: 6) {
                 HStack {
                   Image(systemName: "person.crop.circle.badge.plus")
                   Text(email)
+                    .foregroundColor(AppTheme.textPrimary)
                 }
+                .cardContainer(padding: 12)
+
+                Rectangle()
+                  .fill(AppTheme.divider)
+                  .frame(height: 0.5)
+                  .opacity(0.8)
+                  .padding(.horizontal, 16)
+              }
+              .contentShape(Rectangle())
+              .onTapGesture {
+                HapticsService.shared.lightImpact()
+                select(email: email)
               }
               .disabled(isAddingFriend)
+              .listRowSeparator(.hidden)
+              .listRowInsets(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
             }
           }
           .listStyle(.plain)
+          .scrollContentBackground(.hidden)
+          .listRowBackground(Color.clear)
+          .background(Color.clear)
         } else {
-          Text(statusText)
-            .foregroundColor(.secondary)
-            .multilineTextAlignment(.center)
-            .padding(.top, 8)
+          EmptyStateView(
+            systemImage: "person.2.fill",
+            title: statusText,
+            subtitle: nil
+          )
+          .frame(maxWidth: .infinity)
+          .padding(.top, 8)
         }
 
         Spacer()
+        }
       }
       .padding()
       .disabled(isAddingFriend)
@@ -62,11 +87,11 @@ struct AddFriendsView: View {
               VStack(spacing: 12) {
                 ProgressView()
                 Text(loc("overlay.adding_friend", "Adding friend..."))
-                  .foregroundColor(.white)
+                  .foregroundColor(AppTheme.textPrimary)
               }
               .padding(20)
-              .background(Color.black.opacity(0.6))
-              .cornerRadius(12)
+              .background(AppTheme.surface)
+              .cornerRadius(AppTheme.smallRadius)
             }
           }
         }
@@ -75,7 +100,11 @@ struct AddFriendsView: View {
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
-          Button(loc("common.close", "Close")) { isPresented = false }
+          Button(loc("common.close", "Close")) {
+            HapticsService.shared.select()
+            isPresented = false
+          }
+            .foregroundColor(AppTheme.textPrimary)
             .disabled(isAddingFriend)
         }
       }

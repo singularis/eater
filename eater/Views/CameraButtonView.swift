@@ -31,9 +31,11 @@ struct CameraButtonView: View {
 
       HStack(spacing: 0) {
         Button(action: {
+          HapticsService.shared.select()
           if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
             showPhotoLibrary = true
           } else {
+            HapticsService.shared.error()
             photoLibraryUnavailableAlert = true
           }
         }) {
@@ -48,20 +50,24 @@ struct CameraButtonView: View {
           }
           .padding(.vertical, 24)
           .frame(width: uploadWidth)
-          .background(Color.blue)
-          .cornerRadius(12)
+          .background(AppTheme.primaryButtonGradient)
+          .cornerRadius(AppTheme.cornerRadius)
           .foregroundColor(.white)
         }
         .buttonStyle(.plain)
+        .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
         .disabled(isLoadingFoodPhoto)
+        .buttonStyle(PressScaleButtonStyle())
 
         Color.clear
           .frame(width: gapWidth)
 
         Button(action: {
+          HapticsService.shared.select()
           if UIImagePickerController.isSourceTypeAvailable(.camera) {
             showCamera = true
           } else {
+            HapticsService.shared.error()
             cameraUnavailableAlert = true
           }
         }) {
@@ -75,12 +81,14 @@ struct CameraButtonView: View {
           }
           .padding(.vertical, 24)
           .frame(width: takeWidth)
-          .background(Color.green)
-          .cornerRadius(12)
+          .background(AppTheme.primaryButtonGradient)
+          .cornerRadius(AppTheme.cornerRadius)
           .foregroundColor(.white)
         }
         .buttonStyle(.plain)
+        .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
         .disabled(isLoadingFoodPhoto)
+        .buttonStyle(PressScaleButtonStyle())
       }
       .frame(height: 100)
     }
@@ -160,12 +168,16 @@ struct CameraView: UIViewControllerRepresentable {
       didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
     ) {
       guard let image = info[.originalImage] as? UIImage else {
+        HapticsService.shared.error()
         DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoFailure() }
         picker.dismiss(animated: true)
         return
       }
 
-      DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoStarted() }
+      DispatchQueue.main.async {
+        HapticsService.shared.mediumImpact()
+        CameraCallbackManager.shared.callPhotoStarted()
+      }
 
       // Show loading overlay on top of picker instead of dismissing
       showLoadingOverlay(on: picker)
@@ -187,8 +199,10 @@ struct CameraView: UIViewControllerRepresentable {
           picker.dismiss(animated: true)
 
           if success {
+            HapticsService.shared.success()
             self?.handlePhotoSuccess()
           } else {
+            HapticsService.shared.error()
             self?.handlePhotoFailure()
           }
         }
@@ -241,7 +255,7 @@ struct CameraView: UIViewControllerRepresentable {
 
     private func handlePhotoFailure() {
       if let tempTimestamp = temporaryTimestamp {
-        ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+        _ = ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
         temporaryTimestamp = nil
       }
       CameraCallbackManager.shared.callPhotoFailure()
@@ -292,12 +306,16 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
       didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
     ) {
       guard let image = info[.originalImage] as? UIImage else {
+        HapticsService.shared.error()
         DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoFailure() }
         picker.dismiss(animated: true)
         return
       }
 
-      DispatchQueue.main.async { CameraCallbackManager.shared.callPhotoStarted() }
+      DispatchQueue.main.async {
+        HapticsService.shared.mediumImpact()
+        CameraCallbackManager.shared.callPhotoStarted()
+      }
 
       // Show loading overlay on top of picker instead of dismissing
       showLoadingOverlay(on: picker)
@@ -319,8 +337,10 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
           picker.dismiss(animated: true)
 
           if success {
+            HapticsService.shared.success()
             self?.handlePhotoSuccess()
           } else {
+            HapticsService.shared.error()
             self?.handlePhotoFailure()
           }
         }
@@ -373,7 +393,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
     private func handlePhotoFailure() {
       if let tempTimestamp = temporaryTimestamp {
-        ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
+        _ = ImageStorageService.shared.deleteTemporaryImage(forTime: tempTimestamp)
         temporaryTimestamp = nil
       }
       CameraCallbackManager.shared.callPhotoFailure()

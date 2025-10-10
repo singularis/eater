@@ -51,7 +51,7 @@ class GRPCService {
     }
 
     sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
-      if let error = error {
+      if error != nil {
         completion([], 0, 0)
         return
       }
@@ -115,7 +115,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -236,7 +236,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -276,7 +276,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion("")
           return
         }
@@ -315,7 +315,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -359,7 +359,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -399,7 +399,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
-        if let error = error {
+        if error != nil {
           completion([], 0, 0)
           return
         }
@@ -450,7 +450,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
-        if let error = error {
+        if error != nil {
           completion(nil)
           return
         }
@@ -520,7 +520,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -550,7 +550,7 @@ class GRPCService {
     }
 
     sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
-      if let error = error {
+      if error != nil {
         completion(nil)
         return
       }
@@ -619,7 +619,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -659,7 +659,7 @@ class GRPCService {
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }
@@ -731,7 +731,7 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if let error = error {
+        if error != nil {
           completion(false)
           return
         }

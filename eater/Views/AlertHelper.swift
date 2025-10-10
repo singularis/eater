@@ -1,13 +1,41 @@
 import SwiftUI
 
 class AlertHelper {
-  static func showAlert(title: String, message: String, completion: (() -> Void)? = nil) {
+  enum HapticKind {
+    case success
+    case warning
+    case error
+    case light
+    case medium
+    case heavy
+    case select
+  }
+
+  static func showAlert(
+    title: String,
+    message: String,
+    haptic: HapticKind? = nil,
+    completion: (() -> Void)? = nil
+  ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,
       let rootViewController = window.rootViewController
     else {
       completion?()
       return
+    }
+
+    // Trigger optional haptic prior to presenting the alert
+    if let h = haptic {
+      switch h {
+      case .success: HapticsService.shared.success()
+      case .warning: HapticsService.shared.warning()
+      case .error: HapticsService.shared.error()
+      case .light: HapticsService.shared.lightImpact()
+      case .medium: HapticsService.shared.mediumImpact()
+      case .heavy: HapticsService.shared.heavyImpact()
+      case .select: HapticsService.shared.select()
+      }
     }
 
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)

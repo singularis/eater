@@ -7,49 +7,67 @@ struct LoginView: View {
   @EnvironmentObject private var authService: AuthenticationService
 
   var body: some View {
-    VStack(spacing: 20) {
-      Image(systemName: "fork.knife")
-        .resizable()
-        .scaledToFit()
-        .frame(width: 100, height: 100)
-        .foregroundColor(.blue)
+    ZStack {
+      AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
+      VStack(spacing: 24) {
+        Image(systemName: "fork.knife")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 100, height: 100)
+          .foregroundColor(AppTheme.accent)
 
-      Text(loc("login.welcome", "Welcome to Eateria"))
-        .font(.largeTitle)
-        .fontWeight(.bold)
+        Text(loc("login.welcome", "Welcome to Eateria"))
+          .font(.largeTitle)
+          .fontWeight(.bold)
+          .foregroundColor(AppTheme.textPrimary)
 
-      Text(loc("login.subtitle", "Sign in to continue"))
-        .font(.subheadline)
-        .foregroundColor(.gray)
+        Text(loc("login.subtitle", "Sign in to continue"))
+          .font(.subheadline)
+          .foregroundColor(AppTheme.textSecondary)
 
-      VStack(spacing: 12) {
+        VStack(spacing: 12) {
         // Sign in with Apple button
         Button(action: {
+          HapticsService.shared.mediumImpact()
           authService.signInWithApple()
         }) {
-          HStack {
+          HStack(spacing: 8) {
             Image(systemName: "applelogo")
-              .foregroundColor(.white)
+              .font(.system(size: 18, weight: .semibold))
             Text(loc("login.apple", "Sign in with Apple"))
-              .foregroundColor(.white)
-              .fontWeight(.medium)
+              .fontWeight(.semibold)
           }
           .frame(maxWidth: .infinity)
-          .frame(height: 50)
-          .background(Color.black)
-          .cornerRadius(8)
         }
-        .frame(width: 280, height: 50)
+        .buttonStyle(PrimaryButtonStyle())
+        .frame(width: 280)
 
         // Google Sign-In button
-        GoogleSignInButton(scheme: .dark, style: .wide, state: .normal) {
+        Button(action: {
+          HapticsService.shared.mediumImpact()
           authService.signInWithGoogle()
+        }) {
+          HStack(spacing: 8) {
+            Text("G")
+              .font(.system(size: 18, weight: .bold))
+              .foregroundColor(.white)
+              .frame(width: 24, height: 24)
+              .background(
+                Circle()
+                  .fill(Color.white.opacity(0.2))
+              )
+            Text(loc("login.google", "Sign in with Google"))
+              .fontWeight(.semibold)
+          }
+          .frame(maxWidth: .infinity)
         }
-        .frame(width: 280, height: 50)
+        .buttonStyle(PrimaryButtonStyle())
+        .frame(width: 280)
+        }
+        .padding(.top, 20)
       }
-      .padding(.top, 20)
+      .padding()
     }
-    .padding()
   }
 }
 

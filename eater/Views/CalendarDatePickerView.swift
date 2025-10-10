@@ -10,7 +10,7 @@ struct CalendarDatePickerView: View {
       Text(loc("calendar.selectdate", "Select Date"))
         .font(.title2)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .padding(.top)
 
       DatePicker(
@@ -21,8 +21,8 @@ struct CalendarDatePickerView: View {
       )
       .datePickerStyle(GraphicalDatePickerStyle())
       .frame(height: 400)  // Fixed height to prevent UICalendarView warnings
-      .background(Color.gray.opacity(0.2))
-      .cornerRadius(12)
+      .background(AppTheme.surface)
+      .cornerRadius(AppTheme.cornerRadius)
       .padding()
       .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
       .environment(
@@ -32,41 +32,26 @@ struct CalendarDatePickerView: View {
           cal.locale = Locale(identifier: LanguageService.shared.currentCode)
           return cal
         }())
-
-      HStack(spacing: 20) {
-        Button(action: {
-          isPresented = false
-        }) {
-          Text(loc("common.cancel", "Cancel"))
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.gray.opacity(0.8))
-            .foregroundColor(.white)
-            .cornerRadius(10)
-        }
-        .buttonStyle(PlainButtonStyle())  // Prevent default button behavior
-
-        Button(action: {
-          let dateFormatter = DateFormatter()
-          dateFormatter.dateFormat = "dd-MM-yyyy"
-          let dateString = dateFormatter.string(from: selectedDate)
-
-          // Just call the callback - let parent handle dismissal
-          onDateSelected(dateString)
-        }) {
-          Text(loc("common.select", "Select"))
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.blue.opacity(0.9))
-            .foregroundColor(.white)
-            .cornerRadius(10)
-        }
-        .buttonStyle(PlainButtonStyle())  // Prevent default button behavior
+      .onChange(of: selectedDate) { oldDate, newDate in
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd-MM-yyyy"
+        let dateString = dateFormatter.string(from: newDate)
+        
+        // Immediately trigger callback when date changes
+        onDateSelected(dateString)
       }
+
+      Button(action: {
+        isPresented = false
+      }) {
+        Text(loc("common.cancel", "Cancel"))
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(SecondaryButtonStyle())
       .padding(.horizontal)
       .padding(.bottom, 20)
     }
-    .background(Color.black)
+    .background(AppTheme.backgroundGradient)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }
@@ -78,3 +63,4 @@ struct CalendarDatePickerView: View {
     onDateSelected: { _ in }
   )
 }
+

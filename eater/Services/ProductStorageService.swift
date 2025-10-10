@@ -71,7 +71,7 @@ class ProductStorageService {
         if let tempTime = tempImageTime, !products.isEmpty {
           let newestProduct = products.max(by: { $0.time < $1.time })!
 
-          ImageStorageService.shared.moveTemporaryImage(
+          _ = ImageStorageService.shared.moveTemporaryImage(
             fromTime: tempTime,
             toTime: newestProduct.time
           )

@@ -42,21 +42,17 @@ struct AlcoholCalendarView: View {
       Button(action: { isPresented = false }) {
         Text(loc("common.close", "Close"))
           .frame(maxWidth: .infinity)
-          .padding()
-          .background(Color.gray.opacity(0.8))
-          .foregroundColor(.white)
-          .cornerRadius(10)
       }
-      .buttonStyle(PlainButtonStyle())
+      .buttonStyle(PrimaryButtonStyle())
       .padding(.horizontal)
       .padding(.bottom, 12)
     }
     .padding(.top, 16)
-    .background(Color.black)
+    .background(AppTheme.backgroundGradient)
     .onAppear {
       fetchMonth()
     }
-    .onChange(of: monthAnchorDate) { _ in
+    .onChange(of: monthAnchorDate) { _, _ in
       fetchMonth()
     }
     .overlay(
@@ -87,16 +83,16 @@ struct AlcoholCalendarView: View {
     HStack {
       Button(action: { changeMonth(by: -1) }) {
         Image(systemName: "chevron.left")
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
       }
       Spacer()
       Text(monthTitle(for: monthAnchorDate))
         .font(.system(size: 18, weight: .bold, design: .rounded))
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
       Spacer()
       Button(action: { changeMonth(by: 1) }) {
         Image(systemName: "chevron.right")
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
       }
     }
     .padding(.horizontal)
@@ -108,7 +104,7 @@ struct AlcoholCalendarView: View {
         let sym = weekdaySymbols[idx]
         Text(sym)
           .font(.system(size: 12, weight: .semibold, design: .rounded))
-          .foregroundColor(.white.opacity(0.7))
+          .foregroundColor(AppTheme.textSecondary)
           .frame(maxWidth: .infinity)
       }
     }
@@ -138,35 +134,38 @@ struct AlcoholCalendarView: View {
   private func dayCell(day: DayCell) -> some View {
     let isCurrentMonth = day.isCurrentMonth
     let amount = eventsByDateString[day.dateString] ?? 0
-    return VStack(spacing: 6) {
-      Text("\(day.dayNumber)")
-        .font(.system(size: 14, weight: .medium, design: .rounded))
-        .foregroundColor(isCurrentMonth ? .white : .white.opacity(0.3))
-        .frame(maxWidth: .infinity)
-    }
-    .frame(maxWidth: .infinity)
-    .frame(height: 44)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(Color.gray.opacity(0.2))
-    )
-    .overlay(alignment: .center) {
-      if amount > 0 {
-        Circle()
-          .fill(Color.red)
-          .frame(width: dotSize(for: amount), height: dotSize(for: amount))
-          .shadow(color: .red.opacity(0.4), radius: 3, x: 0, y: 1)
-          .offset(y: 14)
-          .zIndex(10)
-      }
-    }
-    .contentShape(Rectangle())
-    .onTapGesture {
+    return Button(action: {
       guard let events = dayEvents[day.dateString], !events.isEmpty else { return }
       detailsAlertTitle = prettyDate(fromYYYYMMDD: day.dateString)
       detailsAlertMessage = formattedEventsList(events)
       showDetailsAlert = true
+    }) {
+      VStack(spacing: 6) {
+        Text("\(day.dayNumber)")
+          .font(.system(size: 14, weight: .medium, design: .rounded))
+          .foregroundColor(isCurrentMonth ? AppTheme.textPrimary : AppTheme.textSecondary.opacity(0.4))
+          .frame(maxWidth: .infinity)
+      }
+      .frame(maxWidth: .infinity)
+      .frame(height: 44)
+      .background(
+        RoundedRectangle(cornerRadius: 8)
+          .fill(AppTheme.surface)
+      )
+      .overlay(alignment: .center) {
+        if amount > 0 {
+          let shadow = AppTheme.cardShadow
+          Circle()
+            .fill(AppTheme.danger)
+            .frame(width: dotSize(for: amount), height: dotSize(for: amount))
+            .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+            .offset(y: 14)
+            .zIndex(10)
+        }
+      }
+      .contentShape(Rectangle())
     }
+    .buttonStyle(PressScaleButtonStyle())
   }
 
   private func dotSize(for amount: Int) -> CGFloat {

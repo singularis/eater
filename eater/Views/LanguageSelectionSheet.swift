@@ -6,7 +6,9 @@ struct LanguageSelectionSheet: View {
 
   var body: some View {
     NavigationView {
-      List {
+      ZStack {
+        AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
+        List {
         ForEach(languageService.availableLanguagesDetailed(), id: \.code) { item in
           Button(action: {
             languageService.setLanguage(
@@ -17,20 +19,24 @@ struct LanguageSelectionSheet: View {
             HStack(spacing: 12) {
               Text(item.flag)
               Text(item.nativeName)
-                .foregroundColor(.primary)
+                .foregroundColor(AppTheme.textPrimary)
               Spacer()
               if languageService.currentCode == item.code {
                 Image(systemName: "checkmark.circle.fill")
-                  .foregroundColor(.green)
+                  .foregroundColor(AppTheme.success)
               }
             }
           }
+          .buttonStyle(PressScaleButtonStyle())
         }
+        }
+        .scrollContentBackground(.hidden)
       }
       .navigationTitle(loc("profile.language", "Language"))
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
           Button(loc("common.close", "Close")) { isPresented = false }
+            .foregroundColor(AppTheme.textPrimary)
         }
       }
     }

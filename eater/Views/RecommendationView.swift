@@ -6,20 +6,25 @@ struct RecommendationView: View {
 
   var body: some View {
     NavigationView {
-      ScrollView {
+      ZStack {
+        AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
+        ScrollView {
         VStack(alignment: .leading, spacing: 20) {
           Text(loc("rec.title", "Health Recommendation"))
             .font(.title)
             .fontWeight(.bold)
+            .foregroundColor(AppTheme.textPrimary)
             .padding(.bottom, 10)
 
           Group {
             Text(loc("rec.subtitle", "Your Personalized Recommendation"))
               .font(.headline)
               .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
 
             Text(recommendationText)
               .font(.body)
+              .foregroundColor(AppTheme.textPrimary)
               .lineSpacing(4)
           }
 
@@ -27,7 +32,7 @@ struct RecommendationView: View {
             Text(loc("rec.disclaimer.title", "Important Health Disclaimer"))
               .font(.headline)
               .fontWeight(.semibold)
-              .foregroundColor(.orange)
+              .foregroundColor(AppTheme.warning)
 
             Text(
               loc(
@@ -36,9 +41,10 @@ struct RecommendationView: View {
               )
             )
             .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
             .padding()
-            .background(Color.orange.opacity(0.1))
-            .cornerRadius(8)
+            .background(AppTheme.warning.opacity(0.1))
+            .cornerRadius(AppTheme.smallRadius)
           }
 
           Group {
@@ -52,15 +58,16 @@ struct RecommendationView: View {
               Text(loc("rec.src.research", "• Evidence-based nutritional research"))
             }
             .font(.body)
-            .foregroundColor(.secondary)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Text(loc("rec.generated_on", "Generated on:") + " " + formatLocalizedDate(Date()))
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(AppTheme.textSecondary)
             .padding(.top, 20)
         }
         .padding()
+        }
       }
       .navigationTitle(loc("rec.title", "Health Recommendation"))
       .navigationBarTitleDisplayMode(.inline)

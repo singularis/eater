@@ -13,7 +13,7 @@ struct FeedbackView: View {
     NavigationView {
       GeometryReader { _ in
         ZStack {
-          Color.black
+          AppTheme.backgroundGradient
             .edgesIgnoringSafeArea(.all)
 
           VStack(spacing: 20) {
@@ -22,11 +22,11 @@ struct FeedbackView: View {
               Text(loc("feedback.title", "Share Your Feedback"))
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.textPrimary)
 
               Text(loc("feedback.subtitle", "Help us improve your experience"))
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(AppTheme.textSecondary)
                 .multilineTextAlignment(.center)
             }
             .padding(.top, 20)
@@ -35,7 +35,7 @@ struct FeedbackView: View {
             VStack(alignment: .leading, spacing: 8) {
               Text(loc("feedback.field.label", "Your Feedback"))
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.textPrimary)
 
               ZStack(alignment: .topLeading) {
                 if feedbackText.isEmpty {
@@ -45,7 +45,7 @@ struct FeedbackView: View {
                       "Tell us what you think about the app, any issues you've encountered, or features you'd like to see..."
                     )
                   )
-                  .foregroundColor(.gray)
+                  .foregroundColor(AppTheme.textSecondary)
                   .font(.body)
                   .padding(.horizontal, 12)
                   .padding(.vertical, 8)
@@ -53,18 +53,18 @@ struct FeedbackView: View {
 
                 TextEditor(text: $feedbackText)
                   .font(.body)
-                  .foregroundColor(.white)
+                  .foregroundColor(AppTheme.textPrimary)
                   .scrollContentBackground(.hidden)
                   .background(Color.clear)
                   .padding(.horizontal, 8)
                   .padding(.vertical, 4)
               }
               .frame(minHeight: 150)
-              .background(Color.gray.opacity(0.2))
-              .cornerRadius(12)
+              .background(AppTheme.surface)
+              .cornerRadius(AppTheme.smallRadius)
               .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                  .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+                  .stroke(AppTheme.divider, lineWidth: 1)
               )
             }
 
@@ -72,6 +72,7 @@ struct FeedbackView: View {
 
             // Submit button
             Button(action: {
+              HapticsService.shared.mediumImpact()
               submitFeedback()
             }) {
               HStack {
@@ -82,7 +83,6 @@ struct FeedbackView: View {
                 } else {
                   Image(systemName: "paperplane.fill")
                 }
-
                 Text(
                   isSubmitting
                     ? loc("feedback.submitting", "Submitting...")
@@ -91,28 +91,25 @@ struct FeedbackView: View {
                 .fontWeight(.semibold)
               }
               .font(.subheadline)
-              .foregroundColor(.white)
-              .padding(.vertical, 12)
-              .frame(maxWidth: .infinity)
-              .background(
-                feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                  ? Color.gray : Color.blue
-              )
-              .cornerRadius(8)
-              .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
             }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(
+              feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
             .disabled(
               feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
 
             // Cancel button
             Button(action: {
+              HapticsService.shared.select()
               isPresented = false
             }) {
               Text(loc("common.cancel", "Cancel"))
                 .fontWeight(.medium)
-                .foregroundColor(.gray)
+                .frame(maxWidth: .infinity)
             }
+            .buttonStyle(SecondaryButtonStyle())
             .disabled(isSubmitting)
+            
           }
           .padding(.horizontal, 20)
           .padding(.vertical, 10)
@@ -125,7 +122,7 @@ struct FeedbackView: View {
           Button(loc("common.close", "Close")) {
             isPresented = false
           }
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
           .disabled(isSubmitting)
         }
       }
@@ -167,12 +164,14 @@ struct FeedbackView: View {
         isSubmitting = false
 
         if success {
+          HapticsService.shared.success()
           alertMessage = loc(
             "feedback.success",
             "Thank you for your feedback! We appreciate your input and will use it to improve the app."
           )
           showSuccessAlert = true
         } else {
+          HapticsService.shared.error()
           alertMessage = loc(
             "feedback.fail",
             "Failed to submit feedback. Please check your internet connection and try again.")

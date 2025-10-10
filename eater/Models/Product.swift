@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-struct Product: Identifiable, Codable {
+struct Product: Identifiable, Codable, Equatable {
   let id = UUID()
   let time: Int64
   let name: String

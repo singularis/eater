@@ -1,6 +1,6 @@
 import Foundation
 
-struct DailyStatistics: Identifiable {
+struct DailyStatistics: Identifiable, Equatable {
   let id = UUID()
   let date: Date
   let dateString: String  // Format: dd-MM-yyyy
@@ -71,3 +71,4 @@ enum StatisticsPeriod: String, CaseIterable {
     }
   }
 }
+

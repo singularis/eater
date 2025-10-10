@@ -9,7 +9,7 @@ struct OnboardingStep {
 
 struct OnboardingView: View {
   @Binding var isPresented: Bool
-  @State private var currentStep = 0
+  @SceneStorage("onboardingCurrentStep") private var currentStep = 0
   @State private var showingSkipConfirmation = false
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(
@@ -61,6 +61,15 @@ struct OnboardingView: View {
       description: "Pick your preferred language. You can change it later in the tutorial.",
       anchor: "language",
       icon: "globe"
+    ),
+    OnboardingStep(
+      title: loc("onboarding.appearance.title", "Choose Appearance ✨"),
+      description: loc(
+        "onboarding.appearance.desc",
+        "Pick your theme and motion preference. You can change this later in profile."
+      ),
+      anchor: "appearance",
+      icon: "paintbrush.fill"
     ),
     OnboardingStep(
       title: loc("onboarding.welcome.title", "Welcome to Eateria! 🍎"),
@@ -177,21 +186,17 @@ struct OnboardingView: View {
 
   var body: some View {
     ZStack {
-      // Gradient background
-      LinearGradient(
-        gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
+      AppTheme.backgroundGradient
       .edgesIgnoringSafeArea(.all)
 
       VStack(spacing: 0) {
         // Header with progress and skip
         HStack {
           Button(loc("onboarding.skip", "Skip")) {
+            HapticsService.shared.warning()
             showingSkipConfirmation = true
           }
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textSecondary)
           .opacity(0.8)
 
           Spacer()
@@ -200,10 +205,10 @@ struct OnboardingView: View {
           HStack(spacing: 8) {
             ForEach(0..<steps.count, id: \.self) { index in
               Circle()
-                .fill(index <= currentStep ? Color.white : Color.white.opacity(0.3))
+                .fill(index <= currentStep ? AppTheme.textPrimary : AppTheme.textSecondary.opacity(0.4))
                 .frame(width: 8, height: 8)
                 .scaleEffect(index == currentStep ? 1.2 : 1.0)
-                .animation(.easeInOut(duration: 0.3), value: currentStep)
+                .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3), value: currentStep)
             }
           }
           .padding(.horizontal)
@@ -212,7 +217,7 @@ struct OnboardingView: View {
 
           // Step counter
           Text("\(currentStep + 1)/\(steps.count)")
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textSecondary)
             .opacity(0.8)
             .font(.caption)
         }
@@ -234,6 +239,8 @@ struct OnboardingView: View {
           notificationsSetupView
         } else if steps[currentStep].anchor == "data_mode" {
           dataModeView
+        } else if steps[currentStep].anchor == "appearance" {
+          appearanceStepView
         } else {
           defaultStepView
         }
@@ -258,6 +265,7 @@ struct OnboardingView: View {
       Button(loc("onboarding.skip.skip", "Skip")) {
         // Fallback to English if skipping
         LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
+        currentStep = 0  // Reset for next time
         withAnimation(.easeInOut(duration: 0.5)) {
           isPresented = false
         }
@@ -266,6 +274,7 @@ struct OnboardingView: View {
         hasSeenOnboarding = true
         // Fallback to English
         LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
+        currentStep = 0  // Reset for next time
         withAnimation(.easeInOut(duration: 0.5)) {
           isPresented = false
         }
@@ -291,13 +300,13 @@ struct OnboardingView: View {
     VStack(spacing: 18) {
       Image(systemName: "globe")
         .font(.system(size: 60))
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .symbolEffect(.bounce, value: currentStep)
 
       Text(loc("onboarding.language.title", "Choose Language 🌐"))
         .font(.title)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
 
       // Use discovered languages from Localization folder
       let items = languageService.availableLanguagesDetailed()
@@ -315,15 +324,15 @@ struct OnboardingView: View {
                   .fontWeight(item.nativeName == selectedLanguageDisplay ? .bold : .regular)
                 Spacer()
                 if item.nativeName == selectedLanguageDisplay {
-                  Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                  Image(systemName: "checkmark.circle.fill").foregroundColor(AppTheme.success)
                 }
               }
-              .foregroundColor(.white)
+              .foregroundColor(AppTheme.textPrimary)
               .padding(.vertical, 10)
               .padding(.horizontal, 12)
               .background(
                 item.nativeName == selectedLanguageDisplay
-                  ? Color.white.opacity(0.2) : Color.white.opacity(0.1)
+                  ? AppTheme.surface : AppTheme.surfaceAlt
               )
               .cornerRadius(10)
             }
@@ -433,14 +442,14 @@ struct OnboardingView: View {
       // Icon with special styling for disclaimer
       Image(systemName: steps[currentStep].icon)
         .font(.system(size: 60))
-        .foregroundColor(steps[currentStep].anchor == "disclaimer" ? .yellow : .white)
+        .foregroundColor(steps[currentStep].anchor == "disclaimer" ? AppTheme.warning : AppTheme.accent)
         .symbolEffect(.bounce, value: currentStep)
 
       VStack(spacing: 16) {
         Text(localizedTitle(for: steps[currentStep].anchor))
           .font(.title)
           .fontWeight(.bold)
-          .foregroundColor(steps[currentStep].anchor == "disclaimer" ? .yellow : .white)
+          .foregroundColor(steps[currentStep].anchor == "disclaimer" ? AppTheme.warning : AppTheme.textPrimary)
           .multilineTextAlignment(.center)
 
         // Special styling for disclaimer text
@@ -449,23 +458,22 @@ struct OnboardingView: View {
             .font(.body)
             .fontWeight(.medium)
             .multilineTextAlignment(.center)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Color.red.opacity(0.2))
+            .background(AppTheme.danger.opacity(0.1))
             .overlay(
-              RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.yellow, lineWidth: 2)
+              RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+                .stroke(AppTheme.warning, lineWidth: 2)
             )
-            .cornerRadius(12)
+            .cornerRadius(AppTheme.smallRadius)
             .lineLimit(nil)
             .fixedSize(horizontal: false, vertical: true)
         } else {
           Text(localizedDescription(for: steps[currentStep].anchor))
             .font(.body)
             .multilineTextAlignment(.center)
-            .foregroundColor(.white)
-            .opacity(0.9)
+            .foregroundColor(AppTheme.textSecondary)
             .lineLimit(nil)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -475,29 +483,28 @@ struct OnboardingView: View {
   }
 
   private var notificationsSetupView: some View {
-    VStack(spacing: 24) {
+      VStack(spacing: 24) {
       Image(systemName: "bell.badge.fill")
         .font(.system(size: 60))
-        .foregroundColor(.yellow)
+        .foregroundColor(AppTheme.warning)
         .symbolEffect(.bounce, value: currentStep)
 
       VStack(spacing: 12) {
         Text(loc("onboarding.notifications.title", "Stay on Track with Gentle Reminders ⏰"))
           .font(.title)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
           .multilineTextAlignment(.center)
 
         Text(
           loc(
             "onboarding.notifications.desc",
-            "Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We’ll only remind you if you haven’t snapped food yet. You can change this later in settings."
+            "Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We'll only remind you if you haven't snapped food yet. You can change this later in settings."
           )
         )
         .font(.body)
         .multilineTextAlignment(.center)
-        .foregroundColor(.white)
-        .opacity(0.9)
+        .foregroundColor(AppTheme.textSecondary)
         .padding(.horizontal, 20)
       }
 
@@ -509,13 +516,9 @@ struct OnboardingView: View {
           }
         }) {
           Text(loc("onboarding.notifications.enable", "Enable Reminders"))
-            .font(.headline)
-            .foregroundColor(.blue)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Color.white)
-            .cornerRadius(12)
         }
+        .buttonStyle(PrimaryButtonStyle())
 
         Button(action: {
           NotificationService.shared.requestAuthorizationAndEnable(false)
@@ -523,12 +526,61 @@ struct OnboardingView: View {
           withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
         }) {
           Text(loc("onboarding.notifications.notnow", "Not Now"))
-            .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color.white.opacity(0.2))
-            .cornerRadius(12)
+        }
+        .buttonStyle(SecondaryButtonStyle())
+      }
+      .padding(.horizontal, 30)
+    }
+  }
+
+  private var appearanceStepView: some View {
+    VStack(spacing: 24) {
+      Image(systemName: "paintbrush.fill")
+        .font(.system(size: 60))
+        .foregroundColor(AppTheme.accent)
+        .symbolEffect(.bounce, value: currentStep)
+
+      VStack(spacing: 12) {
+        Text(loc("onboarding.appearance.title", "Choose Appearance ✨"))
+          .font(.title)
+          .fontWeight(.bold)
+          .foregroundColor(AppTheme.textPrimary)
+          .multilineTextAlignment(.center)
+
+        Text(loc("onboarding.appearance.desc", "Pick your theme and motion preference. You can change this later in profile."))
+          .font(.body)
+          .multilineTextAlignment(.center)
+          .foregroundColor(AppTheme.textSecondary)
+          .padding(.horizontal, 20)
+      }
+
+      VStack(alignment: .leading, spacing: 10) {
+        Text(loc("profile.appearance", "Appearance"))
+          .font(.caption)
+          .foregroundColor(AppTheme.textSecondary)
+
+        Picker("Appearance", selection: Binding<String>(
+          get: { AppSettingsService.shared.appearance.rawValue },
+          set: { newValue in
+            // Disable animations during theme change to prevent view reset
+            withTransaction(Transaction(animation: nil)) {
+              AppSettingsService.shared.appearance = AppSettingsService.AppearanceMode(rawValue: newValue) ?? .system
+            }
+          }
+        )) {
+          Text(loc("appearance.system", "System")).tag(AppSettingsService.AppearanceMode.system.rawValue)
+          Text(loc("appearance.light", "Light")).tag(AppSettingsService.AppearanceMode.light.rawValue)
+          Text(loc("appearance.dark", "Dark")).tag(AppSettingsService.AppearanceMode.dark.rawValue)
+        }
+        .pickerStyle(.segmented)
+
+        Toggle(isOn: Binding<Bool>(
+          get: { AppSettingsService.shared.reduceMotion },
+          set: { AppSettingsService.shared.reduceMotion = $0 }
+        )) {
+          Text(loc("profile.reduce_motion", "Reduce Motion"))
+            .foregroundColor(AppTheme.textPrimary)
         }
       }
       .padding(.horizontal, 30)
@@ -539,14 +591,14 @@ struct OnboardingView: View {
     VStack(spacing: 24) {
       Image(systemName: "slider.horizontal.3")
         .font(.system(size: 60))
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.accent)
         .symbolEffect(.bounce, value: currentStep)
 
       VStack(spacing: 12) {
         Text(loc("onboarding.datamode.title", "Choose Your Data Mode 📈"))
           .font(.title)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
           .multilineTextAlignment(.center)
 
         Text(
@@ -556,8 +608,7 @@ struct OnboardingView: View {
         )
         .font(.body)
         .multilineTextAlignment(.center)
-        .foregroundColor(.white)
-        .opacity(0.9)
+        .foregroundColor(AppTheme.textSecondary)
         .padding(.horizontal, 20)
       }
 
@@ -573,8 +624,8 @@ struct OnboardingView: View {
         .font(.system(size: 22, weight: .semibold, design: .rounded))
         .controlSize(.large)
         .pickerStyle(SegmentedPickerStyle())
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(10)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
       }
     }
   }
@@ -583,21 +634,20 @@ struct OnboardingView: View {
     VStack(spacing: 30) {
       Image(systemName: steps[currentStep].icon)
         .font(.system(size: 60))
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.accent)
         .symbolEffect(.bounce, value: currentStep)
 
       VStack(spacing: 16) {
         Text(steps[currentStep].title)
           .font(.title)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
           .multilineTextAlignment(.center)
 
         Text(steps[currentStep].description)
           .font(.body)
           .multilineTextAlignment(.center)
-          .foregroundColor(.white)
-          .opacity(0.9)
+          .foregroundColor(AppTheme.textSecondary)
           .lineLimit(nil)
           .fixedSize(horizontal: false, vertical: true)
       }
@@ -610,12 +660,7 @@ struct OnboardingView: View {
             currentStep += 1
           }
         }
-        .font(.headline)
-        .foregroundColor(.blue)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(Color.white)
-        .cornerRadius(12)
+        .buttonStyle(PrimaryButtonStyle())
 
         Button(loc("onboarding.skip_step", "Skip This Step")) {
           agreedToProvideData = false
@@ -624,12 +669,7 @@ struct OnboardingView: View {
             currentStep = steps.firstIndex { $0.anchor == "disclaimer" } ?? currentStep + 1
           }
         }
-        .font(.headline)
-        .foregroundColor(.white)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Color.white.opacity(0.2))
-        .cornerRadius(12)
+        .buttonStyle(SecondaryButtonStyle())
       }
       .padding(.horizontal, 30)
     }
@@ -639,19 +679,19 @@ struct OnboardingView: View {
     VStack(spacing: 20) {
       Image(systemName: steps[currentStep].icon)
         .font(.system(size: 60))
-        .foregroundColor(.red)
+        .foregroundColor(AppTheme.danger)
         .symbolEffect(.bounce, value: currentStep)
 
       Text(steps[currentStep].title)
         .font(.title)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .multilineTextAlignment(.center)
 
       VStack(spacing: 16) {
         HStack {
           Text(loc("health.height", "Height (cm):"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("175", text: $height)
             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -660,7 +700,7 @@ struct OnboardingView: View {
 
         HStack {
           Text(loc("health.weight", "Weight (kg):"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("70", text: $weight)
             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -669,7 +709,7 @@ struct OnboardingView: View {
 
         HStack {
           Text(loc("health.age", "Age (years):"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("25", text: $age)
             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -678,7 +718,7 @@ struct OnboardingView: View {
 
         HStack {
           Text(loc("health.gender", "Gender:"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           Picker("Gender", selection: $isMale) {
             Text(loc("health.gender.male", "Male")).tag(true)
@@ -689,15 +729,15 @@ struct OnboardingView: View {
 
         VStack(alignment: .leading, spacing: 8) {
           Text(loc("health.activity", "Activity Level:"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
           Picker("Activity Level", selection: $activityLevel) {
             ForEach(activityLevels, id: \.self) { level in
               Text(localizedActivityLevel(level)).tag(level)
             }
           }
           .pickerStyle(MenuPickerStyle())
-          .background(Color.white)
-          .cornerRadius(8)
+          .background(AppTheme.surface)
+          .cornerRadius(AppTheme.smallRadius)
         }
       }
       .padding(.horizontal, 30)
@@ -708,55 +748,55 @@ struct OnboardingView: View {
     VStack(spacing: 20) {
       Image(systemName: steps[currentStep].icon)
         .font(.system(size: 60))
-        .foregroundColor(.green)
+        .foregroundColor(AppTheme.success)
         .symbolEffect(.bounce, value: currentStep)
 
       Text(steps[currentStep].title)
         .font(.title)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .multilineTextAlignment(.center)
 
       VStack(spacing: 16) {
         VStack(spacing: 8) {
           Text(loc("health.optimal_weight", "🎯 Optimal Weight"))
             .font(.headline)
-            .foregroundColor(.green)
+            .foregroundColor(AppTheme.success)
           Text("\(optimalWeight, specifier: "%.1f") \(loc("units.kg", "kg"))")
             .font(.title2)
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
 
         VStack(spacing: 8) {
           Text(loc("health.daily_calorie", "🔥 Daily Calorie Target"))
             .font(.headline)
-            .foregroundColor(.orange)
+            .foregroundColor(AppTheme.warning)
           Text("\(recommendedCalories) \(loc("units.kcal", "kcal"))")
             .font(.title2)
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
 
         VStack(spacing: 8) {
           Text(loc("health.estimated_timeline", "⏰ Estimated Timeline"))
             .font(.headline)
-            .foregroundColor(.blue)
+            .foregroundColor(AppTheme.accent)
           Text(timeToOptimalWeight)
             .font(.title3)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .multilineTextAlignment(.center)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
       }
       .padding(.horizontal, 30)
     }
@@ -774,7 +814,8 @@ struct OnboardingView: View {
             // Sync with backend if we haven't already
             if !selectedLanguageCode.isEmpty {
               // The language was already applied locally, just sync with backend now
-              DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+              HapticsService.shared.select()
                 languageService.setLanguage(code: selectedLanguageCode, syncWithBackend: true) {
                   _ in
                 }
@@ -782,16 +823,14 @@ struct OnboardingView: View {
             }
 
             // Close the onboarding
+            HapticsService.shared.success()
+            currentStep = 0  // Reset for next time
             isPresented = false
           }) {
             Text(loc("onboarding.getstarted", "Get Started"))
-              .font(.headline)
-              .foregroundColor(.blue)
               .frame(maxWidth: .infinity)
-              .padding(.vertical, 16)
-              .background(Color.white)
-              .cornerRadius(12)
           }
+          .buttonStyle(PrimaryButtonStyle())
 
           Button(action: {
             hasSeenOnboarding = true
@@ -800,6 +839,7 @@ struct OnboardingView: View {
             if !selectedLanguageCode.isEmpty {
               // The language was already applied locally, just sync with backend now
               DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                HapticsService.shared.select()
                 languageService.setLanguage(code: selectedLanguageCode, syncWithBackend: true) {
                   _ in
                 }
@@ -807,21 +847,14 @@ struct OnboardingView: View {
             }
 
             // Close the onboarding
+            HapticsService.shared.select()
+            currentStep = 0  // Reset for next time
             isPresented = false
           }) {
             Text(loc("onboarding.dontshowagain", "Don't show again"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(.yellow)
               .frame(maxWidth: .infinity)
-              .padding(.vertical, 12)
-              .background(Color.yellow.opacity(0.2))
-              .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                  .stroke(Color.yellow, lineWidth: 2)
-              )
-              .cornerRadius(8)
           }
+          .buttonStyle(SecondaryButtonStyle())
         }
         .padding(.horizontal, 30)
       } else if steps[currentStep].anchor == "health_setup" {
@@ -834,7 +867,8 @@ struct OnboardingView: View {
         // Language selection screen - uses standard navigation
         HStack(spacing: 20) {
           if currentStep > 0 {
-            Button(action: {
+          Button(action: {
+              HapticsService.shared.select()
               withAnimation(.easeInOut(duration: 0.3)) {
                 currentStep -= 1
               }
@@ -843,9 +877,8 @@ struct OnboardingView: View {
                 Image(systemName: "chevron.left")
                 Text(loc("common.back", "Previous"))
               }
-              .foregroundColor(.white)
-              .opacity(0.8)
             }
+            .buttonStyle(SecondaryButtonStyle())
           }
 
           Spacer()
@@ -866,6 +899,7 @@ struct OnboardingView: View {
 
             // Small delay to let the language change settle, then advance
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              HapticsService.shared.select()
               currentStep += 1
             }
           }) {
@@ -873,20 +907,16 @@ struct OnboardingView: View {
               Text(loc("onboarding.next", "Next"))
               Image(systemName: "chevron.right")
             }
-            .font(.headline)
-            .foregroundColor(.blue)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(Color.white)
-            .cornerRadius(25)
           }
+          .buttonStyle(PrimaryButtonStyle())
         }
         .padding(.horizontal, 30)
       } else {
         // Navigation buttons for other screens
         HStack(spacing: 20) {
           if currentStep > 0 {
-            Button(action: {
+          Button(action: {
+              HapticsService.shared.select()
               withAnimation(.easeInOut(duration: 0.3)) {
                 currentStep -= 1
               }
@@ -895,9 +925,8 @@ struct OnboardingView: View {
                 Image(systemName: "chevron.left")
                 Text(loc("common.back", "Previous"))
               }
-              .foregroundColor(.white)
-              .opacity(0.8)
             }
+            .buttonStyle(SecondaryButtonStyle())
           }
 
           Spacer()
@@ -906,13 +935,16 @@ struct OnboardingView: View {
             if steps[currentStep].anchor == "health_form" {
               // Validate and calculate before proceeding
               if validateAndCalculateHealthData() {
+                HapticsService.shared.success()
                 withAnimation(.easeInOut(duration: 0.3)) {
                   currentStep += 1
                 }
               } else {
+                HapticsService.shared.error()
                 showingHealthDataAlert = true
               }
             } else {
+              HapticsService.shared.select()
               withAnimation(.easeInOut(duration: 0.3)) {
                 currentStep += 1
               }
@@ -926,13 +958,8 @@ struct OnboardingView: View {
                 Image(systemName: "chevron.right")
               }
             }
-            .font(.headline)
-            .foregroundColor(getNextButtonTextColor())
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(getNextButtonBackgroundColor())
-            .cornerRadius(25)
           }
+          .buttonStyle(PrimaryButtonStyle())
         }
         .padding(.horizontal, 30)
       }

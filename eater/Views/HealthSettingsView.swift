@@ -39,12 +39,8 @@ struct HealthSettingsView: View {
   var body: some View {
     NavigationView {
       ZStack {
-        LinearGradient(
-          gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
-          startPoint: .topLeading,
-          endPoint: .bottomTrailing
-        )
-        .edgesIgnoringSafeArea(.all)
+        AppTheme.backgroundGradient
+          .edgesIgnoringSafeArea(.all)
 
         ScrollView {
           VStack(spacing: 20) {
@@ -65,18 +61,20 @@ struct HealthSettingsView: View {
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
           Button(loc("common.cancel", "Cancel")) {
+            HapticsService.shared.select()
             isPresented = false
           }
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
         }
 
         if showResults {
           ToolbarItem(placement: .navigationBarTrailing) {
             Button(loc("common.save", "Save")) {
+              HapticsService.shared.success()
               saveHealthData()
               isPresented = false
             }
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .fontWeight(.semibold)
           }
         }
@@ -100,18 +98,18 @@ struct HealthSettingsView: View {
     VStack(spacing: 20) {
       Image(systemName: "heart.fill")
         .font(.system(size: 60))
-        .foregroundColor(.red)
+        .foregroundColor(AppTheme.danger)
 
       Text(loc("health.update.title", "Update Your Health Data"))
         .font(.title)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .multilineTextAlignment(.center)
 
       VStack(spacing: 16) {
         HStack {
           Text(loc("health.height", "Height (cm):"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("175", text: $height)
             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -120,7 +118,7 @@ struct HealthSettingsView: View {
 
         HStack {
           Text(loc("health.weight", "Weight (kg):"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("70", text: $weight)
             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -129,7 +127,7 @@ struct HealthSettingsView: View {
 
         HStack {
           Text(loc("health.age", "Age (years):"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("25", text: $age)
             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -138,7 +136,7 @@ struct HealthSettingsView: View {
 
         HStack {
           Text(loc("health.gender", "Gender:"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           Picker(loc("health.gender", "Gender:"), selection: $isMale) {
             Text(loc("health.gender.male", "Male")).tag(true)
@@ -149,34 +147,32 @@ struct HealthSettingsView: View {
 
         VStack(alignment: .leading, spacing: 8) {
           Text(loc("health.activity", "Activity Level:"))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
           Picker(loc("health.activity", "Activity Level:"), selection: $activityLevel) {
             ForEach(activityLevels, id: \.self) { level in
               Text(localizedActivityLevel(level)).tag(level)
             }
           }
           .pickerStyle(MenuPickerStyle())
-          .background(Color.white)
-          .cornerRadius(8)
+          .background(AppTheme.surface)
+          .cornerRadius(AppTheme.smallRadius)
         }
 
         Button(loc("health.calc_plan", "Calculate My Plan")) {
           if validateAndCalculateHealthData() {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            HapticsService.shared.success()
+            withAnimation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3)) {
               showResults = true
             }
           } else {
+            HapticsService.shared.error()
             showingHealthDataAlert = true
           }
         }
-        .font(.headline)
-        .foregroundColor(.white)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .background(Color.green)
-        .cornerRadius(25)
+        .buttonStyle(PrimaryButtonStyle())
         .padding(.top, 20)
       }
+      .cardContainer(padding: 16)
     }
   }
 
@@ -184,68 +180,65 @@ struct HealthSettingsView: View {
     VStack(spacing: 20) {
       Image(systemName: "target")
         .font(.system(size: 60))
-        .foregroundColor(.green)
+        .foregroundColor(AppTheme.success)
 
       Text(loc("health.updated_plan", "Your Updated Plan"))
         .font(.title)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .multilineTextAlignment(.center)
 
       VStack(spacing: 16) {
         VStack(spacing: 8) {
           Text(loc("health.optimal_weight", "🎯 Optimal Weight"))
             .font(.headline)
-            .foregroundColor(.green)
+            .foregroundColor(AppTheme.success)
           Text("\(optimalWeight, specifier: "%.1f") \(loc("units.kg", "kg"))")
             .font(.title2)
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
 
         VStack(spacing: 8) {
           Text(loc("health.daily_calorie", "🔥 Daily Calorie Target"))
             .font(.headline)
-            .foregroundColor(.orange)
+            .foregroundColor(AppTheme.warning)
           Text("\(recommendedCalories) \(loc("units.kcal", "kcal"))")
             .font(.title2)
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
 
         VStack(spacing: 8) {
           Text(loc("health.estimated_timeline", "⏰ Estimated Timeline"))
             .font(.headline)
-            .foregroundColor(.blue)
+            .foregroundColor(AppTheme.accent)
           Text(timeToOptimalWeight)
             .font(.title3)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .multilineTextAlignment(.center)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(AppTheme.smallRadius)
 
         Button(loc("common.back_to_edit", "Back to Edit")) {
-          withAnimation(.easeInOut(duration: 0.3)) {
+          HapticsService.shared.select()
+          withAnimation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3)) {
             showResults = false
           }
         }
-        .font(.headline)
-        .foregroundColor(.blue)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .background(Color.white)
-        .cornerRadius(25)
+        .buttonStyle(PrimaryButtonStyle())
         .padding(.top, 10)
       }
+      .cardContainer(padding: 16)
     }
   }
 

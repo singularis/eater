@@ -14,17 +14,21 @@ struct HealthDisclaimerView: View {
 
   var body: some View {
     NavigationView {
-      ScrollView {
+      ZStack {
+        AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
+        ScrollView {
         VStack(alignment: .leading, spacing: 20) {
           Text(loc("disc.title", "Health Information Disclaimer"))
             .font(.title)
             .fontWeight(.bold)
+            .foregroundColor(AppTheme.textPrimary)
             .padding(.bottom, 10)
 
           Group {
             Text(loc("disc.section.notice", "Important Notice"))
               .font(.headline)
               .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
 
             Text(
               loc(
@@ -33,12 +37,14 @@ struct HealthDisclaimerView: View {
               )
             )
             .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
           }
 
           Group {
             Text(loc("disc.section.medical", "Medical Disclaimer"))
               .font(.headline)
               .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
 
             Text(
               loc(
@@ -47,12 +53,14 @@ struct HealthDisclaimerView: View {
               )
             )
             .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
           }
 
           Group {
             Text(loc("disc.section.sources", "Data Sources & Citations"))
               .font(.headline)
               .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
 
             VStack(alignment: .leading, spacing: 12) {
               CitationView(
@@ -122,6 +130,7 @@ struct HealthDisclaimerView: View {
             Text(loc("disc.section.accuracy", "Accuracy Disclaimer"))
               .font(.headline)
               .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
 
             Text(
               loc(
@@ -130,12 +139,14 @@ struct HealthDisclaimerView: View {
               )
             )
             .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
           }
 
           Group {
             Text(loc("disc.section.features", "App Features & Limitations"))
               .font(.headline)
               .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
 
             VStack(alignment: .leading, spacing: 8) {
               Text(
@@ -166,14 +177,16 @@ struct HealthDisclaimerView: View {
                 ))
             }
             .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
           }
 
           Text(lastUpdatedText)
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(AppTheme.textSecondary)
             .padding(.top, 20)
         }
         .padding()
+        }
       }
       .navigationTitle(loc("disc.nav", "Health Information"))
       .navigationBarTitleDisplayMode(.inline)
@@ -182,6 +195,7 @@ struct HealthDisclaimerView: View {
           Button(loc("common.done", "Done")) {
             dismiss()
           }
+          .foregroundColor(AppTheme.textPrimary)
         }
       }
     }
@@ -202,10 +216,11 @@ struct CitationView: View {
       Text(loc(titleKey, titleFallback))
         .font(.subheadline)
         .fontWeight(.medium)
+        .foregroundColor(AppTheme.textPrimary)
 
       Text(loc(sourceKey, sourceFallback))
         .font(.caption)
-        .foregroundColor(.blue)
+        .foregroundColor(AppTheme.accent)
         .onTapGesture {
           if let link = URL(string: urlString) {
             UIApplication.shared.open(link)
@@ -214,7 +229,7 @@ struct CitationView: View {
 
       Text(loc(descKey, descFallback))
         .font(.caption)
-        .foregroundColor(.secondary)
+        .foregroundColor(AppTheme.textSecondary)
     }
     .padding(.vertical, 4)
   }

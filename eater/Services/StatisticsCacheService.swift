@@ -67,7 +67,6 @@ class StatisticsCacheService {
 
   private func isExpired(dateString: String, cachedTime: TimeInterval) -> Bool {
     let now = Date()
-    let cacheDate = Date(timeIntervalSince1970: cachedTime)
 
     // Check if this is today's data
     let dateFormatter = DateFormatter()

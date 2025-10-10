@@ -79,7 +79,7 @@ struct ContentView: View {
 
   var body: some View {
     ZStack {
-      Color.black
+      AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
       VStack(spacing: 2) {
@@ -208,29 +208,35 @@ struct ContentView: View {
   }
 
   private var profileButton: some View {
-    Button(action: {
+    let shadow = AppTheme.cardShadow
+    return Button(action: {
+      HapticsService.shared.lightImpact()
       showUserProfile = true
     }) {
       ProfileImageView(
         profilePictureURL: authService.userProfilePictureURL,
         size: 30,
-        fallbackIconColor: .white,
+        fallbackIconColor: AppTheme.textPrimary,
         userName: authService.userName,
         userEmail: authService.userEmail
       )
-      .background(Color.gray.opacity(0.3))
+      .background(AppTheme.surface)
       .clipShape(Circle())
-      .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     }
+    .frame(width: 44, height: 44)
+    .contentShape(Circle())
+    .buttonStyle(PressScaleButtonStyle())
   }
 
   private var alcoholButton: some View {
     Button(action: {
+      HapticsService.shared.select()
       showAlcoholCalendar = true
     }) {
       ZStack {
         Circle()
-          .fill(Color.white.opacity(0.08))
+          .fill(AppTheme.surface)
           .overlay(
             Circle()
               .stroke(
@@ -250,31 +256,34 @@ struct ContentView: View {
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(alcoholIconColor)
       }
-      .frame(width: 36, height: 36)
+      .frame(width: 44, height: 44)
       .contentShape(Circle())
     }
+    .buttonStyle(PressScaleButtonStyle())
     .sheet(isPresented: $showAlcoholCalendar) {
       AlcoholCalendarView(isPresented: $showAlcoholCalendar)
     }
   }
 
   private var dateDisplayView: some View {
-    VStack(spacing: 4) {
+    let shadow = AppTheme.cardShadow
+    return VStack(spacing: 4) {
       HStack(spacing: 8) {
         VStack(spacing: 2) {
           Text(isViewingCustomDate ? currentViewingDate : localizedDateFormatter.string(from: date))
             .font(.system(size: 15, weight: .bold, design: .rounded))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
 
           if isViewingCustomDate {
             Text(loc("date.custom", "Custom Date"))
               .font(.system(size: 10, weight: .medium, design: .rounded))
-              .foregroundColor(.yellow)
+              .foregroundColor(AppTheme.warning)
           }
         }
         .onTapGesture {
           // Prevent opening calendar while loading data
           guard !isLoadingData else { return }
+          HapticsService.shared.select()
           selectedDate = Date()
           showCalendarPicker = true
         }
@@ -283,28 +292,30 @@ struct ContentView: View {
           Button(action: returnToToday) {
             Text(loc("date.today", "Today"))
               .font(.system(size: 12, weight: .semibold, design: .rounded))
-              .foregroundColor(.blue)
+              .foregroundColor(Color.black.opacity(0.9))
               .padding(.horizontal, 8)
               .padding(.vertical, 4)
-              .background(Color.white.opacity(0.9))
-              .cornerRadius(8)
+              .background(AppTheme.accent.opacity(0.9))
+              .cornerRadius(AppTheme.smallRadius)
           }
+          .simultaneousGesture(TapGesture().onEnded { HapticsService.shared.select() })
         }
       }
     }
     .padding()
-    .background(Color.black.opacity(0.8))
-    .cornerRadius(16)
-    .shadow(color: .black.opacity(0.9), radius: 10, x: 0, y: 8)
+    .background(AppTheme.surfaceAlt)
+    .cornerRadius(AppTheme.cornerRadius)
+    .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
   }
 
   private var healthInfoButton: some View {
     Button(action: {
+      HapticsService.shared.select()
       showHealthDisclaimer = true
     }) {
       ZStack {
         Circle()
-          .fill(Color.white.opacity(0.08))
+          .fill(AppTheme.surface)
           .overlay(
             Circle()
               .stroke(
@@ -322,19 +333,21 @@ struct ContentView: View {
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(Color.blue)
       }
-      .frame(width: 36, height: 36)
+      .frame(width: 44, height: 44)
       .contentShape(Circle())
     }
+    .buttonStyle(PressScaleButtonStyle())
   }
 
   private var sportButton: some View {
     Button(action: {
+      HapticsService.shared.select()
       sportCaloriesInput = ""
       showSportCaloriesAlert = true
     }) {
       ZStack {
         Circle()
-          .fill(Color.white.opacity(0.08))
+          .fill(AppTheme.surface)
           .overlay(
             Circle()
               .stroke(
@@ -353,9 +366,10 @@ struct ContentView: View {
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(Color.orange)
       }
-      .frame(width: 36, height: 36)
+      .frame(width: 44, height: 44)
       .contentShape(Circle())
     }
+    .buttonStyle(PressScaleButtonStyle())
     .alert(loc("sport.title", "Sport Calories Bonus"), isPresented: $showSportCaloriesAlert) {
       TextField(loc("sport.placeholder", "Calories burned (e.g., 300)"), text: $sportCaloriesInput)
         .keyboardType(.numberPad)
@@ -381,23 +395,25 @@ struct ContentView: View {
   }
 
   private func weightButton(geo: GeometryProxy) -> some View {
-    Button(action: {
+    let shadow = AppTheme.cardShadow
+    return Button(action: {
+      HapticsService.shared.select()
       showWeightActionSheet = true
     }) {
       ZStack {
         if isLoadingWeightPhoto {
           ProgressView()
-            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
         } else {
           Text(String(format: "%.1f", personWeight))
             .font(.system(size: 22, weight: .semibold, design: .rounded))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
         }
       }
       .padding()
-      .background(Color.gray.opacity(0.8))
-      .cornerRadius(16)
-      .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+      .background(AppTheme.surface)
+      .cornerRadius(AppTheme.cornerRadius)
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     }
     .position(x: 30, y: geo.size.height / 2)
     .confirmationDialog(
@@ -405,9 +421,11 @@ struct ContentView: View {
       titleVisibility: .visible
     ) {
       Button(loc("weight.take_photo", "Take Photo")) {
+        HapticsService.shared.select()
         showCamera = true
       }
       Button(loc("weight.manual_entry", "Manual Entry")) {
+        HapticsService.shared.select()
         manualWeightInput = ""
         showManualWeightEntry = true
       }
@@ -448,15 +466,17 @@ struct ContentView: View {
 
   private func caloriesButton(geo: GeometryProxy) -> some View {
     let adjustedSoftLimit = getAdjustedSoftLimit()
+    let shadow = AppTheme.cardShadow
     return Text("\(loc("calories.label", "Calories")): \(adjustedSoftLimit - caloriesLeft)")
       .font(.system(size: 22, weight: .semibold, design: .rounded))
       .foregroundColor(getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit))
       .padding()
-      .background(Color.gray.opacity(0.8))
-      .cornerRadius(16)
-      .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+      .background(AppTheme.surface)
+      .cornerRadius(AppTheme.cornerRadius)
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
       .position(x: geo.size.width / 2, y: geo.size.height / 2)
       .onTapGesture {
+        HapticsService.shared.select()
         tempSoftLimit = String(softLimit)
         tempHardLimit = String(hardLimit)
         showLimitsAlert = true
@@ -464,27 +484,30 @@ struct ContentView: View {
   }
 
   private func recommendationButton(geo: GeometryProxy) -> some View {
-    ZStack {
+    let shadow = AppTheme.cardShadow
+    return ZStack {
       if isLoadingRecommendation {
         ProgressView()
-          .progressViewStyle(CircularProgressViewStyle(tint: .white))
+          .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
       } else {
         Text(languageService.shortTrendLabel())
           .font(.system(size: 22, weight: .semibold, design: .rounded))
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
       }
     }
     .padding()
-    .background(Color.gray.opacity(0.8))
-    .cornerRadius(16)
-    .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.cornerRadius)
+    .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     .position(x: geo.size.width - 30, y: geo.size.height / 2)
     .onTapGesture {
+      HapticsService.shared.select()
       isLoadingRecommendation = true
       GRPCService().getRecommendation(days: 7) { recommendation in
         DispatchQueue.main.async {
           self.recommendationText = recommendation
           self.showRecommendation = true
+          HapticsService.shared.success()
           self.isLoadingRecommendation = false
           // Return to today after getting recommendation
           if self.isViewingCustomDate {
@@ -497,6 +520,7 @@ struct ContentView: View {
 
   private var macrosLineView: some View {
     let text = formattedMacrosLine()
+    let shadow = AppTheme.cardShadow
     return HStack {
       Spacer(minLength: 0)
       Text(text)
@@ -504,15 +528,15 @@ struct ContentView: View {
         .truncationMode(.tail)
         .font(.system(size: 16, weight: .semibold, design: .rounded))
         .minimumScaleFactor(0.85)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
       Spacer(minLength: 0)
     }
     .frame(maxWidth: .infinity)
     .padding(.horizontal, 16)
     .padding(.vertical, 8)
-    .background(Color.gray.opacity(0.8))
-    .cornerRadius(16)
-    .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 6)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.cornerRadius)
+    .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     .padding(.horizontal, -6)
     .padding(.top, 6)
   }
@@ -536,14 +560,16 @@ struct ContentView: View {
       },
       onPhotoFailure: {
         // Photo processing failed, no need to fetch data
+        HapticsService.shared.error()
         isLoadingFoodPhoto = false
       },
       onPhotoStarted: {
         // Photo processing started
+        HapticsService.shared.mediumImpact()
         isLoadingFoodPhoto = true
       }
     )
-    .buttonStyle(SolidDarkBlueButtonStyle())
+    .buttonStyle(PrimaryButtonStyle())
   }
 
   private var refreshAction: () -> Void {
@@ -676,6 +702,7 @@ struct ContentView: View {
   }
 
   func fetchDataAfterFoodPhoto() {
+    HapticsService.shared.success()
     // Clear today's statistics cache since new food was added
     StatisticsService.shared.clearExpiredCache()
 
@@ -713,7 +740,8 @@ struct ContentView: View {
             title: loc("portion.updated.title", "Portion Updated"),
             message: String(
               format: loc("portion.updated.msg", "Successfully updated '%@' to %d%% portion."),
-              foodName, percentage)
+            foodName, percentage),
+          haptic: .success
           ) {
             // Always return to today after modifying food portion
             self.returnToToday()
@@ -723,7 +751,8 @@ struct ContentView: View {
           AlertHelper.showAlert(
             title: loc("common.update_failed", "Update Failed"),
             message: loc(
-              "portion.update_failed.msg", "Failed to update the food portion. Please try again.")
+            "portion.update_failed.msg", "Failed to update the food portion. Please try again."),
+          haptic: .error
           )
         }
       }
@@ -740,17 +769,19 @@ struct ContentView: View {
           ProductStorageService.shared.clearCache()
 
           // Delete the local image as well
-          let imageDeleted = ImageStorageService.shared.deleteImage(forTime: time)
+          _ = ImageStorageService.shared.deleteImage(forTime: time)
 
           self.deletingProductTime = nil
           AlertHelper.showAlert(
             title: loc("common.removed", "Removed"),
-            message: loc("food.removed.msg", "Food item was removed.")
+          message: loc("food.removed.msg", "Food item was removed."),
+          haptic: .success
           ) {
             self.returnToToday()
           }
         } else {
           // Failed to delete product
+        HapticsService.shared.error()
           self.deletingProductTime = nil
         }
       }
@@ -817,14 +848,16 @@ struct ContentView: View {
     guard let weight = Float(normalizedInput), weight > 0 else {
       AlertHelper.showAlert(
         title: loc("weight.invalid.title", "Invalid Weight"),
-        message: loc("weight.invalid.msg", "Please enter a valid weight in kilograms."))
+        message: loc("weight.invalid.msg", "Please enter a valid weight in kilograms."),
+        haptic: .error)
       return
     }
 
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
-        message: loc("weight.need_login", "Unable to submit weight. Please sign in again."))
+        message: loc("weight.need_login", "Unable to submit weight. Please sign in again."),
+        haptic: .error)
       return
     }
 
@@ -843,12 +876,14 @@ struct ContentView: View {
           self.returnToToday()
           AlertHelper.showAlert(
             title: loc("weight.recorded.title", "Weight Recorded"),
-            message: loc("weight.recorded.msg", "Your weight has been successfully recorded."))
+            message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
+            haptic: .success)
         } else {
           AlertHelper.showAlert(
             title: loc("common.error", "Error"),
             message: loc(
-              "weight.record_failed.msg", "Failed to record your weight. Please try again."))
+              "weight.record_failed.msg", "Failed to record your weight. Please try again."),
+            haptic: .error)
         }
       }
     }
@@ -858,7 +893,8 @@ struct ContentView: View {
     guard let calories = Int(sportCaloriesInput), calories > 0 else {
       AlertHelper.showAlert(
         title: loc("calories.invalid.title", "Invalid Calories"),
-        message: loc("calories.invalid.msg", "Please enter a valid number of calories burned."))
+        message: loc("calories.invalid.msg", "Please enter a valid number of calories burned."),
+        haptic: .error)
       return
     }
 
@@ -875,7 +911,8 @@ struct ContentView: View {
       title: loc("calories.added.title", "Sport Calories Added"),
       message: String(
         format: loc("calories.added.msg", "Added %d calories to your daily limit for today."),
-        calories))
+        calories),
+      haptic: .success)
   }
 
   // MARK: - Helper Methods
@@ -1232,24 +1269,7 @@ struct ContentView: View {
   }
 }
 
-struct SolidDarkBlueButtonStyle: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding()
-      .frame(maxWidth: .infinity)
-      .background(
-        RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .fill(Color.blue.opacity(0.9))
-          .shadow(
-            color: .black.opacity(configuration.isPressed ? 0.3 : 0.7), radius: 10, x: 5, y: 5)
-      )
-      .foregroundColor(.white)
-      .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-      .animation(
-        .spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0),
-        value: configuration.isPressed)
-  }
-}
+// Removed legacy SolidDarkBlueButtonStyle; unified button styles live in DesignSystem
 
 // removed legacy dateFormatter; using localizedDateFormatter bound to app language
 

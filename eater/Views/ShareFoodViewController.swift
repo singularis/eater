@@ -96,10 +96,13 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   private func addLoadMoreIfNeeded() {
     if emails.count < totalCount {
       let footer = UIButton(type: .system)
-      footer.setTitle(loc("friends.more", "More friends"), for: .normal)
+      var config = UIButton.Configuration.filled()
+      config.title = loc("friends.more", "More friends")
+      config.baseBackgroundColor = .clear
+      config.baseForegroundColor = view.tintColor
+      config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
+      footer.configuration = config
       footer.addTarget(self, action: #selector(loadMoreTapped), for: .touchUpInside)
-      footer.contentEdgeInsets = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
-      footer.setTitleColor(view.tintColor, for: .normal)
       footer.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
       let container = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 56))
       footer.frame = container.bounds

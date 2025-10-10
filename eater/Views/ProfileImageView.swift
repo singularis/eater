@@ -8,7 +8,7 @@ struct ProfileImageView: View {
   let userEmail: String?
 
   init(
-    profilePictureURL: String?, size: CGFloat = 80, fallbackIconColor: Color = .white,
+    profilePictureURL: String?, size: CGFloat = 80, fallbackIconColor: Color = AppTheme.textPrimary,
     userName: String? = nil, userEmail: String? = nil
   ) {
     self.profilePictureURL = profilePictureURL

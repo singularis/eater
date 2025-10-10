@@ -22,311 +22,261 @@ struct UserProfileView: View {
 
   var body: some View {
     NavigationView {
-      GeometryReader { geometry in
-        ZStack {
-          Color.black
-            .edgesIgnoringSafeArea(.all)
+      ZStack {
+        AppTheme.backgroundGradient
+          .edgesIgnoringSafeArea(.all)
 
-          ScrollView {
-            VStack(spacing: geometry.size.height < 700 ? 15 : 25) {
-              // User Profile Picture
+        ScrollView {
+          VStack(spacing: 20) {
+            // Profile Section
+            sectionHeader(icon: "person.circle.fill", title: loc("profile.header", "Profile"), color: AppTheme.accent)
+            
+            VStack(spacing: 12) {
               ProfileImageView(
                 profilePictureURL: authService.userProfilePictureURL,
-                size: geometry.size.height < 700 ? 60 : 80,
-                fallbackIconColor: .white,
+                size: 70,
+                fallbackIconColor: AppTheme.textPrimary,
                 userName: authService.userName,
                 userEmail: authService.userEmail
               )
 
-              // User Information
-              VStack(spacing: geometry.size.height < 700 ? 8 : 15) {
-                // User Name
-                if let userName = authService.userName, !userName.isEmpty {
-                  VStack(spacing: 5) {
-                    Text(loc("profile.name", "Name"))
-                      .font(.caption)
-                      .foregroundColor(.gray)
-
-                    Text(userName)
-                      .font(geometry.size.height < 700 ? .title2 : .title)
-                      .fontWeight(.bold)
-                      .foregroundColor(.white)
-                      .padding(.horizontal, 16)
-                      .padding(.vertical, geometry.size.height < 700 ? 8 : 12)
-                      .background(Color.blue.opacity(0.3))
-                      .cornerRadius(8)
-                  }
-                }
-
-                // User Email
-                VStack(spacing: 5) {
-                  Text(loc("profile.email", "Email"))
-                    .font(.caption)
-                    .foregroundColor(.gray)
-
-                  Text(authService.userEmail ?? "No email")
-                    .font(geometry.size.height < 700 ? .body : .title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, geometry.size.height < 700 ? 8 : 12)
-                    .background(Color.gray.opacity(0.3))
-                    .cornerRadius(8)
-                }
+              if let userName = authService.userName, !userName.isEmpty {
+                Text(userName)
+                  .font(.title2)
+                  .fontWeight(.bold)
+                  .foregroundColor(AppTheme.textPrimary)
               }
 
-              // Statistics Button
-              Button(action: {
+              Text(authService.userEmail ?? "No email")
+                .font(.subheadline)
+                .foregroundColor(AppTheme.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .cardContainer(padding: 16)
+
+            // Actions Section
+            sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
+            
+            VStack(spacing: 10) {
+              actionButton(
+                icon: "chart.line.uptrend.xyaxis",
+                title: loc("profile.viewstats", "View Statistics"),
+                accessibilityHint: loc("a11y.open_stats", "Opens your statistics dashboard")
+              ) {
+                HapticsService.shared.select()
                 showStatistics = true
-              }) {
-                HStack {
-                  Image(systemName: "chart.line.uptrend.xyaxis")
-                  Text(loc("profile.viewstats", "View Statistics"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .cornerRadius(8)
-                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
               }
-
-              // Feedback Button
-              Button(action: {
+              
+              actionButton(
+                icon: "message.fill",
+                title: loc("profile.sharefeedback", "Share Feedback"),
+                accessibilityHint: loc("a11y.open_feedback", "Send feedback to the team")
+              ) {
+                HapticsService.shared.select()
                 showFeedback = true
-              }) {
-                HStack {
-                  Image(systemName: "message.fill")
-                  Text(loc("profile.sharefeedback", "Share Feedback"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .background(Color.green)
-                .cornerRadius(8)
-                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
               }
-
-              // Add Friends Button
-              Button(action: {
+              
+              actionButton(
+                icon: "person.crop.circle.badge.plus",
+                title: loc("profile.addfriends", "Add Friends"),
+                accessibilityHint: loc("a11y.open_addfriends", "Search and add friends")
+              ) {
+                HapticsService.shared.select()
                 showAddFriends = true
-              }) {
-                HStack {
-                  Image(systemName: "person.crop.circle.badge.plus")
-                  Text(loc("profile.addfriends", "Add Friends"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .background(Color.purple)
-                .cornerRadius(8)
-                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-              }
-
-              // Health Data Section
-              if hasHealthData {
-                VStack(spacing: 10) {
-                  Text(loc("profile.healthprofile", "Your Health Profile"))
-                    .font(geometry.size.height < 700 ? .title3 : .title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-
-                  VStack(spacing: 8) {
-                    HStack {
-                      Text(loc("health.height.label", "Height:"))
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                      Spacer()
-                      Text("\(userHeight, specifier: "%.0f") \(loc("units.cm", "cm"))")
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                        .fontWeight(.semibold)
-                    }
-                    .padding(.horizontal)
-
-                    HStack {
-                      Text(loc("profile.targetweight", "Target Weight:"))
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                      Spacer()
-                      Text("\(userOptimalWeight, specifier: "%.1f") \(loc("units.kg", "kg"))")
-                        .font(.subheadline)
-                        .foregroundColor(.green)
-                        .fontWeight(.semibold)
-                    }
-                    .padding(.horizontal)
-
-                    HStack {
-                      Text(loc("profile.dailycalorie", "Daily Calorie Target:"))
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                      Spacer()
-                      Text("\(userRecommendedCalories) \(loc("units.kcal", "kcal"))")
-                        .font(.subheadline)
-                        .foregroundColor(.orange)
-                        .fontWeight(.semibold)
-                    }
-                    .padding(.horizontal)
-                  }
-                  .padding(12)
-                  .background(Color.gray.opacity(0.2))
-                  .cornerRadius(10)
-
-                  Button(loc("health.update.title", "Update Health Settings")) {
-                    showHealthSettings = true
-                  }
-                  .foregroundColor(.blue)
-                  .font(.subheadline)
-                  .fontWeight(.medium)
-                  .padding(.vertical, 10)
-                  .padding(.horizontal, 16)
-                  .frame(maxWidth: .infinity)
-                  .background(Color.white.opacity(0.9))
-                  .cornerRadius(8)
-                }
-              } else {
-                VStack(spacing: 10) {
-                  Text(loc("profile.personalize", "Personalize Your Experience"))
-                    .font(geometry.size.height < 700 ? .title3 : .title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-
-                  Text(
-                    loc(
-                      "profile.setuphealth",
-                      "Set up your health profile to get personalized calorie recommendations")
-                  )
-                  .font(.subheadline)
-                  .foregroundColor(.gray)
-                  .multilineTextAlignment(.center)
-
-                  Button(loc("health.update.title", "Setup Health Profile")) {
-                    showHealthSettings = true
-                  }
-                  .foregroundColor(.blue)
-                  .font(.subheadline)
-                  .fontWeight(.medium)
-                  .padding(.vertical, 10)
-                  .padding(.horizontal, 16)
-                  .frame(maxWidth: .infinity)
-                  .background(Color.white.opacity(0.9))
-                  .cornerRadius(8)
-                }
-              }
-
-              // Button Section
-              VStack(spacing: 12) {
-                // Language Picker
-                VStack(alignment: .leading, spacing: 8) {
-                  Text(loc("profile.language", "Language"))
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                  Button(action: {
-                    print(
-                      "[UserProfileView] Language button tapped code=\(languageService.currentCode) name=\(languageService.currentDisplayName)"
-                    )
-                    showLanguagePicker = true
-                  }) {
-                    let flag = languageService.flagEmoji(
-                      forLanguageCode: languageService.currentCode)
-                    HStack {
-                      Text(flag)
-                      Text(languageService.currentDisplayName)
-                        .fontWeight(.semibold)
-                      Spacer()
-                      Image(systemName: "chevron.right").foregroundColor(.white.opacity(0.6))
-                    }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 12)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(8)
-                  }
-                }
-                .padding(.vertical, 8)
-                .sheet(isPresented: $showLanguagePicker) {
-                  LanguageSelectionSheet(isPresented: $showLanguagePicker)
-                    .environmentObject(languageService)
-                }
-
-                // Data Display Mode Toggle
-                VStack(alignment: .leading, spacing: 8) {
-                  Text(loc("profile.datamode", "Data Mode"))
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                  Picker("Data Mode", selection: $dataDisplayMode) {
-                    Text(loc("common.simplified", "Simplified")).tag("simplified")
-                    Text(loc("common.full", "Full")).tag("full")
-                  }
-                  .font(.system(size: 18, weight: .semibold, design: .rounded))
-                  .controlSize(.large)
-                  .pickerStyle(SegmentedPickerStyle())
-                }
-                .padding(.vertical, 8)
-
-                // Tutorial Button
-                Button(action: {
-                  showOnboarding = true
-                }) {
-                  HStack {
-                    Image(systemName: "book.fill")
-                    Text(loc("profile.tutorial", "Tutorial"))
-                      .fontWeight(.semibold)
-                  }
-                  .font(.subheadline)
-                  .foregroundColor(.white)
-                  .padding(.vertical, 12)
-                  .frame(maxWidth: .infinity)
-                  .background(Color.orange)
-                  .cornerRadius(8)
-                  .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-                }
-
-                // Logout Button
-                Button(action: {
-                  logout()
-                }) {
-                  HStack {
-                    Image(systemName: "arrow.right.square.fill")
-                    Text(loc("profile.logout", "Logout"))
-                      .fontWeight(.semibold)
-                  }
-                  .font(.subheadline)
-                  .foregroundColor(.black)
-                  .padding(.vertical, 12)
-                  .frame(maxWidth: .infinity)
-                  .background(Color.yellow)
-                  .cornerRadius(8)
-                  .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-                }
-
-                // Delete Account Button
-                Button(action: {
-                  showDeleteConfirmation = true
-                }) {
-                  HStack {
-                    Image(systemName: "trash.fill")
-                    Text(loc("profile.delete", "Delete Account"))
-                      .fontWeight(.semibold)
-                  }
-                  .font(.subheadline)
-                  .foregroundColor(.white)
-                  .padding(.vertical, 12)
-                  .frame(maxWidth: .infinity)
-                  .background(Color.red)
-                  .cornerRadius(8)
-                  .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-                }
               }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+
+            // Health Section
+            sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
+            
+            if hasHealthData {
+              VStack(spacing: 12) {
+                healthMetricRow(
+                  label: loc("health.height.label", "Height:"),
+                  value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
+                  color: AppTheme.textPrimary
+                )
+                
+                healthMetricRow(
+                  label: loc("profile.targetweight", "Target Weight:"),
+                  value: String(format: "%.1f", userOptimalWeight) + " \(loc("units.kg", "kg"))",
+                  color: AppTheme.success
+                )
+                
+                healthMetricRow(
+                  label: loc("profile.dailycalorie", "Daily Calorie Target:"),
+                  value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
+                  color: AppTheme.warning
+                )
+                
+                Button(loc("health.update.title", "Update Health Settings")) {
+                  HapticsService.shared.select()
+                  showHealthSettings = true
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
+              }
+              .cardContainer(padding: 14)
+            } else {
+              VStack(spacing: 12) {
+                Text(loc("profile.personalize", "Personalize Your Experience"))
+                  .font(.headline)
+                  .foregroundColor(AppTheme.textPrimary)
+                
+                Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textSecondary)
+                  .multilineTextAlignment(.center)
+                
+                Button(loc("health.update.title", "Setup Health Profile")) {
+                  HapticsService.shared.select()
+                  showHealthSettings = true
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
+              }
+              .cardContainer(padding: 14)
+            }
+
+            // Preferences Section
+            sectionHeader(icon: "gearshape.fill", title: loc("profile.preferences", "Preferences"), color: Color.purple)
+            
+            VStack(spacing: 12) {
+              // Language
+              preferenceRow(
+                label: loc("profile.language", "Language"),
+                action: {
+                  HapticsService.shared.select()
+                  print(
+                    "[UserProfileView] Language button tapped code=\(languageService.currentCode) name=\(languageService.currentDisplayName)"
+                  )
+                  showLanguagePicker = true
+                }
+              ) {
+                let flag = languageService.flagEmoji(forLanguageCode: languageService.currentCode)
+                HStack(spacing: 6) {
+                  Text(flag)
+                  Text(languageService.currentDisplayName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                  Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(AppTheme.textSecondary)
+                }
+              }
+              .sheet(isPresented: $showLanguagePicker) {
+                LanguageSelectionSheet(isPresented: $showLanguagePicker)
+                  .environmentObject(languageService)
+              }
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Appearance
+              VStack(alignment: .leading, spacing: 8) {
+                Text(loc("profile.appearance", "Appearance"))
+                  .font(.caption)
+                  .fontWeight(.medium)
+                  .foregroundColor(AppTheme.textSecondary)
+                
+                Picker("Appearance", selection: Binding<String>(
+                  get: { AppSettingsService.shared.appearance.rawValue },
+                  set: { AppSettingsService.shared.appearance = AppSettingsService.AppearanceMode(rawValue: $0) ?? .system }
+                )) {
+                  Text(loc("appearance.system", "System")).tag(AppSettingsService.AppearanceMode.system.rawValue)
+                  Text(loc("appearance.light", "Light")).tag(AppSettingsService.AppearanceMode.light.rawValue)
+                  Text(loc("appearance.dark", "Dark")).tag(AppSettingsService.AppearanceMode.dark.rawValue)
+                }
+                .pickerStyle(.segmented)
+              }
+              .padding(.horizontal, 8)
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Reduce Motion
+              Toggle(isOn: Binding<Bool>(
+                get: { AppSettingsService.shared.reduceMotion },
+                set: { AppSettingsService.shared.reduceMotion = $0 }
+              )) {
+                Text(loc("profile.reduce_motion", "Reduce Motion"))
+                  .font(.subheadline)
+              }
+              .padding(.horizontal, 8)
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Data Mode
+              VStack(alignment: .leading, spacing: 8) {
+                Text(loc("profile.datamode", "Data Mode"))
+                  .font(.caption)
+                  .fontWeight(.medium)
+                  .foregroundColor(AppTheme.textSecondary)
+                
+                Picker("Data Mode", selection: $dataDisplayMode) {
+                  Text(loc("common.simplified", "Simplified")).tag("simplified")
+                  Text(loc("common.full", "Full")).tag("full")
+                }
+                .pickerStyle(.segmented)
+              }
+              .padding(.horizontal, 8)
+            }
+            .padding(.vertical, 12)
+            .cardContainer(padding: 12)
+
+            // Account Section
+            sectionHeader(icon: "person.badge.key.fill", title: loc("profile.account", "Account"), color: Color.orange)
+            
+            VStack(spacing: 10) {
+              Button(action: {
+                HapticsService.shared.select()
+                showOnboarding = true
+              }) {
+                HStack {
+                  Image(systemName: "book.fill")
+                  Text(loc("profile.tutorial", "Tutorial"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+              }
+              .buttonStyle(PrimaryButtonStyle())
+              .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
+
+              Button(action: {
+                HapticsService.shared.warning()
+                logout()
+              }) {
+                HStack {
+                  Image(systemName: "arrow.right.square.fill")
+                  Text(loc("profile.logout", "Logout"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity)
+              }
+              .buttonStyle(SecondaryButtonStyle())
+              .accessibilityHint(loc("a11y.logout", "Signs you out of the app"))
+
+              Button(action: {
+                HapticsService.shared.error()
+                showDeleteConfirmation = true
+              }) {
+                HStack {
+                  Image(systemName: "trash.fill")
+                  Text(loc("profile.delete", "Delete Account"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+              }
+              .buttonStyle(DestructiveButtonStyle())
+              .accessibilityHint(loc("a11y.delete_account", "Permanently delete your account"))
+            }
           }
+          .padding(.horizontal, 16)
+          .padding(.vertical, 12)
         }
       }
       .navigationTitle(loc("nav.profile", "Profile"))
@@ -336,7 +286,7 @@ struct UserProfileView: View {
           Button(loc("common.close", "Close")) {
             dismiss()
           }
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
         }
       }
       .alert(loc("alert.delete.title", "Delete Account"), isPresented: $showDeleteConfirmation) {
@@ -429,6 +379,73 @@ struct UserProfileView: View {
       userOptimalWeight = userDefaults.double(forKey: "userOptimalWeight")
       userRecommendedCalories = userDefaults.integer(forKey: "userRecommendedCalories")
     }
+  }
+  
+  // MARK: - Helper Views
+  
+  private func sectionHeader(icon: String, title: String, color: Color) -> some View {
+    HStack(spacing: 10) {
+      Image(systemName: icon)
+        .font(.system(size: 18, weight: .semibold))
+        .foregroundColor(color)
+      
+      Text(title)
+        .font(.title3)
+        .fontWeight(.bold)
+        .foregroundColor(AppTheme.textPrimary)
+      
+      Spacer()
+    }
+    .padding(.horizontal, 4)
+    .padding(.top, 8)
+  }
+  
+  private func actionButton(icon: String, title: String, accessibilityHint: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      HStack(spacing: 12) {
+        Image(systemName: icon)
+          .font(.system(size: 16, weight: .semibold))
+          .frame(width: 24)
+        Text(title)
+          .fontWeight(.semibold)
+        Spacer()
+      }
+      .font(.subheadline)
+      .foregroundColor(.white)
+      .frame(maxWidth: .infinity)
+    }
+    .buttonStyle(PrimaryButtonStyle())
+    .accessibilityHint(accessibilityHint)
+  }
+  
+  private func healthMetricRow(label: String, value: String, color: Color) -> some View {
+    HStack {
+      Text(label)
+        .font(.subheadline)
+        .foregroundColor(AppTheme.textSecondary)
+      Spacer()
+      Text(value)
+        .font(.subheadline)
+        .fontWeight(.bold)
+        .foregroundColor(color)
+    }
+    .padding(.horizontal, 4)
+  }
+  
+  private func preferenceRow<Content: View>(label: String, action: @escaping () -> Void, @ViewBuilder trailing: () -> Content) -> some View {
+    Button(action: action) {
+      HStack {
+        Text(label)
+          .font(.subheadline)
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        trailing()
+      }
+      .padding(.horizontal, 8)
+      .padding(.vertical, 12)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(PressScaleButtonStyle())
   }
 }
 

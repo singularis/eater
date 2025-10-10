@@ -61,15 +61,15 @@ struct StatisticsView: View {
     NavigationView {
       GeometryReader { geometry in
         ZStack {
-          Color.black.edgesIgnoringSafeArea(.all)
+          AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
 
           if isLoading {
             VStack {
               ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
                 .scaleEffect(1.5)
               Text(loc("stats.loading", "Loading statistics..."))
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.textPrimary)
                 .padding(.top)
             }
           } else {
@@ -109,7 +109,7 @@ struct StatisticsView: View {
           Button(loc("common.close", "Close")) {
             isPresented = false
           }
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
         }
       }
       .onAppear {
@@ -123,19 +123,19 @@ struct StatisticsView: View {
     VStack(spacing: 10) {
       Text(loc("stats.timeperiod", "Time Period"))
         .font(.headline)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
 
-      Picker("Period", selection: $selectedPeriod) {
-        ForEach(StatisticsPeriod.allCases, id: \.self) { period in
-          Text(localizedPeriod(period)).tag(period)
+        Picker("Period", selection: $selectedPeriod) {
+          ForEach(StatisticsPeriod.allCases, id: \.self) { period in
+            Text(localizedPeriod(period)).tag(period)
+          }
         }
-      }
-      .pickerStyle(SegmentedPickerStyle())
-      .background(Color.gray.opacity(0.2))
-      .cornerRadius(8)
-      .onChange(of: selectedPeriod) { _, _ in
-        loadData()
-      }
+        .pickerStyle(SegmentedPickerStyle())
+        .background(AppTheme.surface)
+        .cornerRadius(AppTheme.smallRadius)
+        .onChange(of: selectedPeriod) { _, _ in
+          loadData()
+        }
     }
   }
 
@@ -144,6 +144,7 @@ struct StatisticsView: View {
       HStack(spacing: 12) {
         ForEach(ChartType.allCases, id: \.self) { chartType in
           Button(action: {
+            HapticsService.shared.select()
             withAnimation {
               selectedChart = chartType
             }
@@ -153,8 +154,8 @@ struct StatisticsView: View {
               .fontWeight(.semibold)
               .padding(.horizontal, 12)
               .padding(.vertical, 8)
-              .background(selectedChart == chartType ? Color.blue : Color.gray.opacity(0.3))
-              .foregroundColor(.white)
+              .background(selectedChart == chartType ? AppTheme.accent : AppTheme.surfaceAlt)
+              .foregroundColor(selectedChart == chartType ? Color.black.opacity(0.9) : AppTheme.textPrimary)
               .cornerRadius(16)
           }
         }
@@ -185,8 +186,8 @@ struct StatisticsView: View {
       }
     }
     .padding(12)
-    .background(Color.gray.opacity(0.1))
-    .cornerRadius(12)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.smallRadius)
   }
 
   private var caloriesChart: some View {
@@ -204,21 +205,22 @@ struct StatisticsView: View {
       )
       .foregroundStyle(Color.orange)
     }
-    .chartXAxis {
+    .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: statistics)
+      .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 5)) { _ in
         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
           .foregroundStyle(Color.gray.opacity(0.3))
         AxisValueLabel()
-          .foregroundStyle(Color.white)
+          .foregroundStyle(AppTheme.textPrimary)
           .font(.caption)
       }
     }
-    .chartYAxis {
+      .chartYAxis {
       AxisMarks { _ in
         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
           .foregroundStyle(Color.gray.opacity(0.3))
         AxisValueLabel()
-          .foregroundStyle(Color.white)
+          .foregroundStyle(AppTheme.textPrimary)
           .font(.caption)
       }
     }
@@ -268,7 +270,7 @@ struct StatisticsView: View {
           "\(prefix) \(loc("stats.axis.weight", "Weight")): \(String(format: "%.1f", validWeightStats[0].personWeight)) \(loc("units.kg", "kg"))"
         )
         .font(.headline)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .padding(.bottom, 5)
       }
 
@@ -300,7 +302,7 @@ struct StatisticsView: View {
           AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
             .foregroundStyle(Color.gray.opacity(0.3))
           AxisValueLabel()
-            .foregroundStyle(Color.white)
+            .foregroundStyle(AppTheme.textPrimary)
             .font(.caption)
         }
       }
@@ -309,41 +311,39 @@ struct StatisticsView: View {
           AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
             .foregroundStyle(Color.gray.opacity(0.3))
           AxisValueLabel()
-            .foregroundStyle(Color.white)
+            .foregroundStyle(AppTheme.textPrimary)
             .font(.caption)
         }
       }
       .chartYScale(domain: yAxisMin...yAxisMax)
       .frame(height: validWeightStats.count == 1 ? 200 : 300)
+      .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: validWeightStats)
       .overlay(
         validWeightStats.isEmpty
-          ? VStack {
-            Text(loc("stats.weight.empty.title", "No weight data available"))
-              .foregroundColor(.gray)
-              .font(.subheadline)
-            Text(loc("stats.weight.empty.subtitle", "Submit weight via camera or manual entry"))
-              .foregroundColor(.gray)
-              .font(.caption)
-              .padding(.top, 2)
-          } : nil
+          ? EmptyStateView(
+            systemImage: "scalemass",
+            title: loc("stats.weight.empty.title", "No weight data available"),
+            subtitle: loc("stats.weight.empty.subtitle", "Submit weight via camera or manual entry")
+          ) : nil
       )
     }
   }
 
   private var foodWeightChart: some View {
-    Chart(statistics) { stat in
+      Chart(statistics) { stat in
       BarMark(
         x: .value(loc("stats.axis.date", "Date"), stat.date),
         y: .value(loc("stats.axis.foodweight", "Food Weight"), stat.totalFoodWeight)
       )
       .foregroundStyle(Color.blue)
     }
+    .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: statistics)
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 5)) { _ in
         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
           .foregroundStyle(Color.gray.opacity(0.3))
         AxisValueLabel()
-          .foregroundStyle(Color.white)
+          .foregroundStyle(AppTheme.textPrimary)
           .font(.caption)
       }
     }
@@ -352,7 +352,7 @@ struct StatisticsView: View {
         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
           .foregroundStyle(Color.gray.opacity(0.3))
         AxisValueLabel()
-          .foregroundStyle(Color.white)
+          .foregroundStyle(AppTheme.textPrimary)
           .font(.caption)
       }
     }
@@ -360,56 +360,39 @@ struct StatisticsView: View {
   }
 
   private var macronutrientsChart: some View {
-    let macroData = statistics.map { stat in
-      [
-        (loc("stats.axis.proteins", "Proteins"), stat.proteins, Color.red),
-        (loc("stats.axis.fats", "Fats"), stat.fats, Color.yellow),
-        (loc("stats.axis.carbs", "Carbs"), stat.carbohydrates, Color.blue),
-        (loc("stats.axis.fiber", "Fiber"), stat.fiber, Color.green),
-      ]
-    }.flatMap { dayData in
-      dayData.enumerated().map { _, macro in
-        MacroData(
-          date: statistics[0].date,  // This needs to be fixed
-          nutrient: macro.0,
-          value: macro.1,
-          color: macro.2
-        )
-      }
-    }
-
     return VStack(spacing: 16) {
       Chart(statistics) { stat in
         BarMark(
           x: .value(loc("stats.axis.date", "Date"), stat.date),
           y: .value(loc("stats.axis.proteins", "Proteins"), stat.proteins)
         )
-        .foregroundStyle(Color.red)
+        .foregroundStyle(AppTheme.macroProtein)
 
         BarMark(
           x: .value(loc("stats.axis.date", "Date"), stat.date),
           y: .value(loc("stats.axis.fats", "Fats"), stat.fats)
         )
-        .foregroundStyle(Color.yellow)
+        .foregroundStyle(AppTheme.macroFat)
 
         BarMark(
           x: .value(loc("stats.axis.date", "Date"), stat.date),
           y: .value(loc("stats.axis.carbs", "Carbs"), stat.carbohydrates)
         )
-        .foregroundStyle(Color.blue)
+        .foregroundStyle(AppTheme.macroCarb)
 
         BarMark(
           x: .value(loc("stats.axis.date", "Date"), stat.date),
           y: .value(loc("stats.axis.fiber", "Fiber"), stat.fiber)
         )
-        .foregroundStyle(Color.green)
+        .foregroundStyle(AppTheme.macroFiber)
       }
+      .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: statistics)
       .chartXAxis {
         AxisMarks(values: .automatic(desiredCount: 5)) { _ in
           AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
             .foregroundStyle(Color.gray.opacity(0.3))
           AxisValueLabel()
-            .foregroundStyle(Color.white)
+            .foregroundStyle(AppTheme.textPrimary)
             .font(.caption)
         }
       }
@@ -418,7 +401,7 @@ struct StatisticsView: View {
           AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
             .foregroundStyle(Color.gray.opacity(0.3))
           AxisValueLabel()
-            .foregroundStyle(Color.white)
+            .foregroundStyle(AppTheme.textPrimary)
             .font(.caption)
         }
       }
@@ -440,7 +423,7 @@ struct StatisticsView: View {
               .frame(width: 8, height: 8)
             Text(item.0)
               .font(.caption)
-              .foregroundColor(.white)
+              .foregroundColor(AppTheme.textPrimary)
           }
         }
       }
@@ -452,10 +435,10 @@ struct StatisticsView: View {
     let trends = statisticsService.calculateTrends(from: statistics)
 
     return VStack(alignment: .leading, spacing: 15) {
-      Text(loc("stats.trend.title", "Trend Analysis"))
-        .font(.title2)
-        .fontWeight(.bold)
-        .foregroundColor(.white)
+        Text(loc("stats.trend.title", "Trend Analysis"))
+          .font(.title2)
+          .fontWeight(.bold)
+          .foregroundColor(AppTheme.textPrimary)
         .padding(.bottom, 5)
 
       VStack(spacing: 12) {
@@ -478,7 +461,7 @@ struct StatisticsView: View {
       VStack(alignment: .leading) {
         Text(title)
           .font(.subheadline)
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
 
         HStack {
           Image(systemName: value > 0 ? "arrow.up" : value < 0 ? "arrow.down" : "minus")
@@ -494,8 +477,8 @@ struct StatisticsView: View {
       Spacer()
     }
     .padding()
-    .background(Color.gray.opacity(0.2))
-    .cornerRadius(8)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.smallRadius)
   }
 
   private var insightsView: some View {
@@ -507,7 +490,7 @@ struct StatisticsView: View {
         Text(loc("stats.insights.title", "Insights Overview"))
           .font(.title2)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(AppTheme.textPrimary)
           .padding(.bottom, 5)
 
         VStack(spacing: 12) {
@@ -543,7 +526,7 @@ struct StatisticsView: View {
     HStack {
       Text(title)
         .font(.subheadline)
-        .foregroundColor(.gray)
+        .foregroundColor(AppTheme.textSecondary)
         .lineLimit(1)
 
       Spacer()
@@ -551,13 +534,13 @@ struct StatisticsView: View {
       Text(value)
         .font(.subheadline)
         .fontWeight(.semibold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .lineLimit(1)
     }
     .padding(.horizontal, 12)
     .padding(.vertical, 10)
-    .background(Color.gray.opacity(0.2))
-    .cornerRadius(8)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.smallRadius)
     .frame(maxWidth: .infinity)
   }
 
@@ -572,7 +555,7 @@ struct StatisticsView: View {
       )
       .font(.subheadline)
       .fontWeight(.semibold)
-      .foregroundColor(.white)
+      .foregroundColor(AppTheme.textPrimary)
 
       LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
         summaryCard(
@@ -594,32 +577,32 @@ struct StatisticsView: View {
     }
     .padding(.horizontal, 10)
     .padding(.vertical, 6)
-    .background(Color.gray.opacity(0.1))
-    .cornerRadius(12)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.smallRadius)
   }
 
   private func summaryCard(title: String, value: String, subtitle: String) -> some View {
     VStack(spacing: 3) {
       Text(title)
         .font(.caption2)
-        .foregroundColor(.gray)
+        .foregroundColor(AppTheme.textSecondary)
         .lineLimit(1)
 
       Text(value)
         .font(.subheadline)
         .fontWeight(.bold)
-        .foregroundColor(.white)
+        .foregroundColor(AppTheme.textPrimary)
         .lineLimit(1)
 
       Text(subtitle)
         .font(.caption2)
-        .foregroundColor(.gray)
+        .foregroundColor(AppTheme.textSecondary)
         .lineLimit(1)
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 6)
-    .background(Color.black.opacity(0.3))
-    .cornerRadius(6)
+    .background(AppTheme.surface)
+    .cornerRadius(AppTheme.smallRadius)
     .frame(maxWidth: .infinity)
   }
 

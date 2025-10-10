@@ -156,7 +156,7 @@ final class LanguageService: ObservableObject {
   // Load list from bundled languages.txt
   func loadAvailableLanguages() -> [String] {
     guard let url = Bundle.main.url(forResource: "languages", withExtension: "txt"),
-      let raw = try? String(contentsOf: url)
+      let raw = try? String(contentsOf: url, encoding: .utf8)
     else {
       return []
     }

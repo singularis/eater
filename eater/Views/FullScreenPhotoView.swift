@@ -20,7 +20,7 @@ struct FullScreenPhotoView: View {
 
   var body: some View {
     ZStack {
-      Color.black
+      AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
       VStack {
@@ -29,7 +29,7 @@ struct FullScreenPhotoView: View {
           Text(foodName)
             .font(.title2)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.textPrimary)
             .padding(.leading)
 
           Spacer()
@@ -43,8 +43,8 @@ struct FullScreenPhotoView: View {
           }) {
             Image(systemName: "xmark.circle.fill")
               .font(.title2)
-              .foregroundColor(.white)
-              .background(Color.black.opacity(0.6))
+              .foregroundColor(AppTheme.textPrimary)
+              .background(AppTheme.surfaceAlt)
               .clipShape(Circle())
           }
           .padding(.trailing)
@@ -107,11 +107,11 @@ struct FullScreenPhotoView: View {
           VStack(spacing: 20) {
             Image(systemName: "photo")
               .font(.system(size: 80))
-              .foregroundColor(.gray)
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(loc("fs.no_photo", "No photo available"))
               .font(.title3)
-              .foregroundColor(.gray)
+              .foregroundColor(AppTheme.textSecondary)
           }
         }
 
@@ -120,7 +120,7 @@ struct FullScreenPhotoView: View {
         // Instructions text
         Text(loc("fs.hint", "Double tap to reset • Pinch to zoom • Drag to pan"))
           .font(.caption)
-          .foregroundColor(.gray)
+          .foregroundColor(AppTheme.textSecondary)
           .padding(.bottom, 20)
       }
     }
