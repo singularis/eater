@@ -208,24 +208,38 @@ struct ContentView: View {
   }
 
   private var profileButton: some View {
-    let shadow = AppTheme.cardShadow
     return Button(action: {
       HapticsService.shared.lightImpact()
       showUserProfile = true
     }) {
-      ProfileImageView(
-        profilePictureURL: authService.userProfilePictureURL,
-        size: 30,
-        fallbackIconColor: AppTheme.textPrimary,
-        userName: authService.userName,
-        userEmail: authService.userEmail
-      )
-      .background(AppTheme.surface)
-      .clipShape(Circle())
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+      ZStack {
+        Circle()
+          .fill(AppTheme.surface)
+          .overlay(
+            Circle()
+              .stroke(
+                LinearGradient(
+                  gradient: Gradient(colors: [Color(red: 0.4, green: 0.5, blue: 1.0).opacity(0.9), Color(red: 0.4, green: 0.5, blue: 1.0).opacity(0.3)]),
+                  startPoint: .topLeading,
+                  endPoint: .bottomTrailing
+                ),
+                lineWidth: 2
+              )
+          )
+          .shadow(color: Color(red: 0.4, green: 0.5, blue: 1.0).opacity(0.4), radius: 6, x: 0, y: 3)
+
+        ProfileImageView(
+          profilePictureURL: authService.userProfilePictureURL,
+          size: 30,
+          fallbackIconColor: AppTheme.textPrimary,
+          userName: authService.userName,
+          userEmail: authService.userEmail
+        )
+        .clipShape(Circle())
+      }
+      .frame(width: 44, height: 44)
+      .contentShape(Circle())
     }
-    .frame(width: 44, height: 44)
-    .contentShape(Circle())
     .buttonStyle(PressScaleButtonStyle())
   }
 

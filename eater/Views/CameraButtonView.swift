@@ -53,9 +53,20 @@ struct CameraButtonView: View {
           .background(AppTheme.primaryButtonGradient)
           .cornerRadius(AppTheme.cornerRadius)
           .foregroundColor(.white)
+          .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+              .stroke(
+                LinearGradient(
+                  gradient: Gradient(colors: [Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.9), Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.3)]),
+                  startPoint: .topLeading,
+                  endPoint: .bottomTrailing
+                ),
+                lineWidth: 2
+              )
+          )
+          .shadow(color: Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.4), radius: 6, x: 0, y: 3)
         }
         .buttonStyle(.plain)
-        .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
         .disabled(isLoadingFoodPhoto)
         .buttonStyle(PressScaleButtonStyle())
 
@@ -84,9 +95,20 @@ struct CameraButtonView: View {
           .background(AppTheme.primaryButtonGradient)
           .cornerRadius(AppTheme.cornerRadius)
           .foregroundColor(.white)
+          .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+              .stroke(
+                LinearGradient(
+                  gradient: Gradient(colors: [Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.9), Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.3)]),
+                  startPoint: .topLeading,
+                  endPoint: .bottomTrailing
+                ),
+                lineWidth: 2.5
+              )
+          )
+          .shadow(color: Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.5), radius: 8, x: 0, y: 3)
         }
         .buttonStyle(.plain)
-        .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
         .disabled(isLoadingFoodPhoto)
         .buttonStyle(PressScaleButtonStyle())
       }
