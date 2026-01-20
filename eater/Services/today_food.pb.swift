@@ -52,6 +52,8 @@ struct Dish: Sendable {
     var ingredients: [String] = []
 
     var totalAvgWeight: Int32 = 0
+    
+    var healthRating: Int32 = 0
 
     var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -170,6 +172,7 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
         3: .standard(proto: "estimated_avg_calories"),
         4: .same(proto: "ingredients"),
         5: .standard(proto: "total_avg_weight"),
+        6: .standard(proto: "health_rating"),
     ]
 
     mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -183,6 +186,7 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
             case 3: try decoder.decodeSingularInt32Field(value: &estimatedAvgCalories)
             case 4: try decoder.decodeRepeatedStringField(value: &ingredients)
             case 5: try decoder.decodeSingularInt32Field(value: &totalAvgWeight)
+            case 6: try decoder.decodeSingularInt32Field(value: &healthRating)
             default: break
             }
         }
@@ -204,6 +208,9 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
         if totalAvgWeight != 0 {
             try visitor.visitSingularInt32Field(value: totalAvgWeight, fieldNumber: 5)
         }
+        if healthRating != 0 {
+            try visitor.visitSingularInt32Field(value: healthRating, fieldNumber: 6)
+        }
         try unknownFields.traverse(visitor: &visitor)
     }
 
@@ -213,6 +220,7 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
         if lhs.estimatedAvgCalories != rhs.estimatedAvgCalories { return false }
         if lhs.ingredients != rhs.ingredients { return false }
         if lhs.totalAvgWeight != rhs.totalAvgWeight { return false }
+        if lhs.healthRating != rhs.healthRating { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

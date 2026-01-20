@@ -401,14 +401,15 @@ struct ContentView: View {
   }
 
   private var statsButtonsView: some View {
-    GeometryReader { geo in
-      weightButton(geo: geo)
-      caloriesButton(geo: geo)
-      recommendationButton(geo: geo)
+    HStack(spacing: 12) {
+      weightButton
+      caloriesButton
+      recommendationButton
     }
+    .frame(maxWidth: .infinity)
   }
 
-  private func weightButton(geo: GeometryProxy) -> some View {
+  private var weightButton: some View {
     let shadow = AppTheme.cardShadow
     return Button(action: {
       HapticsService.shared.select()
@@ -424,12 +425,12 @@ struct ContentView: View {
             .foregroundColor(AppTheme.textPrimary)
         }
       }
-      .padding()
+      .frame(maxWidth: .infinity)
+      .padding(8)
       .background(AppTheme.surface)
       .cornerRadius(AppTheme.cornerRadius)
       .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     }
-    .position(x: 30, y: geo.size.height / 2)
     .confirmationDialog(
       loc("weight.record.title", "Record Weight"), isPresented: $showWeightActionSheet,
       titleVisibility: .visible
@@ -478,26 +479,31 @@ struct ContentView: View {
     }
   }
 
-  private func caloriesButton(geo: GeometryProxy) -> some View {
+  private var caloriesButton: some View {
     let adjustedSoftLimit = getAdjustedSoftLimit()
     let shadow = AppTheme.cardShadow
-    return Text("\(loc("calories.label", "Calories")): \(adjustedSoftLimit - caloriesLeft)")
-      .font(.system(size: 22, weight: .semibold, design: .rounded))
+    return Button(action: {
+      HapticsService.shared.select()
+      tempSoftLimit = String(softLimit)
+      tempHardLimit = String(hardLimit)
+      showLimitsAlert = true
+    }) {
+      HStack(spacing: 4) {
+        Image(systemName: "flame.fill")
+          .font(.system(size: 20))
+        Text("\(adjustedSoftLimit - caloriesLeft)")
+          .font(.system(size: 22, weight: .semibold, design: .rounded))
+      }
       .foregroundColor(getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit))
-      .padding()
+      .frame(maxWidth: .infinity)
+      .padding(8)
       .background(AppTheme.surface)
       .cornerRadius(AppTheme.cornerRadius)
       .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
-      .position(x: geo.size.width / 2, y: geo.size.height / 2)
-      .onTapGesture {
-        HapticsService.shared.select()
-        tempSoftLimit = String(softLimit)
-        tempHardLimit = String(hardLimit)
-        showLimitsAlert = true
-      }
+    }
   }
 
-  private func recommendationButton(geo: GeometryProxy) -> some View {
+  private var recommendationButton: some View {
     let shadow = AppTheme.cardShadow
     return ZStack {
       if isLoadingRecommendation {
@@ -509,17 +515,24 @@ struct ContentView: View {
           .foregroundColor(AppTheme.textPrimary)
       }
     }
-    .padding()
+    .frame(maxWidth: .infinity)
+    .padding(8)
     .background(AppTheme.surface)
     .cornerRadius(AppTheme.cornerRadius)
     .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
-    .position(x: geo.size.width - 30, y: geo.size.height / 2)
     .onTapGesture {
       HapticsService.shared.select()
       isLoadingRecommendation = true
       GRPCService().getRecommendation(days: 7) { recommendation in
         DispatchQueue.main.async {
-          self.recommendationText = recommendation
+          if recommendation.isEmpty {
+            self.recommendationText = loc(
+              "rec.fallback",
+              "We couldn't customize your advice right now, but here are some general wellness tips:\n\nConsistent habits build a healthy lifestyle. Start by incorporating more whole foods like vegetables, fruits, nuts, and legumes into your meals. These provide essential fiber and nutrients that processed food often lacks.\n\nTry to limit added sugars and heavily processed snacks, opting instead for natural sweetness from fruit. Staying hydrated is often overlooked but crucial for metabolism and energy.\n\nPhysical activity is the perfect partner to nutrition. Even a daily 30-minute walk can make a significant difference. Lastly, quality sleep is when your body repairs itself—prioritize it just as you do your meals.\n\n⚠️ Disclaimer: This guide is for informational purposes only and is not a substitute for professional medical advice."
+            )
+          } else {
+            self.recommendationText = recommendation
+          }
           self.showRecommendation = true
           HapticsService.shared.success()
           self.isLoadingRecommendation = false
@@ -812,6 +825,8 @@ struct ContentView: View {
 
     // Convert dateString to display format
     let inputFormatter = DateFormatter()
+    inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+    inputFormatter.calendar = Calendar(identifier: .gregorian)
     inputFormatter.dateFormat = "dd-MM-yyyy"
     let displayFormatter = DateFormatter()
     displayFormatter.locale = Locale(identifier: languageService.currentCode)

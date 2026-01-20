@@ -69,7 +69,8 @@ class GRPCService {
             name: dish.dishName,
             calories: Int(dish.estimatedAvgCalories),
             weight: Int(dish.totalAvgWeight),
-            ingredients: dish.ingredients
+            ingredients: dish.ingredients,
+            healthRating: Int(dish.healthRating)
           )
         }
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
@@ -417,7 +418,8 @@ class GRPCService {
               name: dish.dishName,
               calories: Int(dish.estimatedAvgCalories),
               weight: Int(dish.totalAvgWeight),
-              ingredients: dish.ingredients
+              ingredients: dish.ingredients,
+              healthRating: Int(dish.healthRating)
             )
           }
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
@@ -850,6 +852,47 @@ class GRPCService {
       }
     } catch {
       completion(false)
+    }
+  }
+
+  func getFoodHealthLevel(time: Int64, foodName: String, completion: @escaping (Eater_FoodHealthLevelResponse?) -> Void) {
+    var healthLevelRequest = Eater_FoodHealthLevelRequest()
+    healthLevelRequest.time = time
+    healthLevelRequest.foodName = foodName
+
+    do {
+      let requestBody = try healthLevelRequest.serializedData()
+
+      guard
+        var request = createRequest(
+          endpoint: "food_health_level", httpMethod: "POST", body: requestBody)
+      else {
+        completion(nil)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+        if error != nil {
+          completion(nil)
+          return
+        }
+
+        if let response = response as? HTTPURLResponse {
+          if response.statusCode == 200, let data = data {
+            do {
+              let healthLevelResponse = try Eater_FoodHealthLevelResponse(serializedBytes: data)
+              completion(healthLevelResponse)
+            } catch {
+              completion(nil)
+            }
+          } else {
+            completion(nil)
+          }
+        }
+      }
+    } catch {
+      completion(nil)
     }
   }
 }

@@ -1,6 +1,8 @@
 {
   "alert.delete.message": "Are you sure you want to delete your account? This will immediately remove all your data and preferences from this device and sign you out.",
   "alert.delete.title": "Delete Account",
+  "alert.health.disclaimer.body": "This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.",
+  "alert.health.disclaimer.header": "⚠️ HEALTH DISCLAIMER:",
   "appearance.dark": "Dark",
   "appearance.light": "Light",
   "appearance.system": "System",

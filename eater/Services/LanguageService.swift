@@ -196,7 +196,7 @@ final class LanguageService: ObservableObject {
     return code.lowercased().split(separator: "-").first.map(String.init) ?? code.lowercased()
   }
 
-  // Short label for Trend: must be 4 letters, language aware
+  // Short label for Trend: keeping it short for UI consistency
   func shortTrendLabel() -> String {
     // Provide 4-character abbreviations per language for UI consistency.
     // Use local-script where clear; otherwise use a Latin abbreviation.
@@ -209,7 +209,7 @@ final class LanguageService: ObservableObject {
       "da": "Tren",
       "de": "Tren",
       "el": "Τάση",
-      "en": "Trnd",
+      "en": "Advice",
       "es": "Tend",
       "et": "Tren",
       "fi": "Tren",

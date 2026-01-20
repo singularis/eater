@@ -8,14 +8,16 @@ struct Product: Identifiable, Codable, Equatable {
   let calories: Int
   let weight: Int
   let ingredients: [String]
+  let healthRating: Int
 
   // Custom initializer for creating products
-  init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String]) {
+  init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String], healthRating: Int = -1) {
     self.time = time
     self.name = name
     self.calories = calories
     self.weight = weight
     self.ingredients = ingredients
+    self.healthRating = healthRating
   }
 
   var image: UIImage? {
@@ -34,6 +36,6 @@ struct Product: Identifiable, Codable, Equatable {
 
   // Codable implementation
   private enum CodingKeys: String, CodingKey {
-    case time, name, calories, weight, ingredients
+    case time, name, calories, weight, ingredients, healthRating
   }
 }

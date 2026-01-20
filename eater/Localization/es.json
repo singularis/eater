@@ -1,6 +1,8 @@
 {
   "alert.delete.message": "¿Estás seguro de que quieres eliminar tu cuenta? Esto eliminará inmediatamente todos tus datos y preferencias de este dispositivo y cerrará tu sesión.",
   "alert.delete.title": "Eliminar Cuenta",
+  "alert.health.disclaimer.body": "Esta información es solo para fines educativos y no debe reemplazar el consejo médico profesional. Consulte a su proveedor de atención médica antes de realizar cambios en la dieta.",
+  "alert.health.disclaimer.header": "⚠️ AVISO DE SALUD:",
   "appearance.dark": "Oscuro",
   "appearance.light": "Claro",
   "appearance.system": "Sistema",

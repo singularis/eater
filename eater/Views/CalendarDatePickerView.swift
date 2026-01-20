@@ -34,6 +34,8 @@ struct CalendarDatePickerView: View {
         }())
       .onChange(of: selectedDate) { oldDate, newDate in
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.calendar = Calendar(identifier: .gregorian)
         dateFormatter.dateFormat = "dd-MM-yyyy"
         let dateString = dateFormatter.string(from: newDate)
         

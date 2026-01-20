@@ -42,79 +42,13 @@ struct ProductListView: View {
       } else {
         List {
           ForEach(sortedProducts) { product in
-            VStack(spacing: 6) {
-              HStack(spacing: 12) {
-              // Food photo - clickable for full screen
-              if let image = product.image {
-                Image(uiImage: image)
-                  .resizable()
-                  .aspectRatio(contentMode: .fill)
-                  .frame(width: 80, height: 80)
-                  .clipped()
-                  .cornerRadius(AppTheme.smallRadius)
-                  .onTapGesture {
-                    if deletingProductTime != product.time {
-                      HapticsService.shared.select()
-                      onPhotoTap(image, product.name)
-                    }
-                  }
-              } else {
-                RoundedRectangle(cornerRadius: AppTheme.smallRadius)
-                  .fill(AppTheme.surfaceAlt)
-                  .frame(width: 80, height: 80)
-                  .overlay(
-                    Image(systemName: "photo")
-                      .foregroundColor(AppTheme.textSecondary)
-                  )
-                  .onTapGesture {
-                    if deletingProductTime != product.time {
-                      // Try to get image using fallback mechanism
-                      let image = product.image
-                      HapticsService.shared.select()
-                      onPhotoTap(image, product.name)
-                    }
-                  }
-              }
-
-              // Food details - clickable for portion modification
-              VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                  .font(.headline)
-                  .foregroundColor(AppTheme.textPrimary)
-
-                let details =
-                  "\(product.calories) \(loc("units.kcal", "kcal")) • \(product.weight)\(loc("units.gram_suffix", "g"))"
-                Text(details)
-                  .font(.subheadline)
-                  .foregroundColor(AppTheme.textSecondary)
-
-                Text(product.ingredients.joined(separator: ", "))
-                  .font(.caption)
-                  .foregroundColor(AppTheme.textSecondary)
-                  .lineLimit(2)
-              }
-              .onTapGesture {
-                HapticsService.shared.lightImpact()
-                AlertHelper.showPortionSelectionAlert(
-                  foodName: product.name, originalWeight: product.weight, time: product.time,
-                  onPortionSelected: { percentage in
-                    HapticsService.shared.success()
-                    onModify(product.time, product.name, percentage)
-                  }, onShareSuccess: onShareSuccess)
-              }
-
-              Spacer()
-
-              if deletingProductTime == product.time {
-                ProgressView()
-                  .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.accent))
-                  .scaleEffect(0.8)
-              }
-              }
-              .padding(.vertical, 8)
-              .opacity(deletingProductTime == product.time ? 0.6 : 1.0)
-            
-            }
+            ProductRowView(
+              product: product,
+              deletingProductTime: deletingProductTime,
+              onPhotoTap: onPhotoTap,
+              onModify: onModify,
+              onShareSuccess: onShareSuccess
+            )
             .listRowBackground(Color.clear)
             .swipeActions {
               Button {

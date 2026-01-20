@@ -11,9 +11,17 @@ class AlertHelper {
     case select
   }
 
+  private struct HealthSummaryItem: Codable {
+    let ingredients: String?
+    let description: String?
+    let risk: String?
+    let benefit: String?
+  }
+
   static func showAlert(
     title: String,
-    message: String,
+    message: String? = nil,
+    attributedMessage: NSAttributedString? = nil,
     haptic: HapticKind? = nil,
     completion: (() -> Void)? = nil
   ) {
@@ -40,7 +48,9 @@ class AlertHelper {
 
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
-    if let attributedMessage = alert.message {
+    if let attr = attributedMessage {
+      alert.setValue(attr, forKey: "attributedMessage")
+    } else if let attributedMessage = alert.message {
       let mutableAttributedMessage = NSMutableAttributedString(string: attributedMessage)
 
       let largerFontSize: CGFloat = 16
@@ -144,6 +154,79 @@ class AlertHelper {
     let fullMessage = recommendation + disclaimerText
     let title = loc("health.recommendation.title", "Health Recommendation")
     showAlert(title: title, message: fullMessage, completion: completion)
+  }
+
+  static func showHealthLevelInfo(title: String, description: String, healthSummary: String) {
+    let header = loc("alert.health.disclaimer.header", "⚠️ HEALTH DISCLAIMER:")
+    let body = loc(
+      "alert.health.disclaimer.body",
+      "This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
+    )
+    
+    // Attempt to parse JSON healthSummary
+    if let data = healthSummary.data(using: .utf8),
+       let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data) {
+      
+      let fullStr = NSMutableAttributedString()
+      
+      // Main description - slightly larger and secondary color for "intro" feel
+      fullStr.append(NSAttributedString(string: description + "\n\n", attributes: [
+        .font: UIFont.systemFont(ofSize: 17),
+        .foregroundColor: UIColor.secondaryLabel
+      ]))
+      
+      for (index, item) in items.enumerated() {
+        // Separator between items (if not first)
+        if index > 0 {
+          fullStr.append(NSAttributedString(string: "\n"))
+        }
+
+        // Ingredient Name - Headline Style (Softer)
+        if let name = item.ingredients, !name.isEmpty {
+          fullStr.append(NSAttributedString(string: name + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+            .foregroundColor: UIColor.label
+          ]))
+        }
+        
+        // Risk (Orange + Diamond) - Less alarming
+        if let risk = item.risk, !risk.isEmpty {
+           let riskAttr: [NSAttributedString.Key: Any] = [
+             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+             .foregroundColor: UIColor.systemOrange
+           ]
+           fullStr.append(NSAttributedString(string: risk + "\n", attributes: riskAttr))
+        }
+        
+        // Benefit (Green + Sparkles) - Friendly
+        if let benefit = item.benefit, !benefit.isEmpty {
+           let benefitAttr: [NSAttributedString.Key: Any] = [
+             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+             .foregroundColor: UIColor.systemGreen
+           ]
+           fullStr.append(NSAttributedString(string: benefit + "\n", attributes: benefitAttr))
+        }
+        
+        // Description - Regular body text
+        if let desc = item.description, !desc.isEmpty {
+          // Add a tiny bit of spacing before description if we had headers
+          fullStr.append(NSAttributedString(string: desc + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16),
+            .foregroundColor: UIColor.label
+          ]))
+        }
+      }
+      
+      let disclaimer = "\n" + header + "\n" + body
+      fullStr.append(NSAttributedString(string: disclaimer, attributes: [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.secondaryLabel]))
+      
+      showAlert(title: title, attributedMessage: fullStr)
+      return
+    }
+    
+    // Fallback for plain text summary
+    let message = description + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
+    showAlert(title: title, message: message)
   }
 
   static func showPortionSelectionAlert(
