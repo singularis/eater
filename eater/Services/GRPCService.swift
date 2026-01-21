@@ -70,7 +70,8 @@ class GRPCService {
             calories: Int(dish.estimatedAvgCalories),
             weight: Int(dish.totalAvgWeight),
             ingredients: dish.ingredients,
-            healthRating: Int(dish.healthRating)
+            healthRating: Int(dish.healthRating),
+            imageId: dish.imageID
           )
         }
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
@@ -419,7 +420,8 @@ class GRPCService {
               calories: Int(dish.estimatedAvgCalories),
               weight: Int(dish.totalAvgWeight),
               ingredients: dish.ingredients,
-              healthRating: Int(dish.healthRating)
+              healthRating: Int(dish.healthRating),
+              imageId: dish.imageID
             )
           }
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)

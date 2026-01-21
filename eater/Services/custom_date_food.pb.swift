@@ -77,6 +77,8 @@ struct Eater_Dish: Sendable {
     
     var healthRating: Int32 = 0
 
+    var imageID: String = .init()
+
     var unknownFields = SwiftProtobuf.UnknownStorage()
 
     init() {}
@@ -219,6 +221,7 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
         4: .same(proto: "ingredients"),
         5: .standard(proto: "total_avg_weight"),
         6: .standard(proto: "health_rating"),
+        7: .standard(proto: "image_id"),
     ]
 
     mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -233,6 +236,7 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
             case 4: try decoder.decodeRepeatedStringField(value: &ingredients)
             case 5: try decoder.decodeSingularInt32Field(value: &totalAvgWeight)
             case 6: try decoder.decodeSingularInt32Field(value: &healthRating)
+            case 7: try decoder.decodeSingularStringField(value: &imageID)
             default: break
             }
         }
@@ -257,6 +261,9 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
         if healthRating != 0 {
             try visitor.visitSingularInt32Field(value: healthRating, fieldNumber: 6)
         }
+        if !imageID.isEmpty {
+            try visitor.visitSingularStringField(value: imageID, fieldNumber: 7)
+        }
         try unknownFields.traverse(visitor: &visitor)
     }
 
@@ -267,6 +274,7 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
         if lhs.ingredients != rhs.ingredients { return false }
         if lhs.totalAvgWeight != rhs.totalAvgWeight { return false }
         if lhs.healthRating != rhs.healthRating { return false }
+        if lhs.imageID != rhs.imageID { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

@@ -196,49 +196,47 @@ final class LanguageService: ObservableObject {
     return code.lowercased().split(separator: "-").first.map(String.init) ?? code.lowercased()
   }
 
-  // Short label for Trend: keeping it short for UI consistency
-  func shortTrendLabel() -> String {
-    // Provide 4-character abbreviations per language for UI consistency.
-    // Use local-script where clear; otherwise use a Latin abbreviation.
+  // Short label for Recommendation/Advice
+  func shortRecommendationLabel() -> String {
     let map: [String: String] = [
-      "ar": "ترند",
-      "be": "Трэн",
-      "bg": "Трен",
-      "bn": "ট্রেন",
-      "cs": "Tren",
-      "da": "Tren",
-      "de": "Tren",
-      "el": "Τάση",
-      "en": "Advice",
-      "es": "Tend",
-      "et": "Tren",
-      "fi": "Tren",
-      "fr": "Tend",
-      "ga": "Treo",
-      "hi": "ट्रेंड",
-      "hr": "Tren",
-      "hu": "Tren",
-      "it": "Tend",
-      "ja": "トレ",
-      "ko": "트렌",
-      "lt": "Tend",
-      "lv": "Tend",
-      "mt": "Tend",
-      "nl": "Tren",
-      "pl": "Tren",
-      "pt": "Tend",
-      "ro": "Tend",
-      "sk": "Tren",
-      "sl": "Tren",
-      "sv": "Tren",
-      "th": "เทรน",
-      "tr": "Eğil",
-      "uk": "Трен",
-      "ur": "رجح",
-      "vi": "Xuhu",
-      "zh": "趋势",
+      "ar": "نصيحة",    // naseeha (advice)
+      "be": "Пара",     // parada (advice) - short for парада
+      "bg": "Съвет",    // savet (advice)
+      "bn": "পরামর্শ",   // paramarsha (advice)
+      "cs": "Rada",     // rada (advice)
+      "da": "Råd",      // råd (advice)
+      "de": "Rat",      // Rat (advice)
+      "el": "Συμβ",     // symvouli (advice) - short for συμβουλή
+      "en": "Advice",   // advice
+      "es": "Cons",     // consejo (advice)
+      "et": "Nõu",      // nõu (advice)
+      "fi": "Neuvo",    // neuvo (advice)
+      "fr": "Avis",     // avis (advice)
+      "ga": "Comh",     // comhairle (advice)
+      "hi": "सलाह",     // salah (advice)
+      "hr": "Savj",     // savjet (advice)
+      "hu": "Tanács",   // tanács (advice)
+      "it": "Cons",     // consiglio (advice)
+      "ja": "助言",      // jogen (advice)
+      "ko": "조언",      // jo-eon (advice)
+      "lt": "Patar",    // patarimas (advice)
+      "lv": "Padom",    // padoms (advice)
+      "mt": "Parir",    // parir (advice)
+      "nl": "Advies",   // advies (advice)
+      "pl": "Rada",     // rada (advice)
+      "pt": "Cons",     // conselho (advice)
+      "ro": "Sfat",     // sfat (advice)
+      "sk": "Rada",     // rada (advice)
+      "sl": "Nasvet",   // nasvet (advice)
+      "sv": "Råd",      // råd (advice)
+      "th": "แนะนำ",     // khamnaenam (advice)
+      "tr": "Tavsiye",  // tavsiye (advice)
+      "uk": "Порада",   // porada (advice) - NOT рада
+      "ur": "مشورہ",    // mashwara (advice)
+      "vi": "L.khuyên", // lời khuyên (advice)
+      "zh": "建议",      // jiànyi (advice)
     ]
-    return map[currentCode] ?? "TRND"
+    return map[currentCode] ?? "Advice"
   }
 
   func flagEmoji(forLanguageCode code: String) -> String {

@@ -139,10 +139,10 @@ class AlertHelper {
   }
 
   static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
-    let header = loc("alert.health.disclaimer.header", "⚠️ HEALTH DISCLAIMER:")
+    let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
     let body = loc(
-      "alert.health.disclaimer.body",
-      "This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
+      "rec.disclaimer.text",
+      "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
     )
     let sourcesLabel = loc("alert.health.sources.label", "Sources:")
     let sourceUSDA = loc("alert.health.sources.usda", "USDA FoodData Central")
@@ -157,10 +157,10 @@ class AlertHelper {
   }
 
   static func showHealthLevelInfo(title: String, description: String, healthSummary: String) {
-    let header = loc("alert.health.disclaimer.header", "⚠️ HEALTH DISCLAIMER:")
+    let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
     let body = loc(
-      "alert.health.disclaimer.body",
-      "This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
+      "rec.disclaimer.text",
+      "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
     )
     
     // Attempt to parse JSON healthSummary

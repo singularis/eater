@@ -7,11 +7,24 @@ struct ProductRowView: View {
   let onModify: (Int64, String, Int32) -> Void
   let onShareSuccess: () -> Void
 
+  @State private var remoteImage: UIImage? = nil
+  @State private var isLoadingImage: Bool = false
+
+  /// Returns the best available image: local first, then remote fetched
+  private var displayImage: UIImage? {
+    // First try local image
+    if let localImage = product.image {
+      return localImage
+    }
+    // Then try remotely fetched image
+    return remoteImage
+  }
+
   var body: some View {
     ZStack(alignment: .trailing) {
       HStack(spacing: 12) {
         // Food photo - clickable for full screen
-        if let image = product.image {
+        if let image = displayImage {
           Image(uiImage: image)
             .resizable()
             .aspectRatio(contentMode: .fill)
@@ -24,7 +37,17 @@ struct ProductRowView: View {
                 onPhotoTap(image, product.name)
               }
             }
+        } else if isLoadingImage {
+          // Show loading indicator while fetching
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+            .fill(AppTheme.surfaceAlt)
+            .frame(width: 80, height: 80)
+            .overlay(
+              ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textSecondary))
+            )
         } else {
+          // Placeholder - no image available
           RoundedRectangle(cornerRadius: AppTheme.smallRadius)
             .fill(AppTheme.surfaceAlt)
             .frame(width: 80, height: 80)
@@ -35,7 +58,7 @@ struct ProductRowView: View {
             .onTapGesture {
               if deletingProductTime != product.time {
                 // Try to get image using fallback mechanism
-                let image = product.image
+                let image = product.image ?? remoteImage
                 HapticsService.shared.select()
                 onPhotoTap(image, product.name)
               }
@@ -71,7 +94,7 @@ struct ProductRowView: View {
         
         Spacer()
       }
-      .padding(.trailing, (product.healthRating > 0 && deletingProductTime != product.time) ? 45 : 0)
+      .padding(.trailing, (product.healthRating >= 0 && deletingProductTime != product.time) ? 45 : 0)
 
       // Separate layer for Smiley or ProgressView
       if deletingProductTime == product.time {
@@ -79,7 +102,7 @@ struct ProductRowView: View {
           .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.accent))
           .scaleEffect(0.8)
           .padding(.trailing, 8)
-      } else if product.healthRating > 0 {
+      } else if product.healthRating >= 0 {
         Image(systemName: getHealthRatingIconName(rating: product.healthRating))
           .resizable()
           .aspectRatio(contentMode: .fit)
@@ -123,42 +146,73 @@ struct ProductRowView: View {
     }
     .padding(.vertical, 8)
     .opacity(deletingProductTime == product.time ? 0.6 : 1.0)
+    .onAppear {
+      fetchRemoteImageIfNeeded()
+    }
+  }
+
+  /// Fetches the image from the backend if needed
+  private func fetchRemoteImageIfNeeded() {
+    // Debug logging
+    print("📷 ProductRowView: \(product.name) - imageId: '\(product.imageId)', hasLocalImage: \(product.image != nil), needsRemoteFetch: \(product.needsRemoteFetch)")
+    
+    // Only fetch if there's no local image and we have an imageId
+    guard product.image == nil,
+          product.needsRemoteFetch,
+          !isLoadingImage else {
+      print("📷 Skipping fetch for \(product.name): localImage=\(product.image != nil), needsRemote=\(product.needsRemoteFetch), isLoading=\(isLoadingImage)")
+      return
+    }
+
+    print("📷 Starting fetch for \(product.name) with imageId: \(product.imageId)")
+    isLoadingImage = true
+    
+    FoodPhotoService.shared.fetchPhoto(imageId: product.imageId) { image in
+      isLoadingImage = false
+      if let image = image {
+        print("📷 Successfully fetched image for \(product.name)")
+        remoteImage = image
+      } else {
+        print("📷 Failed to fetch image for \(product.name)")
+      }
+    }
   }
 
   private func getHealthRatingIconName(rating: Int) -> String {
     switch rating {
     case 0:
-      return "exclamationmark.triangle.fill" // Hazard
+      return "cross.case.fill" // Medical help needed (Funny/Extreme)
     case 1:
-      return "exclamationmark.triangle" // Hazard
+      return "bed.double.fill" // Food coma / Lethargic
     case 2:
-      return "hand.thumbsdown.fill"
+      return "tortoise.fill" // Slows you down
     case 3:
-      return "hand.thumbsdown"
+      return "hand.thumbsdown.fill" // Thumbs down
     case 4:
-      return "face.dashed"
+      return "cloud.heavyrain.fill" // Gloomy/Sad
     case 5:
-      return "face.expressionless"
+      return "minus.circle.fill" // Neutral / Flat
     case 6:
-      return "face.smiling"
+      return "hare.fill" // Energy / Speed
     case 7:
-      return "hand.thumbsup.fill"
+      return "leaf.fill" // Natural / Healthy
     case 8:
-      return "face.smiling.with.heart.eyes"
+      return "flame.fill" // Fire / Great fuel
     case 9:
-      return "star.fill"
+      return "diamond.fill" // Precious / Top tier
     case 10:
-      return "crown.fill"
+      return "crown.fill" // King / Perfect
     default:
-      return "face.smiling"
+      return "questionmark.circle"
     }
   }
   
   private func getHealthRatingColor(rating: Int) -> Color {
     // 0 is bad (red), 10 is good (green)
     // Clamp value between 0 and 10
-    let clampedRating = max(0, min(10, Double(rating)))
-    let normalized = clampedRating / 10.0
+    let maxRating: Double = 10.0
+    let clampedRating = max(0, min(maxRating, Double(rating)))
+    let normalized = clampedRating / maxRating
     
     // Simple interpolation between red and green
     // Red: 1.0 -> 0.0 (as rating increases)

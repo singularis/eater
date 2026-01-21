@@ -156,4 +156,89 @@ class ImageStorageService {
       return false
     }
   }
+
+  // MARK: - Cached Remote Images (from backend)
+
+  private var cachedImagesDirectory: URL {
+    let url = documentsDirectory.appendingPathComponent("CachedFoodImages")
+    if !FileManager.default.fileExists(atPath: url.path) {
+      try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    }
+    return url
+  }
+
+  /// Convert an imageId to a safe filename
+  private func cacheFilename(forImageId imageId: String) -> String {
+    // imageId format might be: "user@email.com/20260121_143052.jpg"
+    // Convert to safe filename preserving uniqueness
+    let safeFilename = imageId
+      .replacingOccurrences(of: "/", with: "_")
+      .replacingOccurrences(of: "@", with: "_at_")
+    return safeFilename.hasSuffix(".jpg") ? safeFilename : "\(safeFilename).jpg"
+  }
+
+  /// Save an image fetched from backend to cache
+  func saveCachedImage(_ image: UIImage, forImageId imageId: String) -> Bool {
+    guard !imageId.isEmpty,
+          let imageData = image.jpegData(compressionQuality: 0.9) else {
+      return false
+    }
+
+    let filename = cacheFilename(forImageId: imageId)
+    let fileURL = cachedImagesDirectory.appendingPathComponent(filename)
+
+    do {
+      try imageData.write(to: fileURL)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /// Load an image from cache by its imageId
+  func loadCachedImage(forImageId imageId: String) -> UIImage? {
+    guard !imageId.isEmpty else {
+      return nil
+    }
+
+    let filename = cacheFilename(forImageId: imageId)
+    let fileURL = cachedImagesDirectory.appendingPathComponent(filename)
+
+    guard FileManager.default.fileExists(atPath: fileURL.path),
+          let imageData = try? Data(contentsOf: fileURL),
+          let image = UIImage(data: imageData)
+    else {
+      return nil
+    }
+
+    return image
+  }
+
+  /// Check if a cached image exists for the given imageId
+  func cachedImageExists(forImageId imageId: String) -> Bool {
+    guard !imageId.isEmpty else {
+      return false
+    }
+
+    let filename = cacheFilename(forImageId: imageId)
+    let fileURL = cachedImagesDirectory.appendingPathComponent(filename)
+    return FileManager.default.fileExists(atPath: fileURL.path)
+  }
+
+  /// Delete a cached image
+  func deleteCachedImage(forImageId imageId: String) -> Bool {
+    guard !imageId.isEmpty else {
+      return false
+    }
+
+    let filename = cacheFilename(forImageId: imageId)
+    let fileURL = cachedImagesDirectory.appendingPathComponent(filename)
+
+    do {
+      try FileManager.default.removeItem(at: fileURL)
+      return true
+    } catch {
+      return false
+    }
+  }
 }

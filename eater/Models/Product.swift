@@ -9,20 +9,27 @@ struct Product: Identifiable, Codable, Equatable {
   let weight: Int
   let ingredients: [String]
   let healthRating: Int
+  let imageId: String  // Backend MinIO object path for the food photo
 
   // Custom initializer for creating products
-  init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String], healthRating: Int = -1) {
+  init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String], healthRating: Int = -1, imageId: String = "") {
     self.time = time
     self.name = name
     self.calories = calories
     self.weight = weight
     self.ingredients = ingredients
     self.healthRating = healthRating
+    self.imageId = imageId
   }
 
   var image: UIImage? {
-    // First try to load by timestamp
+    // First try to load by timestamp (local storage - from camera capture)
     if let image = ImageStorageService.shared.loadImage(forTime: time) {
+      return image
+    }
+
+    // Second: try to load cached image fetched from backend
+    if let image = ImageStorageService.shared.loadCachedImage(forImageId: imageId) {
       return image
     }
 
@@ -31,11 +38,19 @@ struct Product: Identifiable, Codable, Equatable {
   }
 
   var hasImage: Bool {
-    return ImageStorageService.shared.imageExists(forTime: time)
+    return ImageStorageService.shared.imageExists(forTime: time) 
+      || (!imageId.isEmpty && ImageStorageService.shared.cachedImageExists(forImageId: imageId))
+  }
+
+  var needsRemoteFetch: Bool {
+    // Needs remote fetch if we have an imageId but no local image
+    return !imageId.isEmpty 
+      && !ImageStorageService.shared.imageExists(forTime: time)
+      && !ImageStorageService.shared.cachedImageExists(forImageId: imageId)
   }
 
   // Codable implementation
   private enum CodingKeys: String, CodingKey {
-    case time, name, calories, weight, ingredients, healthRating
+    case time, name, calories, weight, ingredients, healthRating, imageId
   }
 }

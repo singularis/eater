@@ -51,6 +51,7 @@ struct ContentView: View {
   @State private var showWeightActionSheet = false
   @State private var showManualWeightEntry = false
   @State private var manualWeightInput = ""
+  @State private var pendingWeightPhotoCheck = false  // Flag to check motivation after weight photo
 
   // Daily refresh states
   @State private var dailyRefreshTimer: Timer?
@@ -455,6 +456,9 @@ struct ContentView: View {
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
 
+          // Set flag to check for motivation message after data refresh
+          pendingWeightPhotoCheck = true
+          
           // Always return to today after weight photo
           returnToToday()
           isLoadingWeightPhoto = false
@@ -510,7 +514,7 @@ struct ContentView: View {
         ProgressView()
           .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
       } else {
-        Text(languageService.shortTrendLabel())
+        Text(languageService.shortRecommendationLabel())
           .font(.system(size: 22, weight: .semibold, design: .rounded))
           .foregroundColor(AppTheme.textPrimary)
       }
@@ -681,6 +685,30 @@ struct ContentView: View {
         self.personWeight = weight
         self.isLoadingData = false
         self.isFetchingData = false
+
+        // Check for weight photo motivation message
+        if self.pendingWeightPhotoCheck && weight > 0 {
+          self.pendingWeightPhotoCheck = false
+          
+          // Check if user lost weight and show motivational message
+          if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
+            // User lost weight! Show motivational message
+            let motivation = WeightMotivationService.shared.getMotivationalMessage(
+              weightLossGrams: weightLossGrams,
+              languageCode: self.languageService.currentCode
+            )
+            AlertHelper.showAlert(
+              title: motivation.title,
+              message: motivation.message,
+              haptic: .success)
+          } else {
+            // No weight loss detected, show standard message
+            AlertHelper.showAlert(
+              title: loc("weight.recorded.title", "Weight Recorded"),
+              message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
+              haptic: .success)
+          }
+        }
 
         // Recalculate calories if weight changed and user has health data
         let userDefaults = UserDefaults.standard
@@ -901,12 +929,29 @@ struct ContentView: View {
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
 
-          // Always return to today after manual weight entry
-          self.returnToToday()
-          AlertHelper.showAlert(
-            title: loc("weight.recorded.title", "Weight Recorded"),
-            message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
-            haptic: .success)
+          // Check if user lost weight and show motivational message
+          if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
+            // User lost weight! Show motivational message
+            let motivation = WeightMotivationService.shared.getMotivationalMessage(
+              weightLossGrams: weightLossGrams,
+              languageCode: self.languageService.currentCode
+            )
+            
+            // Always return to today after manual weight entry
+            self.returnToToday()
+            AlertHelper.showAlert(
+              title: motivation.title,
+              message: motivation.message,
+              haptic: .success)
+          } else {
+            // No weight loss detected, show standard message
+            // Always return to today after manual weight entry
+            self.returnToToday()
+            AlertHelper.showAlert(
+              title: loc("weight.recorded.title", "Weight Recorded"),
+              message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
+              haptic: .success)
+          }
         } else {
           AlertHelper.showAlert(
             title: loc("common.error", "Error"),
@@ -917,6 +962,7 @@ struct ContentView: View {
       }
     }
   }
+
 
   func submitSportCalories() {
     guard let calories = Int(sportCaloriesInput), calories > 0 else {
