@@ -184,13 +184,7 @@ final class AuthenticationService: NSObject, ObservableObject {
       if let token = storedToken {
         do {
           try validateStoredToken(token)
-          print("✅ Token validation successful")
         } catch {
-          #if DEBUG
-            print(
-              "⚠️ Token validation failed: \(error). User remains logged in but may need to re-authenticate for secure operations."
-            )
-          #endif
           // Keep the user logged in but mark that token needs refresh
           // You could add a flag here to indicate token needs refresh
         }
@@ -498,9 +492,6 @@ final class AuthenticationService: NSObject, ObservableObject {
       if let obj = JWT.validateTokenStructure(token: token),
         let email = obj["sub"] as? String
       {
-        #if DEBUG
-          print("⚠️ Token is expired but structurally valid. User remains logged in.")
-        #endif
         // Keep user logged in but they may need to re-authenticate for secure operations
         if userEmail == nil {
           userEmail = email
@@ -518,11 +509,6 @@ final class AuthenticationService: NSObject, ObservableObject {
       // If signature validation fails on older tokens, fall back to structure-only validation
       // This handles cases where client/server secret keys don't match
       if let obj = JWT.validateTokenStructure(token: token) {
-        // Only log warning in debug builds to reduce production noise
-        #if DEBUG
-          print(
-            "⚠️ Token signature validation failed, but structure is valid. User remains logged in.")
-        #endif
 
         if let email = obj["sub"] as? String {
           if userEmail == nil {

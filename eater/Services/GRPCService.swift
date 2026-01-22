@@ -123,11 +123,6 @@ class GRPCService {
         }
 
         if let response = response as? HTTPURLResponse {
-          // Debug logging
-          print("📱 Photo Response - Status: \(response.statusCode), PhotoType: \(photoType)")
-          if let data = data, let responseText = String(data: data, encoding: .utf8) {
-            print("📱 Response Body: \(responseText)")
-          }
 
           if response.statusCode >= 200, response.statusCode < 300 {
             // Success case - but still check for error messages in response body
@@ -162,16 +157,11 @@ class GRPCService {
             }
           } else {
             // ANY non-2xx status code - ALWAYS show popup
-            print("📱 ERROR: Non-2xx status code \(response.statusCode), showing popup...")
-
             DispatchQueue.main.async {
-              print("📱 ERROR: About to show alert on main queue...")
 
               if photoType == "weight_prompt" {
-                print("📱 ERROR: Weight prompt error")
                 // Weight processing failed
                 if let data = data, let responseText = String(data: data, encoding: .utf8) {
-                  print("📱 ERROR: Weight error with response: \(responseText)")
                   let base = loc(
                     "error.scale.msg",
                     "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on"
@@ -180,7 +170,6 @@ class GRPCService {
                   AlertHelper.showAlert(
                     title: loc("error.scale.title", "Scale Not Recognized"), message: msg)
                 } else {
-                  print("📱 ERROR: Weight error without response text")
                   AlertHelper.showAlert(
                     title: loc("error.scale.title", "Scale Not Recognized"),
                     message: loc(
@@ -189,10 +178,8 @@ class GRPCService {
                     ))
                 }
               } else {
-                print("📱 ERROR: Food prompt error (photoType: \(photoType))")
                 // Food processing failed - ALWAYS show popup for non-2xx
                 if let data = data, let responseText = String(data: data, encoding: .utf8) {
-                  print("📱 ERROR: Food error with response: \(responseText)")
                   let base = loc(
                     "error.food.msg",
                     "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible."
@@ -201,7 +188,6 @@ class GRPCService {
                   AlertHelper.showAlert(
                     title: loc("error.food.title", "Food Not Recognized"), message: msg)
                 } else {
-                  print("📱 ERROR: Food error without response text")
                   AlertHelper.showAlert(
                     title: loc("error.food.title", "Food Not Recognized"),
                     message: loc(
@@ -210,7 +196,6 @@ class GRPCService {
                     ))
                 }
               }
-              print("📱 ERROR: Alert should have been triggered!")
             }
             completion(false)
           }

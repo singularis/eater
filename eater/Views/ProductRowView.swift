@@ -153,27 +153,19 @@ struct ProductRowView: View {
 
   /// Fetches the image from the backend if needed
   private func fetchRemoteImageIfNeeded() {
-    // Debug logging
-    print("📷 ProductRowView: \(product.name) - imageId: '\(product.imageId)', hasLocalImage: \(product.image != nil), needsRemoteFetch: \(product.needsRemoteFetch)")
-    
     // Only fetch if there's no local image and we have an imageId
     guard product.image == nil,
           product.needsRemoteFetch,
           !isLoadingImage else {
-      print("📷 Skipping fetch for \(product.name): localImage=\(product.image != nil), needsRemote=\(product.needsRemoteFetch), isLoading=\(isLoadingImage)")
       return
     }
 
-    print("📷 Starting fetch for \(product.name) with imageId: \(product.imageId)")
     isLoadingImage = true
     
     FoodPhotoService.shared.fetchPhoto(imageId: product.imageId) { image in
       isLoadingImage = false
       if let image = image {
-        print("📷 Successfully fetched image for \(product.name)")
         remoteImage = image
-      } else {
-        print("📷 Failed to fetch image for \(product.name)")
       }
     }
   }
