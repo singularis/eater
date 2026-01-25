@@ -4,16 +4,19 @@ import UIKit
 final class ShareFoodViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
   private let foodName: String
   private let time: Int64
+  private let imageId: String
   private var tableView: UITableView!
-  private var emails: [String] = []
+  private var headerImageView: UIImageView?
+  private var friends: [(email: String, nickname: String)] = []
   private var totalCount: Int = 0
   private var isLoading: Bool = false
   private var sharesCountByEmail: [String: Int] = ShareFoodViewController.loadSharesCount()
   var onShareSuccess: (() -> Void)?
 
-  init(foodName: String, time: Int64) {
+  init(foodName: String, time: Int64, imageId: String = "") {
     self.foodName = foodName
     self.time = time
+    self.imageId = imageId
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -32,6 +35,13 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
       title: loc("friends.add", "Add Friend"), style: .plain, target: self,
       action: #selector(addFriendTapped))
 
+    setupTableView()
+    setupHeader()
+    fetchFriends(reset: true)
+    loadImage()
+  }
+
+  private func setupTableView() {
     tableView = UITableView(frame: .zero, style: .insetGrouped)
     tableView.translatesAutoresizingMaskIntoConstraints = false
     tableView.delegate = self
@@ -43,8 +53,72 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
       tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
+  }
 
-    fetchFriends(reset: true)
+  private func setupHeader() {
+    let container = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 160))
+    let imageView = UIImageView()
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    imageView.contentMode = .scaleAspectFill
+    imageView.clipsToBounds = true
+    imageView.layer.cornerRadius = 16
+    imageView.backgroundColor = .secondarySystemBackground
+    imageView.image = UIImage(systemName: "photo") // Placeholder
+    imageView.tintColor = .systemGray4
+    
+    container.addSubview(imageView)
+    headerImageView = imageView
+    
+    NSLayoutConstraint.activate([
+      imageView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+      imageView.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+      imageView.widthAnchor.constraint(equalToConstant: 120),
+      imageView.heightAnchor.constraint(equalToConstant: 120)
+    ])
+    
+    tableView.tableHeaderView = container
+  }
+
+  private func loadImage() {
+    // 1. Try local image by time
+    if let localImage = ImageStorageService.shared.loadImage(forTime: time) {
+      headerImageView?.image = localImage
+      return
+    }
+
+    // 2. Try cached remote image
+    if !imageId.isEmpty, let cached = ImageStorageService.shared.loadCachedImage(forImageId: imageId) {
+      headerImageView?.image = cached
+      return
+    }
+    
+    // 3. Fetch from network if needed
+    if !imageId.isEmpty {
+      headerImageView?.image = nil // Show loading state on placeholder or activity indicator could be added
+      
+      // Add spinner
+      let spinner = UIActivityIndicatorView(style: .medium)
+      spinner.translatesAutoresizingMaskIntoConstraints = false
+      spinner.startAnimating()
+      if let header = tableView.tableHeaderView {
+         header.addSubview(spinner)
+         NSLayoutConstraint.activate([
+             spinner.centerXAnchor.constraint(equalTo: header.centerXAnchor),
+             spinner.centerYAnchor.constraint(equalTo: header.centerYAnchor)
+         ])
+      }
+
+      FoodPhotoService.shared.fetchPhoto(imageId: imageId) { [weak self] image in
+        DispatchQueue.main.async {
+          spinner.removeFromSuperview()
+          if let image = image {
+            self?.headerImageView?.image = image
+          } else {
+             self?.headerImageView?.image = UIImage(systemName: "photo")
+          }
+        }
+      }
+    }
   }
 
   @objc private func closeTapped() { dismiss(animated: true) }
@@ -68,33 +142,37 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   private func fetchFriends(reset: Bool) {
     guard !isLoading else { return }
     isLoading = true
-    let offset = reset ? 0 : emails.count
+    let offset = reset ? 0 : friends.count
     let limit = 5
-    GRPCService().getFriends(offset: offset, limit: limit) { [weak self] emails, total in
+    GRPCService().getFriends(offset: offset, limit: limit) { [weak self] fetchedFriends, total in
       DispatchQueue.main.async {
         guard let self = self else { return }
         self.isLoading = false
-        if reset { self.emails.removeAll() }
+        if reset { self.friends.removeAll() }
         self.totalCount = total
-        self.emails.append(contentsOf: emails)
-        self.sortEmails()
+        self.friends.append(contentsOf: fetchedFriends)
+        self.sortFriends()
         self.tableView.reloadData()
         self.addLoadMoreIfNeeded()
       }
     }
   }
 
-  private func sortEmails() {
-    emails.sort { a, b in
-      let sa = sharesCountByEmail[a] ?? 0
-      let sb = sharesCountByEmail[b] ?? 0
-      if sa == sb { return a.localizedCaseInsensitiveCompare(b) == .orderedAscending }
+  private func sortFriends() {
+    friends.sort { a, b in
+      let sa = sharesCountByEmail[a.email] ?? 0
+      let sb = sharesCountByEmail[b.email] ?? 0
+      if sa == sb {
+           let nameA = a.nickname.isEmpty ? a.email : a.nickname
+           let nameB = b.nickname.isEmpty ? b.email : b.nickname
+           return nameA.localizedCaseInsensitiveCompare(nameB) == .orderedAscending
+      }
       return sa > sb
     }
   }
 
   private func addLoadMoreIfNeeded() {
-    if emails.count < totalCount {
+    if friends.count < totalCount {
       let footer = UIButton(type: .system)
       var config = UIButton.Configuration.filled()
       config.title = loc("friends.more", "More friends")
@@ -120,36 +198,63 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   // MARK: - UITableView DataSource
 
   func numberOfSections(in _: UITableView) -> Int { 1 }
-  func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int { emails.count }
+  func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int { friends.count }
   func tableView(_: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-    let email = emails[indexPath.row]
-    let shares = sharesCountByEmail[email] ?? 0
-    cell.textLabel?.text = email
-    cell.detailTextLabel?.text = shares > 0 ? "Shared \(shares)x" : ""
+    let friend = friends[indexPath.row]
+    let shares = sharesCountByEmail[friend.email] ?? 0
+    
+    let displayName = friend.nickname.isEmpty ? friend.email : friend.nickname
+    
+    cell.textLabel?.text = displayName
+    
+    var details = [String]()
+    if shares > 0 { details.append("Shared \(shares)x") }
+    if !friend.nickname.isEmpty { details.append(friend.email) }
+    
+    cell.detailTextLabel?.text = details.joined(separator: " • ")
     cell.accessoryType = .disclosureIndicator
     return cell
   }
+
+  private lazy var sharingSpinner: UIActivityIndicatorView = {
+    let spinner = UIActivityIndicatorView(style: .large)
+    spinner.translatesAutoresizingMaskIntoConstraints = false
+    spinner.hidesWhenStopped = true
+    spinner.color = .label
+    return spinner
+  }()
 
   // MARK: - UITableView Delegate
 
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     tableView.deselectRow(at: indexPath, animated: true)
-    let toEmail = emails[indexPath.row]
+    let friend = friends[indexPath.row]
+    let toEmail = friend.email
     guard let fromEmail = UserDefaults.standard.string(forKey: "user_email") else { return }
+    
     promptSharePercentage { [weak self] percentage in
       guard let self = self else { return }
+      
+      self.showSharingLoading()
+      
       GRPCService().shareFood(
         time: self.time, fromEmail: fromEmail, toEmail: toEmail, percentage: percentage
-      ) { [weak self] success in
+      ) { [weak self] success, nickname in
         DispatchQueue.main.async {
           guard let self = self else { return }
+          self.hideSharingLoading()
+          
           if success {
             Self.incrementShareCount(email: toEmail)
             self.sharesCountByEmail = Self.loadSharesCount()
-            self.sortEmails()
+            self.sortFriends()
             self.tableView.reloadData()
-            let message = "Shared \(percentage)% with \(toEmail)"
+            let trimmed = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            let nameUsed = (trimmed?.isEmpty ?? true) ? toEmail : trimmed!
+            let message = "Shared \(percentage)% with \(nameUsed)"
+            
             let callback = self.onShareSuccess
             self.dismiss(animated: true) {
               callback?()
@@ -161,6 +266,23 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
         }
       }
     }
+  }
+
+  private func showSharingLoading() {
+    if sharingSpinner.superview == nil {
+      view.addSubview(sharingSpinner)
+      NSLayoutConstraint.activate([
+        sharingSpinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+        sharingSpinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+      ])
+    }
+    view.isUserInteractionEnabled = false
+    sharingSpinner.startAnimating()
+  }
+
+  private func hideSharingLoading() {
+    view.isUserInteractionEnabled = true
+    sharingSpinner.stopAnimating()
   }
 
   private func promptSharePercentage(onSelected: @escaping (Int32) -> Void) {

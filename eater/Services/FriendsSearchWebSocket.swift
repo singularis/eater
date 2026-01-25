@@ -1,5 +1,10 @@
 import Foundation
 
+struct UserSearchResult {
+  let email: String
+  let nickname: String?
+}
+
 final class FriendsSearchWebSocket: NSObject {
   enum ConnectionState: Equatable {
     case disconnected
@@ -19,7 +24,7 @@ final class FriendsSearchWebSocket: NSObject {
   private let tokenProvider: () -> String?
 
   var onStateChange: ((ConnectionState) -> Void)?
-  var onResults: (([String]) -> Void)?
+  var onResults: (([UserSearchResult]) -> Void)?
 
   init(tokenProvider: @escaping () -> String?) {
     self.tokenProvider = tokenProvider
@@ -145,8 +150,12 @@ final class FriendsSearchWebSocket: NSObject {
 
     if type == "results" {
       if let results = obj["results"] as? [[String: Any]] {
-        let emails = results.compactMap { $0["email"] as? String }
-        onResults?(emails)
+        let userResults = results.compactMap { dict -> UserSearchResult? in
+          guard let email = dict["email"] as? String else { return nil }
+          let nickname = dict["nickname"] as? String
+          return UserSearchResult(email: email, nickname: nickname)
+        }
+        onResults?(userResults)
       } else {
         onResults?([])
       }

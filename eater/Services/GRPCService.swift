@@ -95,7 +95,10 @@ class GRPCService {
 
     let timestamp: String
     if let timestampMillis = timestampMillis {
-      timestamp = String(timestampMillis)
+      // Convert millis to Date and then to ISO8601 string to ensure backend parses it correctly
+      // as it handles ISO8601 natively for 'now' cases.
+      let date = Date(timeIntervalSince1970: TimeInterval(timestampMillis) / 1000)
+      timestamp = ISO8601DateFormatter().string(from: date)
     } else {
       timestamp = ISO8601DateFormatter().string(from: Date())
     }
@@ -671,7 +674,7 @@ class GRPCService {
     }
   }
 
-  func getFriends(offset: Int = 0, limit: Int = 5, completion: @escaping ([String], Int) -> Void) {
+  func getFriends(offset: Int = 0, limit: Int = 5, completion: @escaping ([(email: String, nickname: String)], Int) -> Void) {
     // Backend returns full list via GET; we will slice client-side using offset/limit
     guard let request = createRequest(endpoint: "autocomplete/getfriend", httpMethod: "GET") else {
       completion([], 0)
@@ -685,11 +688,11 @@ class GRPCService {
       if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data {
         do {
           let resp = try Eater_GetFriendsResponse(serializedBytes: data)
-          let allEmails = resp.friends.map { $0.email }
+          let allFriends = resp.friends.map { (email: $0.email, nickname: $0.nickname) }
           let total = Int(resp.count)
-          let start = max(0, min(offset, allEmails.count))
-          let end = max(start, min(start + max(0, limit), allEmails.count))
-          let slice = Array(allEmails[start..<end])
+          let start = max(0, min(offset, allFriends.count))
+          let end = max(start, min(start + max(0, limit), allFriends.count))
+          let slice = Array(allFriends[start..<end])
           completion(slice, total)
         } catch {
           completion([], 0)
@@ -702,7 +705,7 @@ class GRPCService {
 
   func shareFood(
     time: Int64, fromEmail: String, toEmail: String, percentage: Int32,
-    completion: @escaping (Bool) -> Void
+    completion: @escaping (Bool, String?) -> Void
   ) {
     var req = Eater_ShareFoodRequest()
     req.time = time
@@ -715,29 +718,29 @@ class GRPCService {
         var request = createRequest(
           endpoint: "autocomplete/sharefood", httpMethod: "POST", body: body)
       else {
-        completion(false)
+        completion(false, nil)
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
         if error != nil {
-          completion(false)
+          completion(false, nil)
           return
         }
         if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data
         {
           do {
             let resp = try Eater_ShareFoodResponse(serializedBytes: data)
-            completion(resp.success)
+            completion(resp.success, resp.nicknameUsed)
           } catch {
-            completion(false)
+            completion(false, nil)
           }
         } else {
-          completion(false)
+          completion(false, nil)
         }
       }
     } catch {
-      completion(false)
+      completion(false, nil)
     }
   }
 
@@ -879,7 +882,52 @@ class GRPCService {
         }
       }
     } catch {
-      completion(nil)
+     completion(nil)
+    }
+  }
+
+  // MARK: - Nickname Update
+  
+  func updateNickname(nickname: String, completion: @escaping (Bool, String?) -> Void) {
+    guard let url = URL(string: "https://chater.singularis.work/nickname_update") else {
+      completion(false, "Invalid URL")
+      return
+    }
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+    
+    let body: [String: Any] = ["nickname": nickname]
+    
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false, "Failed to encode request")
+      return
+    }
+    
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if let error = error {
+        completion(false, error.localizedDescription)
+        return
+      }
+      
+      if let httpResponse = response as? HTTPURLResponse {
+        if httpResponse.statusCode == 200 {
+          completion(true, nil)
+        } else {
+          let errorMsg = "Server returned status code \(httpResponse.statusCode)"
+          completion(false, errorMsg)
+        }
+      } else {
+        completion(false, "Invalid response")
+      }
     }
   }
 }
+

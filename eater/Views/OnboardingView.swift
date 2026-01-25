@@ -9,9 +9,19 @@ struct OnboardingStep {
 
 struct OnboardingView: View {
   @Binding var isPresented: Bool
+  var mode: OnboardingMode = .initial // Default to initial
+  
+  enum OnboardingMode {
+      case initial
+      case health
+      case social
+  }
+  
   @SceneStorage("onboardingCurrentStep") private var currentStep = 0
   @State private var showingSkipConfirmation = false
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
+  @AppStorage("health_onboarding_shown") private var healthOnboardingShown: Bool = false
+  @AppStorage("social_onboarding_shown") private var socialOnboardingShown: Bool = false
   @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(
     forKey: "notificationsEnabled")
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
@@ -19,6 +29,12 @@ struct OnboardingView: View {
   @State private var selectedLanguageDisplay: String = ""
   @State private var selectedLanguageCode: String = ""
   @State private var isApplyingLanguage: Bool = false
+  
+  // Nickname State
+  @AppStorage("user_nickname") private var savedNickname: String = ""
+  @State private var nickname: String = ""
+  @State private var isNicknameLoading: Bool = false
+  @State private var nicknameError: String? = nil
 
   // Health data collection state
   @State private var height: String = ""
@@ -55,294 +71,890 @@ struct OnboardingView: View {
     }
   }
 
-  let steps: [OnboardingStep] = [
-    OnboardingStep(
-      title: "Choose Language 🌐",
-      description: "Pick your preferred language. You can change it later in the tutorial.",
-      anchor: "language",
-      icon: "globe"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.appearance.title", "Choose Appearance ✨"),
-      description: loc(
-        "onboarding.appearance.desc",
-        "Pick your theme and motion preference. You can change this later in profile."
-      ),
-      anchor: "appearance",
-      icon: "paintbrush.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.welcome.title", "Welcome to Eateria! 🍎"),
-      description: loc(
-        "onboarding.welcome.desc",
-        "Your smart food companion that helps you track calories, monitor weight, and make healthier choices. Let's take a quick tour!"
-      ),
-      anchor: "welcome",
-      icon: "hand.wave.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.recognition.title", "Smart Food Recognition 📸"),
-      description: loc(
-        "onboarding.recognition.desc",
-        "Simply take a photo of your food and our AI will automatically identify it and log the calories. No more manual searching!"
-      ),
-      anchor: "addfood",
-      icon: "camera.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.tracking.title", "Track Your Progress 📊"),
-      description: loc(
-        "onboarding.tracking.desc",
-        "Monitor your daily calories with our color-coded system and track your weight by photographing your scale. Everything is automated!"
-      ),
-      anchor: "tracking",
-      icon: "chart.line.uptrend.xyaxis"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.alcohol.title", "Alcohol Tracking 🍷"),
-      description: loc(
-        "onboarding.alcohol.desc",
-        "See your alcohol history on a calendar. Dots mark days you drank (bigger dot = more drinks). The top wineglass changes color by recency: red (today/last week), yellow (last month), green (older). Tap it to open the calendar."
-      ),
-      anchor: "alcohol",
-      icon: "wineglass.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.friends.title", "Share Meals with Friends 🤝"),
-      description: loc(
-        "onboarding.friends.desc",
-        "Add friends and share your dishes right from the list. Pick how much they ate (25%, 50%, 75% or custom) and we'll handle the rest."
-      ),
-      anchor: "share",
-      icon: "person.2.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.insights.title", "Get Personalized Insights 💡"),
-      description: loc(
-        "onboarding.insights.desc",
-        "View your trends, manage your profile, and access health information - all designed to help you reach your wellness goals."
-      ),
-      anchor: "insights",
-      icon: "lightbulb.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.health_setup.title", "Personalized Health Setup 📋"),
-      description: loc(
-        "onboarding.health_setup.desc",
-        "For the best experience, we can calculate personalized calorie recommendations based on your health data. This is completely optional!"
-      ),
-      anchor: "health_setup",
-      icon: "person.crop.circle.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.health_form.title", "Your Health Data 📝"),
-      description: loc(
-        "onboarding.health_form.desc",
-        "Please provide your basic health information to get personalized recommendations."),
-      anchor: "health_form",
-      icon: "heart.fill"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.health_results.title", "Your Personalized Plan 🎯"),
-      description: loc(
-        "onboarding.health_results.desc",
-        "Based on your data, here are your personalized recommendations for optimal health."),
-      anchor: "health_results",
-      icon: "target"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.disclaimer.title", "Important Health Disclaimer ⚠️"),
-      description: loc(
-        "onboarding.disclaimer.desc",
-        "This app is for informational purposes only and not a substitute for professional medical advice. Always consult healthcare providers for personalized dietary guidance and medical decisions."
-      ),
-      anchor: "disclaimer",
-      icon: "exclamationmark.triangle.fill"
-    ),
-    OnboardingStep(
-      title: "Stay on Track with Gentle Reminders ⏰",
-      description:
-        "Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We’ll only remind you if you haven’t snapped food yet.",
-      anchor: "notifications_setup",
-      icon: "bell.badge.fill"
-    ),
-    OnboardingStep(
-      title: "Choose Your Data Mode 📈",
-      description:
-        "Pick how much detail you want to see. You can change this later in your profile.",
-      anchor: "data_mode",
-      icon: "slider.horizontal.3"
-    ),
-    OnboardingStep(
-      title: loc("onboarding.complete.title", "You're All Set! 🎉"),
-      description: loc(
-        "onboarding.complete.desc",
-        "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed."
-      ),
-      anchor: "complete",
-      icon: "checkmark.circle.fill"
-    ),
-  ]
+  var steps: [OnboardingStep] {
+      switch mode {
+      case .initial:
+          return [
+            OnboardingStep(
+              title: loc("onboarding.language.title", "Choose Language 🌐"),
+              description: loc("onboarding.language.desc", "Pick your preferred language."),
+              anchor: "language",
+              icon: "globe"
+            ),
+            OnboardingStep(
+              title: loc("onboarding.features.title", "All-in-One Tracker 🚀"),
+              description: loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI."),
+              anchor: "features",
+              icon: "square.stack.3d.up.fill"
+            ),
+            OnboardingStep(
+              title: loc("disc.title", "Health Information Disclaimer"),
+              description: loc(
+                "disc.notice.text",
+                "This app provides general nutritional information and dietary suggestions for educational purposes only. The information is not intended to replace professional medical advice, diagnosis, or treatment."
+              ),
+              anchor: "disclaimer",
+              icon: "exclamationmark.triangle.fill"
+            ),
+          ]
+      case .health:
+          return [
+              OnboardingStep(
+                  title: loc("onboarding.health_setup.title", "Personalized Health Setup 📋"),
+                  description: loc("onboarding.health_setup.desc", "For the best experience, we can calculate personalized calorie recommendations based on your health data. This is completely optional!"),
+                  anchor: "health_setup",
+                  icon: "heart.text.square.fill"
+              ),
+              OnboardingStep(
+                  title: loc("onboarding.health_form.title", "Your Health Data 📝"),
+                  description: loc("onboarding.health_form.desc", "Please provide your basic health information to get personalized recommendations."),
+                  anchor: "health_form",
+                  icon: "list.clipboard.fill"
+              ),
+              OnboardingStep(
+                  title: loc("onboarding.health_results.title", "Your Personalized Plan 🎯"),
+                  description: loc("onboarding.health_results.desc", "Based on your data, here are your personalized recommendations for optimal health."),
+                  anchor: "health_results",
+                  icon: "chart.bar.doc.horizontal.fill"
+              )
+          ]
+      case .social:
+          return [
+              OnboardingStep(
+                  title: loc("onboarding.friends.title", "Share Meals with Friends 🤝"),
+                  description: loc("onboarding.friends.desc", "Add friends and share your dishes right from the list. Pick how much they ate and we'll handle the rest."),
+                  anchor: "share",
+                  icon: "person.2.fill"
+              ),
+              OnboardingStep(
+                  title: loc("nickname.title", "Set Your Nickname"),
+                  description: loc("nickname.description", "Choose a nickname to share with friends instead of your email address."),
+                  anchor: "nickname",
+                  icon: "person.text.rectangle.fill"
+              )
+          ]
+      }
+  }
+
+  // ... (body code remains similar, verifying body update) ...
+  // I must be careful not to overwrite the body I just beautified.
+  // The user asked to ALIGN.
+  // I will just update the 'steps' and the 'defaultStepView' logic.
+  
+  // Renamed to handle index
+  private func defaultStepView(for index: Int) -> some View {
+    let step = steps[index]
+    
+    if step.anchor == "features" {
+        return AnyView(featuresStepView)
+    }
+    
+    if step.anchor == "nickname" {
+        return AnyView(nicknameStepView)
+    }
+    
+    if step.anchor == "disclaimer" {
+        return AnyView(disclaimerStepView)
+    }
+
+    if step.anchor == "health_form" {
+         return AnyView(healthFormStepView)
+    }
+
+    if step.anchor == "health_results" {
+         return AnyView(healthResultsStepView)
+    }
+    
+    return AnyView(VStack(spacing: 30) {
+      Spacer()
+        
+      // Hero Icon
+      ZStack {
+        // Glowing background effect
+        ForEach(0..<3) { i in
+            Circle()
+                .stroke(AppTheme.accent.opacity(0.2 - Double(i) * 0.05), lineWidth: 2)
+                .frame(width: 120 + CGFloat(i * 20), height: 120 + CGFloat(i * 20))
+        }
+        
+        Circle()
+            .fill(AppTheme.surface)
+            .frame(width: 120, height: 120)
+            .shadow(color: AppTheme.accent.opacity(0.2), radius: 10, x: 0, y: 5)
+
+        Image(systemName: step.icon)
+            .font(.system(size: 50))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [AppTheme.accent, Color.purple],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .symbolEffect(.bounce.byLayer, options: .repeating, value: true)
+      }
+      .padding(.bottom, 20)
+
+      VStack(spacing: 16) {
+        Text(localizedTitle(for: step.anchor))
+          .font(.system(size: 32, weight: .bold, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundColor(AppTheme.textPrimary)
+          .fixedSize(horizontal: false, vertical: true)
+
+        Text(localizedDescription(for: step.anchor))
+          .font(.system(size: 18, weight: .regular, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundColor(AppTheme.textSecondary)
+          .lineSpacing(4)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .padding(.horizontal, 20)
+      
+      Spacer()
+    }
+    .padding(.horizontal, 24))
+  }
+  
+  private var featuresStepView: some View {
+    VStack(spacing: 30) {
+        Spacer()
+        
+        Text(loc("onboarding.power_features.title", "Power Features ⚡️"))
+            .font(.system(size: 32, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+            .multilineTextAlignment(.center)
+            .padding(.top, 20)
+            
+        VStack(spacing: 20) {
+            FeatureRow(
+                icon: "camera.fill",
+                color: .blue,
+                title: loc("feature.food_log.title", "Smart Food Log"),
+                desc: loc("feature.food_log.desc", "Snap food to count calories instantly.")
+            )
+            FeatureRow(
+                icon: "scalemass.fill",
+                color: .purple,
+                title: loc("feature.scale.title", "Scale Reader"),
+                desc: loc("feature.scale.desc", "Snap your scale to log weight automatically.")
+            )
+            FeatureRow(
+                icon: "wineglass.fill",
+                color: .red,
+                title: loc("feature.alcohol.title", "Alcohol Tracker"),
+                desc: loc("feature.alcohol.desc", "Monitor intake with visual history dots.")
+            )
+            FeatureRow(
+                icon: "calendar.badge.clock",
+                color: .orange,
+                title: loc("feature.timetravel.title", "Time Travel"),
+                desc: loc("feature.timetravel.desc", "Forgot to log? Backdate entries anytime.")
+            )
+        }
+        .padding(.horizontal)
+        
+        Spacer()
+    }
+  }
+  
+  private var disclaimerStepView: some View {
+    ScrollView {
+      VStack(spacing: 24) {
+        Spacer().frame(height: 20)
+        
+        // Warning Icon
+        ZStack {
+          Circle()
+            .fill(Color.orange.opacity(0.1))
+            .frame(width: 100, height: 100)
+          
+          Image(systemName: "exclamationmark.triangle.fill")
+            .font(.system(size: 50))
+            .foregroundColor(.orange)
+        }
+        .padding(.bottom, 10)
+        
+        // Title
+        Text(loc("disc.title", "Health Information Disclaimer"))
+          .font(.system(size: 28, weight: .bold, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundColor(AppTheme.textPrimary)
+        
+        // Main Notice
+        VStack(alignment: .leading, spacing: 16) {
+          DisclaimerSection(
+            title: loc("disc.section.notice", "Important Notice"),
+            text: loc(
+              "disc.notice.text",
+              "This app provides general nutritional information and dietary suggestions for educational purposes only. The information is not intended to replace professional medical advice, diagnosis, or treatment."
+            )
+          )
+          
+          DisclaimerSection(
+            title: loc("disc.section.medical", "Medical Disclaimer"),
+            text: loc(
+              "disc.medical.text",
+              "Always consult with a qualified healthcare provider before making any changes to your diet or nutrition plan, especially if you have medical conditions, allergies, or dietary restrictions."
+            )
+          )
+          
+          DisclaimerSection(
+            title: loc("disc.section.accuracy", "Accuracy Disclaimer"),
+            text: loc(
+              "disc.accuracy.text",
+              "Nutritional estimates are based on visual analysis and may not be completely accurate. Actual nutritional content may vary based on preparation methods, portion sizes, and ingredient variations."
+            )
+          )
+        }
+        .padding(.horizontal, 20)
+        
+        Spacer()
+      }
+    }
+  }
+  
+  struct DisclaimerSection: View {
+    let title: String
+    let text: String
+    
+    var body: some View {
+      VStack(alignment: .leading, spacing: 8) {
+        Text(title)
+          .font(.system(size: 16, weight: .bold, design: .rounded))
+          .foregroundColor(AppTheme.accent)
+        
+        Text(text)
+          .font(.system(size: 15, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .lineSpacing(4)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .padding()
+      .background(AppTheme.surface)
+      .cornerRadius(12)
+    }
+  }
+  
+  struct FeatureRow: View {
+    let icon: String
+    let color: Color
+    let title: String
+    let desc: String
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.1))
+                    .frame(width: 48, height: 48)
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 20))
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(AppTheme.textPrimary)
+                Text(desc)
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(AppTheme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding()
+        .background(AppTheme.surface)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+    }
+  }
+  
+  // MARK: - Health Views (Integrated from Progressive Onboarding logic)
+  
+  private var healthFormStepView: some View {
+      VStack(spacing: 20) {
+          Spacer()
+          
+          VStack(spacing: 24) {
+              // Age
+              VStack(alignment: .leading, spacing: 8) {
+                  Text(loc("health.age", "Age"))
+                      .font(.caption)
+                      .foregroundColor(.gray)
+                      .padding(.leading, 4)
+                  
+                  TextField("25", text: $age)
+                      .keyboardType(.numberPad)
+                      .padding()
+                      .background(AppTheme.surfaceAlt)
+                      .cornerRadius(12)
+              }
+              
+              // Gender
+              VStack(alignment: .leading, spacing: 8) {
+                  Text(loc("health.gender", "Gender"))
+                      .font(.caption)
+                      .foregroundColor(.gray)
+                      .padding(.leading, 4)
+                      
+                  HStack(spacing: 0) {
+                      ForEach([true, false], id: \.self) { isMaleOption in
+                          Button(action: { isMale = isMaleOption }) {
+                              Text(isMaleOption ? loc("health.gender.male", "Male") : loc("health.gender.female", "Female"))
+                                  .font(.system(size: 16, weight: .medium, design: .rounded))
+                                  .frame(maxWidth: .infinity)
+                                  .padding(.vertical, 12)
+                                  .background(isMale == isMaleOption ? AppTheme.surface : Color.clear)
+                                  .foregroundColor(isMale == isMaleOption ? AppTheme.textPrimary : AppTheme.textSecondary)
+                                  .cornerRadius(10)
+                                  .shadow(color: isMale == isMaleOption ? Color.black.opacity(0.05) : Color.clear, radius: 2, x: 0, y: 1)
+                          }
+                      }
+                  }
+                  .padding(4)
+                  .background(AppTheme.surfaceAlt)
+                  .cornerRadius(14)
+              }
+              
+              // Measurements
+              HStack(spacing: 16) {
+                  VStack(alignment: .leading, spacing: 8) {
+                       Text(loc("health.height", "Height (cm)"))
+                           .font(.caption)
+                           .foregroundColor(.gray)
+                           .padding(.leading, 4)
+                       
+                       TextField("175", text: $height)
+                           .keyboardType(.numberPad)
+                           .padding()
+                           .background(AppTheme.surfaceAlt)
+                           .cornerRadius(12)
+                  }
+                  
+                  VStack(alignment: .leading, spacing: 8) {
+                       Text(loc("health.weight", "Weight (kg)"))
+                           .font(.caption)
+                           .foregroundColor(.gray)
+                           .padding(.leading, 4)
+                       
+                       TextField("70", text: $weight)
+                           .keyboardType(.decimalPad)
+                           .padding()
+                           .background(AppTheme.surfaceAlt)
+                           .cornerRadius(12)
+                  }
+              }
+              
+              // Activity Level
+              VStack(alignment: .leading, spacing: 8) {
+                   Text(loc("health.activity", "Activity Level:"))
+                       .font(.caption)
+                       .foregroundColor(.gray)
+                       .padding(.leading, 4)
+                   
+                   Menu {
+                       ForEach(activityLevels, id: \.self) { level in
+                           Button(action: { activityLevel = level }) {
+                               Text(localizedActivityLevel(level))
+                           }
+                       }
+                   } label: {
+                       HStack {
+                           Text(localizedActivityLevel(activityLevel))
+                               .foregroundColor(AppTheme.textPrimary)
+                           Spacer()
+                           Image(systemName: "chevron.up.chevron.down")
+                               .font(.caption)
+                               .foregroundColor(.gray)
+                       }
+                       .padding()
+                       .background(AppTheme.surfaceAlt)
+                       .cornerRadius(12)
+                   }
+              }
+          }
+          .padding(.horizontal, 24)
+          
+          Spacer()
+      }
+      .onAppear {
+          // Pre-fill if exists
+           if let h = UserDefaults.standard.string(forKey: "userHeight") { height = h }
+           if UserDefaults.standard.double(forKey: "userHeight") > 0 {
+               height = String(Int(UserDefaults.standard.double(forKey: "userHeight")))
+           }
+           if UserDefaults.standard.double(forKey: "userWeight") > 0 {
+               weight = String(format: "%.1f", UserDefaults.standard.double(forKey: "userWeight"))
+           }
+           if let a = UserDefaults.standard.string(forKey: "userAge") { age = a }
+           if UserDefaults.standard.integer(forKey: "userAge") > 0 {
+               age = String(UserDefaults.standard.integer(forKey: "userAge"))
+           }
+           isMale = UserDefaults.standard.bool(forKey: "userIsMale")
+      }
+  }
+  
+  private var healthResultsStepView: some View {
+      VStack(spacing: 30) {
+          Spacer()
+          
+          VStack(spacing: 16) {
+              Text(loc("prog.result", "Your Daily Goal"))
+                  .font(.headline)
+                  .foregroundColor(AppTheme.textSecondary)
+              
+              Text("\(recommendedCalories)")
+                    .font(.system(size: 70, weight: .heavy, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(colors: [AppTheme.accent, .orange], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+              Text(loc("units.kcal", "kcal"))
+                  .font(.title3)
+                  .fontWeight(.medium)
+                  .foregroundColor(AppTheme.textSecondary)
+          }
+          .padding(.vertical, 20)
+          
+          if optimalWeight > 0 {
+              VStack(spacing: 8) {
+                  Text(loc("health.optimal_weight", "🎯 Optimal Weight"))
+                      .font(.headline)
+                      .foregroundColor(AppTheme.textPrimary)
+                  
+                  Text("\(String(format: "%.1f", optimalWeight)) kg")
+                      .font(.title2)
+                      .fontWeight(.bold)
+                      .foregroundColor(.green)
+                      
+                  Text(timeToOptimalWeight)
+                      .font(.subheadline)
+                      .foregroundColor(.gray)
+              }
+              .padding()
+              .background(AppTheme.surface.opacity(0.5))
+              .cornerRadius(16)
+          }
+          
+          Spacer()
+      }
+  }
 
   var body: some View {
     ZStack {
+      // Dynamic Background
       AppTheme.backgroundGradient
-      .edgesIgnoringSafeArea(.all)
-
-      VStack(spacing: 0) {
-        // Header with progress and skip
-        HStack {
-          Button(loc("onboarding.skip", "Skip")) {
-            HapticsService.shared.warning()
-            showingSkipConfirmation = true
-          }
-          .foregroundColor(AppTheme.textSecondary)
-          .opacity(0.8)
-
-          Spacer()
-
-          // Progress indicator
-          HStack(spacing: 8) {
-            ForEach(0..<steps.count, id: \.self) { index in
-              Circle()
-                .fill(index <= currentStep ? AppTheme.textPrimary : AppTheme.textSecondary.opacity(0.4))
-                .frame(width: 8, height: 8)
-                .scaleEffect(index == currentStep ? 1.2 : 1.0)
-                .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3), value: currentStep)
+        .edgesIgnoringSafeArea(.all)
+        .overlay(
+            ZStack {
+                Circle()
+                    .fill(Color.purple.opacity(0.3))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 60)
+                    .offset(x: -100, y: -200)
+                
+                Circle()
+                    .fill(Color.blue.opacity(0.3))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 60)
+                    .offset(x: 100, y: 200)
             }
-          }
-          .padding(.horizontal)
-
-          Spacer()
-
-          // Step counter
-          Text("\(currentStep + 1)/\(steps.count)")
+        )
+      
+      VStack(spacing: 0) {
+        // Top Bar
+        HStack {
+            if currentStep > 0 {
+                Button(action: {
+                    withAnimation { currentStep -= 1 }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(AppTheme.textPrimary)
+                        .padding()
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Circle())
+                }
+            }
+            
+            Spacer()
+            
+            Button(loc("onboarding.skip", "Skip")) {
+                withAnimation { showingSkipConfirmation = true }
+            }
+            .font(.system(size: 16, weight: .medium, design: .rounded))
             .foregroundColor(AppTheme.textSecondary)
-            .opacity(0.8)
-            .font(.caption)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.2))
+            .clipShape(Capsule())
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
-
-        Spacer()
-
-        // Main content
-        if steps[currentStep].anchor == "language" {
-          languageSelectionView
-        } else if steps[currentStep].anchor == "health_setup" {
-          healthSetupView
-        } else if steps[currentStep].anchor == "health_form" {
-          healthFormView
-        } else if steps[currentStep].anchor == "health_results" {
-          healthResultsView
-        } else if steps[currentStep].anchor == "notifications_setup" {
-          notificationsSetupView
-        } else if steps[currentStep].anchor == "data_mode" {
-          dataModeView
-        } else if steps[currentStep].anchor == "appearance" {
-          appearanceStepView
-        } else {
-          defaultStepView
+        .padding(.top, 50)
+        .padding(.horizontal, 24)
+        
+        // Content Area with Transitions
+        TabView(selection: $currentStep) {
+            languageSelectionView
+                .tag(0)
+            
+            // Map remaining steps
+            ForEach(1..<steps.count, id: \.self) { index in
+                defaultStepView(for: index)
+                    .tag(index)
+            }
         }
-
+        .tabViewStyle(.page(indexDisplayMode: .never)) // We build our own controls
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: currentStep)
+        
         Spacer()
-
-        // Navigation buttons
-        navigationButtonsView
-          .padding(.bottom, 50)
+        
+        // Bottom Controls
+        VStack(spacing: 24) {
+            // Custom Page Indicator
+            HStack(spacing: 8) {
+                ForEach(0..<steps.count, id: \.self) { index in
+                    Capsule()
+                        .fill(index == currentStep ? AppTheme.accent : Color.gray.opacity(0.3))
+                        .frame(width: index == currentStep ? 24 : 8, height: 8)
+                        .animation(.spring(), value: currentStep)
+                }
+            }
+            
+            // Main Action Button
+            Button(action: {
+                handleNextStep()
+            }) {
+                Group {
+                    if isNicknameLoading && steps[currentStep].anchor == "nickname" {
+                         ProgressView()
+                           .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    } else {
+                         Text(currentStep == steps.count - 1 ? loc("onboarding.start", "Get Started") : loc("onboarding.continue", "Continue"))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                    }
+                }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [AppTheme.accent, Color.purple],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    )
+                    .cornerRadius(20)
+                    .shadow(color: AppTheme.accent.opacity(0.4), radius: 10, x: 0, y: 5)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 50)
       }
     }
     .onAppear {
-      // Only set language selection if not already set
       if selectedLanguageCode.isEmpty {
         selectedLanguageCode = languageService.currentCode
         selectedLanguageDisplay = languageService.nativeName(for: languageService.currentCode)
       }
     }
-    .alert(loc("onboarding.skip.title", "Skip Onboarding?"), isPresented: $showingSkipConfirmation)
-    {
-      Button(loc("onboarding.skip.continue", "Continue Tutorial"), role: .cancel) {}
-      Button(loc("onboarding.skip.skip", "Skip")) {
-        // Fallback to English if skipping
-        LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
-        currentStep = 0  // Reset for next time
-        withAnimation(.easeInOut(duration: 0.5)) {
-          isPresented = false
+    .alert(loc("onboarding.skip.title", "Skip Onboarding?"), isPresented: $showingSkipConfirmation) {
+        Button(loc("onboarding.skip.continue", "Continue Tutorial"), role: .cancel) {}
+        Button(loc("onboarding.skip.skip", "Skip")) {
+            completeOnboarding()
         }
-      }
-      Button(loc("onboarding.skip.dontshow", "Skip & Don't Show Again")) {
-        hasSeenOnboarding = true
-        // Fallback to English
-        LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
-        currentStep = 0  // Reset for next time
-        withAnimation(.easeInOut(duration: 0.5)) {
-          isPresented = false
-        }
-      }
     } message: {
-      Text(
-        loc(
-          "onboarding.skip.message",
-          "You can always access this tutorial later from your profile settings."))
+       Text(loc("onboarding.skip.message", "You can always access this tutorial later from your profile settings."))
     }
-    .alert(loc("health.invalid.title", "Invalid Health Data"), isPresented: $showingHealthDataAlert)
-    {
-      Button(loc("common.ok", "OK"), role: .cancel) {}
-    } message: {
-      Text(
-        loc(
-          "health.invalid.msg",
-          "Please provide valid values for height (cm), weight (kg), and age (years)."))
+  }
+
+  private func handleNextStep() {
+      // Validate current step
+      if currentStep < steps.count {
+          let step = steps[currentStep]
+          
+          if step.anchor == "nickname" {
+              saveNickname { success in
+                  if success {
+                      completeOnboarding() // Nickname is last step in social
+                  }
+              }
+              return
+          }
+          
+          if step.anchor == "health_form" {
+              // Save health data logic
+              if let h = Double(height), let w = Double(weight), let a = Int(age) {
+                  UserDefaults.standard.set(h, forKey: "userHeight")
+                  UserDefaults.standard.set(w, forKey: "userWeight")
+                  UserDefaults.standard.set(a, forKey: "userAge")
+                  UserDefaults.standard.set(isMale, forKey: "userIsMale")
+                  UserDefaults.standard.set(activityLevel, forKey: "userActivityLevel")
+                  UserDefaults.standard.set(true, forKey: "hasUserHealthData") // Mark as done
+                  calculatePlan()
+                  // Move to results
+                  withAnimation { currentStep += 1 }
+              } else {
+                  // Show alert? For now just stay.
+                  HapticsService.shared.error()
+              }
+              return
+          }
+      }
+      
+      // Default behavior
+      if currentStep < steps.count - 1 {
+          withAnimation { currentStep += 1 }
+      } else {
+          completeOnboarding()
+      }
+  }
+  
+  private func calculatePlan() {
+      // Logic from ProgressiveOnboarding logic
+      let h = Double(height) ?? 175
+      let w = Double(weight) ?? 70
+      let a = Int(age) ?? 25
+      
+      // Optimal Weight Calculation (simple BMI based - e.g. BMI 22)
+      // weight = BMI * (height/100)^2
+      let optimalBMI = 22.0
+      let heightInM = h / 100.0
+      optimalWeight = optimalBMI * (heightInM * heightInM)
+      
+      // Time to reach (assuming 0.5kg week loss)
+      let diff = w - optimalWeight
+      if diff > 0 {
+          let weeks = Int(diff / 0.5)
+          timeToOptimalWeight = String(format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeks)
+      } else {
+           timeToOptimalWeight = loc("health.goal.maintain", "You are at optimal weight!")
+      }
+
+      let bmr: Double = isMale ? (10 * w + 6.25 * h - 5 * Double(a) + 5) : (10 * w + 6.25 * h - 5 * Double(a) - 161)
+      
+      let multiplier: Double
+      switch activityLevel {
+      case "Sedentary": multiplier = 1.2
+      case "Lightly Active": multiplier = 1.375
+      case "Moderately Active": multiplier = 1.55
+      case "Very Active": multiplier = 1.725
+      case "Extremely Active": multiplier = 1.9
+      default: multiplier = 1.2
+      }
+      
+      let tdee = bmr * multiplier
+      // Deficit 500
+      let target = Int(tdee - 500)
+      recommendedCalories = max(target, 1200)
+      
+      // Save
+      UserDefaults.standard.set(recommendedCalories, forKey: "userRecommendedCalories")
+      // Update limits
+      let soft = recommendedCalories
+      let hard = Int(Double(soft) * 1.15)
+      let limits = CalorieLimitsStorageService.Limits(softLimit: soft, hardLimit: hard, hasManualCalorieLimits: false)
+      CalorieLimitsStorageService.shared.save(limits)
+      UserDefaults.standard.set(soft, forKey: "softLimit")
+      UserDefaults.standard.set(hard, forKey: "hardLimit")
+  }
+
+  private func saveNickname(completion: @escaping (Bool) -> Void) {
+    let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    
+    guard !trimmed.isEmpty else {
+      nicknameError = loc("nickname.empty_error", "Nickname cannot be empty")
+      completion(false)
+      return
+    }
+    
+    guard trimmed.count <= 50 else {
+      nicknameError = loc("nickname.length_error", "Nickname must be 50 characters or less")
+      completion(false)
+      return
+    }
+    
+    // Check if user is logged in via token presence
+    guard UserDefaults.standard.string(forKey: "auth_token") != nil else {
+         // Not logged in? Just save locally
+         savedNickname = trimmed
+         completion(true)
+         return
+    }
+    
+    isNicknameLoading = true
+    HapticsService.shared.select()
+    
+    GRPCService().updateNickname(nickname: trimmed) { success, errorMsg in
+      DispatchQueue.main.async {
+        self.isNicknameLoading = false
+        if success {
+          self.savedNickname = trimmed
+          completion(true)
+        } else {
+          self.nicknameError = errorMsg ?? loc("nickname.error", "Failed to update nickname")
+          HapticsService.shared.error()
+          completion(false)
+        }
+      }
+    }
+  }
+
+  private var nicknameStepView: some View {
+    VStack(spacing: 30) {
+      Spacer()
+      
+      // Hero Icon
+      ZStack {
+        // Glowing background effect
+        ForEach(0..<2) { i in
+            Circle()
+                .stroke(AppTheme.accent.opacity(0.2 - Double(i) * 0.05), lineWidth: 2)
+                .frame(width: 120 + CGFloat(i * 20), height: 120 + CGFloat(i * 20))
+        }
+        
+        Circle()
+            .fill(AppTheme.surface)
+            .frame(width: 120, height: 120)
+            .shadow(color: AppTheme.accent.opacity(0.2), radius: 10, x: 0, y: 5)
+
+        Image(systemName: "person.text.rectangle.fill")
+            .font(.system(size: 50))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [AppTheme.accent, Color.purple],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+      }
+      .padding(.bottom, 10)
+
+      VStack(spacing: 16) {
+        Text(loc("nickname.title", "Set Your Nickname"))
+          .font(.system(size: 32, weight: .bold, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundColor(AppTheme.textPrimary)
+
+        Text(loc("nickname.description", "Choose a nickname to share with friends."))
+          .font(.system(size: 18, weight: .regular, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundColor(AppTheme.textSecondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .padding(.horizontal, 20)
+      
+      // Input Field
+      VStack(alignment: .leading, spacing: 12) {
+         TextField(loc("nickname.placeholder", "Enter your nickname"), text: $nickname)
+           .font(.system(size: 18))
+           .padding(16)
+           .background(AppTheme.surface)
+           .cornerRadius(AppTheme.cornerRadius)
+           .overlay(
+             RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+               .stroke(nicknameError != nil ? AppTheme.danger : AppTheme.divider, lineWidth: 1)
+           )
+           .autocapitalization(.none)
+           .disableAutocorrection(true)
+           .disabled(isNicknameLoading)
+           .onChange(of: nickname) { _ in nicknameError = nil }
+
+         if let error = nicknameError {
+             Text(error)
+               .font(.system(size: 14))
+               .foregroundColor(AppTheme.danger)
+               .padding(.leading, 4)
+         }
+      }
+      .padding(.horizontal, 30)
+      .padding(.top, 10)
+      
+      Spacer()
+    }
+    .onAppear {
+        if nickname.isEmpty { nickname = savedNickname }
+    }
+  }
+
+  private func completeOnboarding() {
+    print("Completing onboarding for mode: \(mode)")
+    switch mode {
+    case .initial:
+        hasSeenOnboarding = true
+        if selectedLanguageCode.isEmpty {
+            LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
+        }
+    case .health:
+        healthOnboardingShown = true
+    case .social:
+         socialOnboardingShown = true
+    }
+    
+    currentStep = 0
+    withAnimation {
+        isPresented = false
     }
   }
 
   private var languageSelectionView: some View {
-    VStack(spacing: 18) {
-      Image(systemName: "globe")
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.textPrimary)
-        .symbolEffect(.bounce, value: currentStep)
-
-      Text(loc("onboarding.language.title", "Choose Language 🌐"))
-        .font(.title)
-        .fontWeight(.bold)
-        .foregroundColor(AppTheme.textPrimary)
-
-      // Use discovered languages from Localization folder
-      let items = languageService.availableLanguagesDetailed()
-
-      ScrollView {
-        LazyVStack(alignment: .leading, spacing: 8) {
-          ForEach(items, id: \.code) { item in
-            Button(action: {
-              selectedLanguageDisplay = item.nativeName
-              selectedLanguageCode = item.code
-            }) {
-              HStack {
-                Text(item.flag)
-                Text(item.nativeName)
-                  .fontWeight(item.nativeName == selectedLanguageDisplay ? .bold : .regular)
-                Spacer()
-                if item.nativeName == selectedLanguageDisplay {
-                  Image(systemName: "checkmark.circle.fill").foregroundColor(AppTheme.success)
-                }
-              }
-              .foregroundColor(AppTheme.textPrimary)
-              .padding(.vertical, 10)
-              .padding(.horizontal, 12)
-              .background(
-                item.nativeName == selectedLanguageDisplay
-                  ? AppTheme.surface : AppTheme.surfaceAlt
-              )
-              .cornerRadius(10)
-            }
-          }
+    VStack(spacing: 30) {
+        // Icon
+        ZStack {
+            Circle()
+                .fill(Color.blue.opacity(0.1))
+                .frame(width: 120, height: 120)
+            
+            Image(systemName: "globe")
+                .font(.system(size: 60))
+                .foregroundStyle(
+                    LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing)
+                )
         }
-        .padding(.horizontal, 20)
-      }
-      .frame(maxHeight: 350)
+        .padding(.top, 40)
+        
+        Text(loc("onboarding.language.title", "Choose Language 🌐"))
+            .font(.system(size: 32, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+        
+        ScrollView(showsIndicators: false) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                ForEach(languageService.availableLanguagesDetailed(), id: \.code) { item in
+                    Button(action: {
+                        selectedLanguageDisplay = item.nativeName
+                        selectedLanguageCode = item.code
+                        LanguageService.shared.setLanguage(code: item.code, syncWithBackend: false) { _ in }
+                    }) {
+                        VStack(spacing: 8) {
+                            Text(item.flag)
+                                .font(.system(size: 40))
+                            Text(item.nativeName)
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .foregroundColor(AppTheme.textPrimary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(item.code == selectedLanguageCode ? Color.blue.opacity(0.1) : AppTheme.surface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(item.code == selectedLanguageCode ? Color.blue : Color.clear, lineWidth: 2)
+                                )
+                                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        )
+                    }
+                }
+            }
+            .padding(10)
+        }
     }
+    .padding(.horizontal, 24)
   }
+
 
   // MARK: - Helper Methods
 
@@ -366,12 +978,21 @@ struct OnboardingView: View {
       return loc("onboarding.health_form.title", "Your Health Data 📝")
     case "health_results":
       return loc("onboarding.health_results.title", "Your Personalized Plan 🎯")
+    case "features":
+        return loc("onboarding.features.title", "All-in-One Tracker 🚀")
     case "disclaimer":
       return loc("onboarding.disclaimer.title", "Important Health Disclaimer ⚠️")
     case "complete":
       return loc("onboarding.complete.title", "You're All Set! 🎉")
+    case "language":
+        return loc("onboarding.language.title", "Choose Language 🌐")
+    case "nickname":
+        return loc("nickname.title", "Set Your Nickname")
     default:
-      return steps[currentStep].title
+      if let step = steps.first(where: { $0.anchor == anchor }) {
+          return step.title
+      }
+      return ""
     }
   }
 
@@ -430,676 +1051,20 @@ struct OnboardingView: View {
         "onboarding.complete.desc",
         "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed."
       )
+    case "features":
+        return loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI.")
+    case "language":
+        return loc("onboarding.language.desc", "Pick your preferred language.")
+    case "nickname":
+        return loc("nickname.description", "Choose a nickname to share with friends.")
     default:
-      return steps[currentStep].description
+        if let step = steps.first(where: { $0.anchor == anchor }) {
+            return step.description
+        }
+        return ""
     }
   }
 
   // MARK: - View Components
 
-  private var defaultStepView: some View {
-    VStack(spacing: 30) {
-      // Icon with special styling for disclaimer
-      Image(systemName: steps[currentStep].icon)
-        .font(.system(size: 60))
-        .foregroundColor(steps[currentStep].anchor == "disclaimer" ? AppTheme.warning : AppTheme.accent)
-        .symbolEffect(.bounce, value: currentStep)
-
-      VStack(spacing: 16) {
-        Text(localizedTitle(for: steps[currentStep].anchor))
-          .font(.title)
-          .fontWeight(.bold)
-          .foregroundColor(steps[currentStep].anchor == "disclaimer" ? AppTheme.warning : AppTheme.textPrimary)
-          .multilineTextAlignment(.center)
-
-        // Special styling for disclaimer text
-        if steps[currentStep].anchor == "disclaimer" {
-          Text(localizedDescription(for: steps[currentStep].anchor))
-            .font(.body)
-            .fontWeight(.medium)
-            .multilineTextAlignment(.center)
-            .foregroundColor(AppTheme.textPrimary)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(AppTheme.danger.opacity(0.1))
-            .overlay(
-              RoundedRectangle(cornerRadius: AppTheme.smallRadius)
-                .stroke(AppTheme.warning, lineWidth: 2)
-            )
-            .cornerRadius(AppTheme.smallRadius)
-            .lineLimit(nil)
-            .fixedSize(horizontal: false, vertical: true)
-        } else {
-          Text(localizedDescription(for: steps[currentStep].anchor))
-            .font(.body)
-            .multilineTextAlignment(.center)
-            .foregroundColor(AppTheme.textSecondary)
-            .lineLimit(nil)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-      }
-      .padding(.horizontal, 30)
-    }
-  }
-
-  private var notificationsSetupView: some View {
-      VStack(spacing: 24) {
-      Image(systemName: "bell.badge.fill")
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.warning)
-        .symbolEffect(.bounce, value: currentStep)
-
-      VStack(spacing: 12) {
-        Text(loc("onboarding.notifications.title", "Stay on Track with Gentle Reminders ⏰"))
-          .font(.title)
-          .fontWeight(.bold)
-          .foregroundColor(AppTheme.textPrimary)
-          .multilineTextAlignment(.center)
-
-        Text(
-          loc(
-            "onboarding.notifications.desc",
-            "Enable reminders to snap your meals: breakfast (by 12), lunch (by 17), and dinner (by 21). We'll only remind you if you haven't snapped food yet. You can change this later in settings."
-          )
-        )
-        .font(.body)
-        .multilineTextAlignment(.center)
-        .foregroundColor(AppTheme.textSecondary)
-        .padding(.horizontal, 20)
-      }
-
-      VStack(spacing: 14) {
-        Button(action: {
-          NotificationService.shared.requestAuthorizationAndEnable(true) { granted in
-            notificationsEnabledLocal = granted
-            withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
-          }
-        }) {
-          Text(loc("onboarding.notifications.enable", "Enable Reminders"))
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(PrimaryButtonStyle())
-
-        Button(action: {
-          NotificationService.shared.requestAuthorizationAndEnable(false)
-          notificationsEnabledLocal = false
-          withAnimation(.easeInOut(duration: 0.3)) { currentStep += 1 }
-        }) {
-          Text(loc("onboarding.notifications.notnow", "Not Now"))
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(SecondaryButtonStyle())
-      }
-      .padding(.horizontal, 30)
-    }
-  }
-
-  private var appearanceStepView: some View {
-    VStack(spacing: 24) {
-      Image(systemName: "paintbrush.fill")
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.accent)
-        .symbolEffect(.bounce, value: currentStep)
-
-      VStack(spacing: 12) {
-        Text(loc("onboarding.appearance.title", "Choose Appearance ✨"))
-          .font(.title)
-          .fontWeight(.bold)
-          .foregroundColor(AppTheme.textPrimary)
-          .multilineTextAlignment(.center)
-
-        Text(loc("onboarding.appearance.desc", "Pick your theme and motion preference. You can change this later in profile."))
-          .font(.body)
-          .multilineTextAlignment(.center)
-          .foregroundColor(AppTheme.textSecondary)
-          .padding(.horizontal, 20)
-      }
-
-      VStack(alignment: .leading, spacing: 10) {
-        Text(loc("profile.appearance", "Appearance"))
-          .font(.caption)
-          .foregroundColor(AppTheme.textSecondary)
-
-        Picker("Appearance", selection: Binding<String>(
-          get: { AppSettingsService.shared.appearance.rawValue },
-          set: { newValue in
-            // Disable animations during theme change to prevent view reset
-            withTransaction(Transaction(animation: nil)) {
-              AppSettingsService.shared.appearance = AppSettingsService.AppearanceMode(rawValue: newValue) ?? .system
-            }
-          }
-        )) {
-          Text(loc("appearance.system", "System")).tag(AppSettingsService.AppearanceMode.system.rawValue)
-          Text(loc("appearance.light", "Light")).tag(AppSettingsService.AppearanceMode.light.rawValue)
-          Text(loc("appearance.dark", "Dark")).tag(AppSettingsService.AppearanceMode.dark.rawValue)
-        }
-        .pickerStyle(.segmented)
-
-        Toggle(isOn: Binding<Bool>(
-          get: { AppSettingsService.shared.reduceMotion },
-          set: { AppSettingsService.shared.reduceMotion = $0 }
-        )) {
-          Text(loc("profile.reduce_motion", "Reduce Motion"))
-            .foregroundColor(AppTheme.textPrimary)
-        }
-      }
-      .padding(.horizontal, 30)
-    }
-  }
-
-  private var dataModeView: some View {
-    VStack(spacing: 24) {
-      Image(systemName: "slider.horizontal.3")
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.accent)
-        .symbolEffect(.bounce, value: currentStep)
-
-      VStack(spacing: 12) {
-        Text(loc("onboarding.datamode.title", "Choose Your Data Mode 📈"))
-          .font(.title)
-          .fontWeight(.bold)
-          .foregroundColor(AppTheme.textPrimary)
-          .multilineTextAlignment(.center)
-
-        Text(
-          loc(
-            "onboarding.datamode.desc",
-            "Pick how much detail you want to see. You can change this later in your profile.")
-        )
-        .font(.body)
-        .multilineTextAlignment(.center)
-        .foregroundColor(AppTheme.textSecondary)
-        .padding(.horizontal, 20)
-      }
-
-      VStack(alignment: .leading, spacing: 10) {
-        Picker("Mode", selection: $dataDisplayMode) {
-          Text(loc("common.simplified", "Simplified")).font(
-            .system(size: 22, weight: .semibold, design: .rounded)
-          ).tag("simplified")
-          Text(loc("common.full", "Full")).font(
-            .system(size: 22, weight: .semibold, design: .rounded)
-          ).tag("full")
-        }
-        .font(.system(size: 22, weight: .semibold, design: .rounded))
-        .controlSize(.large)
-        .pickerStyle(SegmentedPickerStyle())
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-      }
-    }
-  }
-
-  private var healthSetupView: some View {
-    VStack(spacing: 30) {
-      Image(systemName: steps[currentStep].icon)
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.accent)
-        .symbolEffect(.bounce, value: currentStep)
-
-      VStack(spacing: 16) {
-        Text(steps[currentStep].title)
-          .font(.title)
-          .fontWeight(.bold)
-          .foregroundColor(AppTheme.textPrimary)
-          .multilineTextAlignment(.center)
-
-        Text(steps[currentStep].description)
-          .font(.body)
-          .multilineTextAlignment(.center)
-          .foregroundColor(AppTheme.textSecondary)
-          .lineLimit(nil)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-      .padding(.horizontal, 30)
-
-      VStack(spacing: 16) {
-        Button(loc("onboarding.personalize", "Yes, Let's Personalize")) {
-          agreedToProvideData = true
-          withAnimation(.easeInOut(duration: 0.3)) {
-            currentStep += 1
-          }
-        }
-        .buttonStyle(PrimaryButtonStyle())
-
-        Button(loc("onboarding.skip_step", "Skip This Step")) {
-          agreedToProvideData = false
-          // Skip to disclaimer (skip health form and results)
-          withAnimation(.easeInOut(duration: 0.3)) {
-            currentStep = steps.firstIndex { $0.anchor == "disclaimer" } ?? currentStep + 1
-          }
-        }
-        .buttonStyle(SecondaryButtonStyle())
-      }
-      .padding(.horizontal, 30)
-    }
-  }
-
-  private var healthFormView: some View {
-    VStack(spacing: 20) {
-      Image(systemName: steps[currentStep].icon)
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.danger)
-        .symbolEffect(.bounce, value: currentStep)
-
-      Text(steps[currentStep].title)
-        .font(.title)
-        .fontWeight(.bold)
-        .foregroundColor(AppTheme.textPrimary)
-        .multilineTextAlignment(.center)
-
-      VStack(spacing: 16) {
-        HStack {
-          Text(loc("health.height", "Height (cm):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("175", text: $height)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .keyboardType(.numberPad)
-        }
-
-        HStack {
-          Text(loc("health.weight", "Weight (kg):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("70", text: $weight)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .keyboardType(.numberPad)
-        }
-
-        HStack {
-          Text(loc("health.age", "Age (years):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("25", text: $age)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .keyboardType(.numberPad)
-        }
-
-        HStack {
-          Text(loc("health.gender", "Gender:"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          Picker("Gender", selection: $isMale) {
-            Text(loc("health.gender.male", "Male")).tag(true)
-            Text(loc("health.gender.female", "Female")).tag(false)
-          }
-          .pickerStyle(SegmentedPickerStyle())
-        }
-
-        VStack(alignment: .leading, spacing: 8) {
-          Text(loc("health.activity", "Activity Level:"))
-            .foregroundColor(AppTheme.textPrimary)
-          Picker("Activity Level", selection: $activityLevel) {
-            ForEach(activityLevels, id: \.self) { level in
-              Text(localizedActivityLevel(level)).tag(level)
-            }
-          }
-          .pickerStyle(MenuPickerStyle())
-          .background(AppTheme.surface)
-          .cornerRadius(AppTheme.smallRadius)
-        }
-      }
-      .padding(.horizontal, 30)
-    }
-  }
-
-  private var healthResultsView: some View {
-    VStack(spacing: 20) {
-      Image(systemName: steps[currentStep].icon)
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.success)
-        .symbolEffect(.bounce, value: currentStep)
-
-      Text(steps[currentStep].title)
-        .font(.title)
-        .fontWeight(.bold)
-        .foregroundColor(AppTheme.textPrimary)
-        .multilineTextAlignment(.center)
-
-      VStack(spacing: 16) {
-        VStack(spacing: 8) {
-          Text(loc("health.optimal_weight", "🎯 Optimal Weight"))
-            .font(.headline)
-            .foregroundColor(AppTheme.success)
-          Text("\(optimalWeight, specifier: "%.1f") \(loc("units.kg", "kg"))")
-            .font(.title2)
-            .fontWeight(.bold)
-            .foregroundColor(AppTheme.textPrimary)
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-
-        VStack(spacing: 8) {
-          Text(loc("health.daily_calorie", "🔥 Daily Calorie Target"))
-            .font(.headline)
-            .foregroundColor(AppTheme.warning)
-          Text("\(recommendedCalories) \(loc("units.kcal", "kcal"))")
-            .font(.title2)
-            .fontWeight(.bold)
-            .foregroundColor(AppTheme.textPrimary)
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-
-        VStack(spacing: 8) {
-          Text(loc("health.estimated_timeline", "⏰ Estimated Timeline"))
-            .font(.headline)
-            .foregroundColor(AppTheme.accent)
-          Text(timeToOptimalWeight)
-            .font(.title3)
-            .fontWeight(.semibold)
-            .foregroundColor(AppTheme.textPrimary)
-            .multilineTextAlignment(.center)
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-      }
-      .padding(.horizontal, 30)
-    }
-  }
-
-  private var navigationButtonsView: some View {
-    VStack(spacing: 16) {
-      if currentStep == steps.count - 1 {
-        // Last screen - show both options
-        VStack(spacing: 12) {
-          Button(action: {
-            // Mark onboarding as seen when user completes it
-            hasSeenOnboarding = true
-
-            // Sync with backend if we haven't already
-            if !selectedLanguageCode.isEmpty {
-              // The language was already applied locally, just sync with backend now
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-              HapticsService.shared.select()
-                languageService.setLanguage(code: selectedLanguageCode, syncWithBackend: true) {
-                  _ in
-                }
-              }
-            }
-
-            // Close the onboarding
-            HapticsService.shared.success()
-            currentStep = 0  // Reset for next time
-            isPresented = false
-          }) {
-            Text(loc("onboarding.getstarted", "Get Started"))
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(PrimaryButtonStyle())
-
-          Button(action: {
-            hasSeenOnboarding = true
-
-            // Sync with backend if we haven't already
-            if !selectedLanguageCode.isEmpty {
-              // The language was already applied locally, just sync with backend now
-              DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                HapticsService.shared.select()
-                languageService.setLanguage(code: selectedLanguageCode, syncWithBackend: true) {
-                  _ in
-                }
-              }
-            }
-
-            // Close the onboarding
-            HapticsService.shared.select()
-            currentStep = 0  // Reset for next time
-            isPresented = false
-          }) {
-            Text(loc("onboarding.dontshowagain", "Don't show again"))
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(SecondaryButtonStyle())
-        }
-        .padding(.horizontal, 30)
-      } else if steps[currentStep].anchor == "health_setup" {
-        // Health setup screen - buttons are handled in the view itself
-        EmptyView()
-      } else if steps[currentStep].anchor == "notifications_setup" {
-        // Notifications setup screen - buttons handled in view
-        EmptyView()
-      } else if steps[currentStep].anchor == "language" {
-        // Language selection screen - uses standard navigation
-        HStack(spacing: 20) {
-          if currentStep > 0 {
-          Button(action: {
-              HapticsService.shared.select()
-              withAnimation(.easeInOut(duration: 0.3)) {
-                currentStep -= 1
-              }
-            }) {
-              HStack {
-                Image(systemName: "chevron.left")
-                Text(loc("common.back", "Previous"))
-              }
-            }
-            .buttonStyle(SecondaryButtonStyle())
-          }
-
-          Spacer()
-
-          Button(action: {
-            // Apply selected language and advance
-            let lc =
-              selectedLanguageCode.isEmpty ? languageService.currentCode : selectedLanguageCode
-
-            // Apply the language change immediately but without backend sync
-            if lc != languageService.currentCode {
-              // Clear the localization cache to force reload with new language
-              languageService.setLanguage(code: lc, syncWithBackend: false) { _ in }
-            }
-
-            // Store the selection for later backend sync
-            selectedLanguageCode = lc
-
-            // Small delay to let the language change settle, then advance
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-              HapticsService.shared.select()
-              currentStep += 1
-            }
-          }) {
-            HStack {
-              Text(loc("onboarding.next", "Next"))
-              Image(systemName: "chevron.right")
-            }
-          }
-          .buttonStyle(PrimaryButtonStyle())
-        }
-        .padding(.horizontal, 30)
-      } else {
-        // Navigation buttons for other screens
-        HStack(spacing: 20) {
-          if currentStep > 0 {
-          Button(action: {
-              HapticsService.shared.select()
-              withAnimation(.easeInOut(duration: 0.3)) {
-                currentStep -= 1
-              }
-            }) {
-              HStack {
-                Image(systemName: "chevron.left")
-                Text(loc("common.back", "Previous"))
-              }
-            }
-            .buttonStyle(SecondaryButtonStyle())
-          }
-
-          Spacer()
-
-          Button(action: {
-            if steps[currentStep].anchor == "health_form" {
-              // Validate and calculate before proceeding
-              if validateAndCalculateHealthData() {
-                HapticsService.shared.success()
-                withAnimation(.easeInOut(duration: 0.3)) {
-                  currentStep += 1
-                }
-              } else {
-                HapticsService.shared.error()
-                showingHealthDataAlert = true
-              }
-            } else {
-              HapticsService.shared.select()
-              withAnimation(.easeInOut(duration: 0.3)) {
-                currentStep += 1
-              }
-            }
-          }) {
-            HStack {
-              Text(getNextButtonText())
-              if steps[currentStep].anchor != "disclaimer"
-                && steps[currentStep].anchor != "health_form"
-              {
-                Image(systemName: "chevron.right")
-              }
-            }
-          }
-          .buttonStyle(PrimaryButtonStyle())
-        }
-        .padding(.horizontal, 30)
-      }
-    }
-  }
-
-  // MARK: - Helper Methods
-
-  private func getNextButtonText() -> String {
-    switch steps[currentStep].anchor {
-    case "disclaimer":
-      return loc("onboarding.understand", "I Understand")
-    case "health_form":
-      return loc("health.calc_plan", "Calculate My Plan")
-    default:
-      return loc("onboarding.next", "Next")
-    }
-  }
-
-  private func getNextButtonTextColor() -> Color {
-    switch steps[currentStep].anchor {
-    case "disclaimer":
-      return .red
-    case "health_form":
-      return .white
-    default:
-      return .blue
-    }
-  }
-
-  private func getNextButtonBackgroundColor() -> Color {
-    switch steps[currentStep].anchor {
-    case "disclaimer":
-      return Color.yellow
-    case "health_form":
-      return Color.green
-    default:
-      return Color.white
-    }
-  }
-
-  private func validateAndCalculateHealthData() -> Bool {
-    guard let heightValue = Double(height),
-      let weightValue = Double(weight),
-      let ageValue = Int(age),
-      heightValue > 0,
-      weightValue > 0,
-      ageValue > 0
-    else {
-      return false
-    }
-
-    // Calculate optimal weight using BMI (21.5 - middle of healthy range)
-    let heightInMeters = heightValue / 100.0
-    optimalWeight = 21.5 * heightInMeters * heightInMeters
-
-    // Calculate BMR using Mifflin-St Jeor Equation
-    let bmr: Double
-    if isMale {
-      bmr = 10 * weightValue + 6.25 * heightValue - 5 * Double(ageValue) + 5
-    } else {
-      bmr = 10 * weightValue + 6.25 * heightValue - 5 * Double(ageValue) - 161
-    }
-
-    // Activity multipliers
-    let activityMultiplier: Double
-    switch activityLevel {
-    case "Sedentary":
-      activityMultiplier = 1.2
-    case "Lightly Active":
-      activityMultiplier = 1.375
-    case "Moderately Active":
-      activityMultiplier = 1.55
-    case "Very Active":
-      activityMultiplier = 1.725
-    case "Extremely Active":
-      activityMultiplier = 1.9
-    default:
-      activityMultiplier = 1.2
-    }
-
-    // Calculate TDEE (Total Daily Energy Expenditure)
-    let tdee = bmr * activityMultiplier
-
-    // Adjust calories based on weight goal
-    let weightDifference = weightValue - optimalWeight
-    let calorieAdjustment: Double
-
-    if abs(weightDifference) < 2 {
-      // Maintain current weight
-      calorieAdjustment = 0
-      timeToOptimalWeight = loc("health.goal.maintain", "You are at optimal weight!")
-    } else if weightDifference > 0 {
-      // Lose weight - safe deficit of 500 calories per day
-      calorieAdjustment = -500
-      let weeksToGoal = Int(ceil(abs(weightDifference) * 2))  // ~0.5kg per week
-      timeToOptimalWeight = String(
-        format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeksToGoal)
-    } else {
-      // Gain weight - safe surplus of 300 calories per day
-      calorieAdjustment = 300
-      let weeksToGoal = Int(ceil(abs(weightDifference) * 4))  // ~0.25kg per week
-      timeToOptimalWeight = String(
-        format: loc("health.goal.weeks", "%d weeks to reach optimal weight"), weeksToGoal)
-    }
-
-    recommendedCalories = Int(tdee + calorieAdjustment)
-
-    // Save the calculated values to UserDefaults
-    saveHealthData(
-      heightValue: heightValue,
-      weightValue: weightValue,
-      ageValue: ageValue,
-      isMale: isMale,
-      activityLevel: activityLevel,
-      optimalWeight: optimalWeight,
-      recommendedCalories: recommendedCalories)
-
-    return true
-  }
-
-  private func saveHealthData(
-    heightValue: Double, weightValue: Double, ageValue: Int,
-    isMale: Bool, activityLevel: String, optimalWeight: Double,
-    recommendedCalories: Int
-  ) {
-    let userDefaults = UserDefaults.standard
-    userDefaults.set(heightValue, forKey: "userHeight")
-    userDefaults.set(weightValue, forKey: "userWeight")
-    userDefaults.set(ageValue, forKey: "userAge")
-    userDefaults.set(isMale, forKey: "userIsMale")
-    userDefaults.set(activityLevel, forKey: "userActivityLevel")
-    userDefaults.set(optimalWeight, forKey: "userOptimalWeight")
-    userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
-    userDefaults.set(true, forKey: "hasUserHealthData")
-
-    // Set the calorie limits based on recommendations
-    let softLimit = recommendedCalories
-    let hardLimit = Int(Double(recommendedCalories) * 1.15)  // 15% above recommendation
-    userDefaults.set(softLimit, forKey: "softLimit")
-    userDefaults.set(hardLimit, forKey: "hardLimit")
-  }
 }

@@ -22,6 +22,7 @@ struct Eater_GetFriendsRequest: Sendable {
 
 struct Eater_Friend: Sendable {
     var email: String = .init()
+    var nickname: String = .init()
     var unknownFields = SwiftProtobuf.UnknownStorage()
     init() {}
 }
@@ -55,11 +56,13 @@ extension Eater_Friend: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     static let protoMessageName: String = _protobuf_package + ".Friend"
     static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
         1: .same(proto: "email"),
+        2: .same(proto: "nickname"),
     ]
     mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
         while let fieldNumber = try decoder.nextFieldNumber() {
             switch fieldNumber {
             case 1: try decoder.decodeSingularStringField(value: &email)
+            case 2: try decoder.decodeSingularStringField(value: &nickname)
             default: break
             }
         }
@@ -67,11 +70,13 @@ extension Eater_Friend: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
 
     func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
         if !email.isEmpty { try visitor.visitSingularStringField(value: email, fieldNumber: 1) }
+        if !nickname.isEmpty { try visitor.visitSingularStringField(value: nickname, fieldNumber: 2) }
         try unknownFields.traverse(visitor: &visitor)
     }
 
     static func == (lhs: Eater_Friend, rhs: Eater_Friend) -> Bool {
         if lhs.email != rhs.email { return false }
+        if lhs.nickname != rhs.nickname { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

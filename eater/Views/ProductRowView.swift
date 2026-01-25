@@ -52,16 +52,25 @@ struct ProductRowView: View {
             .fill(AppTheme.surfaceAlt)
             .frame(width: 80, height: 80)
             .overlay(
-              Image(systemName: "photo")
+              Image(systemName: product.needsRemoteFetch ? "arrow.down.circle" : "photo")
                 .foregroundColor(AppTheme.textSecondary)
             )
             .onTapGesture {
               if deletingProductTime != product.time {
-                // Try to get image using fallback mechanism
-                let image = product.image ?? remoteImage
-                HapticsService.shared.select()
-                onPhotoTap(image, product.name)
+                if product.needsRemoteFetch {
+                    HapticsService.shared.select()
+                    fetchRemoteImageIfNeeded()
+                } else {
+                    // Try to get image using fallback mechanism
+                    let image = product.image ?? remoteImage
+                    HapticsService.shared.select()
+                    onPhotoTap(image, product.name)
+                }
               }
+            }
+            .onLongPressGesture {
+                HapticsService.shared.mediumImpact()
+                runDiagnostic()
             }
         }
 
@@ -86,6 +95,7 @@ struct ProductRowView: View {
           HapticsService.shared.lightImpact()
           AlertHelper.showPortionSelectionAlert(
             foodName: product.name, originalWeight: product.weight, time: product.time,
+            imageId: product.imageId,
             onPortionSelected: { percentage in
               HapticsService.shared.success()
               onModify(product.time, product.name, percentage)
@@ -210,5 +220,49 @@ struct ProductRowView: View {
     // Red: 1.0 -> 0.0 (as rating increases)
     // Green: 0.0 -> 1.0 (as rating increases)
     return Color(red: 1.0 - normalized, green: normalized, blue: 0.0)
+  }
+  
+  private func runDiagnostic() {
+      let imageId = product.imageId
+      let hasLocal = ImageStorageService.shared.imageExists(forTime: product.time)
+      let hasCached = ImageStorageService.shared.cachedImageExists(forImageId: imageId)
+      
+      var message = "Image ID: \(imageId.isEmpty ? "EMPTY" : imageId)\n"
+      message += "Local File Exists: \(hasLocal)\n"
+      message += "Cached File Exists: \(hasCached)\n"
+      message += "Needs Remote Fetch: \(product.needsRemoteFetch)\n"
+      
+      // Attempt manual network check
+      if !imageId.isEmpty {
+         message += "Starting Probe...\n"
+         
+         guard let encoded = imageId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+               let url = URL(string: "https://chater.singularis.work/get_photo?image_id=\(encoded)") else {
+             message += "Invalid URL construction"
+             AlertHelper.showAlert(title: "Diagnostic", message: message)
+             return
+         }
+         
+         var request = URLRequest(url: url)
+         if let token = UserDefaults.standard.string(forKey: "auth_token") {
+             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+         }
+         
+         URLSession.shared.dataTask(with: request) { _, response, error in
+             DispatchQueue.main.async {
+                 if let error = error {
+                     message += "Probe Error: \(error.localizedDescription)"
+                 } else if let http = response as? HTTPURLResponse {
+                     message += "HTTP Status: \(http.statusCode)"
+                     if http.statusCode == 403 { message += " (Forbidden)"}
+                     if http.statusCode == 404 { message += " (Not Found)"}
+                 }
+                 AlertHelper.showAlert(title: "Diagnostic Result", message: message)
+             }
+         }.resume()
+         return
+      }
+      
+      AlertHelper.showAlert(title: "Diagnostic Result", message: message)
   }
 }

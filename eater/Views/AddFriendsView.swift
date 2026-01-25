@@ -4,7 +4,7 @@ struct AddFriendsView: View {
   @Binding var isPresented: Bool
 
   @State private var query: String = ""
-  @State private var suggestions: [String] = []
+  @State private var suggestions: [UserSearchResult] = []
   @State private var statusText: String = loc("search.type3", "Type at least 3 letters to search")
   @State private var isConnected: Bool = false
   @State private var isAuthenticated: Bool = false
@@ -18,7 +18,7 @@ struct AddFriendsView: View {
       ZStack {
         AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
         VStack(spacing: 12) {
-        TextField(loc("friends.search.placeholder", "Search by email..."), text: $query)
+        TextField(loc("friends.search.placeholder", "Search by email or nickname..."), text: $query)
           .textInputAutocapitalization(.never)
           .autocorrectionDisabled(true)
           .padding(12)
@@ -35,14 +35,37 @@ struct AddFriendsView: View {
 
         if !suggestions.isEmpty {
           List {
-            ForEach(suggestions, id: \.self) { email in
+            ForEach(suggestions, id: \.email) { user in
               VStack(spacing: 6) {
                 HStack {
                   Image(systemName: "person.crop.circle.badge.plus")
-                  Text(email)
-                    .foregroundColor(AppTheme.textPrimary)
+                    .foregroundColor(AppTheme.accent)
+                  
+                  VStack(alignment: .leading, spacing: 2) {
+                    // Display nickname if available, otherwise email
+                    if let nickname = user.nickname, !nickname.isEmpty {
+                      Text(nickname)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(AppTheme.textPrimary)
+                      
+                      // Show email as secondary info if not Apple hidden email
+                      if !isAppleHiddenEmail(user.email) {
+                        Text(user.email)
+                          .font(.system(size: 13))
+                          .foregroundColor(AppTheme.textSecondary)
+                      }
+                    } else {
+                      // No nickname, show email as primary
+                      Text(user.email)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(AppTheme.textPrimary)
+                    }
+                  }
+                  
+                  Spacer()
                 }
-                .cardContainer(padding: 12)
+                .padding(12)
+                .cardContainer(padding: 0)
 
                 Rectangle()
                   .fill(AppTheme.divider)
@@ -53,7 +76,7 @@ struct AddFriendsView: View {
               .contentShape(Rectangle())
               .onTapGesture {
                 HapticsService.shared.lightImpact()
-                select(email: email)
+                select(user: user)
               }
               .disabled(isAddingFriend)
               .listRowSeparator(.hidden)
@@ -112,6 +135,10 @@ struct AddFriendsView: View {
       .onDisappear { teardownSocket() }
     }
   }
+  
+  private func isAppleHiddenEmail(_ email: String) -> Bool {
+    return email.contains("@privaterelay.appleid.com")
+  }
 
   private func setupSocket() {
     let socket = FriendsSearchWebSocket(tokenProvider: {
@@ -141,11 +168,11 @@ struct AddFriendsView: View {
         statusText = suggestions.isEmpty ? loc("search.disconnected", "Disconnected") : statusText
       }
     }
-    socket.onResults = { emails in
+    socket.onResults = { users in
       isSearching = false
-      suggestions = emails
-      if emails.isEmpty {
-        statusText = loc("search.no_emails", "No emails found")
+      suggestions = users
+      if users.isEmpty {
+        statusText = loc("search.no_results", "No results found")
       }
     }
   }
@@ -177,37 +204,28 @@ struct AddFriendsView: View {
     }
   }
 
-  private func select(email: String) {
+  private func select(user: UserSearchResult) {
     isAddingFriend = true
-    GRPCService().addFriend(email: email) { success in
+    GRPCService().addFriend(email: user.email) { success in
       DispatchQueue.main.async {
         isAddingFriend = false
+        
+        // Display name for feedback: nickname if available, otherwise email
+        let displayName = (user.nickname != nil && !user.nickname!.isEmpty) ? user.nickname! : user.email
+        
         if success {
           AlertHelper.showAlert(
             title: loc("friends.add.success.title", "You have a new friend!"),
             message: String(
-              format: loc("friends.add.success.msg", "%@ added to your friends list"), email))
+              format: loc("friends.add.success.msg", "%@ added to your friends list"), displayName))
         } else {
           AlertHelper.showAlert(
             title: loc("friends.add.fail.title", "Failed"),
             message: String(
-              format: loc("friends.add.fail.msg", "Could not send a friend request to %@"), email))
+              format: loc("friends.add.fail.msg", "Could not send a friend request to %@"), displayName))
         }
         isPresented = false
       }
     }
   }
-}
-
-#Preview {
-  AddFriendsView(isPresented: .constant(true))
-    .environmentObject(
-      {
-        let authService = AuthenticationService()
-        authService.setPreviewState(
-          email: "preview@example.com",
-          profilePictureURL: "https://lh3.googleusercontent.com/a/default-user=s120-c"
-        )
-        return authService
-      }())
 }

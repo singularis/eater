@@ -16,6 +16,8 @@ struct UserProfileView: View {
   @State private var showStatistics = false
   @State private var showFeedback = false
   @State private var showAddFriends = false
+  @State private var showNicknameSettings = false
+  @AppStorage("user_nickname") private var userNickname: String = ""
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"  // "simplified" or "full"
   @EnvironmentObject var languageService: LanguageService
   @State private var showLanguagePicker = false
@@ -40,7 +42,18 @@ struct UserProfileView: View {
                 userEmail: authService.userEmail
               )
 
-              if let userName = authService.userName, !userName.isEmpty {
+              if !userNickname.isEmpty {
+                Text(userNickname)
+                  .font(.title2)
+                  .fontWeight(.bold)
+                  .foregroundColor(AppTheme.textPrimary)
+                
+                if let userName = authService.userName, !userName.isEmpty {
+                  Text(userName)
+                    .font(.subheadline)
+                    .foregroundColor(AppTheme.textSecondary)
+                }
+              } else if let userName = authService.userName, !userName.isEmpty {
                 Text(userName)
                   .font(.title2)
                   .fontWeight(.bold)
@@ -48,7 +61,7 @@ struct UserProfileView: View {
               }
 
               Text(authService.userEmail ?? "No email")
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundColor(AppTheme.textSecondary)
             }
             .frame(maxWidth: .infinity)
@@ -84,6 +97,15 @@ struct UserProfileView: View {
               ) {
                 HapticsService.shared.select()
                 showAddFriends = true
+              }
+              
+              actionButton(
+                icon: "person.text.rectangle.fill",
+                title: loc("profile.set_nickname", "Set Nickname"),
+                accessibilityHint: loc("a11y.set_nickname", "Set a nickname for sharing with friends")
+              ) {
+                HapticsService.shared.select()
+                showNicknameSettings = true
               }
             }
 
@@ -219,6 +241,61 @@ struct UserProfileView: View {
                 .pickerStyle(.segmented)
               }
               .padding(.horizontal, 8)
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Save Photos to Library
+              HStack(spacing: 12) {
+                Image(systemName: "photo.on.rectangle.angled")
+                  .font(.system(size: 20, weight: .semibold))
+                  .foregroundStyle(
+                    LinearGradient(
+                      colors: [Color.purple, Color.blue],
+                      startPoint: .topLeading,
+                      endPoint: .bottomTrailing
+                    )
+                  )
+                  .frame(width: 28)
+                
+                Toggle(isOn: Binding<Bool>(
+                  get: { AppSettingsService.shared.savePhotosToLibrary },
+                  set: { AppSettingsService.shared.savePhotosToLibrary = $0 }
+                )) {
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(loc("profile.save_photos", "Save to Photo Library"))
+                      .font(.subheadline)
+                      .foregroundColor(AppTheme.textPrimary)
+                    Text(loc("profile.save_photos.desc", "Keep food photos as memories"))
+                      .font(.caption2)
+                      .foregroundColor(AppTheme.textSecondary)
+                  }
+                }
+                .tint(
+                  LinearGradient(
+                    colors: [Color.purple, Color.blue],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                  )
+                )
+              }
+              .padding(.horizontal, 8)
+              .padding(.vertical, 6)
+              .background(
+                RoundedRectangle(cornerRadius: 12)
+                  .fill(.ultraThinMaterial)
+                  .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                      .stroke(
+                        LinearGradient(
+                          colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
+                          startPoint: .topLeading,
+                          endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                      )
+                  )
+              )
+              .padding(.horizontal, 4)
             }
             .padding(.vertical, 12)
             .cardContainer(padding: 12)
@@ -316,6 +393,9 @@ struct UserProfileView: View {
       }
       .sheet(isPresented: $showAddFriends) {
         AddFriendsView(isPresented: $showAddFriends)
+      }
+      .sheet(isPresented: $showNicknameSettings) {
+        NicknameSettingsView()
       }
       .onChange(of: showHealthSettings) { _, newValue in
         if !newValue {  // Sheet was dismissed

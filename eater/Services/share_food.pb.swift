@@ -26,6 +26,7 @@ struct Eater_ShareFoodRequest: Sendable {
 
 struct Eater_ShareFoodResponse: Sendable {
     var success: Bool = false
+    var nicknameUsed: String = .init()
     var unknownFields = SwiftProtobuf.UnknownStorage()
     init() {}
 }
@@ -74,11 +75,13 @@ extension Eater_ShareFoodResponse: SwiftProtobuf.Message, SwiftProtobuf._Message
     static let protoMessageName: String = _protobuf_package + ".ShareFoodResponse"
     static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
         1: .same(proto: "success"),
+        2: .standard(proto: "nickname_used"),
     ]
     mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
         while let fieldNumber = try decoder.nextFieldNumber() {
             switch fieldNumber {
             case 1: try decoder.decodeSingularBoolField(value: &success)
+            case 2: try decoder.decodeSingularStringField(value: &nicknameUsed)
             default: break
             }
         }
@@ -86,11 +89,13 @@ extension Eater_ShareFoodResponse: SwiftProtobuf.Message, SwiftProtobuf._Message
 
     func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
         if success != false { try visitor.visitSingularBoolField(value: success, fieldNumber: 1) }
+        if !nicknameUsed.isEmpty { try visitor.visitSingularStringField(value: nicknameUsed, fieldNumber: 2) }
         try unknownFields.traverse(visitor: &visitor)
     }
 
     static func == (lhs: Eater_ShareFoodResponse, rhs: Eater_ShareFoodResponse) -> Bool {
         if lhs.success != rhs.success { return false }
+        if lhs.nicknameUsed != rhs.nicknameUsed { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

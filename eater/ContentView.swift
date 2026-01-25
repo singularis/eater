@@ -9,6 +9,7 @@ struct FullScreenPhotoData: Identifiable {
 struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
+  @Environment(\.scenePhase) var scenePhase
   @State private var products: [Product] = []
   @State private var caloriesLeft: Int = 0
   @State private var personWeight: Float = 0
@@ -24,6 +25,7 @@ struct ContentView: View {
   @State private var showUserProfile = false
   @State private var showHealthDisclaimer = false
   @State private var showOnboarding = false
+  @State private var onboardingMode: OnboardingView.OnboardingMode = .initial
   @State private var showCalendarPicker = false
   @State private var isViewingCustomDate = false
   @State private var currentViewingDate = ""
@@ -62,6 +64,10 @@ struct ContentView: View {
   @State private var sportCaloriesInput = ""
   @State private var todaySportCalories = 0
   @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate: String = ""
+
+  // Progressive Onboarding
+  @State private var showProgressiveOnboarding = false
+  @State private var progressiveStep: ProgressiveOnboardingStep = .none
 
   // Macros (full mode)
   @State private var proteins: Double = 0
@@ -117,12 +123,26 @@ struct ContentView: View {
         refreshMacrosForCurrentView()
         setupDailyRefreshTimer()
         if !hasSeenOnboarding {
+          onboardingMode = .initial
           showOnboarding = true
+        } else if AppSettingsService.shared.shouldShowHealthOnboarding {
+            onboardingMode = .health
+            showOnboarding = true
+        } else if AppSettingsService.shared.shouldShowSocialOnboarding {
+            onboardingMode = .social
+            showOnboarding = true
         }
         fetchAlcoholStatus()
       }
       .onDisappear {
         stopDailyRefreshTimer()
+      }
+      .onChange(of: scenePhase) { newPhase in
+        if newPhase == .inactive || newPhase == .background {
+          if isViewingCustomDate {
+             returnToToday()
+          }
+        }
       }
       .padding()
       .alert(loc("limits.title", "Set Calorie Limits"), isPresented: $showLimitsAlert) {
@@ -177,8 +197,21 @@ struct ContentView: View {
           fullScreenPhotoData = nil
         }
       }
+      .sheet(isPresented: $showProgressiveOnboarding) {
+        ProgressiveOnboardingView(step: progressiveStep, isPresented: $showProgressiveOnboarding) {
+          withAnimation {
+            showProgressiveOnboarding = false
+          }
+          // Increment level based on step completed
+          if progressiveStep == .demographics { AppSettingsService.shared.progressiveOnboardingLevel = 1 }
+          else if progressiveStep == .measurements { AppSettingsService.shared.progressiveOnboardingLevel = 2 }
+          else if progressiveStep == .activity { AppSettingsService.shared.progressiveOnboardingLevel = 3 }
+          else if progressiveStep == .notifications { AppSettingsService.shared.progressiveOnboardingLevel = 4 }
+        }
+        .environmentObject(languageService)
+      }
       .overlay(
-        OnboardingView(isPresented: $showOnboarding)
+        OnboardingView(isPresented: $showOnboarding, mode: onboardingMode)
           .environmentObject(languageService)
           .opacity(showOnboarding ? 1 : 0)
       )
@@ -586,7 +619,22 @@ struct ContentView: View {
   private var cameraButtonView: some View {
     CameraButtonView(
       isLoadingFoodPhoto: isLoadingFoodPhoto,
+      selectedDate: selectedDate,
+      isViewingCustomDate: isViewingCustomDate,
       onPhotoSuccess: {
+        // Increment scan count
+        AppSettingsService.shared.foodScannedCount += 1
+        
+        // Trigger subsequent onboarding phases if needed
+        if AppSettingsService.shared.shouldShowHealthOnboarding {
+            onboardingMode = .health
+            showOnboarding = true
+        } else if AppSettingsService.shared.shouldShowSocialOnboarding {
+            onboardingMode = .social
+            showOnboarding = true
+        }
+        
+        // Original logic
         fetchDataAfterFoodPhoto()
       },
       onPhotoFailure: {
@@ -598,6 +646,9 @@ struct ContentView: View {
         // Photo processing started
         HapticsService.shared.mediumImpact()
         isLoadingFoodPhoto = true
+      },
+      onReturnToToday: {
+        returnToToday()
       }
     )
     .buttonStyle(PrimaryButtonStyle())
@@ -644,6 +695,7 @@ struct ContentView: View {
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
           self.products = fetchedProducts
+          FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
           self.caloriesLeft = calories
           self.personWeight = weight
           self.isFetchingData = false
@@ -675,12 +727,37 @@ struct ContentView: View {
       isLoadingData = true
     }
 
-    // Fetch fresh data from network
+    // Check if we're viewing a custom date - if so, fetch that specific date
+    if isViewingCustomDate && !currentViewingDateString.isEmpty {
+      ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: currentViewingDateString) {
+        fetchedProducts, calories, weight in
+        DispatchQueue.main.async {
+          let previousWeight = self.personWeight
+          self.products = fetchedProducts
+          FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
+          self.caloriesLeft = calories
+          self.personWeight = weight
+          self.isLoadingData = false
+          self.isFetchingData = false
+
+          // Recalculate calories if weight changed and user has health data
+          let userDefaults = UserDefaults.standard
+          if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
+            self.recalculateCalorieLimitsFromHealthData()
+          }
+          self.refreshMacrosForCurrentView()
+        }
+      }
+      return
+    }
+
+    // Fetch fresh data from network (for today)
     isFetchingData = true
     ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
         self.products = fetchedProducts
+        FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
         self.caloriesLeft = calories
         self.personWeight = weight
         self.isLoadingData = false
@@ -756,20 +833,87 @@ struct ContentView: View {
     }
   }
 
+  func checkProgressiveOnboarding() {
+    let count = AppSettingsService.shared.foodSharedCount
+    let level = AppSettingsService.shared.progressiveOnboardingLevel
+    let hasHealthData = UserDefaults.standard.bool(forKey: "hasUserHealthData")
+    
+    var nextStep: ProgressiveOnboardingStep = .none
+    var shouldTrigger = false
+    
+    // If user already has health data, skip to notifications at count 5
+    if hasHealthData {
+      if count >= 5 && level < 4 {
+        nextStep = .notifications
+        shouldTrigger = true
+      }
+    } else {
+      // Logic: 1->Demographics, 2->Measurements, 3->Activity, 5->Notifications
+      if count >= 1 && level < 1 {
+        nextStep = .demographics
+        shouldTrigger = true
+      } else if count >= 2 && level < 2 {
+        nextStep = .measurements
+        shouldTrigger = true
+      } else if count >= 3 && level < 3 {
+        nextStep = .activity
+        shouldTrigger = true
+      } else if count >= 5 && level < 4 {
+        nextStep = .notifications
+        shouldTrigger = true
+      }
+    }
+    
+    if shouldTrigger {
+       DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+          self.progressiveStep = nextStep
+          self.showProgressiveOnboarding = true
+       }
+    }
+  }
+
   func fetchDataAfterFoodPhoto() {
     HapticsService.shared.success()
+    AppSettingsService.shared.foodSharedCount += 1
+    
     // Clear today's statistics cache since new food was added
     StatisticsService.shared.clearExpiredCache()
 
     // Note: ProductStorageService cache is already updated by the fetchAndProcessProducts call
     // that handles the image mapping, so no need to clear it here
 
-    // Always return to today after submitting food photo
-    // This will call fetchDataWithLoading() which will show the fresh cached data with the new food item
-    returnToToday()
+    // If viewing a custom/past date, stay on that date and refresh it
+    // If on today, just refresh today
+    if isViewingCustomDate {
+      // Stay on the selected past date and refresh it
+      ProductStorageService.shared.clearCache() // Clear cache to force fresh data
+      fetchDataWithLoading() // This will fetch data for the currently selected date
+      
+      // After 30 seconds, ask user if they want to go back to Today
+
+      DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
+        // Only prompt if still viewing the custom date
+        guard self.isViewingCustomDate else { return }
+
+        AlertHelper.showConfirmation(
+          title: loc("backdating.return_today.title", "Food Logged"),
+          message: loc("backdating.return_today.msg", "Your food was recorded for the selected past date. Would you like to return to Today?"),
+          actions: [
+            UIAlertAction(title: loc("backdating.return_today.stay", "Stay Here"), style: .cancel),
+            UIAlertAction(title: loc("backdating.return_today.return", "Return to Today"), style: .default) { _ in
+              self.returnToToday()
+            }
+          ]
+        )
+      }
+    } else {
+      // On today - just refresh
+      returnToToday()
+    }
 
     DispatchQueue.main.async {
       self.isLoadingFoodPhoto = false
+      self.checkProgressiveOnboarding()
     }
   }
 
@@ -863,6 +1007,7 @@ struct ContentView: View {
 
     if let parsedDate = inputFormatter.date(from: dateString) {
       currentViewingDate = displayFormatter.string(from: parsedDate)
+      self.selectedDate = parsedDate
     } else {
       currentViewingDate = dateString
     }
@@ -888,8 +1033,15 @@ struct ContentView: View {
 
   func returnToToday() {
     isViewingCustomDate = false
-    currentViewingDate = ""
     currentViewingDateString = ""
+    
+    // Set the viewing date to "Today" or formatted current date
+    let todayFormatter = DateFormatter()
+    todayFormatter.locale = Locale(identifier: languageService.currentCode)
+    todayFormatter.dateStyle = .medium
+    todayFormatter.timeStyle = .none
+    currentViewingDate = todayFormatter.string(from: Date())
+    
     fetchDataWithLoading()
     refreshMacrosForCurrentView()
   }
@@ -1313,7 +1465,7 @@ struct ContentView: View {
   private func getCurrentUTCDateString() -> String {
     let formatter = DateFormatter()
     formatter.timeZone = TimeZone(abbreviation: "UTC")
-    formatter.dateFormat = "yyyy-MM-dd"
+    formatter.dateFormat = "dd-MM-yyyy"
     return formatter.string(from: Date())
   }
 

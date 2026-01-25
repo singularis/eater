@@ -6,20 +6,37 @@ struct CameraButtonView: View {
   @State private var showPhotoLibrary = false
   @State private var cameraUnavailableAlert = false
   @State private var photoLibraryUnavailableAlert = false
+  
+  // Backdating state
+  @State private var showBackdatingAlert = false
+  @State private var pendingSourceType: UIImagePickerController.SourceType? = nil
+  @State private var backdatingMessage: String = ""
+  @State private var backdatingStatusEmoji: String = ""
 
   let isLoadingFoodPhoto: Bool
+  let selectedDate: Date
+  let isViewingCustomDate: Bool
   var onPhotoSuccess: (() -> Void)?
   var onPhotoFailure: (() -> Void)?
   var onPhotoStarted: (() -> Void)?
+  var onReturnToToday: (() -> Void)?
 
   init(
-    isLoadingFoodPhoto: Bool, onPhotoSuccess: (() -> Void)?, onPhotoFailure: (() -> Void)?,
-    onPhotoStarted: (() -> Void)?
+    isLoadingFoodPhoto: Bool,
+    selectedDate: Date = Date(),
+    isViewingCustomDate: Bool = false,
+    onPhotoSuccess: (() -> Void)?,
+    onPhotoFailure: (() -> Void)?,
+    onPhotoStarted: (() -> Void)?,
+    onReturnToToday: (() -> Void)? = nil
   ) {
     self.isLoadingFoodPhoto = isLoadingFoodPhoto
+    self.selectedDate = selectedDate
+    self.isViewingCustomDate = isViewingCustomDate
     self.onPhotoSuccess = onPhotoSuccess
     self.onPhotoFailure = onPhotoFailure
     self.onPhotoStarted = onPhotoStarted
+    self.onReturnToToday = onReturnToToday
   }
 
   var body: some View {
@@ -32,12 +49,7 @@ struct CameraButtonView: View {
       HStack(spacing: 0) {
         Button(action: {
           HapticsService.shared.select()
-          if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
-            showPhotoLibrary = true
-          } else {
-            HapticsService.shared.error()
-            photoLibraryUnavailableAlert = true
-          }
+          checkBackdating(sourceType: .photoLibrary)
         }) {
           HStack(spacing: 4) {
             Image(systemName: "photo.fill")
@@ -75,12 +87,7 @@ struct CameraButtonView: View {
 
         Button(action: {
           HapticsService.shared.select()
-          if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            showCamera = true
-          } else {
-            HapticsService.shared.error()
-            cameraUnavailableAlert = true
-          }
+          checkBackdating(sourceType: .camera)
         }) {
           HStack(spacing: 6) {
             Image(systemName: "camera.fill")
@@ -116,22 +123,24 @@ struct CameraButtonView: View {
     }
     .frame(height: 100)
     .sheet(isPresented: $showCamera) {
-      CameraCallbackManager.shared.setCallbacks(
-        onPhotoSuccess: onPhotoSuccess,
-        onPhotoFailure: onPhotoFailure,
-        onPhotoStarted: onPhotoStarted
-      )
-
-      return CameraView(photoType: "default_prompt")
+      CameraView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
+        .onAppear {
+          CameraCallbackManager.shared.setCallbacks(
+            onPhotoSuccess: onPhotoSuccess,
+            onPhotoFailure: onPhotoFailure,
+            onPhotoStarted: onPhotoStarted
+          )
+        }
     }
     .sheet(isPresented: $showPhotoLibrary) {
-      CameraCallbackManager.shared.setCallbacks(
-        onPhotoSuccess: onPhotoSuccess,
-        onPhotoFailure: onPhotoFailure,
-        onPhotoStarted: onPhotoStarted
-      )
-
-      return PhotoLibraryView(photoType: "default_prompt")
+      PhotoLibraryView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
+        .onAppear {
+          CameraCallbackManager.shared.setCallbacks(
+            onPhotoSuccess: onPhotoSuccess,
+            onPhotoFailure: onPhotoFailure,
+            onPhotoStarted: onPhotoStarted
+          )
+        }
     }
     .alert(
       loc("camera.unavailable.title", "Camera Unavailable"), isPresented: $cameraUnavailableAlert
@@ -148,6 +157,73 @@ struct CameraButtonView: View {
     } message: {
       Text(loc("library.unavailable.msg", "Photo library is not available."))
     }
+    .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $showBackdatingAlert) {
+      Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) { pendingSourceType = nil }
+      Button(loc("backdating.alert.confirm", "Confirm")) {
+        if let type = pendingSourceType {
+          openCamera(sourceType: type)
+        }
+      }
+      Button(loc("backdating.alert.log_today", "Log Today's Food")) {
+        pendingSourceType = nil
+        onReturnToToday?()
+      }
+    } message: {
+      Text(backdatingStatusEmoji + " " + backdatingMessage + "\n\n" + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
+    }
+  }
+
+  private func checkBackdating(sourceType: UIImagePickerController.SourceType) {
+    if isViewingCustomDate && !Calendar.current.isDateInToday(selectedDate) {
+      let diff = Date().timeIntervalSince(selectedDate)
+      let days = diff / 86400
+      let hours = diff / 3600
+      
+      let formatter = DateFormatter()
+      formatter.dateFormat = "EEEE, d 'of' MMMM"
+      let dateString = formatter.string(from: selectedDate)
+      
+      let timeAgo: String
+      if days >= 1 {
+        timeAgo = String(format: loc("backdating.time.days_ago", "%d days ago"), Int(days))
+      } else {
+        timeAgo = String(format: loc("backdating.time.hours_ago", "%d hours ago"), Int(hours))
+      }
+      
+      if days > 30 {
+        backdatingStatusEmoji = "🔴" // Red/Danger
+      } else if days < 5 {
+        backdatingStatusEmoji = "🟢" // Green/Safe
+      } else {
+        backdatingStatusEmoji = "🟠" // Orange/Warning
+      }
+
+      backdatingMessage = String(format: loc("backdating.message.submitting", "Submitting for %@\n(%@)"), dateString, timeAgo)
+
+      
+      pendingSourceType = sourceType
+      showBackdatingAlert = true
+    } else {
+      openCamera(sourceType: sourceType)
+    }
+  }
+
+  private func openCamera(sourceType: UIImagePickerController.SourceType) {
+    if sourceType == .camera {
+      if UIImagePickerController.isSourceTypeAvailable(.camera) {
+        showCamera = true
+      } else {
+        HapticsService.shared.error()
+        cameraUnavailableAlert = true
+      }
+    } else {
+      if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
+        showPhotoLibrary = true
+      } else {
+        HapticsService.shared.error()
+        photoLibraryUnavailableAlert = true
+      }
+    }
   }
 }
 
@@ -155,9 +231,11 @@ struct CameraButtonView: View {
 
 struct CameraView: UIViewControllerRepresentable {
   var photoType: String
+  var targetDate: Date?
 
-  init(photoType: String) {
+  init(photoType: String, targetDate: Date? = nil) {
     self.photoType = photoType
+    self.targetDate = targetDate
   }
 
   func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -170,7 +248,9 @@ struct CameraView: UIViewControllerRepresentable {
     return picker
   }
 
-  func updateUIViewController(_: UIImagePickerController, context _: Context) {}
+  func updateUIViewController(_: UIImagePickerController, context: Context) {
+    context.coordinator.parent = self
+  }
 
   func makeCoordinator() -> Coordinator {
     return Coordinator(self)
@@ -196,6 +276,11 @@ struct CameraView: UIViewControllerRepresentable {
         return
       }
 
+      // Save to Photo Library (Memories) if enabled in settings
+      if AppSettingsService.shared.savePhotosToLibrary {
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+      }
+
       DispatchQueue.main.async {
         HapticsService.shared.mediumImpact()
         CameraCallbackManager.shared.callPhotoStarted()
@@ -204,7 +289,24 @@ struct CameraView: UIViewControllerRepresentable {
       // Show loading overlay on top of picker instead of dismissing
       showLoadingOverlay(on: picker)
 
-      let currentTimeMillis = Int64(Date().timeIntervalSince1970 * 1000)
+      // Calculate timestamp. If targetDate is set (backdating), force it to Noon UTC to avoid timezone issues on backend.
+      let dateToUse: Date
+      if let targetTitle = parent.targetDate {
+          let components = Calendar.current.dateComponents([.year, .month, .day], from: targetTitle)
+          var utcComponents = DateComponents()
+          utcComponents.year = components.year
+          utcComponents.month = components.month
+          utcComponents.day = components.day
+          utcComponents.hour = 12
+          utcComponents.minute = 0
+          utcComponents.second = 0
+          utcComponents.timeZone = TimeZone(abbreviation: "UTC")
+          dateToUse = Calendar(identifier: .gregorian).date(from: utcComponents) ?? targetTitle
+      } else {
+          dateToUse = Date()
+      }
+      
+      let currentTimeMillis = Int64(dateToUse.timeIntervalSince1970 * 1000)
       temporaryTimestamp = currentTimeMillis
 
       let imageSaved = ImageStorageService.shared.saveTemporaryImage(
@@ -293,9 +395,11 @@ struct CameraView: UIViewControllerRepresentable {
 
 struct PhotoLibraryView: UIViewControllerRepresentable {
   var photoType: String
+  var targetDate: Date?
 
-  init(photoType: String) {
+  init(photoType: String, targetDate: Date? = nil) {
     self.photoType = photoType
+    self.targetDate = targetDate
   }
 
   func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -308,7 +412,9 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
     return picker
   }
 
-  func updateUIViewController(_: UIImagePickerController, context _: Context) {}
+  func updateUIViewController(_: UIImagePickerController, context: Context) {
+    context.coordinator.parent = self
+  }
 
   func makeCoordinator() -> Coordinator {
     return Coordinator(self)
@@ -342,7 +448,24 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
       // Show loading overlay on top of picker instead of dismissing
       showLoadingOverlay(on: picker)
 
-      let currentTimeMillis = Int64(Date().timeIntervalSince1970 * 1000)
+      // Calculate timestamp. If targetDate is set (backdating), force it to Noon UTC to avoid timezone issues on backend.
+      let dateToUse: Date
+      if let targetTitle = parent.targetDate {
+          let components = Calendar.current.dateComponents([.year, .month, .day], from: targetTitle)
+          var utcComponents = DateComponents()
+          utcComponents.year = components.year
+          utcComponents.month = components.month
+          utcComponents.day = components.day
+          utcComponents.hour = 12
+          utcComponents.minute = 0
+          utcComponents.second = 0
+          utcComponents.timeZone = TimeZone(abbreviation: "UTC")
+          dateToUse = Calendar(identifier: .gregorian).date(from: utcComponents) ?? targetTitle
+      } else {
+          dateToUse = Date()
+      }
+
+      let currentTimeMillis = Int64(dateToUse.timeIntervalSince1970 * 1000)
       temporaryTimestamp = currentTimeMillis
 
       let imageSaved = ImageStorageService.shared.saveTemporaryImage(

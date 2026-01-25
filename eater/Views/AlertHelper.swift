@@ -73,6 +73,39 @@ class AlertHelper {
     presentAlert(alert, from: rootViewController)
   }
 
+  static func showConfirmation(
+    title: String,
+    message: String? = nil,
+    actions: [UIAlertAction],
+    haptic: HapticKind? = nil
+  ) {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let window = windowScene.windows.first,
+      let rootViewController = window.rootViewController
+    else {
+      return
+    }
+
+    if let h = haptic {
+      switch h {
+      case .success: HapticsService.shared.success()
+      case .warning: HapticsService.shared.warning()
+      case .error: HapticsService.shared.error()
+      case .light: HapticsService.shared.lightImpact()
+      case .medium: HapticsService.shared.mediumImpact()
+      case .heavy: HapticsService.shared.heavyImpact()
+      case .select: HapticsService.shared.select()
+      }
+    }
+
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    for action in actions {
+      alert.addAction(action)
+    }
+
+    presentAlert(alert, from: rootViewController)
+  }
+
   private static func presentAlert(
     _ alert: UIAlertController, from viewController: UIViewController, retryCount: Int = 0
   ) {
@@ -116,13 +149,13 @@ class AlertHelper {
   }
 
   private static func presentShareFriendsController(
-    foodName: String, time: Int64, onShareSuccess: (() -> Void)?
+    foodName: String, time: Int64, imageId: String = "", onShareSuccess: (() -> Void)?
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,
       let rootViewController = window.rootViewController
     else { return }
-    let vc = ShareFoodViewController(foodName: foodName, time: time)
+    let vc = ShareFoodViewController(foodName: foodName, time: time, imageId: imageId)
     vc.onShareSuccess = onShareSuccess
     let nav = UINavigationController(rootViewController: vc)
     nav.modalPresentationStyle = .pageSheet
@@ -134,8 +167,11 @@ class AlertHelper {
   }
 
   // Public helper to show the "Share food with friend" sheet directly
-  static func showShareFriends(foodName: String, time: Int64, onShareSuccess: (() -> Void)? = nil) {
-    presentShareFriendsController(foodName: foodName, time: time, onShareSuccess: onShareSuccess)
+  static func showShareFriends(
+    foodName: String, time: Int64, imageId: String = "", onShareSuccess: (() -> Void)? = nil
+  ) {
+    presentShareFriendsController(
+      foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
   }
 
   static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
@@ -230,7 +266,7 @@ class AlertHelper {
   }
 
   static func showPortionSelectionAlert(
-    foodName: String, originalWeight: Int, time: Int64,
+    foodName: String, originalWeight: Int, time: Int64, imageId: String = "",
     onPortionSelected: @escaping (Int32) -> Void, onShareSuccess: (() -> Void)? = nil
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -266,7 +302,7 @@ class AlertHelper {
         title: String(
           format: loc("portion.125", "125%% (%dg) - One and a quarter portion"),
           originalWeight * 5 / 4), percentage: Int32(125)
-      ),
+        ),
       (
         title: String(
           format: loc("portion.75", "75%% (%dg) - Three quarters"), originalWeight * 3 / 4),
@@ -293,7 +329,8 @@ class AlertHelper {
     // Share food with friend action (visually highlighted)
     let shareTitle = loc("portion.share", "Share food with friend")
     let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
-      presentShareFriendsController(foodName: foodName, time: time, onShareSuccess: onShareSuccess)
+      presentShareFriendsController(
+        foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
     }
     // Make action title green (private API key path, commonly works in UIKit alerts)
     shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")

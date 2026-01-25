@@ -101,6 +101,19 @@ enum AppTheme {
     }
   }
 
+  // Liquid Glass Styles
+  static var liquidGlassStroke: LinearGradient {
+    LinearGradient(
+      colors: [
+        .white.opacity(0.6),
+        .white.opacity(0.1),
+        .white.opacity(0.05)
+      ],
+      startPoint: .topLeading,
+      endPoint: .bottomTrailing
+    )
+  }
+
   private static func colorScheme() -> ColorScheme {
     if let scheme = AppSettingsService.shared.scheme {
       return scheme
@@ -117,8 +130,18 @@ struct PrimaryButtonStyle: ButtonStyle {
       .padding()
       .frame(maxWidth: .infinity)
       .background(
+        ZStack {
+           AppTheme.primaryButtonGradient
+           // Liquid overlay
+           RoundedRectangle(cornerRadius: 25, style: .continuous)
+             .fill(.white.opacity(0.1))
+             .blur(radius: 0.5)
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .overlay(
         RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .fill(AppTheme.primaryButtonGradient)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
       )
       .foregroundColor(.white)
       .shadow(
@@ -152,7 +175,6 @@ struct PressScaleButtonStyle: ButtonStyle {
   }
 }
 
-
 // Unified card container modifier for surfaces
 struct CardModifier: ViewModifier {
   let paddingValue: CGFloat
@@ -161,15 +183,55 @@ struct CardModifier: ViewModifier {
     let shadow = AppTheme.cardShadow
     return content
       .padding(paddingValue)
-      .background(AppTheme.surface)
-      .cornerRadius(AppTheme.cornerRadius)
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+      .background(
+        ZStack {
+          // Glass material
+          Rectangle()
+            .fill(.ultraThinMaterial)
+          
+          // Subtle tint for definition
+          Rectangle()
+            .fill(AppTheme.surface.opacity(0.3))
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1)
+      )
+      .shadow(color: shadow.color.opacity(0.5), radius: shadow.radius + 2, x: shadow.x, y: shadow.y)
+  }
+}
+
+struct LiquidGlassModifier: ViewModifier {
+  let paddingValue: CGFloat
+  let cornerRadius: CGFloat
+  
+  init(paddingValue: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) {
+    self.paddingValue = paddingValue
+    self.cornerRadius = cornerRadius
+  }
+
+  func body(content: Content) -> some View {
+    content
+      .padding(paddingValue)
+      .background(.ultraThinMaterial)
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1)
+      )
+      .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
   }
 }
 
 extension View {
   func cardContainer(padding: CGFloat = 12) -> some View {
     modifier(CardModifier(paddingValue: padding))
+  }
+  
+  func liquidGlass(padding: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
+    modifier(LiquidGlassModifier(paddingValue: padding, cornerRadius: cornerRadius))
   }
 }
 
@@ -180,12 +242,17 @@ struct SecondaryButtonStyle: ButtonStyle {
       .padding()
       .frame(maxWidth: .infinity)
       .background(
+        ZStack {
+          Rectangle()
+            .fill(.ultraThinMaterial)
+          Rectangle()
+            .fill(AppTheme.surface.opacity(0.5))
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .overlay(
         RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .fill(AppTheme.surface)
-          .overlay(
-            RoundedRectangle(cornerRadius: 25, style: .continuous)
-              .stroke(AppTheme.divider, lineWidth: 1)
-          )
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1)
       )
       .foregroundColor(AppTheme.textPrimary)
       .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
@@ -203,7 +270,7 @@ struct SecondaryButtonStyle: ButtonStyle {
 struct DestructiveButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     let gradient = LinearGradient(
-      gradient: Gradient(colors: [AppTheme.danger, AppTheme.danger.opacity(0.8)]),
+      gradient: Gradient(colors: [AppTheme.danger.opacity(0.9), AppTheme.danger.opacity(0.7)]),
       startPoint: .topLeading,
       endPoint: .bottomTrailing
     )
@@ -213,8 +280,17 @@ struct DestructiveButtonStyle: ButtonStyle {
       .padding()
       .frame(maxWidth: .infinity)
       .background(
+        ZStack {
+          gradient
+          RoundedRectangle(cornerRadius: 25, style: .continuous)
+            .fill(.white.opacity(0.1))
+            .blur(radius: 0.5)
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .overlay(
         RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .fill(gradient)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
       )
       .foregroundColor(.white)
       .shadow(
