@@ -296,6 +296,7 @@
   "prog.notif.sub": "Missa inga måltider.",
   "prog.notif.title": "Håll kursen",
   "prog.result": "Ditt dagliga mål",
+  "rec.basis": "Denna rekommendation genereras specifikt baserat på maten du ätit under de senaste 7 dagarna.",
   "rec.disclaimer.text": "⚠️ Denna information är endast för utbildningssyfte och bör inte ersätta professionell medicinsk rådgivning. Konsultera din vårdgivare innan du gör kostförändringar.",
   "rec.disclaimer.title": "Viktig Hälsovarning",
   "rec.generated_on": "Genererad den:",

@@ -296,6 +296,7 @@
   "prog.notif.sub": "Nezmeškajte jedlo.",
   "prog.notif.title": "Zostaňte v kurze",
   "prog.result": "Váš denný cieľ",
+  "rec.basis": "Toto odporúčanie je vygenerované konkrétne na základe jedla, ktoré ste zjedli za posledných 7 dní.",
   "rec.disclaimer.text": "⚠️ Tieto informácie slúžia len na vzdelávacie účely a nemali by nahrádzať odborné lekárske rady. Pred zmenami v stravovaní sa poraďte so svojím poskytovateľom zdravotnej starostlivosti.",
   "rec.disclaimer.title": "Dôležité zdravotné upozornenie",
   "rec.generated_on": "Vygenerované dňa:",

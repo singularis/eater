@@ -181,32 +181,12 @@ struct ProductRowView: View {
   }
 
   private func getHealthRatingIconName(rating: Int) -> String {
-    switch rating {
-    case 0:
-      return "cross.case.fill" // Medical help needed (Funny/Extreme)
-    case 1:
-      return "bed.double.fill" // Food coma / Lethargic
-    case 2:
-      return "tortoise.fill" // Slows you down
-    case 3:
-      return "hand.thumbsdown.fill" // Thumbs down
-    case 4:
-      return "cloud.heavyrain.fill" // Gloomy/Sad
-    case 5:
-      return "minus.circle.fill" // Neutral / Flat
-    case 6:
-      return "hare.fill" // Energy / Speed
-    case 7:
-      return "leaf.fill" // Natural / Healthy
-    case 8:
-      return "flame.fill" // Fire / Great fuel
-    case 9:
-      return "diamond.fill" // Precious / Top tier
-    case 10:
-      return "crown.fill" // King / Perfect
-    default:
-      return "questionmark.circle"
+    // Use numeric circle symbols to show the exact 0-10 rating
+    // SF Symbols supports number.circle.fill for integers 0-50
+    if rating >= 0 && rating <= 50 {
+      return "\(rating).circle.fill"
     }
+    return "questionmark.circle"
   }
   
   private func getHealthRatingColor(rating: Int) -> Color {

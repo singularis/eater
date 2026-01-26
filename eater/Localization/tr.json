@@ -296,6 +296,7 @@
   "prog.notif.sub": "Öğün kaçırma.",
   "prog.notif.title": "Yolda kal",
   "prog.result": "Günlük Hedef",
+  "rec.basis": "Bu öneri, son 7 gün içinde yediğiniz yiyeceklere dayanarak özel olarak oluşturulmuştur.",
   "rec.disclaimer.text": "⚠️ Bu bilgiler sadece eğitim amaçlıdır ve profesyonel tıbbi tavsiyenin yerini almamalıdır. Beslenme değişiklikleri yapmadan önce sağlık hizmeti sağlayıcınıza danışın.",
   "rec.disclaimer.title": "Önemli Sağlık Uyarısı",
   "rec.generated_on": "Oluşturulma tarihi:",

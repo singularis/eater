@@ -296,6 +296,7 @@
   "prog.notif.sub": "通知で食事を逃しません。",
   "prog.notif.title": "維持しましょう",
   "prog.result": "毎日の目標",
+  "rec.basis": "この推奨事項は、過去7日間に食べた食事に基づいて具体的に生成されます。",
   "rec.disclaimer.text": "⚠️ この情報は教育目的のみであり、専門的な医学的助言に代わるものではありません。食事を変更する前に医療提供者に相談してください。",
   "rec.disclaimer.title": "重要な健康に関する免責事項",
   "rec.generated_on": "生成日：",

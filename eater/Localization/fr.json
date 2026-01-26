@@ -296,6 +296,7 @@
   "prog.notif.sub": "Rappels intelligents.",
   "prog.notif.title": "Restez sur la voie",
   "prog.result": "Objectif quotidien",
+  "rec.basis": "Cette recommandation est générée spécifiquement en fonction des aliments que vous avez mangés au cours des 7 derniers jours.",
   "rec.disclaimer.text": "⚠️ Cette information est à des fins éducatives uniquement et ne doit pas remplacer les conseils médicaux professionnels. Consultez votre fournisseur de soins de santé avant de faire des changements alimentaires.",
   "rec.disclaimer.title": "Avis Important de Santé",
   "rec.generated_on": "Généré le :",

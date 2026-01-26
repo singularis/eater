@@ -22,6 +22,14 @@ struct RecommendationView: View {
               .fontWeight(.semibold)
               .foregroundColor(AppTheme.textPrimary)
 
+            Text(loc("rec.basis", "This recommendation is generated specifically based on the food you ate over the last 7 days."))
+              .font(.subheadline)
+              .foregroundColor(AppTheme.textSecondary)
+              .padding(.vertical, 4)
+              .padding(.horizontal, 8)
+              .background(AppTheme.surfaceAlt)
+              .cornerRadius(8)
+
             Text(recommendationText)
               .font(.body)
               .foregroundColor(AppTheme.textPrimary)

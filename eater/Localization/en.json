@@ -296,6 +296,7 @@
   "prog.notif.sub": "Never miss a meal with smart reminders.",
   "prog.notif.title": "Stay on Track",
   "prog.result": "Your Daily Goal",
+  "rec.basis": "This recommendation is generated specifically based on the food you ate over the last 7 days.",
   "rec.disclaimer.text": "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes.",
   "rec.disclaimer.title": "Important Health Disclaimer",
   "rec.generated_on": "Generated on:",

@@ -296,6 +296,7 @@
   "prog.notif.sub": "Gå aldrig glip af et måltid med smarte påmindelser.",
   "prog.notif.title": "Hold kursen",
   "prog.result": "Dit daglige mål",
+  "rec.basis": "Denne anbefaling er genereret specifikt baseret på den mad, du har spist i de sidste 7 dage.",
   "rec.disclaimer.text": "⚠️ Denne information er kun til uddannelsesformål og bør ikke erstatte professionel medicinsk rådgivning. Konsulter din sundhedsudbyder før du laver kostændringer.",
   "rec.disclaimer.title": "Vigtig sundhedsansvarsfraskrivelse",
   "rec.generated_on": "Genereret den:",

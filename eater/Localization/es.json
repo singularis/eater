@@ -296,6 +296,7 @@
   "prog.notif.sub": "Sin perder comidas con recordatorios inteligentes.",
   "prog.notif.title": "Mantente en el camino",
   "prog.result": "Tu objetivo diario",
+  "rec.basis": "Esta recomendación se genera específicamente en función de la comida que consumiste en los últimos 7 días.",
   "rec.disclaimer.text": "⚠️ Esta información es solo para fines educativos y no debe reemplazar el consejo médico profesional. Consulta a tu proveedor de salud antes de hacer cambios dietéticos.",
   "rec.disclaimer.title": "Aviso Importante de Salud",
   "rec.generated_on": "Generado el:",
