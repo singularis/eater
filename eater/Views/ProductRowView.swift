@@ -113,11 +113,8 @@ struct ProductRowView: View {
           .scaleEffect(0.8)
           .padding(.trailing, 8)
       } else if product.healthRating >= 0 {
-        Image(systemName: getHealthRatingIconName(rating: product.healthRating))
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 40, height: 40)
-          .foregroundColor(getHealthRatingColor(rating: product.healthRating))
+        HealthRatingRing(rating: product.healthRating, color: getHealthRatingColor(rating: product.healthRating))
+          .frame(width: 44, height: 44)
           .onTapGesture {
             HapticsService.shared.select()
 
@@ -180,26 +177,28 @@ struct ProductRowView: View {
     }
   }
 
-  private func getHealthRatingIconName(rating: Int) -> String {
-    // Use numeric circle symbols to show the exact 0-10 rating
-    // SF Symbols supports number.circle.fill for integers 0-50
-    if rating >= 0 && rating <= 50 {
-      return "\(rating).circle.fill"
-    }
-    return "questionmark.circle"
-  }
+
   
   private func getHealthRatingColor(rating: Int) -> Color {
     // 0 is bad (red), 10 is good (green)
-    // Clamp value between 0 and 10
     let maxRating: Double = 10.0
     let clampedRating = max(0, min(maxRating, Double(rating)))
     let normalized = clampedRating / maxRating
     
-    // Simple interpolation between red and green
-    // Red: 1.0 -> 0.0 (as rating increases)
-    // Green: 0.0 -> 1.0 (as rating increases)
-    return Color(red: 1.0 - normalized, green: normalized, blue: 0.0)
+    // Vibrant gradient: Red -> Orange -> Yellow -> Green
+    // This ensures 0 is clearly red, and we move through orange/yellow to green
+    
+    if normalized < 0.5 {
+        // Red (1.0, 0.0, 0.0) -> Yellow (1.0, 1.0, 0.0)
+        // Red stays 1.0, Green increases
+        let green = normalized * 2.0
+        return Color(red: 1.0, green: green, blue: 0.0)
+    } else {
+        // Yellow (1.0, 1.0, 0.0) -> Green (0.0, 1.0, 0.0)
+        // Green stays 1.0, Red decreases
+        let red = 1.0 - (normalized - 0.5) * 2.0
+        return Color(red: red, green: 1.0, blue: 0.0)
+    }
   }
   
   private func runDiagnostic() {
@@ -245,4 +244,31 @@ struct ProductRowView: View {
       
       AlertHelper.showAlert(title: "Diagnostic Result", message: message)
   }
+}
+
+struct HealthRatingRing: View {
+    let rating: Int
+    let color: Color
+    
+    var body: some View {
+        let maxRating: Double = 10.0
+        let progress = max(0, min(1.0, Double(rating) / maxRating))
+        
+        return ZStack {
+            // Background track
+            Circle()
+                .stroke(color.opacity(0.2), lineWidth: 4)
+            
+            // Progress ring
+            Circle()
+                .trim(from: 0, to: CGFloat(progress))
+                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            
+            // Rating text
+            Text("\(rating)")
+                .font(.system(size: 25, weight: .bold, design: .rounded))
+                .foregroundColor(color)
+        }
+    }
 }
