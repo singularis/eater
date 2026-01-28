@@ -460,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.8;
+				MARKETING_VERSION = 3.82;
 				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eater;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -495,7 +495,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.8;
+				MARKETING_VERSION = 3.82;
 				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eater;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -227,7 +227,7 @@ final class LanguageService: ObservableObject {
   func flagEmoji(forLanguageCode code: String) -> String {
     let lang = LanguageService.normalize(code: code)
     let representativeCountry: [String: String] = [
-      "en": "US", "es": "ES", "fr": "FR", "de": "DE", "it": "IT", "pt": "PT",
+      "en": "GB", "es": "ES", "fr": "FR", "de": "DE", "it": "IT", "pt": "PT",
       "ru": "RU", "uk": "UA", "zh": "CN", "ja": "JP", "ar": "SA", "hi": "IN",
       "bn": "BD", "nl": "NL", "sv": "SE", "fi": "FI", "da": "DK", "no": "NO",
       "tr": "TR", "el": "GR", "pl": "PL", "cs": "CZ", "sk": "SK", "sl": "SI",
