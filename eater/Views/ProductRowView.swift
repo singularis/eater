@@ -181,7 +181,7 @@ struct ProductRowView: View {
   
   private func getHealthRatingColor(rating: Int) -> Color {
     // 0 is bad (red), 10 is good (green)
-    let maxRating: Double = 10.0
+    let maxRating: Double = 100.0
     let clampedRating = max(0, min(maxRating, Double(rating)))
     let normalized = clampedRating / maxRating
     
@@ -251,7 +251,7 @@ struct HealthRatingRing: View {
     let color: Color
     
     var body: some View {
-        let maxRating: Double = 10.0
+        let maxRating: Double = 100.0
         let progress = max(0, min(1.0, Double(rating) / maxRating))
         
         return ZStack {

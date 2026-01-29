@@ -336,6 +336,12 @@ class AlertHelper {
     shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
     alert.addAction(shareAction)
 
+    // Try Again – visible button between Share and Custom
+    let tryAgainTitle = loc("common.try_again", "Try Again")
+    alert.addAction(UIAlertAction(title: tryAgainTitle, style: .default) { _ in
+      // Dismisses alert; user can tap the row again or retake photo as needed
+    })
+
     // Add custom option
     alert.addAction(
       UIAlertAction(title: loc("portion.custom", "Custom..."), style: .default) { _ in

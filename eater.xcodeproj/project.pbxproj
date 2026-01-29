@@ -38,22 +38,9 @@
 		FEFD384B2CE0167300A05F44 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		FEFD383B2CE002AB00A05F44 /* Exceptions for "eater" folder in "eater" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = FE0505762CD03A3A00E3EF2F /* eater */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FE0505792CD03A3A00E3EF2F /* eater */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FEFD383B2CE002AB00A05F44 /* Exceptions for "eater" folder in "eater" target */,
-			);
 			path = eater;
 			sourceTree = "<group>";
 		};
@@ -447,7 +434,7 @@
 				DEVELOPMENT_TEAM = 7U2NSWS6B2;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_SOURCE_FILE_NAMES = "*.proto";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = eater/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of food to log calorie information.";
@@ -482,7 +469,7 @@
 				DEVELOPMENT_TEAM = 7U2NSWS6B2;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_SOURCE_FILE_NAMES = "*.proto";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = eater/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of food to log calorie information.";
