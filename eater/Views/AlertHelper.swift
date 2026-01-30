@@ -13,9 +13,12 @@ class AlertHelper {
 
   private struct HealthSummaryItem: Codable {
     let ingredients: String?
+    let ingredient: String?
     let description: String?
     let risk: String?
     let benefit: String?
+    let impact: String?
+    let impact_text: String?
   }
 
   static func showAlert(
@@ -217,30 +220,34 @@ class AlertHelper {
           fullStr.append(NSAttributedString(string: "\n"))
         }
 
-        // Ingredient Name - Headline Style (Softer)
-        if let name = item.ingredients, !name.isEmpty {
+        // Ingredient Name - Headline Style (ingredient or ingredients for backward compatibility)
+        let name = item.ingredient ?? item.ingredients ?? ""
+        if !name.isEmpty {
           fullStr.append(NSAttributedString(string: name + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
             .foregroundColor: UIColor.label
           ]))
         }
         
-        // Risk (Orange + Diamond) - Less alarming
-        if let risk = item.risk, !risk.isEmpty {
-           let riskAttr: [NSAttributedString.Key: Any] = [
-             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-             .foregroundColor: UIColor.systemOrange
-           ]
-           fullStr.append(NSAttributedString(string: risk + "\n", attributes: riskAttr))
-        }
-        
-        // Benefit (Green + Sparkles) - Friendly
-        if let benefit = item.benefit, !benefit.isEmpty {
-           let benefitAttr: [NSAttributedString.Key: Any] = [
-             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-             .foregroundColor: UIColor.systemGreen
-           ]
-           fullStr.append(NSAttributedString(string: benefit + "\n", attributes: benefitAttr))
+        // Impact text (new format) or risk/benefit (legacy)
+        let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
+        if !impactText.isEmpty {
+          let isRisk = (item.impact?.lowercased().contains("risk") ?? true) || item.risk != nil
+          let color = isRisk ? UIColor.systemOrange : UIColor.systemGreen
+          fullStr.append(NSAttributedString(string: impactText + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: color
+          ]))
+        } else if let risk = item.risk, !risk.isEmpty {
+          fullStr.append(NSAttributedString(string: risk + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: UIColor.systemOrange
+          ]))
+        } else if let benefit = item.benefit, !benefit.isEmpty {
+          fullStr.append(NSAttributedString(string: benefit + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: UIColor.systemGreen
+          ]))
         }
         
         // Description - Regular body text
