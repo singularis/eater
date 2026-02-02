@@ -131,23 +131,15 @@ struct ActivitiesView: View {
           }
         }
         
-        // Migration: Reset old score system to new wins system (ONE TIME ONLY)
+        // Migration: Clean up old score system (ONE TIME ONLY)
         let migrationKey = "chessLeagueMigrationDone"
         if !UserDefaults.standard.bool(forKey: migrationKey) {
-          print("🎮 Running migration...")
-          if let oldScore = UserDefaults.standard.string(forKey: "chessScore"), !oldScore.isEmpty && oldScore != "0:0" {
-            print("🎮 Found old score: \(oldScore), resetting to new system")
-            // Clear old system
-            UserDefaults.standard.removeObject(forKey: "chessScore")
-            UserDefaults.standard.removeObject(forKey: "chessScoreStartOfDay")
-            // Reset to 0
-            chessTotalWins = 0
-            chessWinsStartOfDay = 0
-            chessOpponents = "{}"
-          } else {
-            print("🎮 No old score found, keeping current state")
-          }
+          print("🎮 Running migration cleanup...")
+          // Just remove old keys, don't reset new system
+          UserDefaults.standard.removeObject(forKey: "chessScore")
+          UserDefaults.standard.removeObject(forKey: "chessScoreStartOfDay")
           UserDefaults.standard.set(true, forKey: migrationKey)
+          print("🎮 Migration done, keeping chessTotalWins=\(chessTotalWins)")
         }
         
         // Sync chess data from backend (only if it has data or we have no local data)
@@ -274,21 +266,6 @@ struct ActivitiesView: View {
         Text("Last game: \(formatDate(lastChessDate))")
           .font(.caption)
           .foregroundColor(AppTheme.textSecondary)
-      }
-      
-      // DEBUG: Temporary restore button
-      if chessTotalWins == 0 {
-        Button(action: {
-          // Restore data
-          chessTotalWins = 6
-          chessOpponents = "{}"
-          HapticsService.shared.success()
-        }) {
-          Text("🔧 Restore 6 wins (debug)")
-            .font(.caption)
-            .foregroundColor(.orange)
-            .padding(.vertical, 4)
-        }
       }
       
       Button(action: {
@@ -669,20 +646,22 @@ struct ActivitiesView: View {
     let oldLeague = getLeague()
     
     // Update scores
+    print("🎮 BEFORE update: chessTotalWins=\(chessTotalWins)")
     switch winner {
     case "me":
       myWins += 1
       chessTotalWins += 1
-      print("🎮 I won! myWins=\(myWins), chessTotalWins=\(chessTotalWins)")
+      print("🎮 ✅ I won! myWins=\(myWins), chessTotalWins=\(chessTotalWins)")
     case "opponent":
       opponentWins += 1
-      print("🎮 Opponent won! opponentWins=\(opponentWins)")
+      print("🎮 Opponent won! opponentWins=\(opponentWins), chessTotalWins=\(chessTotalWins)")
     case "draw":
-      print("🎮 Draw!")
+      print("🎮 Draw! chessTotalWins=\(chessTotalWins)")
       break
     default:
       break
     }
+    print("🎮 AFTER update: chessTotalWins=\(chessTotalWins)")
     
     // Save opponent score locally
     if !chessOpponentEmail.isEmpty {
@@ -716,11 +695,7 @@ struct ActivitiesView: View {
       ) { success, playerScore, opponentScore in
         if success {
           print("✅ Backend sync successful: player=\(playerScore ?? "?"), opponent=\(opponentScore ?? "?")")
-          
-          // Reload fresh data from backend after successful sync
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.syncChessDataFromBackend()
-          }
+          // Note: Not reloading from backend to preserve local state
         } else {
           print("⚠️ Backend sync failed, but local data saved")
         }
@@ -847,20 +822,31 @@ struct ActivitiesView: View {
     
     GRPCService().getAllChessData { success, totalWins, opponents in
       if success {
-        print("🎮 Backend sync successful: totalWins=\(totalWins), opponents=\(opponents)")
+        print("🎮 Backend response: totalWins=\(totalWins), opponents=\(opponents)")
         
         DispatchQueue.main.async {
-          // Backend is the source of truth - always update from it
-          self.chessTotalWins = totalWins
+          let hasBackendData = totalWins > 0 || !opponents.isEmpty
+          let hasLocalData = self.chessTotalWins > 0 || self.chessOpponents != "{}"
           
-          if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
-             let jsonString = String(data: jsonData, encoding: .utf8) {
-            self.chessOpponents = jsonString
-            print("🎮 ✅ Local state updated from backend: totalWins=\(self.chessTotalWins), opponents count=\(opponents.count)")
+          if hasBackendData {
+            // Backend has data - use it
+            print("🎮 ✅ Backend has data, updating from backend")
+            self.chessTotalWins = totalWins
+            
+            if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+              self.chessOpponents = jsonString
+            }
+          } else if hasLocalData {
+            // Backend empty but we have local data - KEEP local
+            print("🎮 ⚠️ Backend empty, keeping local data: totalWins=\(self.chessTotalWins)")
+          } else {
+            // Both empty
+            print("🎮 Both backend and local empty")
           }
         }
       } else {
-        print("⚠️ Failed to sync chess data from backend, keeping local data")
+        print("⚠️ Failed to connect to backend, keeping local data")
       }
     }
   }
