@@ -274,7 +274,10 @@ class AlertHelper {
 
   static func showPortionSelectionAlert(
     foodName: String, originalWeight: Int, time: Int64, imageId: String = "",
-    onPortionSelected: @escaping (Int32) -> Void, onShareSuccess: (() -> Void)? = nil
+    onPortionSelected: @escaping (Int32) -> Void, 
+    onTryAgain: (() -> Void)? = nil,
+    onAddSugar: (() -> Void)? = nil,
+    onShareSuccess: (() -> Void)? = nil
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,
@@ -319,11 +322,6 @@ class AlertHelper {
         title: String(format: loc("portion.50", "50%% (%dg) - Half portion"), originalWeight / 2),
         percentage: Int32(50)
       ),
-      (
-        title: String(
-          format: loc("portion.25", "25%% (%dg) - Quarter portion"), originalWeight / 4),
-        percentage: Int32(25)
-      ),
     ]
 
     for portion in portions {
@@ -332,6 +330,13 @@ class AlertHelper {
           onPortionSelected(portion.percentage)
         })
     }
+
+    // Add extra ingredient option (e.g., sugar to tea/coffee)
+    let addExtraTitle = loc("portion.add_extra", "Add 1 tsp sugar ☕")
+    alert.addAction(UIAlertAction(title: addExtraTitle, style: .default) { _ in
+      // Callback to add sugar - will update calories and track sugar
+      onAddSugar?()
+    })
 
     // Share food with friend action (visually highlighted)
     let shareTitle = loc("portion.share", "Share food with friend")
@@ -346,7 +351,8 @@ class AlertHelper {
     // Try Again – visible button between Share and Custom
     let tryAgainTitle = loc("common.try_again", "Try Again")
     alert.addAction(UIAlertAction(title: tryAgainTitle, style: .default) { _ in
-      // Dismisses alert; user can tap the row again or retake photo as needed
+      // Callback to retry photo analysis with context that previous result was wrong
+      onTryAgain?()
     })
 
     // Add custom option

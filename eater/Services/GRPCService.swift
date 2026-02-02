@@ -329,12 +329,21 @@ class GRPCService {
   }
 
   func modifyFoodRecord(
-    time: Int64, userEmail: String, percentage: Int32, completion: @escaping (Bool) -> Void
+    time: Int64, 
+    userEmail: String, 
+    percentage: Int32, 
+    isTryAgain: Bool = false,
+    imageId: String = "",
+    addedSugarTsp: Float = 0,
+    completion: @escaping (Bool) -> Void
   ) {
     var modifyFoodRequest = Eater_ModifyFoodRecordRequest()
     modifyFoodRequest.time = time
     modifyFoodRequest.userEmail = userEmail
     modifyFoodRequest.percentage = percentage
+    modifyFoodRequest.isTryAgain = isTryAgain
+    modifyFoodRequest.imageID = imageId
+    modifyFoodRequest.addedSugarTsp = addedSugarTsp
 
     do {
       let requestBody = try modifyFoodRequest.serializedData()
