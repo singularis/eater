@@ -716,6 +716,11 @@ struct ActivitiesView: View {
       ) { success, playerScore, opponentScore in
         if success {
           print("✅ Backend sync successful: player=\(playerScore ?? "?"), opponent=\(opponentScore ?? "?")")
+          
+          // Reload fresh data from backend after successful sync
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.syncChessDataFromBackend()
+          }
         } else {
           print("⚠️ Backend sync failed, but local data saved")
         }
@@ -845,32 +850,17 @@ struct ActivitiesView: View {
         print("🎮 Backend sync successful: totalWins=\(totalWins), opponents=\(opponents)")
         
         DispatchQueue.main.async {
-          // Only update if backend has data OR if we have no local data
-          let hasBackendData = totalWins > 0 || !opponents.isEmpty
-          let hasLocalData = self.chessTotalWins > 0 || self.chessOpponents != "{}"
+          // Backend is the source of truth - always update from it
+          self.chessTotalWins = totalWins
           
-          if hasBackendData {
-            // Backend has data - use it
-            print("🎮 Backend has data, updating local state")
-            self.chessTotalWins = totalWins
-            
-            if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
-               let jsonString = String(data: jsonData, encoding: .utf8) {
-              self.chessOpponents = jsonString
-              print("🎮 Local state updated from backend: totalWins=\(self.chessTotalWins)")
-            }
-          } else if !hasLocalData {
-            // Neither backend nor local has data - safe to reset
-            print("🎮 No data on backend or local, keeping empty state")
-            self.chessTotalWins = 0
-            self.chessOpponents = "{}"
-          } else {
-            // Backend empty but we have local data - keep local data
-            print("🎮 Backend empty but local has data, keeping local: totalWins=\(self.chessTotalWins)")
+          if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
+             let jsonString = String(data: jsonData, encoding: .utf8) {
+            self.chessOpponents = jsonString
+            print("🎮 ✅ Local state updated from backend: totalWins=\(self.chessTotalWins), opponents count=\(opponents.count)")
           }
         }
       } else {
-        print("⚠️ Failed to sync chess data from backend, using local data")
+        print("⚠️ Failed to sync chess data from backend, keeping local data")
       }
     }
   }
