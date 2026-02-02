@@ -4,7 +4,7 @@ struct ChessOpponentPickerView: View {
   @Environment(\.dismiss) private var dismiss
   @Binding var playerName: String
   @Binding var opponentName: String
-  let onOpponentSelected: (String) -> Void
+  let onOpponentSelected: (String, String) -> Void  // (name, email)
   
   @State private var friends: [(email: String, nickname: String)] = []
   @State private var isLoading = false
@@ -124,7 +124,7 @@ struct ChessOpponentPickerView: View {
   private func selectOpponent(friend: (email: String, nickname: String)) {
     opponentName = friend.nickname.isEmpty ? friend.email : friend.nickname
     HapticsService.shared.success()
-    onOpponentSelected(opponentName)
+    onOpponentSelected(opponentName, friend.email)
   }
   
   private func fetchFriends() {

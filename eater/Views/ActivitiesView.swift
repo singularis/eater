@@ -14,8 +14,10 @@ struct ActivitiesView: View {
   @AppStorage("chessOpponents") private var chessOpponents = "{}" // JSON: {"opponent@email.com": "3:2"}
   @AppStorage("lastChessDate") private var lastChessDate = ""
   @AppStorage("chessWinsStartOfDay") private var chessWinsStartOfDay = 0
+  @AppStorage("chessOpponentsStartOfDay") private var chessOpponentsStartOfDay = "{}" // JSON snapshot
   @AppStorage("chessPlayerName") private var chessPlayerName = ""
   @AppStorage("chessOpponentName") private var chessOpponentName = ""
+  @AppStorage("chessOpponentEmail") private var chessOpponentEmail = ""
   @AppStorage("todayActivityDate") private var todayActivityDate = ""
   @AppStorage("todaySportCalories") private var todaySportCalories = 0
   @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate = ""
@@ -105,7 +107,8 @@ struct ActivitiesView: View {
         ChessOpponentPickerView(
           playerName: $chessPlayerName,
           opponentName: $chessOpponentName,
-          onOpponentSelected: { opponentNickname in
+          onOpponentSelected: { opponentNickname, opponentEmail in
+            chessOpponentEmail = opponentEmail
             showOpponentPicker = false
             recordChessGame(winner: pendingGameResult)
           }
@@ -146,6 +149,9 @@ struct ActivitiesView: View {
           }
           UserDefaults.standard.set(true, forKey: migrationKey)
         }
+        
+        // Sync chess data from backend (only if it has data or we have no local data)
+        syncChessDataFromBackend()
       }
     }
   }
@@ -252,7 +258,8 @@ struct ActivitiesView: View {
       }
       
       // Current Opponent Score (if exists)
-      if !chessOpponentName.isEmpty, let opponentScore = getOpponentScore(chessOpponentName) {
+      if !chessOpponentName.isEmpty, !chessOpponentEmail.isEmpty,
+         let opponentScore = getOpponentScore(chessOpponentEmail) {
         VStack(spacing: 4) {
           Text("vs \(chessOpponentName)")
             .font(.caption)
@@ -624,22 +631,23 @@ struct ActivitiesView: View {
     print("🎮 Recording chess game: winner=\(winner), opponent=\(chessOpponentName)")
     print("🎮 Before: chessTotalWins=\(chessTotalWins)")
     
-    // If this is the first game today, save current wins as "start of day"
+    // If this is the first game today, save current state as "start of day"
     if lastChessDate != today {
       chessWinsStartOfDay = chessTotalWins
-      print("🎮 New day! Saved start of day wins: \(chessWinsStartOfDay)")
+      chessOpponentsStartOfDay = chessOpponents
+      print("🎮 New day! Saved start of day: wins=\(chessWinsStartOfDay), opponents=\(chessOpponentsStartOfDay)")
     }
     
     // Get current opponent's score
     var myWins = 0
     var opponentWins = 0
-    if !chessOpponentName.isEmpty, let scoreStr = getOpponentScore(chessOpponentName) {
+    if !chessOpponentEmail.isEmpty, let scoreStr = getOpponentScore(chessOpponentEmail) {
       let components = scoreStr.split(separator: ":")
       if components.count == 2 {
         myWins = Int(components[0]) ?? 0
         opponentWins = Int(components[1]) ?? 0
       }
-      print("🎮 Current score vs \(chessOpponentName): \(myWins):\(opponentWins)")
+      print("🎮 Current score vs \(chessOpponentName) (\(chessOpponentEmail)): \(myWins):\(opponentWins)")
     }
     
     // Check for league promotion BEFORE updating
@@ -661,10 +669,10 @@ struct ActivitiesView: View {
       break
     }
     
-    // Save opponent score
-    if !chessOpponentName.isEmpty {
-      updateOpponentScore(chessOpponentName, myWins: myWins, opponentWins: opponentWins)
-      print("🎮 Updated opponent score: \(myWins):\(opponentWins)")
+    // Save opponent score locally
+    if !chessOpponentEmail.isEmpty {
+      updateOpponentScore(chessOpponentEmail, myWins: myWins, opponentWins: opponentWins)
+      print("🎮 Updated opponent score for \(chessOpponentEmail): \(myWins):\(opponentWins)")
       print("🎮 All opponents: \(chessOpponents)")
     }
     
@@ -672,6 +680,34 @@ struct ActivitiesView: View {
     todayActivityDate = today
     
     showChessWinnerSheet = false
+    
+    // Sync with backend
+    if let playerEmail = UserDefaults.standard.string(forKey: "currentUserEmail"),
+       !chessOpponentEmail.isEmpty {
+      let backendResult: String
+      switch winner {
+      case "me": backendResult = "win"
+      case "opponent": backendResult = "loss"
+      case "draw": backendResult = "draw"
+      default: backendResult = "draw"
+      }
+      
+      print("🎮 Syncing with backend: \(playerEmail) vs \(chessOpponentEmail), result=\(backendResult)")
+      
+      GRPCService().recordChessGame(
+        playerEmail: playerEmail,
+        opponentEmail: chessOpponentEmail,
+        result: backendResult
+      ) { success, playerScore, opponentScore in
+        if success {
+          print("✅ Backend sync successful: player=\(playerScore ?? "?"), opponent=\(opponentScore ?? "?")")
+        } else {
+          print("⚠️ Backend sync failed, but local data saved")
+        }
+      }
+    } else {
+      print("⚠️ Cannot sync to backend: missing player or opponent email")
+    }
     
     // Notify ContentView to update sport icon
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -682,15 +718,10 @@ struct ActivitiesView: View {
     
     // Check for league promotion
     let newLeague = getLeague()
-    if newLeague != oldLeague && winner == "me" {
-      // Show promotion alert
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        AlertHelper.showAlert(
-          title: "🎉 " + Localization.shared.tr("activities.chess.promoted", default: "Promoted!"),
-          message: String(format: Localization.shared.tr("activities.chess.promoted.msg", default: "You have been promoted to %@!"), newLeague),
-          haptic: .success
-        )
-      }
+    let wasPromoted = (newLeague != oldLeague && winner == "me")
+    
+    if wasPromoted {
+      print("🎉 PROMOTION! Old: \(oldLeague) → New: \(newLeague) (Total wins: \(chessTotalWins))")
     }
     
     let message: String
@@ -705,11 +736,23 @@ struct ActivitiesView: View {
       message = ""
     }
     
+    // Show game recorded alert first
     AlertHelper.showAlert(
       title: Localization.shared.tr("activities.chess.recorded", default: "Game Recorded"),
       message: message,
       haptic: .success
     )
+    
+    // Show promotion alert after game recorded alert (if promoted)
+    if wasPromoted {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        AlertHelper.showAlert(
+          title: "🎉 " + Localization.shared.tr("activities.chess.promoted", default: "Promoted!"),
+          message: String(format: Localization.shared.tr("activities.chess.promoted.msg", default: "You have been promoted to %@!"), newLeague),
+          haptic: .success
+        )
+      }
+    }
   }
   
   // MARK: - Reset Today's Activities
@@ -735,8 +778,14 @@ struct ActivitiesView: View {
     // Only reset if there were games today
     guard lastChessDate == getCurrentUTCDateString() else { return }
     
-    // Restore wins to start of day
+    print("🎮 Resetting today's chess games")
+    print("🎮 Before reset: wins=\(chessTotalWins), opponents=\(chessOpponents)")
+    
+    // Restore wins and opponent scores to start of day
     chessTotalWins = chessWinsStartOfDay
+    chessOpponents = chessOpponentsStartOfDay
+    
+    print("🎮 After reset: wins=\(chessTotalWins), opponents=\(chessOpponents)")
     
     // Get yesterday's date
     let calendar = Calendar.current
@@ -768,6 +817,47 @@ struct ActivitiesView: View {
       message: message,
       haptic: .success
     )
+  }
+  
+  // MARK: - Sync Chess Data
+  
+  private func syncChessDataFromBackend() {
+    print("🎮 Syncing chess data from backend...")
+    print("🎮 Current local state: totalWins=\(chessTotalWins), opponents=\(chessOpponents)")
+    
+    GRPCService().getAllChessData { success, totalWins, opponents in
+      if success {
+        print("🎮 Backend sync successful: totalWins=\(totalWins), opponents=\(opponents)")
+        
+        DispatchQueue.main.async {
+          // Only update if backend has data OR if we have no local data
+          let hasBackendData = totalWins > 0 || !opponents.isEmpty
+          let hasLocalData = self.chessTotalWins > 0 || self.chessOpponents != "{}"
+          
+          if hasBackendData {
+            // Backend has data - use it
+            print("🎮 Backend has data, updating local state")
+            self.chessTotalWins = totalWins
+            
+            if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+              self.chessOpponents = jsonString
+              print("🎮 Local state updated from backend: totalWins=\(self.chessTotalWins)")
+            }
+          } else if !hasLocalData {
+            // Neither backend nor local has data - safe to reset
+            print("🎮 No data on backend or local, keeping empty state")
+            self.chessTotalWins = 0
+            self.chessOpponents = "{}"
+          } else {
+            // Backend empty but we have local data - keep local data
+            print("🎮 Backend empty but local has data, keeping local: totalWins=\(self.chessTotalWins)")
+          }
+        }
+      } else {
+        print("⚠️ Failed to sync chess data from backend, using local data")
+      }
+    }
   }
   
   // MARK: - Grandmaster Quotes

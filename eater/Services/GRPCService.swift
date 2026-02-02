@@ -6,7 +6,7 @@ class GRPCService {
   private let maxRetries = 10
   private let baseDelay: TimeInterval = 10
 
-  private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
+  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
   {
     guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
       return nil
@@ -23,7 +23,7 @@ class GRPCService {
     return request
   }
 
-  private func sendRequest(
+  internal func sendRequest(
     request: URLRequest, retriesLeft: Int,
     completion: @escaping (Data?, URLResponse?, Error?) -> Void
   ) {
