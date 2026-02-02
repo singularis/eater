@@ -276,6 +276,21 @@ struct ActivitiesView: View {
           .foregroundColor(AppTheme.textSecondary)
       }
       
+      // DEBUG: Temporary restore button
+      if chessTotalWins == 0 {
+        Button(action: {
+          // Restore data
+          chessTotalWins = 6
+          chessOpponents = "{}"
+          HapticsService.shared.success()
+        }) {
+          Text("🔧 Restore 6 wins (debug)")
+            .font(.caption)
+            .foregroundColor(.orange)
+            .padding(.vertical, 4)
+        }
+      }
+      
       Button(action: {
         HapticsService.shared.select()
         showChessWinnerSheet = true
