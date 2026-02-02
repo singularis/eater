@@ -31,6 +31,18 @@ struct Eater_ModifyFoodRecordRequest: Sendable {
 
     var percentage: Int32 = 0
 
+    var isTryAgain: Bool = false
+
+    var manualFoodName: String = .init()
+
+    var manualInsight: String = .init()
+
+    var manualComponents: [String] = []
+
+    var imageID: String = .init()
+
+    var addedSugarTsp: Float = 0
+
     var unknownFields = SwiftProtobuf.UnknownStorage()
 
     init() {}
@@ -58,6 +70,12 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
         1: .same(proto: "time"),
         2: .standard(proto: "user_email"),
         3: .same(proto: "percentage"),
+        4: .standard(proto: "is_try_again"),
+        5: .standard(proto: "manual_food_name"),
+        6: .standard(proto: "manual_insight"),
+        7: .standard(proto: "manual_components"),
+        8: .standard(proto: "image_id"),
+        9: .standard(proto: "added_sugar_tsp"),
     ]
 
     mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -69,6 +87,12 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
             case 1: try decoder.decodeSingularInt64Field(value: &time)
             case 2: try decoder.decodeSingularStringField(value: &userEmail)
             case 3: try decoder.decodeSingularInt32Field(value: &percentage)
+            case 4: try decoder.decodeSingularBoolField(value: &isTryAgain)
+            case 5: try decoder.decodeSingularStringField(value: &manualFoodName)
+            case 6: try decoder.decodeSingularStringField(value: &manualInsight)
+            case 7: try decoder.decodeRepeatedStringField(value: &manualComponents)
+            case 8: try decoder.decodeSingularStringField(value: &imageID)
+            case 9: try decoder.decodeSingularFloatField(value: &addedSugarTsp)
             default: break
             }
         }
@@ -84,6 +108,24 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
         if percentage != 0 {
             try visitor.visitSingularInt32Field(value: percentage, fieldNumber: 3)
         }
+        if isTryAgain != false {
+            try visitor.visitSingularBoolField(value: isTryAgain, fieldNumber: 4)
+        }
+        if !manualFoodName.isEmpty {
+            try visitor.visitSingularStringField(value: manualFoodName, fieldNumber: 5)
+        }
+        if !manualInsight.isEmpty {
+            try visitor.visitSingularStringField(value: manualInsight, fieldNumber: 6)
+        }
+        if !manualComponents.isEmpty {
+            try visitor.visitRepeatedStringField(value: manualComponents, fieldNumber: 7)
+        }
+        if !imageID.isEmpty {
+            try visitor.visitSingularStringField(value: imageID, fieldNumber: 8)
+        }
+        if addedSugarTsp != 0 {
+            try visitor.visitSingularFloatField(value: addedSugarTsp, fieldNumber: 9)
+        }
         try unknownFields.traverse(visitor: &visitor)
     }
 
@@ -91,6 +133,12 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
         if lhs.time != rhs.time { return false }
         if lhs.userEmail != rhs.userEmail { return false }
         if lhs.percentage != rhs.percentage { return false }
+        if lhs.isTryAgain != rhs.isTryAgain { return false }
+        if lhs.manualFoodName != rhs.manualFoodName { return false }
+        if lhs.manualInsight != rhs.manualInsight { return false }
+        if lhs.manualComponents != rhs.manualComponents { return false }
+        if lhs.imageID != rhs.imageID { return false }
+        if lhs.addedSugarTsp != rhs.addedSugarTsp { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }
