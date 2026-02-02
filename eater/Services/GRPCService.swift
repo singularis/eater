@@ -15,6 +15,7 @@ class GRPCService {
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
     request.httpBody = body
+    request.timeoutInterval = 45  // 45 seconds for AI processing
 
     if let token = UserDefaults.standard.string(forKey: "auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
