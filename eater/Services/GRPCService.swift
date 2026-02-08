@@ -8,7 +8,7 @@ class GRPCService {
 
   private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
   {
-    guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/\(endpoint)") else {
       return nil
     }
 
@@ -889,7 +889,7 @@ class GRPCService {
   // MARK: - Nickname Update
   
   func updateNickname(nickname: String, completion: @escaping (Bool, String?) -> Void) {
-    guard let url = URL(string: "https://chater.singularis.work/nickname_update") else {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/nickname_update") else {
       completion(false, "Invalid URL")
       return
     }

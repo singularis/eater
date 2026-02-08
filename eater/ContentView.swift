@@ -38,6 +38,11 @@ struct ContentView: View {
   @State private var lastAlcoholEventDate: Date? = nil
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
+  #if DEBUG
+  @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
+  #else
+  @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
+  #endif
 
   // New loading states
   @State private var isLoadingData = false
@@ -234,6 +239,15 @@ struct ContentView: View {
         }
         Spacer()
         HStack(spacing: 24) {
+          if useDevEnvironment {
+            Text("DEV")
+              .font(.system(size: 10, weight: .heavy))
+              .foregroundColor(.white)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.red)
+              .cornerRadius(4)
+          }
           healthInfoButton
           sportButton
         }

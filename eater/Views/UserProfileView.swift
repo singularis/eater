@@ -19,6 +19,11 @@ struct UserProfileView: View {
   @State private var showNicknameSettings = false
   @AppStorage("user_nickname") private var userNickname: String = ""
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"  // "simplified" or "full"
+  #if DEBUG
+  @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
+  #else
+  @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
+  #endif
   @EnvironmentObject var languageService: LanguageService
   @State private var showLanguagePicker = false
 
@@ -239,6 +244,22 @@ struct UserProfileView: View {
                   Text(loc("common.full", "Full")).tag("full")
                 }
                 .pickerStyle(.segmented)
+              }
+              .padding(.horizontal, 8)
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Dev Environment
+              Toggle(isOn: $useDevEnvironment) {
+                VStack(alignment: .leading, spacing: 2) {
+                  Text("Dev Environment")
+                    .font(.subheadline)
+                    .foregroundColor(AppTheme.textPrimary)
+                  
+                  Text(useDevEnvironment ? "Using Local Server (192.168.0.10)" : "Using Production Server")
+                    .font(.caption2)
+                    .foregroundColor(useDevEnvironment ? AppTheme.accent : AppTheme.textSecondary)
+                }
               }
               .padding(.horizontal, 8)
               
