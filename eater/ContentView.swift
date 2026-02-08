@@ -45,6 +45,7 @@ struct ContentView: View {
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
   #endif
   
+  // Activities icon color (green if any activity today, orange if not)
   private var sportIconColor: Color {
     let today = getCurrentUTCDateString()
     let hasCalories = todaySportCaloriesDate == today && todaySportCalories > 0
