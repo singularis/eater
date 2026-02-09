@@ -6,7 +6,7 @@ class GRPCService {
   private let maxRetries = 10
   private let baseDelay: TimeInterval = 10
 
-  private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
+  private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
   {
     guard let url = URL(string: "\(AppEnvironment.baseURL)/\(endpoint)") else {
       return nil
@@ -15,6 +15,11 @@ class GRPCService {
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
     request.httpBody = body
+    
+    // Set timeout if provided (for faster app startup on slow networks)
+    if let timeout = timeout {
+      request.timeoutInterval = timeout
+    }
 
     if let token = UserDefaults.standard.string(forKey: "auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -45,7 +50,8 @@ class GRPCService {
   }
 
   func fetchProducts(completion: @escaping ([Product], Int, Float) -> Void) {
-    guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
+    // Use 5-second timeout for initial load to speed up app startup
+    guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET", timeout: 5.0) else {
       completion([], 0, 0)
       return
     }
