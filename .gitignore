@@ -2,6 +2,9 @@ config.plist
 .DS_Store
 .vscode
 .idea
+.code
+.docs
+.build
 .env
 .env.local
 .env.development.local

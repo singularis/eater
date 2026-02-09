@@ -28,7 +28,8 @@ struct AppEnvironment {
 
     static var webSocketURL: URL {
         if useDevEnvironment {
-            return URL(string: "ws://192.168.0.10:30601/dev/autocomplete")!
+            // Direct connection to eater-users-dev service (FastAPI supports WebSocket)
+            return URL(string: "ws://192.168.0.118/autocomplete")!
         }
         return URL(string: "wss://chater.singularis.work/autocomplete")!
     }
