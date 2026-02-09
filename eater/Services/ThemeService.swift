@@ -37,10 +37,18 @@ enum AppMascot: String, CaseIterable {
       return []
       
     case (.cat, .happy):
-      return ["british_cat_happy"]
+      // 3-frame rotation: salad, excited, bowl
+      return ["british_cat_happy",
+              "british_cat_excited",
+              "british_cat_food_bowl"]
       
-    case (.cat, .badFood), (.cat, .angry):
-      return ["british_cat_happy"]  // Fallback
+    case (.cat, .badFood):
+      // Separate state for unhealthy food
+      return ["british_cat_bad_food"]
+      
+    case (.cat, .angry):
+      // For losses/anger also show bad_food
+      return ["british_cat_bad_food"]
       
     case (.cat, .gym):
       return ["british_cat_gym"]
@@ -49,10 +57,17 @@ enum AppMascot: String, CaseIterable {
       return ["british_cat_alcohol"]
       
     case (.dog, .happy):
-      return ["french_bulldog_happy"]
+      // 4-frame rotation: salad, toys, duck, coconut
+      return ["french_bulldog_happy",
+              "french_bulldog_toys",
+              "french_bulldog_duck",
+              "french_bulldog_coconut"]
       
-    case (.dog, .badFood), (.dog, .angry):
-      return ["french_bulldog_happy"]  // Fallback
+    case (.dog, .badFood):
+      return ["french_bulldog_bad_food"]
+      
+    case (.dog, .angry):
+      return ["french_bulldog_bad_food"]
       
     case (.dog, .gym):
       return ["french_bulldog_gym", "french_bulldog_towel"]
