@@ -375,9 +375,16 @@ struct CameraView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] _, _, _ in
+        [weak self] products, _, _ in
         // Record that user snapped food today and cancel remaining reminders
         NotificationService.shared.recordFoodSnap()
+        // Play theme sound for the newly added food (health rating)
+        if let added = products.first(where: { $0.time == tempTimestamp })
+          ?? products.max(by: { $0.time < $1.time }) {
+          ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+        } else {
+          ThemeService.shared.playSound(for: "good_food")
+        }
         // Call the success callback through the manager
         CameraCallbackManager.shared.callPhotoSuccess()
 
@@ -534,9 +541,16 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] _, _, _ in
+        [weak self] products, _, _ in
         // Record that user snapped food today and cancel remaining reminders
         NotificationService.shared.recordFoodSnap()
+        // Play theme sound for the newly added food (health rating)
+        if let added = products.first(where: { $0.time == tempTimestamp })
+          ?? products.max(by: { $0.time < $1.time }) {
+          ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+        } else {
+          ThemeService.shared.playSound(for: "good_food")
+        }
         // Call the success callback through the manager
         CameraCallbackManager.shared.callPhotoSuccess()
 

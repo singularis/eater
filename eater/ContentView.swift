@@ -10,6 +10,7 @@ struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
   @Environment(\.scenePhase) var scenePhase
+  @StateObject private var themeService = ThemeService.shared
   @State private var products: [Product] = []
   @State private var caloriesLeft: Int = 0
   @State private var personWeight: Float = 0
@@ -320,7 +321,7 @@ struct ContentView: View {
           )
           .shadow(color: alcoholIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
-        Image(systemName: "wineglass")
+        Image(systemName: themeService.icon(for: "wineglass"))
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(alcoholIconColor)
       }
@@ -429,7 +430,7 @@ struct ContentView: View {
           )
           .shadow(color: sportIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
-        Image(systemName: "figure.run")
+        Image(systemName: themeService.icon(for: "figure.run"))
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(sportIconColor)
       }
@@ -535,7 +536,7 @@ struct ContentView: View {
       showLimitsAlert = true
     }) {
       HStack(spacing: 4) {
-        Image(systemName: "flame.fill")
+        Image(systemName: themeService.icon(for: "flame.fill"))
           .font(.system(size: 20))
         Text("\(adjustedSoftLimit - caloriesLeft)")
           .font(.system(size: 22, weight: .semibold, design: .rounded))
@@ -570,7 +571,7 @@ struct ContentView: View {
     .onTapGesture {
       HapticsService.shared.select()
       isLoadingRecommendation = true
-      GRPCService().getRecommendation(days: 7) { recommendation in
+      GRPCService().getRecommendation(days: 7, languageCode: languageService.currentCode) { recommendation in
         DispatchQueue.main.async {
           if recommendation.isEmpty {
             self.recommendationText = loc(

@@ -55,7 +55,7 @@ struct ActivitiesView: View {
             // Calorie-based activities
             activityButton(
               type: .gym,
-              title: "Gym",
+              title: Localization.shared.tr("activities.gym", default: "Gym"),
               subtitle: Localization.shared.tr("activities.gym.subtitle", default: "Enter time"),
               icon: "dumbbell.fill",
               color: .orange
@@ -63,7 +63,7 @@ struct ActivitiesView: View {
             
             activityButton(
               type: .steps,
-              title: "Steps",
+              title: Localization.shared.tr("activities.steps", default: "Steps"),
               subtitle: Localization.shared.tr("activities.steps.subtitle", default: "Enter step count"),
               icon: "figure.walk",
               color: .green
@@ -71,7 +71,7 @@ struct ActivitiesView: View {
             
             activityButton(
               type: .treadmill,
-              title: "Treadmill",
+              title: Localization.shared.tr("activities.treadmill", default: "Treadmill"),
               subtitle: Localization.shared.tr("activities.treadmill.subtitle", default: "Enter calories"),
               icon: "figure.run",
               color: .blue
@@ -79,7 +79,7 @@ struct ActivitiesView: View {
             
             activityButton(
               type: .elliptical,
-              title: "Elliptical",
+              title: Localization.shared.tr("activities.elliptical", default: "Elliptical"),
               subtitle: Localization.shared.tr("activities.elliptical.subtitle", default: "Enter calories"),
               icon: "figure.elliptical",
               color: .purple
@@ -220,24 +220,22 @@ struct ActivitiesView: View {
           .font(.title2)
           .foregroundColor(.purple)
         
-        Text("Chess")
+        Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
           .font(.title3.bold())
           .foregroundColor(AppTheme.textPrimary)
         
         Spacer()
       }
       
-      // Total Wins and League
+      // Total Wins and League ("Перемог: 1")
       VStack(spacing: 8) {
-        HStack(spacing: 8) {
-          Text("\(chessTotalWins)")
-            .font(.system(size: 48, weight: .bold))
-            .foregroundColor(getLeagueColor())
-          
-          Text("won")
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+          Text(Localization.shared.tr("activities.chess.wins_label", default: "Wins:"))
             .font(.title3)
             .foregroundColor(AppTheme.textSecondary)
-            .padding(.top, 10)
+          Text("\(chessTotalWins)")
+            .font(.system(size: 44, weight: .bold))
+            .foregroundColor(getLeagueColor())
         }
         
         Text(getLeague())
@@ -253,7 +251,7 @@ struct ActivitiesView: View {
       if !chessOpponentName.isEmpty, !chessOpponentEmail.isEmpty,
          let opponentScore = getOpponentScore(chessOpponentEmail) {
         VStack(spacing: 4) {
-          Text("vs \(chessOpponentName)")
+          Text("\(Localization.shared.tr("activities.chess.vs", default: "vs")) \(chessOpponentName)")
             .font(.caption)
             .foregroundColor(AppTheme.textSecondary)
           Text(opponentScore)
@@ -263,7 +261,7 @@ struct ActivitiesView: View {
       }
       
       if !lastChessDate.isEmpty {
-        Text("Last game: \(formatDate(lastChessDate))")
+        Text("\(Localization.shared.tr("activities.last_game", default: "Last game")): \(formatDate(lastChessDate))")
           .font(.caption)
           .foregroundColor(AppTheme.textSecondary)
       }
@@ -307,7 +305,8 @@ struct ActivitiesView: View {
       showActivityInputSheet = true
     }) {
       HStack {
-        Image(systemName: icon)
+        // Theme-aware icon
+        Image(systemName: ThemeService.shared.icon(for: icon))
           .font(.title2)
           .foregroundColor(color)
           .frame(width: 40)
@@ -519,15 +518,15 @@ struct ActivitiesView: View {
   private var activityTitle: String {
     switch selectedActivityType {
     case .gym:
-      return "Gym"
+      return Localization.shared.tr("activities.gym", default: "Gym")
     case .steps:
-      return "Steps"
+      return Localization.shared.tr("activities.steps", default: "Steps")
     case .treadmill:
-      return "Treadmill"
+      return Localization.shared.tr("activities.treadmill", default: "Treadmill")
     case .elliptical:
-      return "Elliptical"
+      return Localization.shared.tr("activities.elliptical", default: "Elliptical")
     case .chess:
-      return "Chess"
+      return Localization.shared.tr("activities.chess.name", default: "Chess")
     }
   }
   
@@ -561,15 +560,15 @@ struct ActivitiesView: View {
   
   private func getLeague() -> String {
     if chessTotalWins == 0 {
-      return "🎯 No League Yet"
+      return "🎯 " + Localization.shared.tr("activities.no_league_yet", default: "No League Yet")
     } else if chessTotalWins <= 5 {
-      return "🪵 Wooden League"
+      return "🪵 " + Localization.shared.tr("activities.league.wooden", default: "Wooden League")
     } else if chessTotalWins <= 10 {
-      return "🥉 Bronze League"
+      return "🥉 " + Localization.shared.tr("activities.league.bronze", default: "Bronze League")
     } else if chessTotalWins <= 20 {
-      return "🥈 Silver League"
+      return "🥈 " + Localization.shared.tr("activities.league.silver", default: "Silver League")
     } else if chessTotalWins <= 30 {
-      return "🥇 Gold League"
+      return "🥇 " + Localization.shared.tr("activities.league.gold", default: "Gold League")
     } else if chessTotalWins <= 50 {
       return "💎 Diamond League"
     } else {
@@ -731,9 +730,12 @@ struct ActivitiesView: View {
       message = ""
     }
     
-    // Show game recorded alert first
+    // Show game recorded alert (neutral title, no mascot message)
+    let title = Localization.shared.tr("activities.chess.recorded_title", default: "Game recorded")
+    ThemeService.shared.playSound(for: "success")
+    
     AlertHelper.showAlert(
-      title: Localization.shared.tr("activities.chess.recorded", default: "Game Recorded"),
+      title: title,
       message: message,
       haptic: .success
     )
@@ -853,52 +855,23 @@ struct ActivitiesView: View {
   
   // MARK: - Grandmaster Quotes
   
+  private static let chessQuoteWinKeys = (1...10).map { "chess.quote.win.\($0)" }
+  private static let chessQuoteDrawKeys = (1...10).map { "chess.quote.draw.\($0)" }
+  private static let chessQuoteLossKeys = (1...10).map { "chess.quote.loss.\($0)" }
+
   private func getRandomWinQuote() -> String {
-    let quotes = [
-      "👑 \"Every chess master was once a beginner.\" - Chernev",
-      "⚔️ \"Tactics is knowing what to do when there is something to do; strategy is knowing what to do when there is nothing to do.\" - Tartakower",
-      "🏆 \"The beauty of a move lies not in its appearance but in the thought behind it.\" - Nimzowitsch",
-      "🎯 \"The winner of the game is the player who makes the next-to-last mistake.\" - Tartakower",
-      "♟️ \"Even a poor plan is better than no plan at all.\" - Mikhail Chigorin",
-      "🔥 \"The threat is stronger than the execution.\" - Nimzowitsch",
-      "💎 \"Discovered check is the dive bomber of the chessboard.\" - Reuben Fine",
-      "⭐ \"When you see a good move, look for a better one.\" - Emanuel Lasker",
-      "🌟 \"Play the opening like a book, the middle game like a magician, and the endgame like a machine.\" - Spielmann",
-      "🎪 \"Chess is the struggle against error.\" - Johannes Zukertort"
-    ]
-    return quotes.randomElement() ?? "👑 Victory is yours! Score updated."
+    let key = Self.chessQuoteWinKeys.randomElement() ?? "chess.quote.win.1"
+    return Localization.shared.tr(key, default: Localization.shared.tr("chess.quote.win.fallback", default: "👑 Victory is yours! Score updated."))
   }
-  
+
   private func getRandomDrawQuote() -> String {
-    let quotes = [
-      "🤝 \"In chess, as in life, a man is his own most dangerous opponent.\" - Reuben Fine",
-      "⚖️ \"The hardest game to win is a won game.\" - Emanuel Lasker",
-      "🎭 \"There are two types of sacrifices: correct ones, and mine.\" - Mikhail Tal",
-      "🌊 \"Chess is a sea in which a gnat may drink and an elephant may bathe.\" - Indian Proverb",
-      "🧩 \"Chess is life.\" - Bobby Fischer",
-      "🎯 \"Half the variations which are calculated in a tournament game turn out to be completely superfluous.\" - Jan Timman",
-      "💫 \"A strong memory, concentration, imagination, and a strong will is required to become a great chess player.\" - Fischer",
-      "🔮 \"Chess is 99% tactics.\" - Richard Teichmann",
-      "🎨 \"Chess is the art of analysis.\" - Mikhail Botvinnik",
-      "⏳ \"I don't believe in psychology. I believe in good moves.\" - Bobby Fischer"
-    ]
-    return quotes.randomElement() ?? "⚖️ An honorable draw. Well fought!"
+    let key = Self.chessQuoteDrawKeys.randomElement() ?? "chess.quote.draw.1"
+    return Localization.shared.tr(key, default: Localization.shared.tr("chess.quote.draw.fallback", default: "⚖️ An honorable draw. Well fought!"))
   }
-  
+
   private func getRandomLossQuote() -> String {
-    let quotes = [
-      "💪 \"Losing can persuade you to change what doesn't need to be changed, and winning can convince you everything is fine even if you are on the brink of disaster.\" - Garry Kasparov",
-      "🌱 \"You must take your opponent into a deep dark forest where 2+2=5, and the path leading out is only wide enough for one.\" - Mikhail Tal",
-      "🔄 \"Life is like a game of chess. To win you have to make a move.\" - Allan Rufus",
-      "📚 \"I have not given any drawn or lost games, because I thought them inadequate for the purposes of instruction.\" - Capablanca",
-      "🎲 \"The blunders are all there on the board, waiting to be made.\" - Savielly Tartakower",
-      "🌟 \"The mistakes are there, waiting to be made.\" - Savielly Tartakower",
-      "🛡️ \"I prefer to lose a really good game than to win a bad one.\" - David Levy",
-      "🌸 \"Even a poor plan is better than no plan.\" - Frank Marshall",
-      "🎓 \"Every chess master was once a beginner who refused to give up.\" - Unknown",
-      "⚡ \"You may learn much more from a game you lose than from a game you win.\" - Capablanca"
-    ]
-    return quotes.randomElement() ?? "💪 Learn from this game and come back stronger!"
+    let key = Self.chessQuoteLossKeys.randomElement() ?? "chess.quote.loss.1"
+    return Localization.shared.tr(key, default: Localization.shared.tr("chess.quote.loss.fallback", default: "💪 Learn from this game and come back stronger!"))
   }
   
   private func submitActivity() {
@@ -948,8 +921,15 @@ struct ActivitiesView: View {
     
     showActivityInputSheet = false
     
+    // Theme-aware motivational message
+    let themeTitle = ThemeService.shared.getMotivationalMessage(
+      for: "activity_recorded",
+      language: LanguageService.shared.currentCode
+    )
+    ThemeService.shared.playSound(for: "success")
+    
     AlertHelper.showAlert(
-      title: Localization.shared.tr("activities.added.title", default: "Activity Added"),
+      title: themeTitle,
       message: String(
         format: Localization.shared.tr("activities.added.msg", default: "%d calories from %@ added to your daily limit."),
         calories,

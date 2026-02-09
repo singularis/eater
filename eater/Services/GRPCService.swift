@@ -250,9 +250,10 @@ class GRPCService {
     }
   }
 
-  func getRecommendation(days: Int32, completion: @escaping (String) -> Void) {
+  func getRecommendation(days: Int32, languageCode: String, completion: @escaping (String) -> Void) {
     var recommendationRequest = Eater_RecommendationRequest()
     recommendationRequest.days = days
+    recommendationRequest.languageCode = languageCode
 
     do {
       let requestBody = try recommendationRequest.serializedData()

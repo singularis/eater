@@ -21,6 +21,35 @@ class AlertHelper {
     let impact_text: String?
   }
 
+  /// Maps API English phrases to localization keys for health/ingredient modal
+  private static let healthPhraseToKey: [String: String] = [
+    "Wholesome fruit": "health.phrase.wholesome_fruit",
+    "Mostly whole fruit with fiber and potassium.": "health.phrase.whole_fruit_fiber_potassium",
+    "Nutrient rich": "health.phrase.nutrient_rich",
+    "Potassium vitamin B6 fiber": "health.phrase.potassium_b6_fiber",
+    "Natural sugar": "health.phrase.natural_sugar",
+    "Sugar spike !": "health.phrase.sugar_spike",
+    "Sugar spike!": "health.phrase.sugar_spike",
+    "Raises blood sugar if overeat": "health.phrase.raises_blood_sugar",
+    "Fiber and key nutrients": "health.phrase.fiber_and_nutrients",
+    "Moderate natural sugar": "health.phrase.moderate_sugar",
+    "High sodium": "health.phrase.high_sodium",
+    "Ultra-processed": "health.phrase.ultra_processed",
+    "Added sugars": "health.phrase.added_sugars",
+    "Healthy fats": "health.phrase.healthy_fats",
+    "Good protein source": "health.phrase.protein_source",
+  ]
+
+  /// Translates health/ingredient text from API (English) to current app language when we have a key
+  private static func translateHealthText(_ text: String) -> String {
+    let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !t.isEmpty else { return text }
+    if let key = healthPhraseToKey[t] {
+      return loc(key, t)
+    }
+    return text
+  }
+
   static func showAlert(
     title: String,
     message: String? = nil,
@@ -201,59 +230,55 @@ class AlertHelper {
       "rec.disclaimer.text",
       "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
     )
-    
+    let displayTitle = translateHealthText(title)
+    let displayDescription = translateHealthText(description)
+
     // Attempt to parse JSON healthSummary
     if let data = healthSummary.data(using: .utf8),
        let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data) {
       
       let fullStr = NSMutableAttributedString()
       
-      // Main description - slightly larger and secondary color for "intro" feel
-      fullStr.append(NSAttributedString(string: description + "\n\n", attributes: [
+      fullStr.append(NSAttributedString(string: displayDescription + "\n\n", attributes: [
         .font: UIFont.systemFont(ofSize: 17),
         .foregroundColor: UIColor.secondaryLabel
       ]))
       
       for (index, item) in items.enumerated() {
-        // Separator between items (if not first)
         if index > 0 {
           fullStr.append(NSAttributedString(string: "\n"))
         }
 
-        // Ingredient Name - Headline Style (ingredient or ingredients for backward compatibility)
         let name = item.ingredient ?? item.ingredients ?? ""
         if !name.isEmpty {
-          fullStr.append(NSAttributedString(string: name + "\n", attributes: [
+          fullStr.append(NSAttributedString(string: translateHealthText(name) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
             .foregroundColor: UIColor.label
           ]))
         }
         
-        // Impact text (new format) or risk/benefit (legacy)
         let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
         if !impactText.isEmpty {
           let isRisk = (item.impact?.lowercased().contains("risk") ?? true) || item.risk != nil
           let color = isRisk ? UIColor.systemOrange : UIColor.systemGreen
-          fullStr.append(NSAttributedString(string: impactText + "\n", attributes: [
+          fullStr.append(NSAttributedString(string: translateHealthText(impactText) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
             .foregroundColor: color
           ]))
         } else if let risk = item.risk, !risk.isEmpty {
-          fullStr.append(NSAttributedString(string: risk + "\n", attributes: [
+          fullStr.append(NSAttributedString(string: translateHealthText(risk) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
             .foregroundColor: UIColor.systemOrange
           ]))
         } else if let benefit = item.benefit, !benefit.isEmpty {
-          fullStr.append(NSAttributedString(string: benefit + "\n", attributes: [
+          fullStr.append(NSAttributedString(string: translateHealthText(benefit) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
             .foregroundColor: UIColor.systemGreen
           ]))
         }
         
-        // Description - Regular body text
         if let desc = item.description, !desc.isEmpty {
-          // Add a tiny bit of spacing before description if we had headers
-          fullStr.append(NSAttributedString(string: desc + "\n", attributes: [
+          fullStr.append(NSAttributedString(string: translateHealthText(desc) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 16),
             .foregroundColor: UIColor.label
           ]))
@@ -263,13 +288,12 @@ class AlertHelper {
       let disclaimer = "\n" + header + "\n" + body
       fullStr.append(NSAttributedString(string: disclaimer, attributes: [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.secondaryLabel]))
       
-      showAlert(title: title, attributedMessage: fullStr)
+      showAlert(title: displayTitle, attributedMessage: fullStr)
       return
     }
     
-    // Fallback for plain text summary
-    let message = description + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
-    showAlert(title: title, message: message)
+    let message = displayDescription + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
+    showAlert(title: displayTitle, message: message)
   }
 
   static func showPortionSelectionAlert(

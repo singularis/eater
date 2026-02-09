@@ -78,7 +78,7 @@ struct ProductRowView: View {
 
         // Food details - clickable for portion modification
         VStack(alignment: .leading, spacing: 4) {
-          Text(product.name)
+          Text(Localization.shared.translateFoodName(product.name))
             .font(.headline)
             .foregroundColor(AppTheme.textPrimary)
 
@@ -96,12 +96,12 @@ struct ProductRowView: View {
             let sugarText = product.addedSugarTsp == 1 
               ? loc("sugar.added.1tsp", "🍬 +1 tsp sugar")
               : String(format: loc("sugar.added.multiple", "🍬 +%.1f tsp sugar"), product.addedSugarTsp)
-            Text("\(product.ingredients.joined(separator: ", ")) • \(sugarText)")
+            Text("\(product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")) • \(sugarText)")
               .font(.caption)
               .foregroundColor(AppTheme.textSecondary)
               .lineLimit(2)
           } else {
-            Text(product.ingredients.joined(separator: ", "))
+            Text(product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", "))
               .font(.caption)
               .foregroundColor(AppTheme.textSecondary)
               .lineLimit(2)

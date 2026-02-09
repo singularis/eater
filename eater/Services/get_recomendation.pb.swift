@@ -26,6 +26,7 @@ struct Eater_RecommendationRequest: Sendable {
     // methods supported on all messages.
 
     var days: Int32 = 0
+    var languageCode: String = .init()
 
     var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -52,6 +53,7 @@ extension Eater_RecommendationRequest: SwiftProtobuf.Message, SwiftProtobuf._Mes
     static let protoMessageName: String = _protobuf_package + ".RecommendationRequest"
     static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
         1: .same(proto: "days"),
+        2: .standard(proto: "language_code"),
     ]
 
     mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -61,6 +63,7 @@ extension Eater_RecommendationRequest: SwiftProtobuf.Message, SwiftProtobuf._Mes
             // enabled. https://github.com/apple/swift-protobuf/issues/1034
             switch fieldNumber {
             case 1: try decoder.decodeSingularInt32Field(value: &days)
+            case 2: try decoder.decodeSingularStringField(value: &languageCode)
             default: break
             }
         }
@@ -70,11 +73,15 @@ extension Eater_RecommendationRequest: SwiftProtobuf.Message, SwiftProtobuf._Mes
         if days != 0 {
             try visitor.visitSingularInt32Field(value: days, fieldNumber: 1)
         }
+        if !languageCode.isEmpty {
+            try visitor.visitSingularStringField(value: languageCode, fieldNumber: 2)
+        }
         try unknownFields.traverse(visitor: &visitor)
     }
 
     static func == (lhs: Eater_RecommendationRequest, rhs: Eater_RecommendationRequest) -> Bool {
         if lhs.days != rhs.days { return false }
+        if lhs.languageCode != rhs.languageCode { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

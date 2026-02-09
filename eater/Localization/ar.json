@@ -284,6 +284,31 @@
   "profile.setuphealth": "قم بإعداد ملفك الصحي للحصول على توصيات مخصصة للسعرات الحرارية",
   "profile.sharefeedback": "مشاركة التعليقات",
   "profile.targetweight": "الوزن المستهدف:",
+  "profile.theme": "السمة",
+  "profile.friend": "اختر صديقك",
+  "profile.friend.desc": "احصل على أيقونات وأصوات ورسائل تحفيزية مخصصة!",
+  "profile.mascot": "اختر صديقك",
+  "profile.mascot.desc": "احصل على أيقونات وأصوات ورسائل تحفيزية مخصصة!",
+  "profile.theme.sounds": "أصوات السمة",
+  "profile.theme.sounds.cat": "أصوات مواء",
+  "profile.theme.sounds.dog": "أصوات نباح",
+  "profile.theme.name.none": "افتراضي",
+  "profile.theme.name.cat": "القط البريطاني",
+  "profile.theme.name.dog": "Root",
+  "activities.gym": "الجيم",
+  "activities.steps": "الخطوات",
+  "activities.treadmill": "المطحنة",
+  "activities.elliptical": "الإهليلجي",
+  "activities.chess.name": "الشطرنج",
+  "activities.chess.won": "فوز",
+  "activities.chess.vs": "ضد",
+  "activities.last_game": "آخر مباراة",
+  "activities.no_league_yet": "لا يوجد دوري بعد",
+  "activities.league.wooden": "الدوري الخشبي",
+  "activities.league.bronze": "الدوري البرونزي",
+  "activities.league.silver": "الدوري الفضي",
+  "activities.league.gold": "الدوري الذهبي",
+  "activities.league.platinum": "الدوري البلاتيني",
   "profile.tutorial": "الدليل التعليمي",
   "profile.viewstats": "عرض الإحصائيات",
   "prog.act.sub": "حدد استهلاكك اليومي ل الطاقة.",
@@ -306,6 +331,9 @@
   "rec.src.usda": "• USDA FoodData Central",
   "rec.subtitle": "توصيتك المخصصة",
   "rec.title": "التوصية الصحية",
+  "rec.favorite_dish": "الطبق المفضل:",
+  "rec.dish_name_label": "اسم الطبق:",
+  "rec.description_label": "الوصف:",
   "search.connected_authenticating": "متصل. جاري المصادقة...",
   "search.connecting": "جاري الاتصال...",
   "search.disconnected": "غير متصل",
@@ -316,6 +344,54 @@
   "sport.msg": "أدخل عدد السعرات التي حرقتها أثناء التمرين. ستُضاف إلى حدك اليومي لليوم فقط.",
   "sport.placeholder": "السعرات المحروقة (مثلاً 300)",
   "sport.title": "مكافأة سعرات الرياضة",
+  "activities.title": "الأنشطة",
+  "activities.other": "أنشطة أخرى",
+  "activities.chess.record": "تسجيل المباراة",
+  "activities.chess.wins_label": "انتصارات:",
+  "activities.chess.recorded_title": "تم تسجيل المباراة",
+  "activities.chess.who_won": "من فاز؟",
+  "activities.chess.me": "أنا",
+  "activities.chess.draw": "تعادل",
+  "activities.chess.opponent": "الخصم",
+  "activities.chess.win": "فوز رائع! تم تحديث النتيجة.",
+  "activities.chess.draw_recorded": "تم تسجيل التعادل.",
+  "activities.chess.loss": "حظاً أوفر في المرة القادمة!",
+  "activities.chess.recorded": "تم تسجيل المباراة",
+  "activities.chess.reset_today": "إعادة تعيين مباريات اليوم",
+  "activities.chess.reset.title": "تم إعادة تعيين المباريات",
+  "activities.chess.reset.msg": "تم إلغاء مباريات الشطرنج اليوم. إجمالي الانتصارات استُعيد إلى: %d",
+  "activities.chess.select_opponent": "اختر الخصم",
+  "activities.chess.no_friends": "لا أصدقاء بعد",
+  "activities.chess.add_friends_hint": "أضف أصدقاء لتتبع مباريات الشطرنج معاً",
+  "activities.chess.promoted": "ترقية!",
+  "activities.chess.promoted.msg": "تمت ترقيتك إلى %@!",
+  "chess.quote.win.fallback": "👑 النصر لك! تم تحديث النتيجة.",
+  "chess.quote.draw.fallback": "⚖️ تعادل مشرّف. حرب جيدة!",
+  "chess.quote.loss.fallback": "💪 تعلّم من هذه المباراة وعد أقوى!",
+  "activities.calories.prompt": "كم سعرة حرارية أحرقت؟",
+  "activities.calories.placeholder": "أدخل السعرات",
+  "activities.calories.submit": "أضف إلى حد اليوم",
+  "activities.calories.added": "تمت إضافة السعرات",
+  "activities.calories.added_msg": "تمت إضافة %d سعرة من %@ إلى حدك اليومي.",
+  "activities.gym.subtitle": "أدخل الوقت",
+  "activities.gym.prompt": "كم دقيقة تدربت؟",
+  "activities.gym.placeholder": "دقائق",
+  "activities.steps.subtitle": "أدخل عدد الخطوات",
+  "activities.steps.prompt": "كم خطوة مشيت؟",
+  "activities.steps.placeholder": "خطوات",
+  "activities.treadmill.subtitle": "أدخل السعرات",
+  "activities.elliptical.subtitle": "أدخل السعرات",
+  "activities.submit": "أضف إلى حد اليوم",
+  "activities.added.title": "تمت إضافة النشاط",
+  "activities.added.msg": "تمت إضافة %d سعرة من %@ إلى حدك اليومي.",
+  "activities.invalid.title": "إدخال غير صالح",
+  "activities.invalid.msg": "يرجى إدخال رقم صالح.",
+  "activities.burned.title": "السعرات المحروقة اليوم",
+  "activities.burned.today": "تمت الإضافة إلى حد اليوم",
+  "activities.burned.none": "لا أنشطة مسجلة اليوم",
+  "activities.burned.reset": "إعادة تعيين أنشطة اليوم",
+  "activities.burned.reset.title": "تم إعادة تعيين الأنشطة",
+  "activities.burned.reset.msg": "تم إعادة تعيين كل أنشطة اليوم. حد السعرات اليومي عاد إلى طبيعته.",
   "stats.active_days": "الأيام النشطة",
   "stats.avg_calories": "متوسط السعرات اليومية",
   "stats.avg_fiber": "متوسط الألياف",
