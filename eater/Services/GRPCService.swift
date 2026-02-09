@@ -6,8 +6,7 @@ class GRPCService {
   private let maxRetries = 10
   private let baseDelay: TimeInterval = 10
 
-  private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
-
+  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
   {
     guard let url = URL(string: "\(AppEnvironment.baseURL)/\(endpoint)") else {
       return nil
@@ -16,10 +15,9 @@ class GRPCService {
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
     request.httpBody = body
-    if let timeout = timeout {
-      request.timeoutInterval = timeout
-    }
-
+    
+    // Set timeout if provided (for faster app startup on slow networks), otherwise default to 45 seconds
+    request.timeoutInterval = timeout ?? 45
 
     if let token = UserDefaults.standard.string(forKey: "auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
