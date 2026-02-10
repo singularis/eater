@@ -18,7 +18,7 @@ struct AppNameApp: App {
           .environmentObject(appSettings)
           .id(LanguageService.shared.currentCode)
           .onAppear {
-            NotificationService.shared.initializeOnLaunch()
+            NotificationService.shared.initializeOnLaunch() 
           }
       } else {
         LoginView()

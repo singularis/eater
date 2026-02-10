@@ -6,6 +6,40 @@ final class Localization {
   private var cache: [String: [String: String]] = [:]
   private let queue = DispatchQueue(label: "LocalizationQueue")
 
+  /// Maps API food names (often English) to localization keys for display
+  private static let foodNameToKey: [String: String] = [
+    "Apple": "food.apple",
+    "Banana": "food.banana",
+    "Orange": "food.orange",
+    "Bread": "food.bread",
+    "Chicken": "food.chicken",
+    "Egg": "food.egg",
+    "Eggs": "food.eggs",
+    "Milk": "food.milk",
+    "Rice": "food.rice",
+    "Salad": "food.salad",
+    "Tomato": "food.tomato",
+    "Cheese": "food.cheese",
+    "Fish": "food.fish",
+    "Meat": "food.meat",
+    "Potato": "food.potato",
+    "Potatoes": "food.potatoes",
+    "Pasta": "food.pasta",
+    "Yogurt": "food.yogurt",
+    "Coffee": "food.coffee",
+    "Tea": "food.tea",
+  ]
+
+  /// Returns localized food name when we have a key, otherwise the original name
+  func translateFoodName(_ name: String) -> String {
+    let t = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !t.isEmpty else { return name }
+    if let key = Self.foodNameToKey[t] {
+      return tr(key, default: t)
+    }
+    return name
+  }
+
   func tr(_ key: String, default defaultValue: String? = nil) -> String {
     let code = LanguageService.shared.currentCode
     let map = translations(for: code)

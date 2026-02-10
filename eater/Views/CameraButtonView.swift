@@ -1,5 +1,6 @@
 import AVFoundation
 import SwiftUI
+import PhotosUI
 
 struct CameraButtonView: View {
   @State private var showCamera = false
@@ -40,84 +41,88 @@ struct CameraButtonView: View {
   }
 
   var body: some View {
-    GeometryReader { geo in
-      let totalWidth = geo.size.width
-      let uploadWidth = totalWidth * 0.30
-      let gapWidth = totalWidth * 0.05
-      let takeWidth = totalWidth - uploadWidth - gapWidth
+    VStack(spacing: 10) {
+      // First row: Single upload and Camera
+      GeometryReader { geo in
+        let totalWidth = geo.size.width
+        let uploadWidth = totalWidth * 0.30
+        let gapWidth = totalWidth * 0.05
+        let takeWidth = totalWidth - uploadWidth - gapWidth
 
-      HStack(spacing: 0) {
-        Button(action: {
-          HapticsService.shared.select()
-          checkBackdating(sourceType: .photoLibrary)
-        }) {
-          HStack(spacing: 4) {
-            Image(systemName: "photo.fill")
-              .font(.system(size: 18))
-            Text(loc("camera.upload", "Upload"))
-              .font(.system(size: 16, weight: .medium, design: .rounded))
-              .multilineTextAlignment(.center)
-              .lineLimit(2)
-              .minimumScaleFactor(0.8)
+        HStack(spacing: 0) {
+          Button(action: {
+            HapticsService.shared.select()
+            checkBackdating(sourceType: .photoLibrary)
+          }) {
+            HStack(spacing: 4) {
+              Image(systemName: "photo.fill")
+                .font(.system(size: 18))
+              Text(loc("camera.upload", "Upload"))
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+            }
+            .padding(.vertical, 24)
+            .frame(width: uploadWidth)
+            .background(AppTheme.primaryButtonGradient)
+            .cornerRadius(AppTheme.cornerRadius)
+            .foregroundColor(.white)
+            .overlay(
+              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                .stroke(
+                  LinearGradient(
+                    gradient: Gradient(colors: [Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.9), Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.3)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  ),
+                  lineWidth: 2
+                )
+            )
+            .shadow(color: Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.4), radius: 6, x: 0, y: 3)
           }
-          .padding(.vertical, 24)
-          .frame(width: uploadWidth)
-          .background(AppTheme.primaryButtonGradient)
-          .cornerRadius(AppTheme.cornerRadius)
-          .foregroundColor(.white)
-          .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-              .stroke(
-                LinearGradient(
-                  gradient: Gradient(colors: [Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.9), Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.3)]),
-                  startPoint: .topLeading,
-                  endPoint: .bottomTrailing
-                ),
-                lineWidth: 2
-              )
-          )
-          .shadow(color: Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.4), radius: 6, x: 0, y: 3)
-        }
-        .buttonStyle(.plain)
-        .disabled(isLoadingFoodPhoto)
-        .buttonStyle(PressScaleButtonStyle())
+          .buttonStyle(.plain)
+          .disabled(isLoadingFoodPhoto)
+          .buttonStyle(PressScaleButtonStyle())
 
-        Color.clear
-          .frame(width: gapWidth)
+          Color.clear
+            .frame(width: gapWidth)
 
-        Button(action: {
-          HapticsService.shared.select()
-          checkBackdating(sourceType: .camera)
-        }) {
-          HStack(spacing: 6) {
-            Image(systemName: "camera.fill")
-              .font(.system(size: 20))
-            Text(loc("camera.takefood", "Take Food Photo"))
-              .font(.system(size: 16, weight: .medium, design: .rounded))
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
+          Button(action: {
+            HapticsService.shared.select()
+            checkBackdating(sourceType: .camera)
+          }) {
+            HStack(spacing: 6) {
+              Image(systemName: "camera.fill")
+                .font(.system(size: 20))
+              Text(loc("camera.takefood", "Take Food Photo"))
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            }
+            .padding(.vertical, 24)
+            .frame(width: takeWidth)
+            .background(AppTheme.primaryButtonGradient)
+            .cornerRadius(AppTheme.cornerRadius)
+            .foregroundColor(.white)
+            .overlay(
+              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                .stroke(
+                  LinearGradient(
+                    gradient: Gradient(colors: [Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.9), Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.3)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  ),
+                  lineWidth: 2.5
+                )
+            )
+            .shadow(color: Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.5), radius: 8, x: 0, y: 3)
           }
-          .padding(.vertical, 24)
-          .frame(width: takeWidth)
-          .background(AppTheme.primaryButtonGradient)
-          .cornerRadius(AppTheme.cornerRadius)
-          .foregroundColor(.white)
-          .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-              .stroke(
-                LinearGradient(
-                  gradient: Gradient(colors: [Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.9), Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.3)]),
-                  startPoint: .topLeading,
-                  endPoint: .bottomTrailing
-                ),
-                lineWidth: 2.5
-              )
-          )
-          .shadow(color: Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.5), radius: 8, x: 0, y: 3)
+          .buttonStyle(.plain)
+          .disabled(isLoadingFoodPhoto)
+          .buttonStyle(PressScaleButtonStyle())
         }
-        .buttonStyle(.plain)
-        .disabled(isLoadingFoodPhoto)
-        .buttonStyle(PressScaleButtonStyle())
+        .frame(height: 100)
       }
       .frame(height: 100)
     }
@@ -158,7 +163,9 @@ struct CameraButtonView: View {
       Text(loc("library.unavailable.msg", "Photo library is not available."))
     }
     .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $showBackdatingAlert) {
-      Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) { pendingSourceType = nil }
+      Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) {
+        pendingSourceType = nil
+      }
       Button(loc("backdating.alert.confirm", "Confirm")) {
         if let type = pendingSourceType {
           openCamera(sourceType: type)
@@ -225,6 +232,7 @@ struct CameraButtonView: View {
       }
     }
   }
+  
 }
 
 // MARK: - Camera View
@@ -367,9 +375,16 @@ struct CameraView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] _, _, _ in
+        [weak self] products, _, _ in
         // Record that user snapped food today and cancel remaining reminders
         NotificationService.shared.recordFoodSnap()
+        // Play theme sound for the newly added food (health rating)
+        if let added = products.first(where: { $0.time == tempTimestamp })
+          ?? products.max(by: { $0.time < $1.time }) {
+          ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+        } else {
+          ThemeService.shared.playSound(for: "good_food")
+        }
         // Call the success callback through the manager
         CameraCallbackManager.shared.callPhotoSuccess()
 
@@ -526,9 +541,16 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] _, _, _ in
+        [weak self] products, _, _ in
         // Record that user snapped food today and cancel remaining reminders
         NotificationService.shared.recordFoodSnap()
+        // Play theme sound for the newly added food (health rating)
+        if let added = products.first(where: { $0.time == tempTimestamp })
+          ?? products.max(by: { $0.time < $1.time }) {
+          ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+        } else {
+          ThemeService.shared.playSound(for: "good_food")
+        }
         // Call the success callback through the manager
         CameraCallbackManager.shared.callPhotoSuccess()
 

@@ -10,6 +10,7 @@ struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
   @Environment(\.scenePhase) var scenePhase
+  @StateObject private var themeService = ThemeService.shared
   @State private var products: [Product] = []
   @State private var caloriesLeft: Int = 0
   @State private var personWeight: Float = 0
@@ -43,7 +44,13 @@ struct ContentView: View {
   #else
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
   #endif
-
+  
+  private var sportIconColor: Color {
+    let today = getCurrentUTCDateString()
+    let hasCalories = todaySportCaloriesDate == today && todaySportCalories > 0
+    let hasActivity = todayActivityDate == today
+    return (hasCalories || hasActivity) ? .green : .orange
+  }
   // New loading states
   @State private var isLoadingData = false
   @State private var isLoadingWeightPhoto = false
@@ -64,11 +71,12 @@ struct ContentView: View {
   @State private var dailyRefreshTimer: Timer?
   @State private var lastKnownUTCDate: String = ""
 
-  // Sport calories states
-  @State private var showSportCaloriesAlert = false
-  @State private var sportCaloriesInput = ""
-  @State private var todaySportCalories = 0
+  // Activities states
+  @State private var showActivitiesView = false
+  @State private var uiRefreshTrigger = false
+  @AppStorage("todaySportCalories") private var todaySportCalories = 0
   @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate: String = ""
+  @AppStorage("todayActivityDate") private var todayActivityDate: String = ""
 
   // Progressive Onboarding
   @State private var showProgressiveOnboarding = false
@@ -108,6 +116,8 @@ struct ContentView: View {
           onRefresh: refreshAction,
           onDelete: deleteProductWithLoading,
           onModify: modifyProductPortion,
+          onTryAgain: tryAgainProduct,
+          onAddSugar: addSugarToProduct,
           onPhotoTap: showFullScreenPhoto,
           deletingProductTime: deletingProductTime,
           onShareSuccess: {
@@ -127,6 +137,7 @@ struct ContentView: View {
         fetchDataWithLoading()
         refreshMacrosForCurrentView()
         setupDailyRefreshTimer()
+        setupActivityCaloriesObserver()
         if !hasSeenOnboarding {
           onboardingMode = .initial
           showOnboarding = true
@@ -141,6 +152,14 @@ struct ContentView: View {
       }
       .onDisappear {
         stopDailyRefreshTimer()
+      }
+      .onChange(of: todaySportCalories) { _ in
+        // Force UI refresh when sport calories change
+        uiRefreshTrigger.toggle()
+      }
+      .onChange(of: todayActivityDate) { _ in
+        // Force UI refresh when activity date changes
+        uiRefreshTrigger.toggle()
       }
       .onChange(of: scenePhase) { newPhase in
         if newPhase == .inactive || newPhase == .background {
@@ -314,7 +333,7 @@ struct ContentView: View {
           )
           .shadow(color: alcoholIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
-        Image(systemName: "wineglass")
+        Image(systemName: themeService.icon(for: "wineglass"))
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(alcoholIconColor)
       }
@@ -404,8 +423,7 @@ struct ContentView: View {
   private var sportButton: some View {
     Button(action: {
       HapticsService.shared.select()
-      sportCaloriesInput = ""
-      showSportCaloriesAlert = true
+      showActivitiesView = true
     }) {
       ZStack {
         Circle()
@@ -414,7 +432,7 @@ struct ContentView: View {
             Circle()
               .stroke(
                 LinearGradient(
-                  gradient: Gradient(colors: [Color.orange.opacity(0.9), Color.orange.opacity(0.3)]
+                  gradient: Gradient(colors: [sportIconColor.opacity(0.9), sportIconColor.opacity(0.3)]
                   ),
                   startPoint: .topLeading,
                   endPoint: .bottomTrailing
@@ -422,29 +440,19 @@ struct ContentView: View {
                 lineWidth: 2
               )
           )
-          .shadow(color: Color.orange.opacity(0.4), radius: 6, x: 0, y: 3)
+          .shadow(color: sportIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
-        Image(systemName: "figure.run")
+        Image(systemName: themeService.icon(for: "figure.run"))
           .font(.system(size: 18, weight: .semibold))
-          .foregroundColor(Color.orange)
+          .foregroundColor(sportIconColor)
       }
       .frame(width: 44, height: 44)
       .contentShape(Circle())
     }
     .buttonStyle(PressScaleButtonStyle())
-    .alert(loc("sport.title", "Sport Calories Bonus"), isPresented: $showSportCaloriesAlert) {
-      TextField(loc("sport.placeholder", "Calories burned (e.g., 300)"), text: $sportCaloriesInput)
-        .keyboardType(.numberPad)
-      Button(loc("sport.add", "Add to Today's Limit")) {
-        submitSportCalories()
-      }
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-    } message: {
-      Text(
-        loc(
-          "sport.msg",
-          "Enter the number of calories you burned during your workout. This will be added to your daily calorie limit for today only."
-        ))
+    .id("sport-\(todayActivityDate)-\(todaySportCalories)-\(uiRefreshTrigger)")
+    .sheet(isPresented: $showActivitiesView) {
+      ActivitiesView()
     }
   }
 
@@ -540,7 +548,7 @@ struct ContentView: View {
       showLimitsAlert = true
     }) {
       HStack(spacing: 4) {
-        Image(systemName: "flame.fill")
+        Image(systemName: themeService.icon(for: "flame.fill"))
           .font(.system(size: 20))
         Text("\(adjustedSoftLimit - caloriesLeft)")
           .font(.system(size: 22, weight: .semibold, design: .rounded))
@@ -552,6 +560,7 @@ struct ContentView: View {
       .cornerRadius(AppTheme.cornerRadius)
       .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     }
+    .id("calories-\(todaySportCalories)-\(todaySportCaloriesDate)-\(uiRefreshTrigger)")
   }
 
   private var recommendationButton: some View {
@@ -574,7 +583,7 @@ struct ContentView: View {
     .onTapGesture {
       HapticsService.shared.select()
       isLoadingRecommendation = true
-      GRPCService().getRecommendation(days: 7) { recommendation in
+      GRPCService().getRecommendation(days: 7, languageCode: languageService.currentCode) { recommendation in
         DispatchQueue.main.async {
           if recommendation.isEmpty {
             self.recommendationText = loc(
@@ -931,6 +940,82 @@ struct ContentView: View {
     }
   }
 
+  func tryAgainProduct(time: Int64, imageId: String) {
+    guard let userEmail = authService.userEmail else {
+      AlertHelper.showAlert(
+        title: loc("common.error", "Error"),
+        message: loc("portion.modify.need_login", "Unable to retry. Please sign in again."))
+      return
+    }
+    
+    // Send Try Again request with isTryAgain flag
+    GRPCService().modifyFoodRecord(
+      time: time, 
+      userEmail: userEmail, 
+      percentage: 100,
+      isTryAgain: true,
+      imageId: imageId
+    ) { success in
+      DispatchQueue.main.async {
+        if success {
+          // Clear caches and refresh
+          StatisticsService.shared.clearExpiredCache()
+          ProductStorageService.shared.clearCache()
+          
+          AlertHelper.showAlert(
+            title: loc("common.try_again.success", "Reanalyzing..."),
+            message: loc("common.try_again.msg", "The photo is being reanalyzed. Please wait a moment."),
+            haptic: .success
+          ) {
+            self.returnToToday()
+          }
+        } else {
+          HapticsService.shared.error()
+          AlertHelper.showAlert(
+            title: loc("common.error", "Error"),
+            message: loc("common.try_again.error", "Failed to reanalyze. Please try again."))
+        }
+      }
+    }
+  }
+  
+  func addSugarToProduct(time: Int64, foodName: String) {
+    guard let userEmail = authService.userEmail else {
+      AlertHelper.showAlert(
+        title: loc("common.error", "Error"),
+        message: loc("portion.modify.need_login", "Unable to add sugar. Please sign in again."))
+      return
+    }
+    
+    // Add 1 teaspoon of sugar (1 tsp = ~5g, ~20 calories)
+    GRPCService().modifyFoodRecord(
+      time: time,
+      userEmail: userEmail,
+      percentage: 100,
+      addedSugarTsp: 1.0
+    ) { success in
+      DispatchQueue.main.async {
+        if success {
+          // Clear caches and refresh
+          StatisticsService.shared.clearExpiredCache()
+          ProductStorageService.shared.clearCache()
+          
+          AlertHelper.showAlert(
+            title: loc("portion.sugar_added.title", "Sugar Added"),
+            message: String(
+              format: loc("portion.sugar_added.msg", "Added 1 tsp sugar (+20 cal) to '%@'"),
+              foodName),
+            haptic: .success
+          ) {
+            self.returnToToday()
+          }
+        } else {
+          HapticsService.shared.error()
+        }
+      }
+    }
+  }
+
   func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
@@ -1130,30 +1215,43 @@ struct ContentView: View {
   }
 
 
-  func submitSportCalories() {
-    guard let calories = Int(sportCaloriesInput), calories > 0 else {
-      AlertHelper.showAlert(
-        title: loc("calories.invalid.title", "Invalid Calories"),
-        message: loc("calories.invalid.msg", "Please enter a valid number of calories burned."),
-        haptic: .error)
-      return
+  func setupActivityCaloriesObserver() {
+    NotificationCenter.default.addObserver(
+      forName: NSNotification.Name("ActivityCaloriesAdded"),
+      object: nil,
+      queue: .main
+    ) { notification in
+      if let userInfo = notification.userInfo,
+         let calories = userInfo["calories"] as? Int {
+        let todayString = getCurrentUTCDateString()
+        
+        // If it's a new day, reset; otherwise add to existing
+        if self.todaySportCaloriesDate == todayString {
+          self.todaySportCalories += calories  // ADD to today's total
+        } else {
+          self.todaySportCalories = calories   // New day, set fresh
+        }
+        
+        self.todaySportCaloriesDate = todayString
+        self.todayActivityDate = todayString
+      }
     }
-
-    // Store sport calories for today only
-    let todayString = getCurrentUTCDateString()
-    todaySportCalories = calories
-    todaySportCaloriesDate = todayString
-
-    // Clear the input field
-    sportCaloriesInput = ""
-
-    // Show success message
-    AlertHelper.showAlert(
-      title: loc("calories.added.title", "Sport Calories Added"),
-      message: String(
-        format: loc("calories.added.msg", "Added %d calories to your daily limit for today."),
-        calories),
-      haptic: .success)
+    
+    // Observer for chess games
+    NotificationCenter.default.addObserver(
+      forName: NSNotification.Name("ChessGameRecorded"),
+      object: nil,
+      queue: .main
+    ) { _ in
+      // Ensure todayActivityDate is set to today
+      let todayString = getCurrentUTCDateString()
+      self.todayActivityDate = todayString
+      
+      // Force UI refresh after chess game
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        self.uiRefreshTrigger.toggle()
+      }
+    }
   }
 
   // MARK: - Helper Methods
@@ -1449,12 +1547,12 @@ struct ContentView: View {
 
   private func colorForLastAlcoholDate(_ last: Date) -> Color {
     let days = Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 999
-    if days <= 7 {
-      return .red
-    } else if days <= 30 {
-      return Color.yellow
+    if days == 0 {
+      return .red      // Today - red warning
+    } else if days == 1 {
+      return .yellow   // Yesterday - yellow caution
     } else {
-      return .green
+      return .green    // 2+ days ago - green (good recovery)
     }
   }
 
@@ -1490,9 +1588,10 @@ struct ContentView: View {
       print("UTC date changed from \(lastKnownUTCDate) to \(currentUTCDate) - refreshing data")
       lastKnownUTCDate = currentUTCDate
 
-      // Reset sport calories for the new day
+      // Reset activities for the new day
       todaySportCalories = 0
       todaySportCaloriesDate = ""
+      todayActivityDate = ""
 
       // Only refresh if we're viewing today's data (not a custom date)
       if !isViewingCustomDate {

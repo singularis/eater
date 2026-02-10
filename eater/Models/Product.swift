@@ -10,9 +10,10 @@ struct Product: Identifiable, Codable, Equatable {
   let ingredients: [String]
   let healthRating: Int
   let imageId: String  // Backend MinIO object path for the food photo
+  let addedSugarTsp: Float  // Tracking added sugar in teaspoons
 
   // Custom initializer for creating products
-  init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String], healthRating: Int = -1, imageId: String = "") {
+  init(time: Int64, name: String, calories: Int, weight: Int, ingredients: [String], healthRating: Int = -1, imageId: String = "", addedSugarTsp: Float = 0) {
     self.time = time
     self.name = name
     self.calories = calories
@@ -20,6 +21,7 @@ struct Product: Identifiable, Codable, Equatable {
     self.ingredients = ingredients
     self.healthRating = healthRating
     self.imageId = imageId
+    self.addedSugarTsp = addedSugarTsp
   }
 
   var image: UIImage? {
@@ -49,8 +51,14 @@ struct Product: Identifiable, Codable, Equatable {
       && !ImageStorageService.shared.cachedImageExists(forImageId: imageId)
   }
 
+  // Computed property for total calories including added sugar
+  var totalCalories: Int {
+    let sugarCalories = Int(addedSugarTsp * 20) // 1 tsp sugar (5g) ≈ 20 calories
+    return calories + sugarCalories
+  }
+
   // Codable implementation
   private enum CodingKeys: String, CodingKey {
-    case time, name, calories, weight, ingredients, healthRating, imageId
+    case time, name, calories, weight, ingredients, healthRating, imageId, addedSugarTsp
   }
 }

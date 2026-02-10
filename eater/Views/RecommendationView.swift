@@ -4,6 +4,17 @@ struct RecommendationView: View {
   @Environment(\.dismiss) private var dismiss
   let recommendationText: String
 
+  /// Replaces API English labels with localized strings in recommendation body
+  private var localizedRecommendationText: String {
+    var text = recommendationText
+    text = text.replacingOccurrences(of: "Favorite dish:", with: loc("rec.favorite_dish", "Favorite dish:"))
+    text = text.replacingOccurrences(of: "- Dish Name:", with: "- " + loc("rec.dish_name_label", "Dish Name:"))
+    text = text.replacingOccurrences(of: "- Description:", with: "- " + loc("rec.description_label", "Description:"))
+    text = text.replacingOccurrences(of: "Dish Name:", with: loc("rec.dish_name_label", "Dish Name:"))
+    text = text.replacingOccurrences(of: "Description:", with: loc("rec.description_label", "Description:"))
+    return text
+  }
+
   var body: some View {
     NavigationView {
       ZStack {
@@ -30,7 +41,7 @@ struct RecommendationView: View {
               .background(AppTheme.surfaceAlt)
               .cornerRadius(8)
 
-            Text(recommendationText)
+            Text(localizedRecommendationText)
               .font(.body)
               .foregroundColor(AppTheme.textPrimary)
               .lineSpacing(4)
