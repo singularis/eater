@@ -319,16 +319,17 @@ struct UserProfileView: View {
               Divider().padding(.horizontal, 8)
               
               // Dev Environment
-              Toggle(isOn: $useDevEnvironment) {
-                VStack(alignment: .leading, spacing: 2) {
-                  Text("Dev Environment")
-                    .font(.subheadline)
-                    .foregroundColor(AppTheme.textPrimary)
-                  
-                  Text(useDevEnvironment ? "Using Local Server (192.168.0.10)" : "Using Production Server")
-                    .font(.caption2)
-                    .foregroundColor(useDevEnvironment ? AppTheme.accent : AppTheme.textSecondary)
+              VStack(alignment: .leading, spacing: 8) {
+                Text(loc("profile.dev_environment", "Dev Environment"))
+                  .font(.caption)
+                  .fontWeight(.medium)
+                  .foregroundColor(AppTheme.textSecondary)
+                
+                Picker("Dev Environment", selection: $useDevEnvironment) {
+                  Text(loc("env.production", "Production")).tag(false)
+                  Text(loc("env.development", "Development")).tag(true)
                 }
+                .pickerStyle(.segmented)
               }
               .padding(.horizontal, 8)
               
