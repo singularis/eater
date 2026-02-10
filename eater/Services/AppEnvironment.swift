@@ -26,6 +26,14 @@ struct AppEnvironment {
         return "https://chater.singularis.work"
     }
 
+    static var autocompleteBaseURL: String {
+        if useDevEnvironment {
+            // Direct connection to eater-users-dev service
+            return "http://192.168.0.118"
+        }
+        return "https://chater.singularis.work"
+    }
+
     static var webSocketURL: URL {
         if useDevEnvironment {
             // Direct connection to eater-users-dev service (FastAPI supports WebSocket)

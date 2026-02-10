@@ -330,6 +330,17 @@ struct UserProfileView: View {
                   Text(loc("env.development", "Development")).tag(true)
                 }
                 .pickerStyle(.segmented)
+                .background(useDevEnvironment ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
+                .cornerRadius(8)
+                .onChange(of: useDevEnvironment) { _, newValue in
+                  print("Environment changed to \(newValue ? "DEV" : "PROD"), clearing local chess data")
+                  let keys = [
+                    "chessTotalWins", "chessOpponents", "lastChessDate",
+                    "chessWinsStartOfDay", "chessOpponentsStartOfDay",
+                    "chessPlayerName", "chessOpponentName", "chessOpponentEmail"
+                  ]
+                  keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+                }
               }
               .padding(.horizontal, 8)
               

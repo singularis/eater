@@ -8,7 +8,12 @@ class GRPCService {
 
   internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
   {
-    guard let url = URL(string: "\(AppEnvironment.baseURL)/\(endpoint)") else {
+    var baseURL = AppEnvironment.baseURL
+    if endpoint.hasPrefix("autocomplete/") {
+      baseURL = AppEnvironment.autocompleteBaseURL
+    }
+
+    guard let url = URL(string: "\(baseURL)/\(endpoint)") else {
       return nil
     }
 
