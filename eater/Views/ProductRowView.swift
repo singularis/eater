@@ -5,6 +5,8 @@ struct ProductRowView: View {
   let deletingProductTime: Int64?
   let onPhotoTap: (UIImage?, String) -> Void
   let onModify: (Int64, String, Int32) -> Void
+  let onTryAgain: (Int64, String) -> Void
+  let onAddSugar: (Int64, String) -> Void
   let onShareSuccess: () -> Void
 
   @State private var remoteImage: UIImage? = nil
@@ -76,20 +78,34 @@ struct ProductRowView: View {
 
         // Food details - clickable for portion modification
         VStack(alignment: .leading, spacing: 4) {
-          Text(product.name)
+          Text(Localization.shared.translateFoodName(product.name))
             .font(.headline)
             .foregroundColor(AppTheme.textPrimary)
 
-          let details =
-            "\(product.calories) \(loc("units.kcal", "kcal")) • \(product.weight)\(loc("units.gram_suffix", "g"))"
+          // Show total calories (including added sugar)
+          let caloriesDisplay = product.addedSugarTsp > 0 
+            ? "\(product.totalCalories) \(loc("units.kcal", "kcal")) (\(product.calories) + \(Int(product.addedSugarTsp * 20))☕)"
+            : "\(product.calories) \(loc("units.kcal", "kcal"))"
+          let details = "\(caloriesDisplay) • \(product.weight)\(loc("units.gram_suffix", "g"))"
           Text(details)
             .font(.subheadline)
             .foregroundColor(AppTheme.textSecondary)
 
-          Text(product.ingredients.joined(separator: ", "))
-            .font(.caption)
-            .foregroundColor(AppTheme.textSecondary)
-            .lineLimit(2)
+          // Show ingredients and sugar info
+          if product.addedSugarTsp > 0 {
+            let sugarText = product.addedSugarTsp == 1 
+              ? loc("sugar.added.1tsp", "🍬 +1 tsp sugar")
+              : String(format: loc("sugar.added.multiple", "🍬 +%.1f tsp sugar"), product.addedSugarTsp)
+            Text("\(product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")) • \(sugarText)")
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
+              .lineLimit(2)
+          } else {
+            Text(product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", "))
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
+              .lineLimit(2)
+          }
         }
         .onTapGesture {
           HapticsService.shared.lightImpact()
@@ -99,7 +115,16 @@ struct ProductRowView: View {
             onPortionSelected: { percentage in
               HapticsService.shared.success()
               onModify(product.time, product.name, percentage)
-            }, onShareSuccess: onShareSuccess)
+            },
+            onTryAgain: {
+              HapticsService.shared.select()
+              onTryAgain(product.time, product.imageId)
+            },
+            onAddSugar: {
+              HapticsService.shared.success()
+              onAddSugar(product.time, product.name)
+            },
+            onShareSuccess: onShareSuccess)
         }
         
         Spacer()
@@ -180,24 +205,32 @@ struct ProductRowView: View {
 
   
   private func getHealthRatingColor(rating: Int) -> Color {
-    // 0 is bad (red), 10 is good (green)
-    let maxRating: Double = 10.0
-    let clampedRating = max(0, min(maxRating, Double(rating)))
-    let normalized = clampedRating / maxRating
+    // Health rating color ranges:
+    // 0-39: RED (unhealthy)
+    // 40-59: ORANGE (poor)
+    // 60-79: YELLOW (moderate)
+    // 80-94: LIGHT GREEN (good)
+    // 95-100: BRIGHT GREEN (excellent)
     
-    // Vibrant gradient: Red -> Orange -> Yellow -> Green
-    // This ensures 0 is clearly red, and we move through orange/yellow to green
-    
-    if normalized < 0.5 {
-        // Red (1.0, 0.0, 0.0) -> Yellow (1.0, 1.0, 0.0)
-        // Red stays 1.0, Green increases
-        let green = normalized * 2.0
-        return Color(red: 1.0, green: green, blue: 0.0)
-    } else {
-        // Yellow (1.0, 1.0, 0.0) -> Green (0.0, 1.0, 0.0)
-        // Green stays 1.0, Red decreases
-        let red = 1.0 - (normalized - 0.5) * 2.0
-        return Color(red: red, green: 1.0, blue: 0.0)
+    switch rating {
+    case 0...39:
+      // Red
+      return Color(red: 1.0, green: 0.0, blue: 0.0)
+    case 40..<60:
+      // Orange
+      return Color(red: 1.0, green: 0.6, blue: 0.0)
+    case 60..<80:
+      // Golden Yellow (darker for better contrast on white)
+      return Color(red: 0.85, green: 0.7, blue: 0.0)
+    case 80..<95:
+      // Light Green (salad green)
+      return Color(red: 0.5, green: 0.9, blue: 0.3)
+    case 95...100:
+      // Bright Green (excellent)
+      return Color(red: 0.0, green: 1.0, blue: 0.0)
+    default:
+      // Fallback for negative or out-of-range values
+      return Color.gray
     }
   }
   
@@ -250,25 +283,51 @@ struct HealthRatingRing: View {
     let rating: Int
     let color: Color
     
+    private let circleSize: CGFloat = 40
+    private let heartSize: CGFloat = 50
+    
     var body: some View {
-        let maxRating: Double = 10.0
-        let progress = max(0, min(1.0, Double(rating) / maxRating))
-        
-        return ZStack {
-            // Background track
-            Circle()
-                .stroke(color.opacity(0.2), lineWidth: 4)
+        // Show heart outline for excellent ratings (95-100)
+        if rating >= 95 {
+            ZStack {
+                // Background heart (light)
+                Image(systemName: "heart")
+                    .font(.system(size: 44))
+                    .foregroundColor(color.opacity(0.2))
+                
+                // Foreground heart (solid stroke)
+                Image(systemName: "heart")
+                    .font(.system(size: 44, weight: .bold))
+                    .foregroundColor(color)
+                
+                // Rating text
+                Text("\(rating)")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(color)
+            }
+            .frame(width: heartSize, height: heartSize)
+        } else {
+            // Regular ring for other ratings
+            let maxRating: Double = 100.0
+            let progress = max(0, min(1.0, Double(rating) / maxRating))
             
-            // Progress ring
-            Circle()
-                .trim(from: 0, to: CGFloat(progress))
-                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            
-            // Rating text
-            Text("\(rating)")
-                .font(.system(size: 25, weight: .bold, design: .rounded))
-                .foregroundColor(color)
+            ZStack {
+                // Background track
+                Circle()
+                    .stroke(color.opacity(0.2), lineWidth: 4)
+                
+                // Progress ring
+                Circle()
+                    .trim(from: 0, to: CGFloat(progress))
+                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                
+                // Rating text
+                Text("\(rating)")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(color)
+            }
+            .frame(width: circleSize, height: circleSize)
         }
     }
 }

@@ -6,7 +6,7 @@ class GRPCService {
   private let maxRetries = 10
   private let baseDelay: TimeInterval = 10
 
-  private func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
+  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
   {
     guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
       return nil
@@ -15,6 +15,7 @@ class GRPCService {
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
     request.httpBody = body
+    request.timeoutInterval = 45  // 45 seconds for AI processing
 
     if let token = UserDefaults.standard.string(forKey: "auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -23,7 +24,7 @@ class GRPCService {
     return request
   }
 
-  private func sendRequest(
+  internal func sendRequest(
     request: URLRequest, retriesLeft: Int,
     completion: @escaping (Data?, URLResponse?, Error?) -> Void
   ) {
@@ -249,9 +250,10 @@ class GRPCService {
     }
   }
 
-  func getRecommendation(days: Int32, completion: @escaping (String) -> Void) {
+  func getRecommendation(days: Int32, languageCode: String, completion: @escaping (String) -> Void) {
     var recommendationRequest = Eater_RecommendationRequest()
     recommendationRequest.days = days
+    recommendationRequest.languageCode = languageCode
 
     do {
       let requestBody = try recommendationRequest.serializedData()
@@ -329,12 +331,21 @@ class GRPCService {
   }
 
   func modifyFoodRecord(
-    time: Int64, userEmail: String, percentage: Int32, completion: @escaping (Bool) -> Void
+    time: Int64, 
+    userEmail: String, 
+    percentage: Int32, 
+    isTryAgain: Bool = false,
+    imageId: String = "",
+    addedSugarTsp: Float = 0,
+    completion: @escaping (Bool) -> Void
   ) {
     var modifyFoodRequest = Eater_ModifyFoodRecordRequest()
     modifyFoodRequest.time = time
     modifyFoodRequest.userEmail = userEmail
     modifyFoodRequest.percentage = percentage
+    modifyFoodRequest.isTryAgain = isTryAgain
+    modifyFoodRequest.imageID = imageId
+    modifyFoodRequest.addedSugarTsp = addedSugarTsp
 
     do {
       let requestBody = try modifyFoodRequest.serializedData()

@@ -21,6 +21,7 @@ struct UserProfileView: View {
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"  // "simplified" or "full"
   @EnvironmentObject var languageService: LanguageService
   @State private var showLanguagePicker = false
+  @StateObject private var themeService = ThemeService.shared
 
   var body: some View {
     NavigationView {
@@ -67,6 +68,74 @@ struct UserProfileView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .cardContainer(padding: 16)
+
+            // Theme Section
+            sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
+            
+            VStack(spacing: 14) {
+              // Preview of current mascot (two different images: happy and gym)
+              if themeService.currentMascot != .none {
+                HStack(spacing: 16) {
+                  MascotAvatarView(state: .happy, size: 60)
+                  MascotAvatarView(state: .gym, size: 60)
+                }
+                .padding(.vertical, 8)
+              }
+              
+              VStack(alignment: .leading, spacing: 12) {
+                Text(loc("profile.friend", "Choose Your Friend"))
+                  .font(.subheadline)
+                  .fontWeight(.semibold)
+                  .foregroundColor(AppTheme.textPrimary)
+                
+                Text(loc("profile.friend.desc", "Get custom icons, sounds, and motivational messages!"))
+                  .font(.caption)
+                  .foregroundColor(AppTheme.textSecondary)
+                
+                // Friend Picker
+                HStack(spacing: 12) {
+                  ForEach(AppMascot.allCases, id: \.self) { mascot in
+                    MascotButton(
+                      mascot: mascot,
+                      isSelected: themeService.currentMascot == mascot
+                    ) {
+                      HapticsService.shared.select()
+                      themeService.currentMascot = mascot
+                      themeService.playSound(for: "happy")
+                    }
+                  }
+                }
+              }
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Sound Toggle
+              Toggle(isOn: $themeService.soundEnabled) {
+                HStack(spacing: 8) {
+                  Image(systemName: themeService.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(themeService.soundEnabled ? AppTheme.accent : AppTheme.textSecondary)
+                  
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(loc("profile.theme.sounds", "Theme Sounds"))
+                      .font(.subheadline)
+                      .foregroundColor(AppTheme.textPrimary)
+                    
+                    if themeService.currentMascot != .none {
+                      Text(themeService.currentMascot == .cat ? loc("profile.theme.sounds.cat", "Meow sounds") : loc("profile.theme.sounds.dog", "Woof sounds"))
+                        .font(.caption2)
+                        .foregroundColor(AppTheme.textSecondary)
+                    }
+                  }
+                }
+              }
+              .padding(.horizontal, 8)
+              .tint(AppTheme.accent)
+              .disabled(themeService.currentMascot == .none)
+              .opacity(themeService.currentMascot == .none ? 0.5 : 1.0)
+            }
+            .padding(.vertical, 14)
+            .cardContainer(padding: 14)
 
             // Actions Section
             sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
@@ -524,6 +593,67 @@ struct UserProfileView: View {
       .padding(.horizontal, 8)
       .padding(.vertical, 12)
       .contentShape(Rectangle())
+    }
+    .buttonStyle(PressScaleButtonStyle())
+  }
+}
+
+// MARK: - Mascot Button
+
+struct MascotButton: View {
+  let mascot: AppMascot
+  let isSelected: Bool
+  let action: () -> Void
+  
+  var body: some View {
+    Button(action: action) {
+      VStack(spacing: 8) {
+        ZStack {
+          RoundedRectangle(cornerRadius: 16)
+            .fill(isSelected ? 
+              LinearGradient(
+                colors: [AppTheme.accent, AppTheme.accent.opacity(0.7)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+              ) : 
+              LinearGradient(
+                colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.1)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+              )
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: 16)
+                .stroke(isSelected ? Color.white.opacity(0.3) : Color.clear, lineWidth: 2)
+            )
+          
+          if mascot == .none {
+            Image(systemName: "star.fill")
+              .font(.system(size: 32))
+              .foregroundColor(isSelected ? .white : AppTheme.textSecondary)
+          } else {
+            // Show actual mascot image if available
+            if let imageName = mascot.happyImage() {
+              Image(imageName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
+            } else {
+              // Fallback: лапка замість емодзі
+              Image(systemName: "pawprint.circle.fill")
+                .font(.system(size: 32))
+                .foregroundColor(isSelected ? .white : AppTheme.textSecondary)
+            }
+          }
+        }
+        .frame(height: 70)
+        
+        Text(loc("profile.theme.name.\(mascot.rawValue)", mascot.displayName))
+          .font(.caption)
+          .fontWeight(isSelected ? .bold : .medium)
+          .foregroundColor(isSelected ? AppTheme.accent : AppTheme.textSecondary)
+      }
     }
     .buttonStyle(PressScaleButtonStyle())
   }

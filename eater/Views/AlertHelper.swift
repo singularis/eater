@@ -13,9 +13,41 @@ class AlertHelper {
 
   private struct HealthSummaryItem: Codable {
     let ingredients: String?
+    let ingredient: String?
     let description: String?
     let risk: String?
     let benefit: String?
+    let impact: String?
+    let impact_text: String?
+  }
+
+  /// Maps API English phrases to localization keys for health/ingredient modal
+  private static let healthPhraseToKey: [String: String] = [
+    "Wholesome fruit": "health.phrase.wholesome_fruit",
+    "Mostly whole fruit with fiber and potassium.": "health.phrase.whole_fruit_fiber_potassium",
+    "Nutrient rich": "health.phrase.nutrient_rich",
+    "Potassium vitamin B6 fiber": "health.phrase.potassium_b6_fiber",
+    "Natural sugar": "health.phrase.natural_sugar",
+    "Sugar spike !": "health.phrase.sugar_spike",
+    "Sugar spike!": "health.phrase.sugar_spike",
+    "Raises blood sugar if overeat": "health.phrase.raises_blood_sugar",
+    "Fiber and key nutrients": "health.phrase.fiber_and_nutrients",
+    "Moderate natural sugar": "health.phrase.moderate_sugar",
+    "High sodium": "health.phrase.high_sodium",
+    "Ultra-processed": "health.phrase.ultra_processed",
+    "Added sugars": "health.phrase.added_sugars",
+    "Healthy fats": "health.phrase.healthy_fats",
+    "Good protein source": "health.phrase.protein_source",
+  ]
+
+  /// Translates health/ingredient text from API (English) to current app language when we have a key
+  private static func translateHealthText(_ text: String) -> String {
+    let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !t.isEmpty else { return text }
+    if let key = healthPhraseToKey[t] {
+      return loc(key, t)
+    }
+    return text
   }
 
   static func showAlert(
@@ -198,55 +230,55 @@ class AlertHelper {
       "rec.disclaimer.text",
       "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
     )
-    
+    let displayTitle = translateHealthText(title)
+    let displayDescription = translateHealthText(description)
+
     // Attempt to parse JSON healthSummary
     if let data = healthSummary.data(using: .utf8),
        let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data) {
       
       let fullStr = NSMutableAttributedString()
       
-      // Main description - slightly larger and secondary color for "intro" feel
-      fullStr.append(NSAttributedString(string: description + "\n\n", attributes: [
+      fullStr.append(NSAttributedString(string: displayDescription + "\n\n", attributes: [
         .font: UIFont.systemFont(ofSize: 17),
         .foregroundColor: UIColor.secondaryLabel
       ]))
       
       for (index, item) in items.enumerated() {
-        // Separator between items (if not first)
         if index > 0 {
           fullStr.append(NSAttributedString(string: "\n"))
         }
 
-        // Ingredient Name - Headline Style (Softer)
-        if let name = item.ingredients, !name.isEmpty {
-          fullStr.append(NSAttributedString(string: name + "\n", attributes: [
+        let name = item.ingredient ?? item.ingredients ?? ""
+        if !name.isEmpty {
+          fullStr.append(NSAttributedString(string: translateHealthText(name) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
             .foregroundColor: UIColor.label
           ]))
         }
         
-        // Risk (Orange + Diamond) - Less alarming
-        if let risk = item.risk, !risk.isEmpty {
-           let riskAttr: [NSAttributedString.Key: Any] = [
-             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-             .foregroundColor: UIColor.systemOrange
-           ]
-           fullStr.append(NSAttributedString(string: risk + "\n", attributes: riskAttr))
+        let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
+        if !impactText.isEmpty {
+          let isRisk = (item.impact?.lowercased().contains("risk") ?? true) || item.risk != nil
+          let color = isRisk ? UIColor.systemOrange : UIColor.systemGreen
+          fullStr.append(NSAttributedString(string: translateHealthText(impactText) + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: color
+          ]))
+        } else if let risk = item.risk, !risk.isEmpty {
+          fullStr.append(NSAttributedString(string: translateHealthText(risk) + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: UIColor.systemOrange
+          ]))
+        } else if let benefit = item.benefit, !benefit.isEmpty {
+          fullStr.append(NSAttributedString(string: translateHealthText(benefit) + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: UIColor.systemGreen
+          ]))
         }
         
-        // Benefit (Green + Sparkles) - Friendly
-        if let benefit = item.benefit, !benefit.isEmpty {
-           let benefitAttr: [NSAttributedString.Key: Any] = [
-             .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-             .foregroundColor: UIColor.systemGreen
-           ]
-           fullStr.append(NSAttributedString(string: benefit + "\n", attributes: benefitAttr))
-        }
-        
-        // Description - Regular body text
         if let desc = item.description, !desc.isEmpty {
-          // Add a tiny bit of spacing before description if we had headers
-          fullStr.append(NSAttributedString(string: desc + "\n", attributes: [
+          fullStr.append(NSAttributedString(string: translateHealthText(desc) + "\n", attributes: [
             .font: UIFont.systemFont(ofSize: 16),
             .foregroundColor: UIColor.label
           ]))
@@ -256,18 +288,20 @@ class AlertHelper {
       let disclaimer = "\n" + header + "\n" + body
       fullStr.append(NSAttributedString(string: disclaimer, attributes: [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.secondaryLabel]))
       
-      showAlert(title: title, attributedMessage: fullStr)
+      showAlert(title: displayTitle, attributedMessage: fullStr)
       return
     }
     
-    // Fallback for plain text summary
-    let message = description + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
-    showAlert(title: title, message: message)
+    let message = displayDescription + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
+    showAlert(title: displayTitle, message: message)
   }
 
   static func showPortionSelectionAlert(
     foodName: String, originalWeight: Int, time: Int64, imageId: String = "",
-    onPortionSelected: @escaping (Int32) -> Void, onShareSuccess: (() -> Void)? = nil
+    onPortionSelected: @escaping (Int32) -> Void, 
+    onTryAgain: (() -> Void)? = nil,
+    onAddSugar: (() -> Void)? = nil,
+    onShareSuccess: (() -> Void)? = nil
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,
@@ -312,11 +346,6 @@ class AlertHelper {
         title: String(format: loc("portion.50", "50%% (%dg) - Half portion"), originalWeight / 2),
         percentage: Int32(50)
       ),
-      (
-        title: String(
-          format: loc("portion.25", "25%% (%dg) - Quarter portion"), originalWeight / 4),
-        percentage: Int32(25)
-      ),
     ]
 
     for portion in portions {
@@ -325,6 +354,13 @@ class AlertHelper {
           onPortionSelected(portion.percentage)
         })
     }
+
+    // Add extra ingredient option (e.g., sugar to tea/coffee)
+    let addExtraTitle = loc("portion.add_extra", "Add 1 tsp sugar ☕")
+    alert.addAction(UIAlertAction(title: addExtraTitle, style: .default) { _ in
+      // Callback to add sugar - will update calories and track sugar
+      onAddSugar?()
+    })
 
     // Share food with friend action (visually highlighted)
     let shareTitle = loc("portion.share", "Share food with friend")
@@ -335,6 +371,13 @@ class AlertHelper {
     // Make action title green (private API key path, commonly works in UIKit alerts)
     shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
     alert.addAction(shareAction)
+
+    // Try Again – visible button between Share and Custom
+    let tryAgainTitle = loc("common.try_again", "Try Again")
+    alert.addAction(UIAlertAction(title: tryAgainTitle, style: .default) { _ in
+      // Callback to retry photo analysis with context that previous result was wrong
+      onTryAgain?()
+    })
 
     // Add custom option
     alert.addAction(
