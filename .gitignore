@@ -18,3 +18,4 @@ eater/config.plist.test
 eater/config.plist.production
 eater/config.plist.local
 eater/Info.plist
+Info.plist
