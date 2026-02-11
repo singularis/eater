@@ -333,13 +333,25 @@ struct UserProfileView: View {
                 .background(useDevEnvironment ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
                 .cornerRadius(8)
                 .onChange(of: useDevEnvironment) { _, newValue in
-                  print("Environment changed to \(newValue ? "DEV" : "PROD"), clearing local chess data")
+                  print("Environment changed to \(newValue ? "DEV" : "PROD"), clearing and refetching local chess data")
+                  
                   let keys = [
                     "chessTotalWins", "chessOpponents", "lastChessDate",
                     "chessWinsStartOfDay", "chessOpponentsStartOfDay",
                     "chessPlayerName", "chessOpponentName", "chessOpponentEmail"
                   ]
                   keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+                  
+                  GRPCService().getAllChessData { success, totalWins, opponents in
+                    if success {
+                      UserDefaults.standard.set(totalWins, forKey: "chessTotalWins")
+                      
+                      if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
+                         let jsonString = String(data: jsonData, encoding: .utf8) {
+                        UserDefaults.standard.set(jsonString, forKey: "chessOpponents")
+                      }
+                    }
+                  }
                 }
               }
               .padding(.horizontal, 8)
