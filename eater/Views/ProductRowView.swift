@@ -249,7 +249,7 @@ struct ProductRowView: View {
          message += "Starting Probe...\n"
          
          guard let encoded = imageId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-               let url = URL(string: "https://chater.singularis.work/get_photo?image_id=\(encoded)") else {
+               let url = URL(string: "\(AppEnvironment.baseURL)/get_photo?image_id=\(encoded)") else {
              message += "Invalid URL construction"
              AlertHelper.showAlert(title: "Diagnostic", message: message)
              return

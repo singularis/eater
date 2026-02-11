@@ -19,6 +19,11 @@ struct UserProfileView: View {
   @State private var showNicknameSettings = false
   @AppStorage("user_nickname") private var userNickname: String = ""
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"  // "simplified" or "full"
+  #if DEBUG
+  @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
+  #else
+  @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
+  #endif
   @EnvironmentObject var languageService: LanguageService
   @State private var showLanguagePicker = false
   @StateObject private var themeService = ThemeService.shared
@@ -308,6 +313,46 @@ struct UserProfileView: View {
                   Text(loc("common.full", "Full")).tag("full")
                 }
                 .pickerStyle(.segmented)
+              }
+              .padding(.horizontal, 8)
+              
+              Divider().padding(.horizontal, 8)
+              
+              // Dev Environment
+              VStack(alignment: .leading, spacing: 8) {
+                Text(loc("profile.dev_environment", "Dev Environment"))
+                  .font(.caption)
+                  .fontWeight(.medium)
+                  .foregroundColor(AppTheme.textSecondary)
+                
+                Picker("Dev Environment", selection: $useDevEnvironment) {
+                  Text(loc("env.production", "Production")).tag(false)
+                  Text(loc("env.development", "Development")).tag(true)
+                }
+                .pickerStyle(.segmented)
+                .background(useDevEnvironment ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
+                .cornerRadius(8)
+                .onChange(of: useDevEnvironment) { _, newValue in
+                  print("Environment changed to \(newValue ? "DEV" : "PROD"), clearing and refetching local chess data")
+                  
+                  let keys = [
+                    "chessTotalWins", "chessOpponents", "lastChessDate",
+                    "chessWinsStartOfDay", "chessOpponentsStartOfDay",
+                    "chessPlayerName", "chessOpponentName", "chessOpponentEmail"
+                  ]
+                  keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+                  
+                  GRPCService().getAllChessData { success, totalWins, opponents in
+                    if success {
+                      UserDefaults.standard.set(totalWins, forKey: "chessTotalWins")
+                      
+                      if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
+                         let jsonString = String(data: jsonData, encoding: .utf8) {
+                        UserDefaults.standard.set(jsonString, forKey: "chessOpponents")
+                      }
+                    }
+                  }
+                }
               }
               .padding(.horizontal, 8)
               

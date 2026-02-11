@@ -4,6 +4,9 @@ xcuserdata/
 *.xcuserstate
 .vscode
 .idea
+.code
+.docs
+.build
 .env
 .env.local
 .env.development.local
@@ -15,3 +18,5 @@ eater/config.plist.test
 eater/config.plist.production
 eater/config.plist.local
 eater/Info.plist
+Info.plist
+Info.plist

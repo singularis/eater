@@ -14,7 +14,6 @@ final class FriendsSearchWebSocket: NSObject {
     case failed(String)
   }
 
-  private let url = URL(string: "wss://chater.singularis.work/autocomplete")!
   private var session: URLSession?
   private var webSocketTask: URLSessionWebSocketTask?
   private var isListening = false
@@ -44,7 +43,7 @@ final class FriendsSearchWebSocket: NSObject {
     config.timeoutIntervalForResource = 30
     let session = URLSession(configuration: config)
     self.session = session
-    let task = session.webSocketTask(with: url)
+    let task = session.webSocketTask(with: AppEnvironment.webSocketURL)
     webSocketTask = task
     task.resume()
     onStateChange?(.connected)

@@ -95,7 +95,7 @@ final class AuthenticationService: NSObject, ObservableObject {
   @Published var isLoading = false
 
   private let secretKey: String
-  private let baseURL = "https://chater.singularis.work"
+
 
   override init() {
     // Load secret key
@@ -195,7 +195,7 @@ final class AuthenticationService: NSObject, ObservableObject {
   // MARK: - Network Layer
 
   private func requestToken(with tokenRequest: TokenRequest) async throws -> TokenResponse {
-    guard let url = URL(string: "\(baseURL)/eater_auth") else {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/eater_auth") else {
       throw URLError(.badURL)
     }
 

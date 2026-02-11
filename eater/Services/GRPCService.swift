@@ -6,16 +6,23 @@ class GRPCService {
   private let maxRetries = 10
   private let baseDelay: TimeInterval = 10
 
-  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
+  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
   {
-    guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
+    var baseURL = AppEnvironment.baseURL
+    if endpoint.hasPrefix("autocomplete/") {
+      baseURL = AppEnvironment.autocompleteBaseURL
+    }
+
+    guard let url = URL(string: "\(baseURL)/\(endpoint)") else {
       return nil
     }
 
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
     request.httpBody = body
-    request.timeoutInterval = 45  // 45 seconds for AI processing
+    
+    // Set timeout if provided (for faster app startup on slow networks), otherwise default to 45 seconds
+    request.timeoutInterval = timeout ?? 45
 
     if let token = UserDefaults.standard.string(forKey: "auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -46,7 +53,8 @@ class GRPCService {
   }
 
   func fetchProducts(completion: @escaping ([Product], Int, Float) -> Void) {
-    guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
+    // Use 5-second timeout for initial load to speed up app startup
+    guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET", timeout: 5.0) else {
       completion([], 0, 0)
       return
     }
@@ -900,7 +908,7 @@ class GRPCService {
   // MARK: - Nickname Update
   
   func updateNickname(nickname: String, completion: @escaping (Bool, String?) -> Void) {
-    guard let url = URL(string: "https://chater.singularis.work/nickname_update") else {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/nickname_update") else {
       completion(false, "Invalid URL")
       return
     }

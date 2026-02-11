@@ -6,7 +6,7 @@ class FoodPhotoService {
   static let shared = FoodPhotoService()
   private init() {}
 
-  private let baseURL = "https://chater.singularis.work"
+
   
   // Track in-flight requests to prevent duplicate fetches
   private var inFlightRequests: Set<String> = []
@@ -60,7 +60,7 @@ class FoodPhotoService {
     }
 
     // Construct URL
-    guard let url = URL(string: "\(baseURL)/get_photo?image_id=\(encodedImageId)") else {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/get_photo?image_id=\(encodedImageId)") else {
       removeInFlightRequest(imageId)
       completion(nil)
       return
