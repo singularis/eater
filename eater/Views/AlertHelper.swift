@@ -372,10 +372,10 @@ class AlertHelper {
     shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
     alert.addAction(shareAction)
 
-    // Try Again – visible button between Share and Custom
-    let tryAgainTitle = loc("common.try_again", "Try Again")
-    alert.addAction(UIAlertAction(title: tryAgainTitle, style: .default) { _ in
-      // Callback to retry photo analysis with context that previous result was wrong
+    // Try manually – visible button between Share and Custom
+    let tryManualTitle = loc("common.try_manual", "Try manually")
+    alert.addAction(UIAlertAction(title: tryManualTitle, style: .default) { _ in
+      // Callback to allow user to manually fix dish name
       onTryAgain?()
     })
 
@@ -413,6 +413,46 @@ class AlertHelper {
     }
 
     rootViewController.present(navController, animated: true)
+  }
+
+  /// Generic text input alert helper (single text field)
+  static func showTextInputAlert(
+    title: String,
+    message: String? = nil,
+    placeholder: String,
+    initialText: String = "",
+    confirmTitle: String = "OK",
+    keyboardType: UIKeyboardType = .default,
+    onSubmit: @escaping (String) -> Void
+  ) {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let window = windowScene.windows.first,
+      let rootViewController = window.rootViewController
+    else {
+      return
+    }
+
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    alert.addTextField { textField in
+      textField.placeholder = placeholder
+      textField.text = initialText
+      textField.keyboardType = keyboardType
+    }
+
+    let submitAction = UIAlertAction(title: confirmTitle, style: .default) { _ in
+      let text =
+        alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+      guard !text.isEmpty else { return }
+      onSubmit(text)
+    }
+
+    let cancelAction = UIAlertAction(
+      title: loc("common.cancel", "Cancel"), style: .cancel, handler: nil)
+
+    alert.addAction(submitAction)
+    alert.addAction(cancelAction)
+
+    presentAlert(alert, from: rootViewController)
   }
 }
 

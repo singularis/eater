@@ -942,39 +942,71 @@ struct ContentView: View {
   }
 
   func tryAgainProduct(time: Int64, imageId: String) {
+    // Repurposed as "Try manually" – user can manually fix dish name.
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
-        message: loc("portion.modify.need_login", "Unable to retry. Please sign in again."))
+        message: loc(
+          "portion.modify.need_login", "Unable to update. Please sign in again."))
       return
     }
-    
-    // Send Try Again request with isTryAgain flag
-    GRPCService().modifyFoodRecord(
-      time: time, 
-      userEmail: userEmail, 
-      percentage: 100,
-      isTryAgain: true,
-      imageId: imageId
-    ) { success in
-      DispatchQueue.main.async {
-        if success {
-          // Clear caches and refresh
-          StatisticsService.shared.clearExpiredCache()
-          ProductStorageService.shared.clearCache()
-          
-          AlertHelper.showAlert(
-            title: loc("common.try_again.success", "Reanalyzing..."),
-            message: loc("common.try_again.msg", "The photo is being reanalyzed. Please wait a moment."),
-            haptic: .success
-          ) {
-            self.returnToToday()
+
+    // Find current product to prefill the text field with existing name
+    guard let product = products.first(where: { $0.time == time }) else {
+      return
+    }
+
+    AlertHelper.showTextInputAlert(
+      title: loc("manual_food.title", "Fix food name"),
+      message: loc(
+        "manual_food.msg",
+        "Enter the correct dish name. This will replace the current name in your log."
+      ),
+      placeholder: product.name,
+      initialText: product.name,
+      confirmTitle: loc("common.save", "Save")
+    ) { newName in
+      GRPCService().renameFood(
+        time: time,
+        userEmail: userEmail,
+        newName: newName
+      ) { success in
+        DispatchQueue.main.async {
+          if success {
+            // Optimistically update local products list so the change is visible immediately
+            self.products = self.products.map { item in
+              if item.time == time {
+                return Product(
+                  time: item.time,
+                  name: newName,
+                  calories: item.calories,
+                  weight: item.weight,
+                  ingredients: item.ingredients,
+                  healthRating: item.healthRating,
+                  imageId: item.imageId,
+                  addedSugarTsp: item.addedSugarTsp
+                )
+              } else {
+                return item
+              }
+            }
+
+            AlertHelper.showAlert(
+              title: loc("manual_food.success.title", "Name updated"),
+              message: String(
+                format: loc(
+                  "manual_food.success.msg", "Dish name was updated to '%@'."), newName),
+              haptic: .success
+            )
+          } else {
+            HapticsService.shared.error()
+            AlertHelper.showAlert(
+              title: loc("common.error", "Error"),
+              message: loc(
+                "manual_food.error",
+                "Failed to update dish name. Please try again.")
+            )
           }
-        } else {
-          HapticsService.shared.error()
-          AlertHelper.showAlert(
-            title: loc("common.error", "Error"),
-            message: loc("common.try_again.error", "Failed to reanalyze. Please try again."))
         }
       }
     }

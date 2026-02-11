@@ -85,6 +85,7 @@
   "common.try_again.success": "Reanalyzing...",
   "common.simplified": "Simplified",
   "common.try_again": "Try Again",
+  "common.try_manual": "Try manually",
   "common.update_failed": "Update Failed",
   "date.custom": "Custom Date",
   "date.today": "Today",
@@ -567,5 +568,10 @@
   "weight.record_failed.msg": "Failed to record your weight. Please try again.",
   "weight.recorded.msg": "Your weight has been successfully recorded.",
   "weight.recorded.title": "Weight Recorded",
-  "weight.take_photo": "Take Photo"
+  "weight.take_photo": "Take Photo",
+  "manual_food.title": "Fix food name",
+  "manual_food.msg": "Enter the correct dish name. This will replace the current name in your log.",
+  "manual_food.success.title": "Name updated",
+  "manual_food.success.msg": "Dish name was updated to '%@'.",
+  "manual_food.error": "Failed to update dish name. Please try again."
 }
