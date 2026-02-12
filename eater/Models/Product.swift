@@ -100,6 +100,9 @@ struct Product: Identifiable, Codable, Equatable {
     // Honey: mild penalty (still sugar, but "healthier" than white sugar)
     delta -= (extras["honey_10g"] ?? 0) * 5
 
+    // Milk: tiny penalty (adds calories, usually neutral-ish)
+    delta -= (extras["milk_50g"] ?? 0) * 1
+
     // Soy sauce: mild penalty (sodium)
     delta -= (extras["soy_sauce_15g"] ?? 0) * 6
 

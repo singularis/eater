@@ -392,6 +392,10 @@ class AlertHelper {
               UIAlertAction(title: loc("portion.extra.honey", "Honey 10g"), style: .default) { _ in
                 onAddDrinkExtra?("honey_10g")
               })
+            additionalAlert.addAction(
+              UIAlertAction(title: loc("portion.extra.milk", "Milk 50g"), style: .default) { _ in
+                onAddDrinkExtra?("milk_50g")
+              })
             let addSugarTitle = loc("portion.add_extra", "Add 1 tsp sugar ☕")
             additionalAlert.addAction(
               UIAlertAction(title: addSugarTitle, style: .default) { _ in
@@ -443,7 +447,7 @@ class AlertHelper {
     alert.addAction(tryManualAction)
 
     // Add custom option (purple)
-    let customTitle = loc("portion.custom", "Custom grams...")
+    let customTitle = loc("portion.custom", "Custom grams")
     let customAction = UIAlertAction(title: customTitle, style: .default) { _ in
       showCustomPortionAlert(
         foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)

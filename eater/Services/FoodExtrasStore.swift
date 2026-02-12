@@ -17,6 +17,7 @@ final class FoodExtrasStore {
   static let definitions: [String: (grams: Int, calories: Int)] = [
     "lemon_5g": (grams: 5, calories: 1),
     "honey_10g": (grams: 10, calories: 30),
+    "milk_50g": (grams: 50, calories: 32),
     "soy_sauce_15g": (grams: 15, calories: 10),
     "wasabi_3g": (grams: 3, calories: 8),
     "spicy_pepper_5g": (grams: 5, calories: 2),

@@ -28,23 +28,20 @@ struct ProductRowView: View {
     "\(product.totalCalories) \(loc("units.kcal", "kcal")) • \(product.totalWeight)\(loc("units.gram_suffix", "g"))"
   }
 
-  private var ingredientsWithExtrasText: String {
-    let ingredientsText =
-      product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")
+  private var ingredientsText: String {
+    product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")
+  }
 
-    let extrasIcons: [String] = {
-      var parts: [String] = []
-      if product.extras["lemon_5g"] != nil { parts.append("🍋") }
-      if product.extras["honey_10g"] != nil { parts.append("🍯") }
-      if product.extras["soy_sauce_15g"] != nil { parts.append("🥢") }
-      if product.extras["wasabi_3g"] != nil { parts.append("🌿") }
-      if product.extras["spicy_pepper_5g"] != nil { parts.append("🌶") }
-      if product.addedSugarTsp > 0 { parts.append("🍬") }
-      return parts
-    }()
-
-    if extrasIcons.isEmpty { return ingredientsText }
-    return ingredientsText + " • " + extrasIcons.joined(separator: " ")
+  private var extrasIconsText: String {
+    var parts: [String] = []
+    if product.extras["lemon_5g"] != nil { parts.append("🍋") }
+    if product.extras["honey_10g"] != nil { parts.append("🍯") }
+    if product.extras["milk_50g"] != nil { parts.append("🥛") }
+    if product.extras["soy_sauce_15g"] != nil { parts.append("🥢") }
+    if product.extras["wasabi_3g"] != nil { parts.append("🌿") }
+    if product.extras["spicy_pepper_5g"] != nil { parts.append("🌶") }
+    if product.addedSugarTsp > 0 { parts.append("🍬") }
+    return parts.joined(separator: " ")
   }
 
   var body: some View {
@@ -111,10 +108,18 @@ struct ProductRowView: View {
             .font(.subheadline)
             .foregroundColor(AppTheme.textSecondary)
 
-          Text(ingredientsWithExtrasText)
+          Text(ingredientsText)
             .font(.caption)
             .foregroundColor(AppTheme.textSecondary)
             .lineLimit(2)
+
+          // Extras icons on a dedicated line so they don't get truncated on some devices
+          if !extrasIconsText.isEmpty {
+            Text(extrasIconsText)
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
+              .lineLimit(1)
+          }
         }
         .onTapGesture {
           HapticsService.shared.lightImpact()
