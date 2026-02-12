@@ -12,6 +12,7 @@ struct UserProfileView: View {
   @State private var userWeight: Double = 0
   @State private var userAge: Int = 0
   @State private var userOptimalWeight: Double = 0
+  @State private var userTargetWeight: Double = 0
   @State private var userRecommendedCalories: Int = 0
   @State private var showStatistics = false
   @State private var showFeedback = false
@@ -193,10 +194,23 @@ struct UserProfileView: View {
                   value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
                   color: AppTheme.textPrimary
                 )
+
+                let currentBMI: Double = {
+                  let hm = userHeight / 100.0
+                  guard hm > 0, userWeight > 0 else { return 0 }
+                  return userWeight / (hm * hm)
+                }()
+                if currentBMI > 0 {
+                  healthMetricRow(
+                    label: loc("health.bmi.label", "BMI:"),
+                    value: String(format: "%.1f", currentBMI),
+                    color: AppTheme.textPrimary
+                  )
+                }
                 
                 healthMetricRow(
                   label: loc("profile.targetweight", "Target Weight:"),
-                  value: String(format: "%.1f", userOptimalWeight) + " \(loc("units.kg", "kg"))",
+                  value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
                   color: AppTheme.success
                 )
                 
@@ -571,6 +585,7 @@ struct UserProfileView: View {
       userWeight = userDefaults.double(forKey: "userWeight")
       userAge = userDefaults.integer(forKey: "userAge")
       userOptimalWeight = userDefaults.double(forKey: "userOptimalWeight")
+      userTargetWeight = userDefaults.double(forKey: "userTargetWeight")
       userRecommendedCalories = userDefaults.integer(forKey: "userRecommendedCalories")
     }
   }

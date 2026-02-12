@@ -730,6 +730,7 @@ struct ContentView: View {
           let userDefaults = UserDefaults.standard
           if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
             self.recalculateCalorieLimitsFromHealthData()
+            self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
           }
           self.refreshMacrosForCurrentView()
         }
@@ -817,6 +818,7 @@ struct ContentView: View {
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
           self.recalculateCalorieLimitsFromHealthData()
+          self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
       }
@@ -841,9 +843,87 @@ struct ContentView: View {
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
           self.recalculateCalorieLimitsFromHealthData()
+          self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
       }
+    }
+  }
+
+  private func checkWeightGoalMilestones(previousWeight: Float, newWeight: Float) {
+    let userDefaults = UserDefaults.standard
+    let target = userDefaults.double(forKey: "userTargetWeight")
+    let mode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
+    guard target > 0 else { return }
+
+    // Avoid spamming: at most once per UTC day
+    let today = getCurrentUTCDateString()
+    let lastShown = userDefaults.string(forKey: "goalMilestoneLastShownDate") ?? ""
+    if lastShown == today { return }
+
+    let tol = 0.2
+    let w = Double(newWeight)
+    let prev = Double(previousWeight)
+
+    func offerMaintenance() {
+      userDefaults.set("maintain", forKey: "userGoalMode")
+      userDefaults.set(0, forKey: "userGoalMonths")
+      userDefaults.set(w, forKey: "userTargetWeight")
+      self.recalculateCalorieLimitsFromHealthData()
+      userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+      AlertHelper.showAlert(
+        title: loc("goal.maintain.enabled.title", "Maintenance enabled"),
+        message: loc("goal.maintain.enabled.msg", "Great! We'll help you maintain your weight with ongoing tracking."),
+        haptic: .success
+      )
+    }
+
+    if mode == "lose" {
+      if w <= target + tol {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showCelebration(
+          title: loc("goal.reached.title", "You did it!"),
+          message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
+          primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
+          primaryAction: offerMaintenance,
+          secondaryTitle: loc("common.close", "Close"),
+          secondaryAction: nil
+        )
+      } else if w > prev + 0.2 {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showAlert(
+          title: loc("goal.motivation.title", "Keep going"),
+          message: loc(
+            "goal.motivation.msg",
+            "Small ups and downs are normal. You're still on your path — keep tracking and we'll adjust your plan."
+          ),
+          haptic: .select
+        )
+      }
+    } else if mode == "gain" {
+      if w >= target - tol {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showCelebration(
+          title: loc("goal.reached.title", "You did it!"),
+          message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
+          primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
+          primaryAction: offerMaintenance,
+          secondaryTitle: loc("common.close", "Close"),
+          secondaryAction: nil
+        )
+      } else if w < prev - 0.2 {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showAlert(
+          title: loc("goal.motivation.title", "Keep going"),
+          message: loc(
+            "goal.motivation.msg",
+            "Small ups and downs are normal. You're still on your path — keep tracking and we'll adjust your plan."
+          ),
+          haptic: .select
+        )
+      }
+    } else {
+      // maintain / activityOnly: no milestone popups for now
     }
   }
 
@@ -1413,12 +1493,15 @@ struct ContentView: View {
     let age = userDefaults.integer(forKey: "userAge")
     let isMale = userDefaults.bool(forKey: "userIsMale")
     let activityLevel = userDefaults.string(forKey: "userActivityLevel") ?? "Sedentary"
+    let targetWeight = userDefaults.double(forKey: "userTargetWeight")
+    let goalMode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
+    let goalMonths = userDefaults.integer(forKey: "userGoalMonths")
 
     // Use current weight from the app if available and different from stored
     if personWeight > 0 {
       let currentWeight = Double(personWeight)
       if abs(currentWeight - weight) > 0.1 {  // If weight has changed significantly
-        weight = currentWeight
+        weight = (currentWeight * 10).rounded() / 10
         userDefaults.set(weight, forKey: "userWeight")  // Update stored weight
       }
     }
@@ -1457,22 +1540,66 @@ struct ContentView: View {
     // Calculate TDEE (Total Daily Energy Expenditure)
     let tdee = bmr * activityMultiplier
 
-    // Adjust calories based on weight goal
-    let weightDifference = weight - optimalWeight
-    let calorieAdjustment: Double
+    // Adjust calories based on user goal (target weight + period), fallback to optimal weight behavior.
+    var recommendedCalories: Int
+    let minCalories = isMale ? 1500 : 1200
 
-    if abs(weightDifference) < 2 {
-      // Maintain current weight
-      calorieAdjustment = 0
-    } else if weightDifference > 0 {
-      // Lose weight - safe deficit of 500 calories per day
-      calorieAdjustment = -500
+    if targetWeight > 0, (goalMode == "lose" || goalMode == "gain"), goalMonths >= 2 {
+      let diffKg = targetWeight - weight  // negative = lose, positive = gain
+
+      // Enforce healthy minimum pacing (same rules as HealthSettingsView)
+      let absDiff = abs(diffKg)
+      let minMonths: Int
+      if absDiff <= 5.0 {
+        minMonths = 2
+      } else if absDiff <= 10.0 {
+        minMonths = 4
+      } else {
+        minMonths = 6
+      }
+
+      let months = max(goalMonths, minMonths)
+      let days = Double(months) * 30.4
+      let dailyDelta = (diffKg * 7700.0) / days
+      recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
+    } else if goalMode == "activityOnly" || goalMode == "maintain" {
+      recommendedCalories = Int(tdee)
+    } else if targetWeight > 0 {
+      // Target set but no mode/period - default maintain for small diffs, else 4 months
+      let diffKg = targetWeight - weight
+      if abs(diffKg) <= 1.0 {
+        recommendedCalories = Int(tdee)
+      } else {
+        // Use a healthy minimum: 2 months up to 5kg, 4 months up to 10kg, 6 months above.
+        let absDiff = abs(diffKg)
+        let months: Double
+        if absDiff <= 5.0 {
+          months = 2.0
+        } else if absDiff <= 10.0 {
+          months = 4.0
+        } else {
+          months = 6.0
+        }
+        let days = months * 30.4
+        let dailyDelta = (diffKg * 7700.0) / days
+        recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
+      }
     } else {
-      // Gain weight - safe surplus of 300 calories per day
-      calorieAdjustment = 300
+      // Legacy fallback: compare to optimal weight
+      let weightDifference = weight - optimalWeight
+      let calorieAdjustment: Double
+      if abs(weightDifference) < 2 {
+        calorieAdjustment = 0
+      } else if weightDifference > 0 {
+        calorieAdjustment = -500
+      } else {
+        calorieAdjustment = 300
+      }
+      recommendedCalories = max(Int(tdee + calorieAdjustment), minCalories)
+      userDefaults.set(optimalWeight, forKey: "userTargetWeight")
+      userDefaults.set("lose", forKey: "userGoalMode")
+      userDefaults.set(4, forKey: "userGoalMonths")
     }
-
-    let recommendedCalories = Int(tdee + calorieAdjustment)
 
     // Update the calorie limits
     softLimit = recommendedCalories
@@ -1484,7 +1611,8 @@ struct ContentView: View {
     userDefaults.set(softLimit, forKey: "softLimit")
     userDefaults.set(hardLimit, forKey: "hardLimit")
     userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
-    userDefaults.set(optimalWeight, forKey: "userOptimalWeight")
+    // Keep legacy key for UI compatibility, but prefer userTargetWeight
+    userDefaults.set(userDefaults.double(forKey: "userTargetWeight") > 0 ? userDefaults.double(forKey: "userTargetWeight") : optimalWeight, forKey: "userOptimalWeight")
   }
 
   private func getAdjustedSoftLimit() -> Int {

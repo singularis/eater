@@ -688,8 +688,8 @@ struct OnboardingView: View {
           if step.anchor == "health_form" {
               // Save health data logic
               if let h = Double(height), let w = Double(weight), let a = Int(age) {
-                  UserDefaults.standard.set(h, forKey: "userHeight")
-                  UserDefaults.standard.set(w, forKey: "userWeight")
+                  UserDefaults.standard.set(h.rounded(), forKey: "userHeight")
+                  UserDefaults.standard.set((w * 10).rounded() / 10, forKey: "userWeight")
                   UserDefaults.standard.set(a, forKey: "userAge")
                   UserDefaults.standard.set(isMale, forKey: "userIsMale")
                   UserDefaults.standard.set(activityLevel, forKey: "userActivityLevel")

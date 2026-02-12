@@ -138,8 +138,42 @@ class AlertHelper {
     presentAlert(alert, from: rootViewController)
   }
 
+  /// Full-screen celebration with simple confetti.
+  static func showCelebration(
+    title: String,
+    message: String,
+    primaryTitle: String,
+    primaryAction: @escaping () -> Void,
+    secondaryTitle: String = "",
+    secondaryAction: (() -> Void)? = nil
+  ) {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let window = windowScene.windows.first,
+      let rootViewController = window.rootViewController
+    else {
+      return
+    }
+
+    HapticsService.shared.success()
+    let vc = CelebrationViewController(
+      titleText: title,
+      messageText: message,
+      primaryTitle: primaryTitle,
+      primaryAction: primaryAction,
+      secondaryTitle: secondaryTitle,
+      secondaryAction: secondaryAction
+    )
+    presentController(vc, from: rootViewController)
+  }
+
   private static func presentAlert(
     _ alert: UIAlertController, from viewController: UIViewController, retryCount: Int = 0
+  ) {
+    presentController(alert, from: viewController, retryCount: retryCount)
+  }
+
+  private static func presentController(
+    _ controller: UIViewController, from viewController: UIViewController, retryCount: Int = 0
   ) {
     // Find a suitable view controller for presentation
     var presentingViewController = viewController
@@ -153,7 +187,7 @@ class AlertHelper {
         // Dismiss the sheet and then present the alert
         presentedVC.dismiss(animated: true) {
           DispatchQueue.main.async {
-            viewController.present(alert, animated: true)
+            viewController.present(controller, animated: true)
           }
         }
         return
@@ -165,17 +199,17 @@ class AlertHelper {
 
     // Check if we can present
     if presentingViewController.presentedViewController == nil {
-      presentingViewController.present(alert, animated: true)
+      presentingViewController.present(controller, animated: true)
     } else {
       // If we've tried too many times, just present anyway on root
       if retryCount >= 4 {
-        viewController.present(alert, animated: true)
+        viewController.present(controller, animated: true)
         return
       }
 
       // Wait a bit and try again
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        presentAlert(alert, from: viewController, retryCount: retryCount + 1)
+        presentController(controller, from: viewController, retryCount: retryCount + 1)
       }
     }
   }
@@ -522,6 +556,156 @@ class AlertHelper {
     alert.addAction(cancelAction)
 
     presentAlert(alert, from: rootViewController)
+  }
+}
+
+private final class CelebrationViewController: UIViewController {
+  private let titleText: String
+  private let messageText: String
+  private let primaryTitle: String
+  private let primaryAction: () -> Void
+  private let secondaryTitle: String
+  private let secondaryAction: (() -> Void)?
+
+  private var emitter: CAEmitterLayer?
+
+  init(
+    titleText: String,
+    messageText: String,
+    primaryTitle: String,
+    primaryAction: @escaping () -> Void,
+    secondaryTitle: String,
+    secondaryAction: (() -> Void)?
+  ) {
+    self.titleText = titleText
+    self.messageText = messageText
+    self.primaryTitle = primaryTitle
+    self.primaryAction = primaryAction
+    self.secondaryTitle = secondaryTitle
+    self.secondaryAction = secondaryAction
+    super.init(nibName: nil, bundle: nil)
+    modalPresentationStyle = .overFullScreen
+    modalTransitionStyle = .crossDissolve
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    view.backgroundColor = UIColor.black.withAlphaComponent(0.55)
+
+    let card = UIView()
+    card.backgroundColor = UIColor.systemBackground
+    card.layer.cornerRadius = 18
+    card.translatesAutoresizingMaskIntoConstraints = false
+
+    let titleLabel = UILabel()
+    titleLabel.text = titleText
+    titleLabel.font = UIFont.systemFont(ofSize: 22, weight: .bold)
+    titleLabel.textAlignment = .center
+    titleLabel.numberOfLines = 0
+    titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+    let messageLabel = UILabel()
+    messageLabel.text = messageText
+    messageLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+    messageLabel.textAlignment = .center
+    messageLabel.numberOfLines = 0
+    messageLabel.textColor = UIColor.secondaryLabel
+    messageLabel.translatesAutoresizingMaskIntoConstraints = false
+
+    let primary = UIButton(type: .system)
+    primary.setTitle(primaryTitle, for: .normal)
+    primary.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+    primary.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.15)
+    primary.layer.cornerRadius = 12
+    primary.translatesAutoresizingMaskIntoConstraints = false
+    primary.addTarget(self, action: #selector(primaryTapped), for: .touchUpInside)
+
+    let stack = UIStackView(arrangedSubviews: [titleLabel, messageLabel, primary])
+    stack.axis = .vertical
+    stack.spacing = 12
+    stack.translatesAutoresizingMaskIntoConstraints = false
+
+    if !secondaryTitle.isEmpty, let _ = secondaryAction {
+      let secondary = UIButton(type: .system)
+      secondary.setTitle(secondaryTitle, for: .normal)
+      secondary.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+      secondary.translatesAutoresizingMaskIntoConstraints = false
+      secondary.addTarget(self, action: #selector(secondaryTapped), for: .touchUpInside)
+      stack.addArrangedSubview(secondary)
+    }
+
+    card.addSubview(stack)
+    view.addSubview(card)
+
+    NSLayoutConstraint.activate([
+      card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      card.widthAnchor.constraint(lessThanOrEqualToConstant: 320),
+      card.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
+      card.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+
+      stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
+      stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+      stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+      stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -20),
+
+      primary.heightAnchor.constraint(equalToConstant: 44),
+    ])
+
+    startConfetti()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+      self?.stopConfetti()
+    }
+  }
+
+  private func startConfetti() {
+    let emitter = CAEmitterLayer()
+    emitter.emitterPosition = CGPoint(x: view.bounds.midX, y: -10)
+    emitter.emitterShape = .line
+    emitter.emitterSize = CGSize(width: view.bounds.size.width, height: 2)
+
+    func cell(color: UIColor) -> CAEmitterCell {
+      let c = CAEmitterCell()
+      c.birthRate = 10
+      c.lifetime = 6.0
+      c.velocity = 180
+      c.velocityRange = 60
+      c.emissionLongitude = .pi
+      c.emissionRange = .pi / 8
+      c.spin = 3
+      c.spinRange = 2
+      c.scale = 0.04
+      c.scaleRange = 0.02
+      c.color = color.cgColor
+      c.contents = UIImage(systemName: "circle.fill")?.withTintColor(color, renderingMode: .alwaysOriginal).cgImage
+      return c
+    }
+
+    emitter.emitterCells = [
+      cell(color: .systemPink),
+      cell(color: .systemYellow),
+      cell(color: .systemTeal),
+      cell(color: .systemPurple),
+      cell(color: .systemOrange),
+    ]
+
+    view.layer.insertSublayer(emitter, at: 0)
+    self.emitter = emitter
+  }
+
+  private func stopConfetti() {
+    emitter?.birthRate = 0
+  }
+
+  @objc private func primaryTapped() {
+    dismiss(animated: true) { [primaryAction] in primaryAction() }
+  }
+
+  @objc private func secondaryTapped() {
+    dismiss(animated: true) { [secondaryAction] in secondaryAction?() }
   }
 }
 

@@ -130,7 +130,9 @@ enum AppMascot: String, CaseIterable {
       // Dog themed icons (лапки, кісточка, зайчик)
       switch systemIcon {
       case "checkmark.circle.fill": return "pawprint.circle.fill"
-      case "flame.fill": return "fossil.shell.fill"  // bone
+      // NOTE: `bone.fill` is not available on some iOS/SF Symbols versions → icon may disappear.
+      // Use a universally-available dog-themed symbol instead.
+      case "flame.fill": return "pawprint.fill"
       case "figure.run": return "hare.fill"  // dog playing
       case "trophy.fill": return "medal.fill"
       case "heart.fill": return "suit.heart.fill"
