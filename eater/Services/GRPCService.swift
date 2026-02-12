@@ -6,7 +6,7 @@ class GRPCService {
   private let maxRetries = 10
   private let baseDelay: TimeInterval = 10
 
-  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil) -> URLRequest?
+  internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
   {
     guard let url = URL(string: "https://chater.singularis.work/\(endpoint)") else {
       return nil
@@ -15,7 +15,7 @@ class GRPCService {
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
     request.httpBody = body
-    request.timeoutInterval = 45  // 45 seconds for AI processing
+    request.timeoutInterval = timeout ?? 45  // 45 seconds for AI processing by default
 
     if let token = UserDefaults.standard.string(forKey: "auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -45,20 +45,20 @@ class GRPCService {
     task.resume()
   }
 
-  func fetchProducts(completion: @escaping ([Product], Int, Float) -> Void) {
-    guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET") else {
-      completion([], 0, 0)
+  func fetchProducts(completion: @escaping (Result<([Product], Int, Float), Error>) -> Void) {
+    guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET", timeout: 15) else {
+      completion(.failure(NSError(domain: "GRPCService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed create request"])))
       return
     }
 
     sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
-      if error != nil {
-        completion([], 0, 0)
+      if let error = error {
+        completion(.failure(error))
         return
       }
 
       guard let data = data else {
-        completion([], 0, 0)
+        completion(.failure(NSError(domain: "GRPCService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
         return
       }
 
@@ -78,9 +78,9 @@ class GRPCService {
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
         let persohWeight = Float(todayFood.personWeight)
 
-        completion(products, remainingCalories, persohWeight)
+        completion(.success((products, remainingCalories, persohWeight)))
       } catch {
-        completion([], 0, 0)
+        completion(.failure(error))
       }
     }
   }
@@ -383,7 +383,7 @@ class GRPCService {
     }
   }
 
-  func fetchCustomDateFood(date: String, completion: @escaping ([Product], Int, Float) -> Void) {
+  func fetchCustomDateFood(date: String, completion: @escaping (Result<([Product], Int, Float), Error>) -> Void) {
     var customDateRequest = Eater_CustomDateFoodRequest()
     customDateRequest.date = date
 
@@ -391,22 +391,24 @@ class GRPCService {
       let requestBody = try customDateRequest.serializedData()
 
       guard
-        var request = createRequest(
-          endpoint: "get_food_custom_date", httpMethod: "POST", body: requestBody)
+        let request = createRequest(
+          endpoint: "get_food_custom_date", httpMethod: "POST", body: requestBody, timeout: 15)
       else {
-        completion([], 0, 0)
+        completion(.failure(NSError(domain: "GRPCService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed create request"])))
         return
       }
-      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+      
+      var finalRequest = request
+      finalRequest.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
-        if error != nil {
-          completion([], 0, 0)
+      sendRequest(request: finalRequest, retriesLeft: maxRetries) { data, _, error in
+        if let error = error {
+          completion(.failure(error))
           return
         }
 
         guard let data = data else {
-          completion([], 0, 0)
+          completion(.failure(NSError(domain: "GRPCService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
           return
         }
 
@@ -426,13 +428,13 @@ class GRPCService {
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
           let personWeight = Float(customDateFood.personWeight)
 
-          completion(products, remainingCalories, personWeight)
+          completion(.success((products, remainingCalories, personWeight)))
         } catch {
-          completion([], 0, 0)
+          completion(.failure(error))
         }
       }
     } catch {
-      completion([], 0, 0)
+      completion(.failure(error))
     }
   }
 

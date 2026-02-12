@@ -701,22 +701,27 @@ struct ContentView: View {
 
       // Cache is fresh but getting older, refresh in background without loading indicator
       isFetchingData = true
-      ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) {
-        fetchedProducts, calories, weight in
+      ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) { result in
         DispatchQueue.main.async {
-          let previousWeight = self.personWeight
-          self.products = fetchedProducts
-          FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories
-          self.personWeight = weight
-          self.isFetchingData = false
+          switch result {
+          case .success(let (fetchedProducts, calories, weight)):
+              let previousWeight = self.personWeight
+              self.products = fetchedProducts
+              FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
+              self.caloriesLeft = calories
+              self.personWeight = weight
+              self.isFetchingData = false
 
-          // Recalculate calories if weight changed and user has health data
-          let userDefaults = UserDefaults.standard
-          if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-            self.recalculateCalorieLimitsFromHealthData()
+              // Recalculate calories if weight changed and user has health data
+              let userDefaults = UserDefaults.standard
+              if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
+                self.recalculateCalorieLimitsFromHealthData()
+              }
+              self.refreshMacrosForCurrentView()
+          case .failure:
+              self.isFetchingData = false
+              // Silently fail for background refresh, or show alert if needed. Usually silent for background refresh is better.
           }
-          self.refreshMacrosForCurrentView()
         }
       }
       return
@@ -740,23 +745,29 @@ struct ContentView: View {
 
     // Check if we're viewing a custom date - if so, fetch that specific date
     if isViewingCustomDate && !currentViewingDateString.isEmpty {
-      ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: currentViewingDateString) {
-        fetchedProducts, calories, weight in
+      ProductStorageService.shared.fetchAndProcessCustomDateFood(date: currentViewingDateString) { result in
         DispatchQueue.main.async {
-          let previousWeight = self.personWeight
-          self.products = fetchedProducts
-          FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories
-          self.personWeight = weight
-          self.isLoadingData = false
-          self.isFetchingData = false
+            switch result {
+            case .success(let (fetchedProducts, calories, weight)):
+              let previousWeight = self.personWeight
+              self.products = fetchedProducts
+              FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
+              self.caloriesLeft = calories
+              self.personWeight = weight
+              self.isLoadingData = false
+              self.isFetchingData = false
 
-          // Recalculate calories if weight changed and user has health data
-          let userDefaults = UserDefaults.standard
-          if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-            self.recalculateCalorieLimitsFromHealthData()
-          }
-          self.refreshMacrosForCurrentView()
+              // Recalculate calories if weight changed and user has health data
+              let userDefaults = UserDefaults.standard
+              if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
+                self.recalculateCalorieLimitsFromHealthData()
+              }
+              self.refreshMacrosForCurrentView()
+            case .failure:
+              self.isLoadingData = false
+              self.isFetchingData = false
+              AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("error.generic.timeout", "Oops, something happened. Please try again."))
+            }
         }
       }
       return
@@ -764,46 +775,54 @@ struct ContentView: View {
 
     // Fetch fresh data from network (for today)
     isFetchingData = true
-    ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
+    ProductStorageService.shared.fetchAndProcessProducts { result in
       DispatchQueue.main.async {
-        let previousWeight = self.personWeight
-        self.products = fetchedProducts
-        FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-        self.caloriesLeft = calories
-        self.personWeight = weight
-        self.isLoadingData = false
-        self.isFetchingData = false
+        switch result {
+        case .success(let (fetchedProducts, calories, weight)):
+            let previousWeight = self.personWeight
+            self.products = fetchedProducts
+            FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
+            self.caloriesLeft = calories
+            self.personWeight = weight
+            self.isLoadingData = false
+            self.isFetchingData = false
 
-        // Check for weight photo motivation message
-        if self.pendingWeightPhotoCheck && weight > 0 {
-          self.pendingWeightPhotoCheck = false
-          
-          // Check if user lost weight and show motivational message
-          if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
-            // User lost weight! Show motivational message
-            let motivation = WeightMotivationService.shared.getMotivationalMessage(
-              weightLossGrams: weightLossGrams,
-              languageCode: self.languageService.currentCode
-            )
-            AlertHelper.showAlert(
-              title: motivation.title,
-              message: motivation.message,
-              haptic: .success)
-          } else {
-            // No weight loss detected, show standard message
-            AlertHelper.showAlert(
-              title: loc("weight.recorded.title", "Weight Recorded"),
-              message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
-              haptic: .success)
-          }
-        }
+            // Check for weight photo motivation message
+            if self.pendingWeightPhotoCheck && weight > 0 {
+              self.pendingWeightPhotoCheck = false
+              
+              // Check if user lost weight and show motivational message
+              if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
+                // User lost weight! Show motivational message
+                let motivation = WeightMotivationService.shared.getMotivationalMessage(
+                  weightLossGrams: weightLossGrams,
+                  languageCode: self.languageService.currentCode
+                )
+                AlertHelper.showAlert(
+                  title: motivation.title,
+                  message: motivation.message,
+                  haptic: .success)
+              } else {
+                // No weight loss detected, show standard message
+                AlertHelper.showAlert(
+                  title: loc("weight.recorded.title", "Weight Recorded"),
+                  message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
+                  haptic: .success)
+              }
+            }
 
-        // Recalculate calories if weight changed and user has health data
-        let userDefaults = UserDefaults.standard
-        if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-          self.recalculateCalorieLimitsFromHealthData()
+            // Recalculate calories if weight changed and user has health data
+            let userDefaults = UserDefaults.standard
+            if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
+              self.recalculateCalorieLimitsFromHealthData()
+            }
+            self.refreshMacrosForCurrentView()
+
+        case .failure:
+            self.isLoadingData = false
+            self.isFetchingData = false
+            AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("error.generic.timeout", "Oops, something happened. Please try again."))
         }
-        self.refreshMacrosForCurrentView()
       }
     }
   }
@@ -814,20 +833,27 @@ struct ContentView: View {
 
     isFetchingData = true
     // For background updates, always try cache first
-    ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
+    ProductStorageService.shared.fetchAndProcessProducts { result in
       DispatchQueue.main.async {
-        let previousWeight = self.personWeight
-        self.products = fetchedProducts
-        self.caloriesLeft = calories
-        self.personWeight = weight
-        self.isFetchingData = false
+        switch result {
+        case .success(let (fetchedProducts, calories, weight)):
+          let previousWeight = self.personWeight
+          self.products = fetchedProducts
+          self.caloriesLeft = calories
+          self.personWeight = weight
+          self.isFetchingData = false
 
-        // Recalculate calories if weight changed and user has health data
-        let userDefaults = UserDefaults.standard
-        if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-          self.recalculateCalorieLimitsFromHealthData()
+          // Recalculate calories if weight changed and user has health data
+          let userDefaults = UserDefaults.standard
+          if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
+            self.recalculateCalorieLimitsFromHealthData()
+          }
+          self.refreshMacrosForCurrentView()
+        case .failure:
+          self.isFetchingData = false
+          // Use localized error message
+          AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("error.generic.timeout", "Oops, something happened. Please try again."))
         }
-        self.refreshMacrosForCurrentView()
       }
     }
   }
@@ -1099,21 +1125,27 @@ struct ContentView: View {
       currentViewingDate = dateString
     }
 
-    ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: dateString) {
-      fetchedProducts, calories, weight in
+    ProductStorageService.shared.fetchAndProcessCustomDateFood(date: dateString) { result in
       DispatchQueue.main.async {
-        let previousWeight = self.personWeight
-        self.products = fetchedProducts
-        self.caloriesLeft = calories
-        self.personWeight = weight
-        self.isLoadingData = false
+        switch result {
+        case .success(let (fetchedProducts, calories, weight)):
+          let previousWeight = self.personWeight
+          self.products = fetchedProducts
+          self.caloriesLeft = calories
+          self.personWeight = weight
+          self.isLoadingData = false
 
-        // Recalculate calories if weight changed and user has health data
-        let userDefaults = UserDefaults.standard
-        if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-          self.recalculateCalorieLimitsFromHealthData()
+          // Recalculate calories if weight changed and user has health data
+          let userDefaults = UserDefaults.standard
+          if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
+            self.recalculateCalorieLimitsFromHealthData()
+          }
+          self.refreshMacrosForCurrentView()
+
+        case .failure:
+          self.isLoadingData = false
+          AlertHelper.showAlert(title: loc("common.error", "Error"), message: loc("error.generic.timeout", "Oops, something happened. Please try again."))
         }
-        self.refreshMacrosForCurrentView()
       }
     }
   }
