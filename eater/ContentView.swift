@@ -119,6 +119,8 @@ struct ContentView: View {
           onModify: modifyProductPortion,
           onTryAgain: tryAgainProduct,
           onAddSugar: addSugarToProduct,
+          onAddDrinkExtra: addExtraToProduct,
+          onAddFoodExtra: addExtraToProduct,
           onPhotoTap: showFullScreenPhoto,
           deletingProductTime: deletingProductTime,
           onShareSuccess: {
@@ -702,8 +704,8 @@ struct ContentView: View {
       .getCachedDataIfFresh()
     {
       // Update UI immediately with cached data
-      products = cachedProducts
-      caloriesLeft = cachedCalories
+      products = FoodExtrasStore.shared.apply(to: cachedProducts)
+      caloriesLeft = cachedCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
       personWeight = cachedWeight
 
       // Check if cache is relatively recent (less than 30 minutes)
@@ -718,9 +720,9 @@ struct ContentView: View {
         fetchedProducts, calories, weight in
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
-          self.products = fetchedProducts
+          self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories
+          self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
           self.personWeight = weight
           self.isFetchingData = false
 
@@ -740,8 +742,8 @@ struct ContentView: View {
       .getCachedDataAsFallback()
     {
       // Show stale data immediately for better UX
-      products = fallbackProducts
-      caloriesLeft = fallbackCalories
+      products = FoodExtrasStore.shared.apply(to: fallbackProducts)
+      caloriesLeft = fallbackCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
       personWeight = fallbackWeight
 
       // Show a subtle loading indicator since we're using stale data
@@ -757,9 +759,9 @@ struct ContentView: View {
         fetchedProducts, calories, weight in
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
-          self.products = fetchedProducts
+          self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories
+          self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
           self.personWeight = weight
           self.isLoadingData = false
           self.isFetchingData = false
@@ -780,9 +782,9 @@ struct ContentView: View {
     ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
-        self.products = fetchedProducts
+        self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
         FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-        self.caloriesLeft = calories
+        self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
         self.isLoadingData = false
         self.isFetchingData = false
@@ -830,8 +832,8 @@ struct ContentView: View {
     ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
-        self.products = fetchedProducts
-        self.caloriesLeft = calories
+        self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
+        self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
         self.isFetchingData = false
 
@@ -966,45 +968,37 @@ struct ContentView: View {
       initialText: product.name,
       confirmTitle: loc("common.save", "Save")
     ) { newName in
-      GRPCService().renameFood(
+      // Re-analyze the existing photo using the user-provided dish name,
+      // so calories/grams/health rating update (not just the title).
+      GRPCService().modifyFoodRecord(
         time: time,
         userEmail: userEmail,
-        newName: newName
+        percentage: 100,
+        isTryAgain: true,
+        imageId: imageId,
+        manualFoodName: newName
       ) { success in
         DispatchQueue.main.async {
           if success {
-            // Optimistically update local products list so the change is visible immediately
-            self.products = self.products.map { item in
-              if item.time == time {
-                return Product(
-                  time: item.time,
-                  name: newName,
-                  calories: item.calories,
-                  weight: item.weight,
-                  ingredients: item.ingredients,
-                  healthRating: item.healthRating,
-                  imageId: item.imageId,
-                  addedSugarTsp: item.addedSugarTsp
-                )
-              } else {
-                return item
-              }
-            }
-
+            // Clear caches and refresh so updated nutrition/health comes from backend
+            StatisticsService.shared.clearExpiredCache()
+            ProductStorageService.shared.clearCache()
             AlertHelper.showAlert(
-              title: loc("manual_food.success.title", "Name updated"),
+              title: loc("manual_food.success.title", "Updated"),
               message: String(
                 format: loc(
-                  "manual_food.success.msg", "Dish name was updated to '%@'."), newName),
+                  "manual_food.success.msg", "Updated '%@'."), newName),
               haptic: .success
-            )
+            ) {
+              self.returnToToday()
+            }
           } else {
             HapticsService.shared.error()
             AlertHelper.showAlert(
               title: loc("common.error", "Error"),
               message: loc(
                 "manual_food.error",
-                "Failed to update dish name. Please try again.")
+                "Failed to update. Please try again.")
             )
           }
         }
@@ -1029,6 +1023,12 @@ struct ContentView: View {
     ) { success in
       DispatchQueue.main.async {
         if success {
+          // Optimistically update UI + local store so sugar icon and calories/grams update immediately
+          FoodExtrasStore.shared.addSugar(time: time, tsp: 1)
+          let updated = FoodExtrasStore.shared.apply(to: self.products)
+          self.products = updated
+          self.caloriesLeft += 20
+
           // Clear caches and refresh
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
@@ -1047,6 +1047,36 @@ struct ContentView: View {
         }
       }
     }
+  }
+
+  /// Local-only extras (lemon/honey/soy/wasabi/pepper) – updates dish calories/grams and top calories immediately.
+  func addExtraToProduct(time: Int64, foodName: String, extraKey: String) {
+    FoodExtrasStore.shared.addExtra(time: time, extraKey: extraKey)
+
+    // Apply to UI model
+    let updatedExtras = FoodExtrasStore.shared.extras(for: time)
+    self.products = self.products.map { item in
+      guard item.time == time else { return item }
+      return Product(
+        time: item.time,
+        name: item.name,
+        calories: item.calories,
+        weight: item.weight,
+        ingredients: item.ingredients,
+        healthRating: item.healthRating,
+        imageId: item.imageId,
+        addedSugarTsp: item.addedSugarTsp,
+        extras: updatedExtras
+      )
+    }
+
+    // Adjust top calories (calories consumed) by this extra's calories
+    if let def = FoodExtrasStore.definitions[extraKey] {
+      self.caloriesLeft += def.calories
+    }
+
+    // Persist updated view state into cache for fast reload UX
+    ProductStorageService.shared.saveProducts(self.products, calories: self.caloriesLeft, weight: self.personWeight)
   }
 
   func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {

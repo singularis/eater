@@ -345,6 +345,7 @@ class GRPCService {
     isTryAgain: Bool = false,
     imageId: String = "",
     addedSugarTsp: Float = 0,
+    manualFoodName: String = "",
     completion: @escaping (Bool) -> Void
   ) {
     var modifyFoodRequest = Eater_ModifyFoodRecordRequest()
@@ -354,6 +355,7 @@ class GRPCService {
     modifyFoodRequest.isTryAgain = isTryAgain
     modifyFoodRequest.imageID = imageId
     modifyFoodRequest.addedSugarTsp = addedSugarTsp
+    modifyFoodRequest.manualFoodName = manualFoodName
 
     do {
       let requestBody = try modifyFoodRequest.serializedData()

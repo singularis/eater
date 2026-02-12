@@ -297,10 +297,17 @@ class AlertHelper {
   }
 
   static func showPortionSelectionAlert(
-    foodName: String, originalWeight: Int, time: Int64, imageId: String = "",
-    onPortionSelected: @escaping (Int32) -> Void, 
+    foodName: String,
+    originalWeight: Int,
+    time: Int64,
+    imageId: String = "",
+    isDrink: Bool,
+    isFruitOrVegetable: Bool = false,
+    onPortionSelected: @escaping (Int32) -> Void,
     onTryAgain: (() -> Void)? = nil,
     onAddSugar: (() -> Void)? = nil,
+    onAddDrinkExtra: ((String) -> Void)? = nil,
+    onAddFoodExtra: ((String) -> Void)? = nil,
     onShareSuccess: (() -> Void)? = nil
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -355,13 +362,6 @@ class AlertHelper {
         })
     }
 
-    // Add extra ingredient option (e.g., sugar to tea/coffee)
-    let addExtraTitle = loc("portion.add_extra", "Add 1 tsp sugar ☕")
-    alert.addAction(UIAlertAction(title: addExtraTitle, style: .default) { _ in
-      // Callback to add sugar - will update calories and track sugar
-      onAddSugar?()
-    })
-
     // Share food with friend action (visually highlighted)
     let shareTitle = loc("portion.share", "Share food with friend")
     let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
@@ -372,19 +372,84 @@ class AlertHelper {
     shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
     alert.addAction(shareAction)
 
+    // Additional extras: not for fruit/vegetable; tap "Additional" to open submenu
+    if !isFruitOrVegetable {
+      let additionalTitle = loc("portion.additional", "Additional")
+      let additionalAction = UIAlertAction(title: additionalTitle, style: .default) { _ in
+          // Present a second alert (submenu) with extra options
+          let additionalAlert = UIAlertController(
+            title: additionalTitle,
+            message: nil,
+            preferredStyle: .alert
+          )
+
+          if isDrink {
+            additionalAlert.addAction(
+              UIAlertAction(title: loc("portion.extra.lemon", "Lemon 5g"), style: .default) { _ in
+                onAddDrinkExtra?("lemon_5g")
+              })
+            additionalAlert.addAction(
+              UIAlertAction(title: loc("portion.extra.honey", "Honey 10g"), style: .default) { _ in
+                onAddDrinkExtra?("honey_10g")
+              })
+            let addSugarTitle = loc("portion.add_extra", "Add 1 tsp sugar ☕")
+            additionalAlert.addAction(
+              UIAlertAction(title: addSugarTitle, style: .default) { _ in
+                onAddSugar?()
+              })
+          } else {
+            additionalAlert.addAction(
+              UIAlertAction(title: loc("portion.extra.soy", "Soy sauce 15g"), style: .default) { _ in
+                onAddFoodExtra?("soy_sauce_15g")
+              })
+            additionalAlert.addAction(
+              UIAlertAction(title: loc("portion.extra.wasabi", "Wasabi 3g"), style: .default) { _ in
+                onAddFoodExtra?("wasabi_3g")
+              })
+            additionalAlert.addAction(
+              UIAlertAction(title: loc("portion.extra.pepper", "Spicy pepper 5g"), style: .default) { _ in
+                onAddFoodExtra?("spicy_pepper_5g")
+              })
+          }
+
+          additionalAlert.addAction(
+            UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel, handler: nil))
+
+          // Present after the first alert dismisses
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            rootViewController.present(additionalAlert, animated: true)
+          }
+        }
+      // Yellow text for "Additional" (darker in Light Mode for readability)
+      let additionalTitleColor = UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+          return UIColor.systemYellow
+        }
+        // Amber-ish yellow that stays readable on white backgrounds
+        return UIColor(red: 0.72, green: 0.52, blue: 0.00, alpha: 1.0)
+      }
+      additionalAction.setValue(additionalTitleColor, forKey: "titleTextColor")
+      alert.addAction(additionalAction)
+    }
+
     // Try manually – visible button between Share and Custom
     let tryManualTitle = loc("common.try_manual", "Try manually")
-    alert.addAction(UIAlertAction(title: tryManualTitle, style: .default) { _ in
+    let tryManualAction = UIAlertAction(title: tryManualTitle, style: .default) { _ in
       // Callback to allow user to manually fix dish name
       onTryAgain?()
-    })
+    }
+    // Orange for "Try manually"
+    tryManualAction.setValue(UIColor.systemOrange, forKey: "titleTextColor")
+    alert.addAction(tryManualAction)
 
-    // Add custom option
-    alert.addAction(
-      UIAlertAction(title: loc("portion.custom", "Custom..."), style: .default) { _ in
-        showCustomPortionAlert(
-          foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
-      })
+    // Add custom option (purple)
+    let customTitle = loc("portion.custom", "Custom grams...")
+    let customAction = UIAlertAction(title: customTitle, style: .default) { _ in
+      showCustomPortionAlert(
+        foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
+    }
+    customAction.setValue(UIColor.systemPurple, forKey: "titleTextColor")
+    alert.addAction(customAction)
 
     alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
 
