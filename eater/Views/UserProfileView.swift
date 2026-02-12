@@ -79,13 +79,23 @@ struct UserProfileView: View {
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
             
             VStack(spacing: 14) {
-              // Preview of current mascot (two different images: happy and gym)
+              // Preview of current mascot (5 states for clarity)
               if themeService.currentMascot != .none {
-                HStack(spacing: 16) {
-                  MascotAvatarView(state: .happy, size: 60)
-                  MascotAvatarView(state: .gym, size: 60)
+                let previews = themeService.getUniquePreviewImageNames(count: 5)
+                ScrollView(.horizontal, showsIndicators: false) {
+                  HStack(spacing: 12) {
+                    ForEach(previews, id: \.self) { imageName in
+                      Image(imageName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 56, height: 56)
+                        .clipShape(Circle())
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    }
+                  }
+                  .padding(.vertical, 8)
+                  .padding(.horizontal, 2)
                 }
-                .padding(.vertical, 8)
               }
               
               VStack(alignment: .leading, spacing: 12) {

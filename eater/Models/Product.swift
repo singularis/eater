@@ -153,6 +153,10 @@ struct Product: Identifiable, Codable, Equatable {
   /// Heuristic: fruit or vegetable — no "Additional" extras (no sugar, no soy/wasabi/pepper).
   var isFruitOrVegetable: Bool {
     let lower = name.lowercased()
+    // Never treat soups as "fruit/vegetable" for UI purposes — users often want sauces/spices.
+    if lower.contains("soup") {
+      return false
+    }
     let fruitVegKeywords = [
       "apple", "banana", "orange", "fruit", "salad", "tomato", "carrot", "cucumber",
       "avocado", "grape", "berries", "berry", "peach", "pear", "plum", "mango", "pineapple",
