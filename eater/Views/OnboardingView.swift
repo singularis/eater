@@ -26,6 +26,7 @@ struct OnboardingView: View {
     forKey: "notificationsEnabled")
   @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
   @EnvironmentObject var languageService: LanguageService
+  @StateObject private var themeService = ThemeService.shared
   @State private var selectedLanguageDisplay: String = ""
   @State private var selectedLanguageCode: String = ""
   @State private var isApplyingLanguage: Bool = false
@@ -76,13 +77,25 @@ struct OnboardingView: View {
       case .initial:
           return [
             OnboardingStep(
-              title: loc("onboarding.language.title", "Choose Language 🌐"),
-              description: loc("onboarding.language.desc", "Pick your preferred language."),
-              anchor: "language",
-              icon: "globe"
+              title: loc("onboarding.tools.title", "Your Essential Tools 🍽️"),
+              description: loc("onboarding.tools.desc", "Small steps that make a big difference."),
+              anchor: "tools",
+              icon: "scalemass.fill"
             ),
             OnboardingStep(
-              title: loc("onboarding.features.title", "All-in-One Tracker 🚀"),
+              title: loc("onboarding.pets.title", "Meet Your Pet Companion 🐾"),
+              description: loc("onboarding.pets.desc", "Choose a pet that will motivate you on your journey."),
+              anchor: "pets",
+              icon: "pawprint.fill"
+            ),
+            OnboardingStep(
+              title: loc("onboarding.new_features.title", "New Features ✨"),
+              description: loc("onboarding.new_features.subtitle", "Powerful tools to make your tracking even better."),
+              anchor: "smart_tips",
+              icon: "sparkles"
+            ),
+            OnboardingStep(
+              title: loc("onboarding.features.title", "All in one Tracker 🚀"),
               description: loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI."),
               anchor: "features",
               icon: "square.stack.3d.up.fill"
@@ -144,6 +157,22 @@ struct OnboardingView: View {
   // Renamed to handle index
   private func defaultStepView(for index: Int) -> some View {
     let step = steps[index]
+    
+    if step.anchor == "tools" {
+        return AnyView(toolsStepView)
+    }
+    
+    if step.anchor == "pets" {
+        return AnyView(petThemeStepView)
+    }
+    
+    if step.anchor == "smart_tips" {
+        return AnyView(smartTipsStepView)
+    }
+    
+    if step.anchor == "language" {
+        return AnyView(languageSelectionView)
+    }
     
     if step.anchor == "features" {
         return AnyView(featuresStepView)
@@ -216,6 +245,413 @@ struct OnboardingView: View {
     .padding(.horizontal, 24))
   }
   
+  private var toolsStepView: some View {
+    VStack(spacing: 16) {
+      // Title
+      Text(loc("onboarding.tools.title", "Your Essential Tools 🍽️"))
+        .font(.system(size: 34, weight: .bold, design: .rounded))
+        .foregroundColor(AppTheme.textPrimary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+
+      // Subtitle
+      Text(loc("onboarding.tools.subtitle", "These are small but very important steps toward healthier eating."))
+        .font(.system(size: 18, weight: .regular, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+        .multilineTextAlignment(.center)
+        .lineSpacing(4)
+        .padding(.horizontal, 24)
+
+      // --- Kitchen Scales Card ---
+      HStack(spacing: 14) {
+        Image("onboarding_kitchen_scales")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 80, height: 80)
+          .padding(6)
+          .background(AppTheme.surfaceAlt)
+          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+        VStack(alignment: .leading, spacing: 6) {
+          Text(loc("onboarding.tools.scales.title", "Kitchen Scales"))
+            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+
+          Text(loc("onboarding.tools.scales.desc", "Weigh your food to understand real portions. You will be surprised how much a \"small\" serving actually weighs."))
+            .font(.system(size: 16, weight: .regular, design: .rounded))
+            .foregroundColor(AppTheme.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
+      .padding(14)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(AppTheme.surface)
+      .cornerRadius(18)
+      .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+      .padding(.horizontal, 20)
+
+      // --- Food Containers Card ---
+      HStack(spacing: 14) {
+        Image("onboarding_food_containers")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 80, height: 80)
+          .padding(6)
+          .background(AppTheme.surfaceAlt)
+          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+        VStack(alignment: .leading, spacing: 6) {
+          Text(loc("onboarding.tools.containers.title", "Food Containers"))
+            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+
+          Text(loc("onboarding.tools.containers.desc", "Organize meals so nothing goes to waste. Containers make meal prep effortless and keep your eating structured."))
+            .font(.system(size: 16, weight: .regular, design: .rounded))
+            .foregroundColor(AppTheme.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
+      .padding(14)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(AppTheme.surface)
+      .cornerRadius(18)
+      .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+      .padding(.horizontal, 20)
+
+      // --- Track Everything reminder ---
+      VStack(spacing: 10) {
+        HStack(spacing: 8) {
+          Image(systemName: "checkmark.circle.fill")
+            .font(.system(size: 24))
+            .foregroundColor(.green)
+
+          Text(loc("onboarding.tools.track.title", "Track Everything"))
+            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+        }
+
+        Text(loc("onboarding.tools.track.desc", "Even if something seems less healthy, keep tracking! No judgment, no stopping. That is the path to a balanced relationship with food. Every step toward awareness matters."))
+          .font(.system(size: 15, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(3)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .padding(14)
+      .frame(maxWidth: .infinity)
+      .background(Color.green.opacity(0.06))
+      .cornerRadius(16)
+      .overlay(
+        RoundedRectangle(cornerRadius: 16)
+          .stroke(Color.green.opacity(0.2), lineWidth: 1)
+      )
+      .padding(.horizontal, 20)
+
+      Spacer()
+    }
+  }
+
+  private var petThemeStepView: some View {
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: 20) {
+        // Title with paws inline
+        HStack(spacing: 6) {
+          Text(loc("onboarding.pets.title_short", "Meet Your Pet Companion"))
+            .font(.system(size: 28, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+          Image(systemName: "pawprint.fill")
+            .font(.system(size: 22))
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+
+        Text(loc("onboarding.pets.subtitle", "Pick a furry friend that will motivate you every day!"))
+          .font(.system(size: 17, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(3)
+          .padding(.horizontal, 24)
+
+        // --- British Cat ---
+        VStack(spacing: 12) {
+          HStack(spacing: 10) {
+            if let catImg = AppMascot.cat.happyImage() {
+              Image(catImg)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+                .clipShape(Circle())
+            }
+            VStack(alignment: .leading, spacing: 4) {
+              Text("British Cat")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(AppTheme.textPrimary)
+              Text(loc("onboarding.pets.cat.desc", "Elegant and opinionated. Purrs when you eat well, hisses when you don't."))
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(AppTheme.textSecondary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+          }
+
+          // Cat moods preview (centered)
+          HStack(spacing: 14) {
+            Spacer()
+            PetMoodBubble(imageName: "british_cat_happy", label: loc("onboarding.pets.mood.happy", "Happy"))
+            PetMoodBubble(imageName: "british_cat_gym", label: loc("onboarding.pets.mood.gym", "Gym"))
+            PetMoodBubble(imageName: "british_cat_bad_food", label: loc("onboarding.pets.mood.upset", "Upset"))
+            PetMoodBubble(imageName: "british_cat_alcohol", label: loc("onboarding.pets.mood.alcohol_tracking", "Alcohol"))
+            Spacer()
+          }
+
+          // Choose cat button
+          Button(action: {
+            HapticsService.shared.select()
+            themeService.currentMascot = .cat
+            themeService.playSound(for: "happy")
+          }) {
+            Text(themeService.currentMascot == .cat
+              ? loc("onboarding.pets.cat.chosen", "You chose the cat! 🐱")
+              : loc("onboarding.pets.cat.choose", "Choose me if you are a cat person!"))
+              .font(.system(size: 15, weight: .semibold, design: .rounded))
+              .foregroundColor(themeService.currentMascot == .cat ? .white : AppTheme.textPrimary)
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 10)
+              .background(
+                themeService.currentMascot == .cat
+                  ? AnyShapeStyle(LinearGradient(colors: [AppTheme.accent, Color.purple], startPoint: .leading, endPoint: .trailing))
+                  : AnyShapeStyle(AppTheme.surfaceAlt)
+              )
+              .cornerRadius(14)
+          }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+          RoundedRectangle(cornerRadius: 18)
+            .stroke(themeService.currentMascot == .cat ? AppTheme.accent : Color.clear, lineWidth: 2)
+        )
+        .padding(.horizontal, 20)
+
+        // --- French Bulldog ---
+        VStack(spacing: 12) {
+          HStack(spacing: 10) {
+            if let dogImg = AppMascot.dog.happyImage() {
+              Image(dogImg)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+                .clipShape(Circle())
+            }
+            VStack(alignment: .leading, spacing: 4) {
+              Text("French Bulldog")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(AppTheme.textPrimary)
+              Text(loc("onboarding.pets.dog.desc", "Loyal and expressive. Barks with joy for healthy meals, growls at junk food."))
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(AppTheme.textSecondary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+          }
+
+          // Dog moods preview (centered)
+          HStack(spacing: 14) {
+            Spacer()
+            PetMoodBubble(imageName: "french_bulldog_happy", label: loc("onboarding.pets.mood.happy", "Happy"))
+            PetMoodBubble(imageName: "french_bulldog_gym", label: loc("onboarding.pets.mood.gym", "Gym"))
+            PetMoodBubble(imageName: "french_bulldog_bad_food", label: loc("onboarding.pets.mood.upset", "Upset"))
+            PetMoodBubble(imageName: "french_bulldog_alcohol", label: loc("onboarding.pets.mood.alcohol_tracking", "Alcohol"))
+            Spacer()
+          }
+
+          // Choose dog button
+          Button(action: {
+            HapticsService.shared.select()
+            themeService.currentMascot = .dog
+            themeService.playSound(for: "happy")
+          }) {
+            Text(themeService.currentMascot == .dog
+              ? loc("onboarding.pets.dog.chosen", "You chose the dog! 🐶")
+              : loc("onboarding.pets.dog.choose", "Choose me if you are a dog lover!"))
+              .font(.system(size: 15, weight: .semibold, design: .rounded))
+              .foregroundColor(themeService.currentMascot == .dog ? .white : AppTheme.textPrimary)
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 10)
+              .background(
+                themeService.currentMascot == .dog
+                  ? AnyShapeStyle(LinearGradient(colors: [AppTheme.accent, Color.purple], startPoint: .leading, endPoint: .trailing))
+                  : AnyShapeStyle(AppTheme.surfaceAlt)
+              )
+              .cornerRadius(14)
+          }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+          RoundedRectangle(cornerRadius: 18)
+            .stroke(themeService.currentMascot == .dog ? AppTheme.accent : Color.clear, lineWidth: 2)
+        )
+        .padding(.horizontal, 20)
+
+        // --- What your pet does ---
+        VStack(spacing: 10) {
+          Text(loc("onboarding.pets.features.title", "What Your Pet Does"))
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textPrimary)
+
+          VStack(alignment: .leading, spacing: 8) {
+            PetFeatureRow(icon: "speaker.wave.2.fill", color: .blue,
+              text: loc("onboarding.pets.feature.sounds", "Reacts with real sounds to your food choices"))
+            PetFeatureRow(icon: "face.smiling.fill", color: .green,
+              text: loc("onboarding.pets.feature.happy", "Cheerful sounds when you eat healthy"))
+            PetFeatureRow(icon: "exclamationmark.bubble.fill", color: .orange,
+              text: loc("onboarding.pets.feature.upset", "Upset sounds for less healthy picks"))
+            PetFeatureRow(icon: "message.fill", color: .purple,
+              text: loc("onboarding.pets.feature.messages", "Unique motivational messages in your language"))
+            PetFeatureRow(icon: "pawprint.fill", color: AppTheme.accent,
+              text: loc("onboarding.pets.feature.icons", "Custom themed icons throughout the app"))
+          }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(Color.purple.opacity(0.05))
+        .cornerRadius(16)
+        .overlay(
+          RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.purple.opacity(0.15), lineWidth: 1)
+        )
+        .padding(.horizontal, 20)
+
+        Spacer().frame(height: 8)
+      }
+    }
+  }
+
+  private var smartTipsStepView: some View {
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: 18) {
+        // Title
+        Text(loc("onboarding.new_features.title", "New Features ✨"))
+          .font(.system(size: 30, weight: .bold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 20)
+          .padding(.top, 12)
+
+        Text(loc("onboarding.new_features.subtitle", "Powerful tools to make your tracking even better."))
+          .font(.system(size: 16, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(3)
+          .padding(.horizontal, 24)
+
+        // --- 1. Try Manually ---
+        VStack(spacing: 10) {
+          HStack(spacing: 10) {
+            ZStack {
+              Circle()
+                .fill(Color.blue.opacity(0.12))
+                .frame(width: 44, height: 44)
+              Image(systemName: "hand.tap.fill")
+                .font(.system(size: 20))
+                .foregroundColor(.blue)
+            }
+            Text(loc("onboarding.tips.try_manual.title", "Try Manually"))
+              .font(.system(size: 18, weight: .bold, design: .rounded))
+              .foregroundColor(AppTheme.textPrimary)
+            Spacer()
+          }
+
+          Text(loc("onboarding.tips.try_manual.desc", "If the AI recognized a dish differently from what you actually ate, just tap on it and select \"Try manually\". You can then type the correct food name, adjust the portion, or update ingredients. The app will recalculate everything for you."))
+            .font(.system(size: 14, weight: .regular, design: .rounded))
+            .foregroundColor(AppTheme.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .padding(.horizontal, 20)
+
+        // --- 2. Additional (coffee example) ---
+        VStack(spacing: 10) {
+          HStack(spacing: 10) {
+            ZStack {
+              Circle()
+                .fill(Color.orange.opacity(0.12))
+                .frame(width: 44, height: 44)
+              Image(systemName: "cup.and.saucer.fill")
+                .font(.system(size: 20))
+                .foregroundColor(.orange)
+            }
+            Text(loc("onboarding.tips.addons.title", "Additional Add ons"))
+              .font(.system(size: 18, weight: .bold, design: .rounded))
+              .foregroundColor(AppTheme.textPrimary)
+            Spacer()
+          }
+
+          Text(loc("onboarding.tips.addons.desc2", "Tap any food and select \"Additional\" to see what you can add. For example, with coffee you can choose lemon 5g, honey 10g, milk 50g, or sugar. Each add on changes the healthiness score so you can compare: coffee with sugar (score 65) versus coffee with lemon (score 89). Works with sushi, tea, and many other dishes!"))
+            .font(.system(size: 14, weight: .regular, design: .rounded))
+            .foregroundColor(AppTheme.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .padding(.horizontal, 20)
+
+        // --- 3. Target Setting ---
+        VStack(spacing: 10) {
+          HStack(spacing: 10) {
+            ZStack {
+              Circle()
+                .fill(Color.green.opacity(0.12))
+                .frame(width: 44, height: 44)
+              Image(systemName: "target")
+                .font(.system(size: 20))
+                .foregroundColor(.green)
+            }
+            Text(loc("onboarding.tips.target.title", "Your Personal Plan"))
+              .font(.system(size: 18, weight: .bold, design: .rounded))
+              .foregroundColor(AppTheme.textPrimary)
+            Spacer()
+          }
+
+          Text(loc("onboarding.tips.target.desc", "Set your target weight and choose your activity level. The app will calculate a personalized plan with a timeline just for you. BMI is kept safe and never drops below 18.5. You can also pick an \"activity only\" option that focuses on weight loss through exercise rather than dietary changes. It is fully tailored to your real life situation!"))
+            .font(.system(size: 14, weight: .regular, design: .rounded))
+            .foregroundColor(AppTheme.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .padding(.horizontal, 20)
+
+        Spacer().frame(height: 8)
+      }
+    }
+  }
+
   private var featuresStepView: some View {
     VStack(spacing: 30) {
         Spacer()
@@ -250,6 +686,15 @@ struct OnboardingView: View {
                 color: .orange,
                 title: loc("feature.timetravel.title", "Time Travel"),
                 desc: loc("feature.timetravel.desc", "Forgot to log? Backdate entries anytime.")
+            )
+            FeatureRow(
+                icon: "pawprint.fill",
+                color: AppTheme.success,
+                title: loc("feature.pet_sounds.title", "Pet Sound Feedback"),
+                desc: loc(
+                  "feature.pet_sounds.desc",
+                  "We added a fun pet themed feedback system. Choose a British cat or a French bulldog. Your pet reacts with sounds. Less healthy food triggers an angry woof or a displeased cat sound. Great choices trigger cheerful happy sounds."
+                )
             )
         }
         .padding(.horizontal)
@@ -594,11 +1039,7 @@ struct OnboardingView: View {
         
         // Content Area with Transitions
         TabView(selection: $currentStep) {
-            languageSelectionView
-                .tag(0)
-            
-            // Map remaining steps
-            ForEach(1..<steps.count, id: \.self) { index in
+            ForEach(0..<steps.count, id: \.self) { index in
                 defaultStepView(for: index)
                     .tag(index)
             }
@@ -978,8 +1419,14 @@ struct OnboardingView: View {
       return loc("onboarding.health_form.title", "Your Health Data 📝")
     case "health_results":
       return loc("onboarding.health_results.title", "Your Personalized Plan 🎯")
+    case "tools":
+        return loc("onboarding.tools.title", "Your Essential Tools 🍽️")
+    case "pets":
+        return loc("onboarding.pets.title", "Meet Your Pet Companion 🐾")
+    case "smart_tips":
+        return loc("onboarding.new_features.title", "New Features ✨")
     case "features":
-        return loc("onboarding.features.title", "All-in-One Tracker 🚀")
+        return loc("onboarding.features.title", "All in one Tracker 🚀")
     case "disclaimer":
       return loc("onboarding.disclaimer.title", "Important Health Disclaimer ⚠️")
     case "complete":
@@ -1051,6 +1498,12 @@ struct OnboardingView: View {
         "onboarding.complete.desc",
         "Ready to start your healthy journey? You can always revisit this tutorial from your profile settings if needed."
       )
+    case "tools":
+        return loc("onboarding.tools.desc", "Small steps that make a big difference.")
+    case "pets":
+        return loc("onboarding.pets.desc", "Choose a pet that will motivate you on your journey.")
+    case "smart_tips":
+        return loc("onboarding.new_features.subtitle", "Powerful tools to make your tracking even better.")
     case "features":
         return loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI.")
     case "language":
@@ -1067,4 +1520,44 @@ struct OnboardingView: View {
 
   // MARK: - View Components
 
+}
+
+// MARK: - Pet Theme Helpers
+
+struct PetMoodBubble: View {
+  let imageName: String
+  let label: String
+
+  var body: some View {
+    VStack(spacing: 4) {
+      Image(imageName)
+        .resizable()
+        .scaledToFit()
+        .frame(width: 50, height: 50)
+        .clipShape(Circle())
+        .shadow(color: Color.black.opacity(0.08), radius: 3, x: 0, y: 2)
+      Text(label)
+        .font(.system(size: 11, weight: .medium, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+    }
+  }
+}
+
+struct PetFeatureRow: View {
+  let icon: String
+  let color: Color
+  let text: String
+
+  var body: some View {
+    HStack(spacing: 10) {
+      Image(systemName: icon)
+        .font(.system(size: 16))
+        .foregroundColor(color)
+        .frame(width: 28)
+      Text(text)
+        .font(.system(size: 14, weight: .regular, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+  }
 }

@@ -75,6 +75,43 @@ struct UserProfileView: View {
             .padding(.vertical, 16)
             .cardContainer(padding: 16)
 
+            // Watch me first! Section
+            Button(action: {
+              HapticsService.shared.select()
+              showOnboarding = true
+            }) {
+              HStack(spacing: 12) {
+                // Cat image
+                if let catImage = AppMascot.cat.happyImage() {
+                  Image(catImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                }
+
+                HStack {
+                  Image(systemName: "play.circle.fill")
+                  Text(loc("profile.watch_me_first", "Watch me first!"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+
+                // Dog image
+                if let dogImage = AppMascot.dog.happyImage() {
+                  Image(dogImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                }
+              }
+              .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(GreenButtonStyle())
+            .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
+
             // Theme Section
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
             
@@ -442,22 +479,6 @@ struct UserProfileView: View {
             sectionHeader(icon: "person.badge.key.fill", title: loc("profile.account", "Account"), color: Color.orange)
             
             VStack(spacing: 10) {
-              Button(action: {
-                HapticsService.shared.select()
-                showOnboarding = true
-              }) {
-                HStack {
-                  Image(systemName: "book.fill")
-                  Text(loc("profile.tutorial", "Tutorial"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-              }
-              .buttonStyle(PrimaryButtonStyle())
-              .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
-
               Button(action: {
                 HapticsService.shared.warning()
                 logout()
