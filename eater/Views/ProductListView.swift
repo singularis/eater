@@ -7,6 +7,8 @@ struct ProductListView: View {
   let onModify: (Int64, String, Int32) -> Void
   let onTryAgain: (Int64, String) -> Void
   let onAddSugar: (Int64, String) -> Void
+  var onAddDrinkExtra: ((Int64, String, String) -> Void)? = nil
+  var onAddFoodExtra: ((Int64, String, String) -> Void)? = nil
   let onPhotoTap: (UIImage?, String) -> Void
   let deletingProductTime: Int64?
   let onShareSuccess: () -> Void
@@ -51,6 +53,8 @@ struct ProductListView: View {
               onModify: onModify,
               onTryAgain: onTryAgain,
               onAddSugar: onAddSugar,
+              onAddDrinkExtra: onAddDrinkExtra,
+              onAddFoodExtra: onAddFoodExtra,
               onShareSuccess: onShareSuccess
             )
             .listRowBackground(Color.clear)

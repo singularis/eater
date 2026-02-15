@@ -329,8 +329,10 @@ struct ProgressiveOnboardingView: View {
         onComplete()
         
     case .measurements:
-        defaults.set(Double(height) ?? 175, forKey: "userHeight")
-        defaults.set(Double(weight) ?? 70, forKey: "userWeight")
+        let h = (Double(height) ?? 175).rounded()
+        let w = ((Double(weight) ?? 70) * 10).rounded() / 10
+        defaults.set(h, forKey: "userHeight")
+        defaults.set(w, forKey: "userWeight")
         onComplete()
         
     case .activity:

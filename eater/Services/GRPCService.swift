@@ -345,6 +345,7 @@ class GRPCService {
     isTryAgain: Bool = false,
     imageId: String = "",
     addedSugarTsp: Float = 0,
+    manualFoodName: String = "",
     completion: @escaping (Bool) -> Void
   ) {
     var modifyFoodRequest = Eater_ModifyFoodRecordRequest()
@@ -354,6 +355,7 @@ class GRPCService {
     modifyFoodRequest.isTryAgain = isTryAgain
     modifyFoodRequest.imageID = imageId
     modifyFoodRequest.addedSugarTsp = addedSugarTsp
+    modifyFoodRequest.manualFoodName = manualFoodName
 
     do {
       let requestBody = try modifyFoodRequest.serializedData()
@@ -388,6 +390,60 @@ class GRPCService {
       }
     } catch {
       completion(false)
+    }
+  }
+
+  /// JSON endpoint to rename a food item manually, without re-triggering AI analysis.
+  func renameFood(
+    time: Int64,
+    userEmail: String,
+    newName: String,
+    completion: @escaping (Bool) -> Void
+  ) {
+    let payload: [String: Any] = [
+      "time": time,
+      "user_email": userEmail,
+      "manual_food_name": newName,
+    ]
+
+    guard let body = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+      completion(false)
+      return
+    }
+
+    guard var request = createRequest(
+      endpoint: "modify_food_manual", httpMethod: "POST", body: body)
+    else {
+      completion(false)
+      return
+    }
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+
+      if let response = response as? HTTPURLResponse {
+        if response.statusCode >= 200 && response.statusCode < 300 {
+          // If backend returns JSON with success flag, respect it; otherwise assume OK on 2xx.
+          if let data = data,
+            let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [
+              String: Any
+            ],
+            let success = json["success"] as? Bool
+          {
+            completion(success)
+          } else {
+            completion(true)
+          }
+        } else {
+          completion(false)
+        }
+      } else {
+        completion(false)
+      }
     }
   }
 

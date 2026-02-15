@@ -119,6 +119,8 @@ struct ContentView: View {
           onModify: modifyProductPortion,
           onTryAgain: tryAgainProduct,
           onAddSugar: addSugarToProduct,
+          onAddDrinkExtra: addExtraToProduct,
+          onAddFoodExtra: addExtraToProduct,
           onPhotoTap: showFullScreenPhoto,
           deletingProductTime: deletingProductTime,
           onShareSuccess: {
@@ -702,8 +704,8 @@ struct ContentView: View {
       .getCachedDataIfFresh()
     {
       // Update UI immediately with cached data
-      products = cachedProducts
-      caloriesLeft = cachedCalories
+      products = FoodExtrasStore.shared.apply(to: cachedProducts)
+      caloriesLeft = cachedCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
       personWeight = cachedWeight
 
       // Check if cache is relatively recent (less than 30 minutes)
@@ -718,9 +720,9 @@ struct ContentView: View {
         fetchedProducts, calories, weight in
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
-          self.products = fetchedProducts
+          self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories
+          self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
           self.personWeight = weight
           self.isFetchingData = false
 
@@ -728,6 +730,7 @@ struct ContentView: View {
           let userDefaults = UserDefaults.standard
           if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
             self.recalculateCalorieLimitsFromHealthData()
+            self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
           }
           self.refreshMacrosForCurrentView()
         }
@@ -740,8 +743,8 @@ struct ContentView: View {
       .getCachedDataAsFallback()
     {
       // Show stale data immediately for better UX
-      products = fallbackProducts
-      caloriesLeft = fallbackCalories
+      products = FoodExtrasStore.shared.apply(to: fallbackProducts)
+      caloriesLeft = fallbackCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
       personWeight = fallbackWeight
 
       // Show a subtle loading indicator since we're using stale data
@@ -757,9 +760,9 @@ struct ContentView: View {
         fetchedProducts, calories, weight in
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
-          self.products = fetchedProducts
+          self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories
+          self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
           self.personWeight = weight
           self.isLoadingData = false
           self.isFetchingData = false
@@ -780,9 +783,9 @@ struct ContentView: View {
     ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
-        self.products = fetchedProducts
+        self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
         FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-        self.caloriesLeft = calories
+        self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
         self.isLoadingData = false
         self.isFetchingData = false
@@ -815,6 +818,7 @@ struct ContentView: View {
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
           self.recalculateCalorieLimitsFromHealthData()
+          self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
       }
@@ -830,8 +834,8 @@ struct ContentView: View {
     ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
-        self.products = fetchedProducts
-        self.caloriesLeft = calories
+        self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
+        self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
         self.isFetchingData = false
 
@@ -839,9 +843,87 @@ struct ContentView: View {
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
           self.recalculateCalorieLimitsFromHealthData()
+          self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
       }
+    }
+  }
+
+  private func checkWeightGoalMilestones(previousWeight: Float, newWeight: Float) {
+    let userDefaults = UserDefaults.standard
+    let target = userDefaults.double(forKey: "userTargetWeight")
+    let mode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
+    guard target > 0 else { return }
+
+    // Avoid spamming: at most once per UTC day
+    let today = getCurrentUTCDateString()
+    let lastShown = userDefaults.string(forKey: "goalMilestoneLastShownDate") ?? ""
+    if lastShown == today { return }
+
+    let tol = 0.2
+    let w = Double(newWeight)
+    let prev = Double(previousWeight)
+
+    func offerMaintenance() {
+      userDefaults.set("maintain", forKey: "userGoalMode")
+      userDefaults.set(0, forKey: "userGoalMonths")
+      userDefaults.set(w, forKey: "userTargetWeight")
+      self.recalculateCalorieLimitsFromHealthData()
+      userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+      AlertHelper.showAlert(
+        title: loc("goal.maintain.enabled.title", "Maintenance enabled"),
+        message: loc("goal.maintain.enabled.msg", "Great! We'll help you maintain your weight with ongoing tracking."),
+        haptic: .success
+      )
+    }
+
+    if mode == "lose" {
+      if w <= target + tol {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showCelebration(
+          title: loc("goal.reached.title", "You did it!"),
+          message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
+          primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
+          primaryAction: offerMaintenance,
+          secondaryTitle: loc("common.close", "Close"),
+          secondaryAction: nil
+        )
+      } else if w > prev + 0.2 {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showAlert(
+          title: loc("goal.motivation.title", "Keep going"),
+          message: loc(
+            "goal.motivation.msg",
+            "Small ups and downs are normal. You're still on your path — keep tracking and we'll adjust your plan."
+          ),
+          haptic: .select
+        )
+      }
+    } else if mode == "gain" {
+      if w >= target - tol {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showCelebration(
+          title: loc("goal.reached.title", "You did it!"),
+          message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
+          primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
+          primaryAction: offerMaintenance,
+          secondaryTitle: loc("common.close", "Close"),
+          secondaryAction: nil
+        )
+      } else if w < prev - 0.2 {
+        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+        AlertHelper.showAlert(
+          title: loc("goal.motivation.title", "Keep going"),
+          message: loc(
+            "goal.motivation.msg",
+            "Small ups and downs are normal. You're still on your path — keep tracking and we'll adjust your plan."
+          ),
+          haptic: .select
+        )
+      }
+    } else {
+      // maintain / activityOnly: no milestone popups for now
     }
   }
 
@@ -942,39 +1024,63 @@ struct ContentView: View {
   }
 
   func tryAgainProduct(time: Int64, imageId: String) {
+    // Repurposed as "Try manually" – user can manually fix dish name.
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
-        message: loc("portion.modify.need_login", "Unable to retry. Please sign in again."))
+        message: loc(
+          "portion.modify.need_login", "Unable to update. Please sign in again."))
       return
     }
-    
-    // Send Try Again request with isTryAgain flag
-    GRPCService().modifyFoodRecord(
-      time: time, 
-      userEmail: userEmail, 
-      percentage: 100,
-      isTryAgain: true,
-      imageId: imageId
-    ) { success in
-      DispatchQueue.main.async {
-        if success {
-          // Clear caches and refresh
-          StatisticsService.shared.clearExpiredCache()
-          ProductStorageService.shared.clearCache()
-          
-          AlertHelper.showAlert(
-            title: loc("common.try_again.success", "Reanalyzing..."),
-            message: loc("common.try_again.msg", "The photo is being reanalyzed. Please wait a moment."),
-            haptic: .success
-          ) {
-            self.returnToToday()
+
+    // Find current product to prefill the text field with existing name
+    guard let product = products.first(where: { $0.time == time }) else {
+      return
+    }
+
+    AlertHelper.showTextInputAlert(
+      title: loc("manual_food.title", "Fix food name"),
+      message: loc(
+        "manual_food.msg",
+        "Enter the correct dish name. This will replace the current name in your log."
+      ),
+      placeholder: product.name,
+      initialText: product.name,
+      confirmTitle: loc("common.save", "Save")
+    ) { newName in
+      // Re-analyze the existing photo using the user-provided dish name,
+      // so calories/grams/health rating update (not just the title).
+      GRPCService().modifyFoodRecord(
+        time: time,
+        userEmail: userEmail,
+        percentage: 100,
+        isTryAgain: true,
+        imageId: imageId,
+        manualFoodName: newName
+      ) { success in
+        DispatchQueue.main.async {
+          if success {
+            // Clear caches and refresh so updated nutrition/health comes from backend
+            StatisticsService.shared.clearExpiredCache()
+            ProductStorageService.shared.clearCache()
+            AlertHelper.showAlert(
+              title: loc("manual_food.success.title", "Updated"),
+              message: String(
+                format: loc(
+                  "manual_food.success.msg", "Updated '%@'."), newName),
+              haptic: .success
+            ) {
+              self.returnToToday()
+            }
+          } else {
+            HapticsService.shared.error()
+            AlertHelper.showAlert(
+              title: loc("common.error", "Error"),
+              message: loc(
+                "manual_food.error",
+                "Failed to update. Please try again.")
+            )
           }
-        } else {
-          HapticsService.shared.error()
-          AlertHelper.showAlert(
-            title: loc("common.error", "Error"),
-            message: loc("common.try_again.error", "Failed to reanalyze. Please try again."))
         }
       }
     }
@@ -997,6 +1103,12 @@ struct ContentView: View {
     ) { success in
       DispatchQueue.main.async {
         if success {
+          // Optimistically update UI + local store so sugar icon and calories/grams update immediately
+          FoodExtrasStore.shared.addSugar(time: time, tsp: 1)
+          let updated = FoodExtrasStore.shared.apply(to: self.products)
+          self.products = updated
+          self.caloriesLeft += 20
+
           // Clear caches and refresh
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
@@ -1015,6 +1127,36 @@ struct ContentView: View {
         }
       }
     }
+  }
+
+  /// Local-only extras (lemon/honey/soy/wasabi/pepper) – updates dish calories/grams and top calories immediately.
+  func addExtraToProduct(time: Int64, foodName: String, extraKey: String) {
+    FoodExtrasStore.shared.addExtra(time: time, extraKey: extraKey)
+
+    // Apply to UI model
+    let updatedExtras = FoodExtrasStore.shared.extras(for: time)
+    self.products = self.products.map { item in
+      guard item.time == time else { return item }
+      return Product(
+        time: item.time,
+        name: item.name,
+        calories: item.calories,
+        weight: item.weight,
+        ingredients: item.ingredients,
+        healthRating: item.healthRating,
+        imageId: item.imageId,
+        addedSugarTsp: item.addedSugarTsp,
+        extras: updatedExtras
+      )
+    }
+
+    // Adjust top calories (calories consumed) by this extra's calories
+    if let def = FoodExtrasStore.definitions[extraKey] {
+      self.caloriesLeft += def.calories
+    }
+
+    // Persist updated view state into cache for fast reload UX
+    ProductStorageService.shared.saveProducts(self.products, calories: self.caloriesLeft, weight: self.personWeight)
   }
 
   func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
@@ -1351,12 +1493,15 @@ struct ContentView: View {
     let age = userDefaults.integer(forKey: "userAge")
     let isMale = userDefaults.bool(forKey: "userIsMale")
     let activityLevel = userDefaults.string(forKey: "userActivityLevel") ?? "Sedentary"
+    let targetWeight = userDefaults.double(forKey: "userTargetWeight")
+    let goalMode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
+    let goalMonths = userDefaults.integer(forKey: "userGoalMonths")
 
     // Use current weight from the app if available and different from stored
     if personWeight > 0 {
       let currentWeight = Double(personWeight)
       if abs(currentWeight - weight) > 0.1 {  // If weight has changed significantly
-        weight = currentWeight
+        weight = (currentWeight * 10).rounded() / 10
         userDefaults.set(weight, forKey: "userWeight")  // Update stored weight
       }
     }
@@ -1395,22 +1540,66 @@ struct ContentView: View {
     // Calculate TDEE (Total Daily Energy Expenditure)
     let tdee = bmr * activityMultiplier
 
-    // Adjust calories based on weight goal
-    let weightDifference = weight - optimalWeight
-    let calorieAdjustment: Double
+    // Adjust calories based on user goal (target weight + period), fallback to optimal weight behavior.
+    var recommendedCalories: Int
+    let minCalories = isMale ? 1500 : 1200
 
-    if abs(weightDifference) < 2 {
-      // Maintain current weight
-      calorieAdjustment = 0
-    } else if weightDifference > 0 {
-      // Lose weight - safe deficit of 500 calories per day
-      calorieAdjustment = -500
+    if targetWeight > 0, (goalMode == "lose" || goalMode == "gain"), goalMonths >= 2 {
+      let diffKg = targetWeight - weight  // negative = lose, positive = gain
+
+      // Enforce healthy minimum pacing (same rules as HealthSettingsView)
+      let absDiff = abs(diffKg)
+      let minMonths: Int
+      if absDiff <= 5.0 {
+        minMonths = 2
+      } else if absDiff <= 10.0 {
+        minMonths = 4
+      } else {
+        minMonths = 6
+      }
+
+      let months = max(goalMonths, minMonths)
+      let days = Double(months) * 30.4
+      let dailyDelta = (diffKg * 7700.0) / days
+      recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
+    } else if goalMode == "activityOnly" || goalMode == "maintain" {
+      recommendedCalories = Int(tdee)
+    } else if targetWeight > 0 {
+      // Target set but no mode/period - default maintain for small diffs, else 4 months
+      let diffKg = targetWeight - weight
+      if abs(diffKg) <= 1.0 {
+        recommendedCalories = Int(tdee)
+      } else {
+        // Use a healthy minimum: 2 months up to 5kg, 4 months up to 10kg, 6 months above.
+        let absDiff = abs(diffKg)
+        let months: Double
+        if absDiff <= 5.0 {
+          months = 2.0
+        } else if absDiff <= 10.0 {
+          months = 4.0
+        } else {
+          months = 6.0
+        }
+        let days = months * 30.4
+        let dailyDelta = (diffKg * 7700.0) / days
+        recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
+      }
     } else {
-      // Gain weight - safe surplus of 300 calories per day
-      calorieAdjustment = 300
+      // Legacy fallback: compare to optimal weight
+      let weightDifference = weight - optimalWeight
+      let calorieAdjustment: Double
+      if abs(weightDifference) < 2 {
+        calorieAdjustment = 0
+      } else if weightDifference > 0 {
+        calorieAdjustment = -500
+      } else {
+        calorieAdjustment = 300
+      }
+      recommendedCalories = max(Int(tdee + calorieAdjustment), minCalories)
+      userDefaults.set(optimalWeight, forKey: "userTargetWeight")
+      userDefaults.set("lose", forKey: "userGoalMode")
+      userDefaults.set(4, forKey: "userGoalMonths")
     }
-
-    let recommendedCalories = Int(tdee + calorieAdjustment)
 
     // Update the calorie limits
     softLimit = recommendedCalories
@@ -1422,7 +1611,8 @@ struct ContentView: View {
     userDefaults.set(softLimit, forKey: "softLimit")
     userDefaults.set(hardLimit, forKey: "hardLimit")
     userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
-    userDefaults.set(optimalWeight, forKey: "userOptimalWeight")
+    // Keep legacy key for UI compatibility, but prefer userTargetWeight
+    userDefaults.set(userDefaults.double(forKey: "userTargetWeight") > 0 ? userDefaults.double(forKey: "userTargetWeight") : optimalWeight, forKey: "userOptimalWeight")
   }
 
   private func getAdjustedSoftLimit() -> Int {

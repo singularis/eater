@@ -130,7 +130,9 @@ enum AppMascot: String, CaseIterable {
       // Dog themed icons (лапки, кісточка, зайчик)
       switch systemIcon {
       case "checkmark.circle.fill": return "pawprint.circle.fill"
-      case "flame.fill": return "fossil.shell.fill"  // bone
+      // NOTE: `bone.fill` is not available on some iOS/SF Symbols versions → icon may disappear.
+      // Use a universally-available dog-themed symbol instead.
+      case "flame.fill": return "pawprint.fill"
       case "figure.run": return "hare.fill"  // dog playing
       case "trophy.fill": return "medal.fill"
       case "heart.fill": return "suit.heart.fill"
@@ -283,6 +285,41 @@ class ThemeService: ObservableObject {
     case "sugar", "loss", "error", "angry": return getMascotImage(for: .angry)
     default: return getMascotImage(for: .happy)
     }
+  }
+
+  /// Returns `count` unique preview images for the current mascot.
+  /// Used in Profile → Theme to avoid showing repeated photos.
+  func getUniquePreviewImageNames(count: Int = 5) -> [String] {
+    guard currentMascot != .none else { return [] }
+
+    // Build a unique pool (avoid angry because it often duplicates badFood).
+    let poolStates: [MascotState] = [.happy, .gym, .badFood, .alcohol]
+    var unique: [String] = []
+    var seen = Set<String>()
+    for state in poolStates {
+      for name in currentMascot.images(for: state) {
+        if !seen.contains(name) {
+          unique.append(name)
+          seen.insert(name)
+        }
+      }
+    }
+
+    guard !unique.isEmpty else { return [] }
+
+    // Rotate across sessions so previews vary, but keep uniqueness within a row.
+    let key = "mascot_preview_rotation_\(currentMascot.rawValue)"
+    let start = UserDefaults.standard.integer(forKey: key) % unique.count
+    let take = min(count, unique.count)
+
+    var result: [String] = []
+    result.reserveCapacity(take)
+    for i in 0..<take {
+      result.append(unique[(start + i) % unique.count])
+    }
+
+    UserDefaults.standard.set((start + take) % unique.count, forKey: key)
+    return result
   }
   
   // MARK: - Helper

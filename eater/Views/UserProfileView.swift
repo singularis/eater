@@ -12,6 +12,7 @@ struct UserProfileView: View {
   @State private var userWeight: Double = 0
   @State private var userAge: Int = 0
   @State private var userOptimalWeight: Double = 0
+  @State private var userTargetWeight: Double = 0
   @State private var userRecommendedCalories: Int = 0
   @State private var showStatistics = false
   @State private var showFeedback = false
@@ -74,17 +75,64 @@ struct UserProfileView: View {
             .padding(.vertical, 16)
             .cardContainer(padding: 16)
 
+            // Watch me first! Section
+            Button(action: {
+              HapticsService.shared.select()
+              showOnboarding = true
+            }) {
+              HStack(spacing: 12) {
+                // Cat image
+                if let catImage = AppMascot.cat.happyImage() {
+                  Image(catImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                }
+
+                HStack {
+                  Image(systemName: "play.circle.fill")
+                  Text(loc("profile.watch_me_first", "Watch me first!"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+
+                // Dog image
+                if let dogImage = AppMascot.dog.happyImage() {
+                  Image(dogImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                }
+              }
+              .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(GreenButtonStyle())
+            .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
+
             // Theme Section
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
             
             VStack(spacing: 14) {
-              // Preview of current mascot (two different images: happy and gym)
+              // Preview of current mascot (5 states for clarity)
               if themeService.currentMascot != .none {
-                HStack(spacing: 16) {
-                  MascotAvatarView(state: .happy, size: 60)
-                  MascotAvatarView(state: .gym, size: 60)
+                let previews = themeService.getUniquePreviewImageNames(count: 5)
+                ScrollView(.horizontal, showsIndicators: false) {
+                  HStack(spacing: 12) {
+                    ForEach(previews, id: \.self) { imageName in
+                      Image(imageName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 56, height: 56)
+                        .clipShape(Circle())
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    }
+                  }
+                  .padding(.vertical, 8)
+                  .padding(.horizontal, 2)
                 }
-                .padding(.vertical, 8)
               }
               
               VStack(alignment: .leading, spacing: 12) {
@@ -193,10 +241,23 @@ struct UserProfileView: View {
                   value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
                   color: AppTheme.textPrimary
                 )
+
+                let currentBMI: Double = {
+                  let hm = userHeight / 100.0
+                  guard hm > 0, userWeight > 0 else { return 0 }
+                  return userWeight / (hm * hm)
+                }()
+                if currentBMI > 0 {
+                  healthMetricRow(
+                    label: loc("health.bmi.label", "BMI:"),
+                    value: String(format: "%.1f", currentBMI),
+                    color: AppTheme.textPrimary
+                  )
+                }
                 
                 healthMetricRow(
                   label: loc("profile.targetweight", "Target Weight:"),
-                  value: String(format: "%.1f", userOptimalWeight) + " \(loc("units.kg", "kg"))",
+                  value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
                   color: AppTheme.success
                 )
                 
@@ -419,22 +480,6 @@ struct UserProfileView: View {
             
             VStack(spacing: 10) {
               Button(action: {
-                HapticsService.shared.select()
-                showOnboarding = true
-              }) {
-                HStack {
-                  Image(systemName: "book.fill")
-                  Text(loc("profile.tutorial", "Tutorial"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-              }
-              .buttonStyle(PrimaryButtonStyle())
-              .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
-
-              Button(action: {
                 HapticsService.shared.warning()
                 logout()
               }) {
@@ -571,6 +616,7 @@ struct UserProfileView: View {
       userWeight = userDefaults.double(forKey: "userWeight")
       userAge = userDefaults.integer(forKey: "userAge")
       userOptimalWeight = userDefaults.double(forKey: "userOptimalWeight")
+      userTargetWeight = userDefaults.double(forKey: "userTargetWeight")
       userRecommendedCalories = userDefaults.integer(forKey: "userRecommendedCalories")
     }
   }

@@ -247,6 +247,8 @@ private struct ProductData: Codable {
   let ingredients: [String]
   let healthRating: Int
   let imageId: String
+  let addedSugarTsp: Float
+  let extras: [String: Int]
 
   init(from product: Product) {
     time = product.time
@@ -256,6 +258,8 @@ private struct ProductData: Codable {
     ingredients = product.ingredients
     healthRating = product.healthRating
     imageId = product.imageId
+    addedSugarTsp = product.addedSugarTsp
+    extras = product.extras
   }
 
   func toProduct() -> Product {
@@ -266,7 +270,9 @@ private struct ProductData: Codable {
       weight: weight,
       ingredients: ingredients,
       healthRating: healthRating,
-      imageId: imageId
+      imageId: imageId,
+      addedSugarTsp: addedSugarTsp,
+      extras: extras
     )
   }
 }
