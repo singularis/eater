@@ -699,65 +699,23 @@ struct ContentView: View {
     // Prevent multiple simultaneous data fetches
     guard !isFetchingData else { return }
 
+    // Always show loading on start
+    isLoadingData = true
+    isFetchingData = true
+
     // Try to load cached data first for instant display
-    if let (cachedProducts, cachedCalories, cachedWeight) = ProductStorageService.shared
-      .getCachedDataIfFresh()
-    {
-      // Update UI immediately with cached data
+    let (cachedProducts, cachedCalories, cachedWeight) = ProductStorageService.shared.loadProducts()
+    if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
       products = FoodExtrasStore.shared.apply(to: cachedProducts)
       caloriesLeft = cachedCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
       personWeight = cachedWeight
-
-      // Check if cache is relatively recent (less than 30 minutes)
-      if !ProductStorageService.shared.isDataStale(maxAgeMinutes: 30) {
-        // Cache is very fresh, no need to show loading or fetch new data
-        return
-      }
-
-      // Cache is fresh but getting older, refresh in background without loading indicator
-      isFetchingData = true
-      ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) {
-        fetchedProducts, calories, weight in
-        DispatchQueue.main.async {
-          let previousWeight = self.personWeight
-          self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
-          FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
-          self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
-          self.personWeight = weight
-          self.isFetchingData = false
-
-          // Recalculate calories if weight changed and user has health data
-          let userDefaults = UserDefaults.standard
-          if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-            self.recalculateCalorieLimitsFromHealthData()
-            self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
-          }
-          self.refreshMacrosForCurrentView()
-        }
-      }
-      return
-    }
-
-    // No fresh cache available - try fallback to slightly stale data while loading
-    if let (fallbackProducts, fallbackCalories, fallbackWeight) = ProductStorageService.shared
-      .getCachedDataAsFallback()
-    {
-      // Show stale data immediately for better UX
-      products = FoodExtrasStore.shared.apply(to: fallbackProducts)
-      caloriesLeft = fallbackCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
-      personWeight = fallbackWeight
-
-      // Show a subtle loading indicator since we're using stale data
-      isLoadingData = true
-    } else {
-      // No cached data at all, show full loading
-      isLoadingData = true
+      refreshMacrosForCurrentView()
     }
 
     // Check if we're viewing a custom date - if so, fetch that specific date
     if isViewingCustomDate && !currentViewingDateString.isEmpty {
-      ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: currentViewingDateString) {
-        fetchedProducts, calories, weight in
+      ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: currentViewingDateString) { 
+        (fetchedProducts, calories, weight) in
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
           self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
@@ -779,8 +737,8 @@ struct ContentView: View {
     }
 
     // Fetch fresh data from network (for today)
-    isFetchingData = true
-    ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
+    // FORCE refresh so we actually use the network and show the loading state
+    ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) { (fetchedProducts, calories, weight) in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
         self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)

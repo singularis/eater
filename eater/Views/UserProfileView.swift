@@ -394,24 +394,23 @@ struct UserProfileView: View {
                 .background(useDevEnvironment ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
                 .cornerRadius(8)
                 .onChange(of: useDevEnvironment) { _, newValue in
-                  print("Environment changed to \(newValue ? "DEV" : "PROD"), clearing and refetching local chess data")
+                  print("Environment changed to \(newValue ? "DEV" : "PROD")")
                   
-                  let keys = [
+                  // Clear caches that depend on the backend environment
+                  ProductStorageService.shared.clearCache()
+                  StatisticsService.shared.clearExpiredCache()
+                  
+                  // Clear local chess data so we don't mix environments
+                  let chessKeys = [
                     "chessTotalWins", "chessOpponents", "lastChessDate",
                     "chessWinsStartOfDay", "chessOpponentsStartOfDay",
-                    "chessPlayerName", "chessOpponentName", "chessOpponentEmail"
+                    "chessOpponentName", "chessOpponentEmail"
                   ]
-                  keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+                  chessKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
                   
-                  GRPCService().getAllChessData { success, totalWins, opponents in
-                    if success {
-                      UserDefaults.standard.set(totalWins, forKey: "chessTotalWins")
-                      
-                      if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
-                         let jsonString = String(data: jsonData, encoding: .utf8) {
-                        UserDefaults.standard.set(jsonString, forKey: "chessOpponents")
-                      }
-                    }
+                  // Notify all views (including ActivitiesView) about the environment change
+                  DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    NotificationCenter.default.post(name: NSNotification.Name("EnvironmentChanged"), object: nil)
                   }
                 }
               }
@@ -572,6 +571,14 @@ struct UserProfileView: View {
   private func logout() {
     // Clear statistics cache before logging out
     StatisticsService.shared.clearCache()
+    
+    // Clear chess data (ActivitiesView AppStorage) so it doesn't persist to other accounts/environments
+    let chessKeys = [
+      "chessTotalWins", "chessOpponents", "lastChessDate",
+      "chessWinsStartOfDay", "chessOpponentsStartOfDay",
+      "chessOpponentName", "chessOpponentEmail"
+    ]
+    chessKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
 
     // Sign out user and clear local data
     authService.signOut()

@@ -59,7 +59,7 @@ class GRPCService {
       return
     }
 
-    sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
+    sendRequest(request: request, retriesLeft: 0) { data, _, error in
       if error != nil {
         completion([], 0, 0)
         return
@@ -1004,5 +1004,152 @@ class GRPCService {
       }
     }
   }
-}
 
+  // MARK: - Chess
+
+  /// Record a chess game and synchronize with opponent
+  func recordChessGame(
+    playerEmail: String,
+    opponentEmail: String,
+    result: String,
+    completion: @escaping (Bool, String?, String?) -> Void
+  ) {
+    let requestDict: [String: Any] = [
+      "player_email": playerEmail,
+      "opponent_email": opponentEmail,
+      "result": result,
+      "timestamp": Int64(Date().timeIntervalSince1970 * 1000)
+    ]
+    
+    guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
+      completion(false, nil, nil)
+      return
+    }
+    
+    guard var urlRequest = createRequest(endpoint: "record_chess_game", httpMethod: "POST", body: body) else {
+      completion(false, nil, nil)
+      return
+    }
+    
+    urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, nil, nil)
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, nil, nil)
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, nil, nil)
+          return
+        }
+        
+        if let success = responseDict["success"] as? Bool, success {
+          let playerWins = responseDict["player_wins"] as? Int ?? 0
+          let playerLosses = responseDict["player_losses"] as? Int ?? 0
+          let opponentWins = responseDict["opponent_wins"] as? Int ?? 0
+          let opponentLosses = responseDict["opponent_losses"] as? Int ?? 0
+          
+          completion(true, "\(playerWins):\(playerLosses)", "\(opponentWins):\(opponentLosses)")
+        } else {
+          completion(false, nil, nil)
+        }
+      } catch {
+        completion(false, nil, nil)
+      }
+    }
+  }
+  
+  /// Get chess statistics for current user
+  func getChessStats(
+    userEmail: String,
+    opponentEmail: String? = nil,
+    completion: @escaping (Bool, String?, String?, String?) -> Void
+  ) {
+    var requestDict: [String: Any] = ["user_email": userEmail]
+    if let opponent = opponentEmail {
+      requestDict["opponent_email"] = opponent
+    }
+    
+    guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
+      completion(false, nil, nil, nil)
+      return
+    }
+    
+    guard var urlRequest = createRequest(endpoint: "autocomplete/get_chess_stats", httpMethod: "POST", body: body) else {
+      completion(false, nil, nil, nil)
+      return
+    }
+    
+    urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, nil, nil, nil)
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, nil, nil, nil)
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, nil, nil, nil)
+          return
+        }
+        
+        let score = responseDict["score"] as? String ?? "0:0"
+        let opponentName = responseDict["opponent_name"] as? String
+        let lastGameDate = responseDict["last_game_date"] as? String
+        
+        completion(true, score, opponentName, lastGameDate)
+      } catch {
+        completion(false, nil, nil, nil)
+      }
+    }
+  }
+  
+  /// Get all chess data (total wins + all opponent scores)
+  func getAllChessData(
+    completion: @escaping (Bool, Int, [String: String]) -> Void
+  ) {
+    guard let urlRequest = createRequest(endpoint: "autocomplete/get_all_chess_data", httpMethod: "GET") else {
+      completion(false, 0, [:])
+      return
+    }
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, 0, [:])
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, 0, [:])
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, 0, [:])
+          return
+        }
+        
+        let totalWins = responseDict["total_wins"] as? Int ?? 0
+        let opponents = responseDict["opponents"] as? [String: String] ?? [:]
+        
+        completion(true, totalWins, opponents)
+      } catch {
+        completion(false, 0, [:])
+      }
+    }
+  }
+}

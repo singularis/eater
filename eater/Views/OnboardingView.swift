@@ -405,6 +405,7 @@ struct OnboardingView: View {
             PetMoodBubble(imageName: "british_cat_happy", label: loc("onboarding.pets.mood.happy", "Happy"))
             PetMoodBubble(imageName: "british_cat_gym", label: loc("onboarding.pets.mood.gym", "Gym"))
             PetMoodBubble(imageName: "british_cat_bad_food", label: loc("onboarding.pets.mood.upset", "Upset"))
+            PetMoodBubble(imageName: "british_cat_hiss", label: loc("onboarding.pets.mood.fault", "Fault"))
             PetMoodBubble(imageName: "british_cat_alcohol", label: loc("onboarding.pets.mood.alcohol_tracking", "Alcohol"))
             Spacer()
           }
@@ -469,6 +470,7 @@ struct OnboardingView: View {
             PetMoodBubble(imageName: "french_bulldog_happy", label: loc("onboarding.pets.mood.happy", "Happy"))
             PetMoodBubble(imageName: "french_bulldog_gym", label: loc("onboarding.pets.mood.gym", "Gym"))
             PetMoodBubble(imageName: "french_bulldog_bad_food", label: loc("onboarding.pets.mood.upset", "Upset"))
+            PetMoodBubble(imageName: "french_bulldog_growl", label: loc("onboarding.pets.mood.fault", "Fault"))
             PetMoodBubble(imageName: "french_bulldog_alcohol", label: loc("onboarding.pets.mood.alcohol_tracking", "Alcohol"))
             Spacer()
           }
@@ -502,6 +504,61 @@ struct OnboardingView: View {
         .overlay(
           RoundedRectangle(cornerRadius: 18)
             .stroke(themeService.currentMascot == .dog ? AppTheme.accent : Color.clear, lineWidth: 2)
+        )
+        .padding(.horizontal, 20)
+
+        // --- Default / No Pet ---
+        VStack(spacing: 12) {
+          HStack(spacing: 10) {
+            Image(systemName: "star.fill") // Icon for default
+                .resizable()
+                .scaledToFit()
+                .frame(width: 32, height: 32)
+                .foregroundColor(.orange)
+                .padding(12)
+                .background(Color.orange.opacity(0.1))
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 4) {
+              Text(loc("onboarding.pets.default.title", "Default Style"))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(AppTheme.textPrimary)
+              Text(loc("onboarding.pets.default.desc", "Clean and simple. Standard icons without pet reactions."))
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(AppTheme.textSecondary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+          }
+          
+          Button(action: {
+            HapticsService.shared.select()
+            themeService.currentMascot = .none
+          }) {
+            Text(themeService.currentMascot == .none
+              ? loc("onboarding.pets.default.chosen", "You chose Default! ✨")
+              : loc("onboarding.pets.default.choose", "Choose for a simple look"))
+              .font(.system(size: 15, weight: .semibold, design: .rounded))
+              .foregroundColor(themeService.currentMascot == .none ? .white : AppTheme.textPrimary)
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 10)
+              .background(
+                themeService.currentMascot == .none
+                  ? AnyShapeStyle(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
+                  : AnyShapeStyle(AppTheme.surfaceAlt)
+              )
+              .cornerRadius(14)
+          }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+          RoundedRectangle(cornerRadius: 18)
+            .stroke(themeService.currentMascot == .none ? Color.orange : Color.clear, lineWidth: 2)
         )
         .padding(.horizontal, 20)
 

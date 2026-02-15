@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 enum ActivityType {
   case chess
@@ -28,6 +29,9 @@ struct ActivitiesView: View {
   @State private var selectedActivityType: ActivityType = .treadmill
   @State private var inputValue = ""
   @State private var pendingGameResult: String = "" // "me", "draw", or "opponent"
+  @State private var isSyncingChess = false
+  @State private var showChessHistory = false
+  @State private var cachedFriends: [(email: String, nickname: String)]? = nil
   
   var body: some View {
     NavigationView {
@@ -111,22 +115,19 @@ struct ActivitiesView: View {
             chessOpponentEmail = opponentEmail
             showOpponentPicker = false
             recordChessGame(winner: pendingGameResult)
-          }
+          },
+          initialFriends: cachedFriends
         )
       }
       .sheet(isPresented: $showActivityInputSheet) {
         activityInputSheet
       }
       .onAppear {
-        print("🎮 ActivitiesView appeared")
-        print("🎮 chessTotalWins: \(chessTotalWins)")
-        print("🎮 chessOpponents: \(chessOpponents)")
-        
         // Initialize player name if not set
         if chessPlayerName.isEmpty {
           if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
             chessPlayerName = nickname
-          } else if let email = UserDefaults.standard.string(forKey: "currentUserEmail") {
+          } else if let email = UserDefaults.standard.string(forKey: "user_email") {
             chessPlayerName = email.components(separatedBy: "@").first ?? email
           }
         }
@@ -134,16 +135,22 @@ struct ActivitiesView: View {
         // Migration: Clean up old score system (ONE TIME ONLY)
         let migrationKey = "chessLeagueMigrationDone"
         if !UserDefaults.standard.bool(forKey: migrationKey) {
-          print("🎮 Running migration cleanup...")
-          // Just remove old keys, don't reset new system
           UserDefaults.standard.removeObject(forKey: "chessScore")
           UserDefaults.standard.removeObject(forKey: "chessScoreStartOfDay")
           UserDefaults.standard.set(true, forKey: migrationKey)
-          print("🎮 Migration done, keeping chessTotalWins=\(chessTotalWins)")
         }
+        
+        // Pre-fetch friends list for chess opponent picker (cache it)
+        prefetchFriends()
         
         // Sync chess data from backend (only if it has data or we have no local data)
         syncChessDataFromBackend()
+      }
+      .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("EnvironmentChanged"))) { _ in
+        resetChessDataForEnvironmentSwitch()
+      }
+      .sheet(isPresented: $showChessHistory) {
+        ChessOpponentsHistoryView(opponentsJSON: chessOpponents, isPresented: $showChessHistory)
       }
     }
   }
@@ -224,10 +231,41 @@ struct ActivitiesView: View {
           .font(.title3.bold())
           .foregroundColor(AppTheme.textPrimary)
         
+        Button(action: {
+          HapticsService.shared.select()
+          showChessHistory = true
+        }) {
+          Image(systemName: "clock.arrow.circlepath")
+            .font(.caption)
+          Text(Localization.shared.tr("activities.chess.history", default: "History"))
+            .font(.caption.bold())
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(8)
+        .foregroundColor(.blue)
+        
         Spacer()
+        
+        if isSyncingChess {
+          ProgressView()
+            .scaleEffect(0.8)
+        }
+        
+        // Environment indicator
+        if AppEnvironment.useDevEnvironment {
+          Text("DEV")
+            .font(.system(size: 9, weight: .heavy))
+            .foregroundColor(.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Color.red)
+            .cornerRadius(4)
+        }
       }
       
-      // Total Wins and League ("Перемог: 1")
+      // Total Wins and League
       VStack(spacing: 8) {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
           Text(Localization.shared.tr("activities.chess.wins_label", default: "Wins:"))
@@ -247,17 +285,64 @@ struct ActivitiesView: View {
           .cornerRadius(12)
       }
       
-      // Current Opponent Score (if exists)
+      // Current / Last Opponent Score (clearer W-L format)
       if !chessOpponentName.isEmpty, !chessOpponentEmail.isEmpty,
          let opponentScore = getOpponentScore(chessOpponentEmail) {
-        VStack(spacing: 4) {
+        let parts = opponentScore.split(separator: ":")
+        let myW = parts.count == 2 ? String(parts[0]) : "0"
+        let opW = parts.count == 2 ? String(parts[1]) : "0"
+        
+        VStack(spacing: 6) {
           Text("\(Localization.shared.tr("activities.chess.vs", default: "vs")) \(chessOpponentName)")
             .font(.caption)
             .foregroundColor(AppTheme.textSecondary)
-          Text(opponentScore)
-            .font(.subheadline.bold())
-            .foregroundColor(AppTheme.textPrimary)
+          
+          HStack(spacing: 12) {
+            VStack(spacing: 2) {
+              Text(myW)
+                .font(.title2.bold())
+                .foregroundColor(.green)
+              Text(Localization.shared.tr("activities.chess.wins_short", default: "W"))
+                .font(.caption2)
+                .foregroundColor(AppTheme.textSecondary)
+            }
+            
+            Text("—")
+              .font(.title3)
+              .foregroundColor(AppTheme.textSecondary)
+            
+            VStack(spacing: 2) {
+              Text(opW)
+                .font(.title2.bold())
+                .foregroundColor(.red)
+              Text(Localization.shared.tr("activities.chess.losses_short", default: "L"))
+                .font(.caption2)
+                .foregroundColor(AppTheme.textSecondary)
+            }
+          }
+          
+          // Quick rematch button
+          Button(action: {
+            HapticsService.shared.select()
+            showChessWinnerSheet = true
+          }) {
+            HStack(spacing: 4) {
+              Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.system(size: 12))
+              Text(Localization.shared.tr("activities.chess.rematch", default: "Rematch"))
+                .font(.caption.bold())
+            }
+            .foregroundColor(.purple)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(Color.purple.opacity(0.12))
+            .cornerRadius(10)
+          }
         }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 12)
+        .background(AppTheme.surface.opacity(0.5))
+        .cornerRadius(12)
       }
       
       if !lastChessDate.isEmpty {
@@ -352,7 +437,9 @@ struct ActivitiesView: View {
           Button(action: { 
             pendingGameResult = "me"
             showChessWinnerSheet = false
-            showOpponentPicker = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showOpponentPicker = true
+            }
           }) {
             VStack {
               Image(systemName: "person.fill")
@@ -372,7 +459,9 @@ struct ActivitiesView: View {
           Button(action: { 
             pendingGameResult = "draw"
             showChessWinnerSheet = false
-            showOpponentPicker = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showOpponentPicker = true
+            }
           }) {
             VStack {
               Image(systemName: "equal")
@@ -392,7 +481,9 @@ struct ActivitiesView: View {
           Button(action: { 
             pendingGameResult = "opponent"
             showChessWinnerSheet = false
-            showOpponentPicker = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showOpponentPicker = true
+            }
           }) {
             VStack {
               Image(systemName: "person.2.fill")
@@ -619,14 +710,10 @@ struct ActivitiesView: View {
   private func recordChessGame(winner: String) {
     let today = getCurrentUTCDateString()
     
-    print("🎮 Recording chess game: winner=\(winner), opponent=\(chessOpponentName)")
-    print("🎮 Before: chessTotalWins=\(chessTotalWins)")
-    
     // If this is the first game today, save current state as "start of day"
     if lastChessDate != today {
       chessWinsStartOfDay = chessTotalWins
       chessOpponentsStartOfDay = chessOpponents
-      print("🎮 New day! Saved start of day: wins=\(chessWinsStartOfDay), opponents=\(chessOpponentsStartOfDay)")
     }
     
     // Get current opponent's score
@@ -638,35 +725,27 @@ struct ActivitiesView: View {
         myWins = Int(components[0]) ?? 0
         opponentWins = Int(components[1]) ?? 0
       }
-      print("🎮 Current score vs \(chessOpponentName) (\(chessOpponentEmail)): \(myWins):\(opponentWins)")
     }
     
     // Check for league promotion BEFORE updating
     let oldLeague = getLeague()
     
     // Update scores
-    print("🎮 BEFORE update: chessTotalWins=\(chessTotalWins)")
     switch winner {
     case "me":
       myWins += 1
       chessTotalWins += 1
-      print("🎮 ✅ I won! myWins=\(myWins), chessTotalWins=\(chessTotalWins)")
     case "opponent":
       opponentWins += 1
-      print("🎮 Opponent won! opponentWins=\(opponentWins), chessTotalWins=\(chessTotalWins)")
     case "draw":
-      print("🎮 Draw! chessTotalWins=\(chessTotalWins)")
       break
     default:
       break
     }
-    print("🎮 AFTER update: chessTotalWins=\(chessTotalWins)")
     
     // Save opponent score locally
     if !chessOpponentEmail.isEmpty {
       updateOpponentScore(chessOpponentEmail, myWins: myWins, opponentWins: opponentWins)
-      print("🎮 Updated opponent score for \(chessOpponentEmail): \(myWins):\(opponentWins)")
-      print("🎮 All opponents: \(chessOpponents)")
     }
     
     lastChessDate = today
@@ -675,7 +754,7 @@ struct ActivitiesView: View {
     showChessWinnerSheet = false
     
     // Sync with backend
-    if let playerEmail = UserDefaults.standard.string(forKey: "currentUserEmail"),
+    if let playerEmail = UserDefaults.standard.string(forKey: "user_email"),
        !chessOpponentEmail.isEmpty {
       let backendResult: String
       switch winner {
@@ -685,22 +764,11 @@ struct ActivitiesView: View {
       default: backendResult = "draw"
       }
       
-      print("🎮 Syncing with backend: \(playerEmail) vs \(chessOpponentEmail), result=\(backendResult)")
-      
       GRPCService().recordChessGame(
         playerEmail: playerEmail,
         opponentEmail: chessOpponentEmail,
         result: backendResult
-      ) { success, playerScore, opponentScore in
-        if success {
-          print("✅ Backend sync successful: player=\(playerScore ?? "?"), opponent=\(opponentScore ?? "?")")
-          // Note: Not reloading from backend to preserve local state
-        } else {
-          print("⚠️ Backend sync failed, but local data saved")
-        }
-      }
-    } else {
-      print("⚠️ Cannot sync to backend: missing player or opponent email")
+      ) { _, _, _ in }
     }
     
     // Notify ContentView to update sport icon
@@ -713,10 +781,6 @@ struct ActivitiesView: View {
     // Check for league promotion
     let newLeague = getLeague()
     let wasPromoted = (newLeague != oldLeague && winner == "me")
-    
-    if wasPromoted {
-      print("🎉 PROMOTION! Old: \(oldLeague) → New: \(newLeague) (Total wins: \(chessTotalWins))")
-    }
     
     let message: String
     switch winner {
@@ -775,14 +839,9 @@ struct ActivitiesView: View {
     // Only reset if there were games today
     guard lastChessDate == getCurrentUTCDateString() else { return }
     
-    print("🎮 Resetting today's chess games")
-    print("🎮 Before reset: wins=\(chessTotalWins), opponents=\(chessOpponents)")
-    
     // Restore wins and opponent scores to start of day
     chessTotalWins = chessWinsStartOfDay
     chessOpponents = chessOpponentsStartOfDay
-    
-    print("🎮 After reset: wins=\(chessTotalWins), opponents=\(chessOpponents)")
     
     // Get yesterday's date
     let calendar = Calendar.current
@@ -819,36 +878,62 @@ struct ActivitiesView: View {
   // MARK: - Sync Chess Data
   
   private func syncChessDataFromBackend() {
-    print("🎮 Syncing chess data from backend...")
-    print("🎮 Current local state: totalWins=\(chessTotalWins), opponents=\(chessOpponents)")
+    guard !isSyncingChess else { return }
+    isSyncingChess = true
     
     GRPCService().getAllChessData { success, totalWins, opponents in
-      if success {
-        print("🎮 Backend response: totalWins=\(totalWins), opponents=\(opponents)")
+      DispatchQueue.main.async {
+        self.isSyncingChess = false
         
-        DispatchQueue.main.async {
+        if success {
           let hasBackendData = totalWins > 0 || !opponents.isEmpty
-          let hasLocalData = self.chessTotalWins > 0 || self.chessOpponents != "{}"
           
           if hasBackendData {
-            // Backend has data - use it
-            print("🎮 ✅ Backend has data, updating from backend")
             self.chessTotalWins = totalWins
             
             if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
                let jsonString = String(data: jsonData, encoding: .utf8) {
               self.chessOpponents = jsonString
             }
-          } else if hasLocalData {
-            // Backend empty but we have local data - KEEP local
-            print("🎮 ⚠️ Backend empty, keeping local data: totalWins=\(self.chessTotalWins)")
-          } else {
-            // Both empty
-            print("🎮 Both backend and local empty")
+          } else if self.chessTotalWins == 0 && self.chessOpponents == "{}" {
+            self.chessTotalWins = 0
+            self.chessOpponents = "{}"
           }
         }
-      } else {
-        print("⚠️ Failed to connect to backend, keeping local data")
+      }
+    }
+  }
+  
+  // MARK: - Environment Switch Support
+  
+  private func resetChessDataForEnvironmentSwitch() {
+    
+    // Reset all chess-related @AppStorage values to defaults
+    chessTotalWins = 0
+    chessOpponents = "{}"
+    lastChessDate = ""
+    chessWinsStartOfDay = 0
+    chessOpponentsStartOfDay = "{}"
+    chessOpponentName = ""
+    chessOpponentEmail = ""
+    // Keep chessPlayerName - it's the user's own name
+    
+    // Clear friends cache (friends list may differ per environment)
+    cachedFriends = nil
+    
+    // Re-sync from the new environment's backend
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      self.syncChessDataFromBackend()
+      self.prefetchFriends()
+    }
+  }
+  
+  // MARK: - Friends Cache
+  
+  private func prefetchFriends() {
+    GRPCService().getFriends(offset: 0, limit: 100) { fetchedFriends, _ in
+      DispatchQueue.main.async {
+        self.cachedFriends = fetchedFriends
       }
     }
   }
