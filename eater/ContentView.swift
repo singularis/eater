@@ -33,6 +33,7 @@ struct ContentView: View {
   @State private var currentViewingDateString = ""  // Original format dd-MM-yyyy
   @State private var showRecommendation = false
   @State private var recommendationText = ""
+  @State private var showStatistics = false
   // Alcohol states
   @State private var showAlcoholCalendar = false
   @State private var alcoholIconColor: Color = .green
@@ -130,6 +131,15 @@ struct ContentView: View {
           }
         )
         .padding(.top, 0)
+        .gesture(
+          DragGesture(minimumDistance: 50, coordinateSpace: .local)
+            .onEnded { value in
+              if value.translation.width > 50 && abs(value.translation.height) < abs(value.translation.width) {
+                HapticsService.shared.select()
+                showStatistics = true
+              }
+            }
+        )
 
         cameraButtonView
           .padding(.top, 10)
@@ -204,6 +214,9 @@ struct ContentView: View {
       }
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
+      }
+      .sheet(isPresented: $showStatistics) {
+        StatisticsView(isPresented: $showStatistics)
       }
       .sheet(isPresented: $showCalendarPicker) {
         CalendarDatePickerView(

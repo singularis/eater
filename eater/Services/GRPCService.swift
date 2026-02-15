@@ -1117,6 +1117,49 @@ class GRPCService {
     }
   }
   
+  /// Get chess history (list of past games)
+  /// - Parameters:
+  ///   - limit: Number of games to fetch (default 50)
+  ///   - offset: Offset for pagination (default 0)
+  ///   - completion: Callback with success flag, total count, and list of games
+  func getChessHistory(
+    limit: Int = 50,
+    offset: Int = 0,
+    completion: @escaping (Bool, Int, [[String: Any]]) -> Void
+  ) {
+    let endpoint = "autocomplete/get_chess_history?limit=\(limit)&offset=\(offset)"
+    guard let urlRequest = createRequest(endpoint: endpoint, httpMethod: "GET") else {
+      completion(false, 0, [])
+      return
+    }
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, 0, [])
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, 0, [])
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, 0, [])
+          return
+        }
+        
+        let total = responseDict["total"] as? Int ?? 0
+        let games = responseDict["games"] as? [[String: Any]] ?? []
+        
+        completion(true, total, games)
+      } catch {
+        completion(false, 0, [])
+      }
+    }
+  }
+
   /// Get all chess data (total wins + all opponent scores)
   func getAllChessData(
     completion: @escaping (Bool, Int, [String: String]) -> Void
@@ -1144,9 +1187,22 @@ class GRPCService {
         }
         
         let totalWins = responseDict["total_wins"] as? Int ?? 0
-        let opponents = responseDict["opponents"] as? [String: String] ?? [:]
         
-        completion(true, totalWins, opponents)
+        // Handle both old (String) and new (Object) formats for opponents
+        var simpleOpponents: [String: String] = [:]
+        
+        if let rawOpponents = responseDict["opponents"] as? [String: Any] {
+          for (email, value) in rawOpponents {
+            if let scoreStr = value as? String {
+              simpleOpponents[email] = scoreStr
+            } else if let detailedObj = value as? [String: Any],
+                      let scoreStr = detailedObj["score"] as? String {
+              simpleOpponents[email] = scoreStr
+            }
+          }
+        }
+        
+        completion(true, totalWins, simpleOpponents)
       } catch {
         completion(false, 0, [:])
       }

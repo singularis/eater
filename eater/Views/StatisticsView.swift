@@ -6,11 +6,11 @@ struct StatisticsView: View {
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
-  @State private var selectedChart: ChartType = .insights
+  @AppStorage("selectedChartType") private var selectedChart: ChartType = .insights
 
   private let statisticsService = StatisticsService.shared
 
-  enum ChartType: CaseIterable {
+  enum ChartType: String, CaseIterable {
     case insights
     case calories
     case macros
