@@ -38,6 +38,34 @@ class AlertHelper {
     "Added sugars": "health.phrase.added_sugars",
     "Healthy fats": "health.phrase.healthy_fats",
     "Good protein source": "health.phrase.protein_source",
+    // Ingredients (so modal uses app language)
+    "Broccoli": "health.phrase.broccoli",
+    "Carrot": "health.phrase.carrot",
+    "Green bean": "health.phrase.green_bean",
+    "Potato": "health.phrase.potato",
+    "Vegetable oil": "health.phrase.vegetable_oil",
+    "Salt": "health.phrase.salt",
+    "Vegetables in general": "health.phrase.vegetables_general",
+    "Lots of fiber and vitamins, but there is oil and salt.": "health.phrase.fiber_vitamins_oil_salt",
+    "Antioxidants": "health.phrase.antioxidants",
+    "Vision and skin": "health.phrase.vision_skin",
+    "Vitamin A beta carotene": "health.phrase.vitamin_a_beta_carotene",
+    "Vitamins C K folate": "health.phrase.vitamins_c_k_folate",
+    "Satiety": "health.phrase.satiety",
+    "Fiber folate vitamin C": "health.phrase.fiber_folate_vitamin_c",
+    "Energy": "health.phrase.energy",
+    "Potassium carbohydrates for energy": "health.phrase.potassium_carbs_energy",
+    "Excess calories": "health.phrase.excess_calories",
+    "High calorie content": "health.phrase.high_calorie",
+    "Excess salt": "health.phrase.excess_salt",
+    "May increase sodium": "health.phrase.may_increase_sodium",
+    // Lowercase variants from API
+    "broccoli": "health.phrase.broccoli",
+    "carrot": "health.phrase.carrot",
+    "green bean": "health.phrase.green_bean",
+    "potato": "health.phrase.potato",
+    "vegetable oil": "health.phrase.vegetable_oil",
+    "salt": "health.phrase.salt",
   ]
 
   /// Translates health/ingredient text from API (English) to current app language when we have a key
@@ -406,9 +434,9 @@ class AlertHelper {
     shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
     alert.addAction(shareAction)
 
-    // Additional extras: not for fruit/vegetable; tap "Additional" to open submenu
+    // Additives extras: not for fruit/vegetable; tap "Additives" to open submenu
     if !isFruitOrVegetable {
-      let additionalTitle = loc("portion.additional", "Additional")
+      let additionalTitle = loc("portion.additional", "Additives")
       let additionalAction = UIAlertAction(title: additionalTitle, style: .default) { _ in
           // Present a second alert (submenu) with extra options
           let additionalAlert = UIAlertController(
@@ -458,7 +486,7 @@ class AlertHelper {
             rootViewController.present(additionalAlert, animated: true)
           }
         }
-      // Yellow text for "Additional" (darker in Light Mode for readability)
+      // Yellow text for "Additives" (darker in Light Mode for readability)
       let additionalTitleColor = UIColor { traits in
         if traits.userInterfaceStyle == .dark {
           return UIColor.systemYellow

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct OnboardingStep {
   let title: String
@@ -30,6 +31,7 @@ struct OnboardingView: View {
   @State private var selectedLanguageDisplay: String = ""
   @State private var selectedLanguageCode: String = ""
   @State private var isApplyingLanguage: Bool = false
+  @State private var showFeedback: Bool = false
   
   // Nickname State
   @AppStorage("user_nickname") private var savedNickname: String = ""
@@ -89,16 +91,28 @@ struct OnboardingView: View {
               icon: "pawprint.fill"
             ),
             OnboardingStep(
+              title: loc("onboarding.plan.title", "Your Personal Plan 🎯"),
+              description: loc("onboarding.plan.desc", "See how your goal and activity level turn into a safe, realistic plan."),
+              anchor: "plan",
+              icon: "target"
+            ),
+            OnboardingStep(
+              title: loc("onboarding.plates.title", "Balanced Plate and Score"),
+              description: loc("onboarding.plates.desc", "See how a balanced plate leads to a higher health score."),
+              anchor: "balanced_plate",
+              icon: "leaf.circle.fill"
+            ),
+            OnboardingStep(
               title: loc("onboarding.new_features.title", "New Features ✨"),
               description: loc("onboarding.new_features.subtitle", "Powerful tools to make your tracking even better."),
               anchor: "smart_tips",
               icon: "sparkles"
             ),
             OnboardingStep(
-              title: loc("onboarding.features.title", "All in one Tracker 🚀"),
-              description: loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI."),
-              anchor: "features",
-              icon: "square.stack.3d.up.fill"
+              title: loc("onboarding.team.title", "Let's Build Eateria Together"),
+              description: loc("onboarding.team.desc", "We'd love to grow with you."),
+              anchor: "team",
+              icon: "heart.circle.fill"
             ),
             OnboardingStep(
               title: loc("disc.title", "Health Information Disclaimer"),
@@ -166,12 +180,24 @@ struct OnboardingView: View {
         return AnyView(petThemeStepView)
     }
     
+    if step.anchor == "plan" {
+        return AnyView(planStepView)
+    }
+    
+    if step.anchor == "balanced_plate" {
+        return AnyView(balancedPlateStepView)
+    }
+    
     if step.anchor == "smart_tips" {
         return AnyView(smartTipsStepView)
     }
     
     if step.anchor == "language" {
         return AnyView(languageSelectionView)
+    }
+    
+    if step.anchor == "team" {
+        return AnyView(teamStepView)
     }
     
     if step.anchor == "features" {
@@ -405,7 +431,6 @@ struct OnboardingView: View {
             PetMoodBubble(imageName: "british_cat_happy", label: loc("onboarding.pets.mood.happy", "Happy"))
             PetMoodBubble(imageName: "british_cat_gym", label: loc("onboarding.pets.mood.gym", "Gym"))
             PetMoodBubble(imageName: "british_cat_bad_food", label: loc("onboarding.pets.mood.upset", "Upset"))
-            PetMoodBubble(imageName: "british_cat_hiss", label: loc("onboarding.pets.mood.fault", "Fault"))
             PetMoodBubble(imageName: "british_cat_alcohol", label: loc("onboarding.pets.mood.alcohol_tracking", "Alcohol"))
             Spacer()
           }
@@ -470,7 +495,6 @@ struct OnboardingView: View {
             PetMoodBubble(imageName: "french_bulldog_happy", label: loc("onboarding.pets.mood.happy", "Happy"))
             PetMoodBubble(imageName: "french_bulldog_gym", label: loc("onboarding.pets.mood.gym", "Gym"))
             PetMoodBubble(imageName: "french_bulldog_bad_food", label: loc("onboarding.pets.mood.upset", "Upset"))
-            PetMoodBubble(imageName: "french_bulldog_growl", label: loc("onboarding.pets.mood.fault", "Fault"))
             PetMoodBubble(imageName: "french_bulldog_alcohol", label: loc("onboarding.pets.mood.alcohol_tracking", "Alcohol"))
             Spacer()
           }
@@ -596,6 +620,43 @@ struct OnboardingView: View {
     }
   }
 
+  private func featureCard(
+    icon: String,
+    iconColor: Color,
+    titleKey: String,
+    titleDefault: String,
+    descKey: String,
+    descDefault: String
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 10) {
+        ZStack {
+          Circle()
+            .fill(iconColor.opacity(0.12))
+            .frame(width: 44, height: 44)
+          Image(systemName: icon)
+            .font(.system(size: 20))
+            .foregroundColor(iconColor)
+        }
+        Text(loc(titleKey, titleDefault))
+          .font(.system(size: 18, weight: .bold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+      }
+      Text(loc(descKey, descDefault))
+        .font(.system(size: 14, weight: .regular, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+        .lineSpacing(3)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(14)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(AppTheme.surface)
+    .cornerRadius(18)
+    .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+    .padding(.horizontal, 20)
+  }
+
   private var smartTipsStepView: some View {
     ScrollView(showsIndicators: false) {
       VStack(spacing: 18) {
@@ -614,98 +675,237 @@ struct OnboardingView: View {
           .lineSpacing(3)
           .padding(.horizontal, 24)
 
-        // --- 1. Try Manually ---
-        VStack(spacing: 10) {
-          HStack(spacing: 10) {
-            ZStack {
-              Circle()
-                .fill(Color.blue.opacity(0.12))
-                .frame(width: 44, height: 44)
-              Image(systemName: "hand.tap.fill")
-                .font(.system(size: 20))
-                .foregroundColor(.blue)
-            }
-            Text(loc("onboarding.tips.try_manual.title", "Try Manually"))
-              .font(.system(size: 18, weight: .bold, design: .rounded))
-              .foregroundColor(AppTheme.textPrimary)
-            Spacer()
-          }
+        // --- 1. Try Manually (finger tap icon, orange) ---
+        featureCard(
+          icon: "hand.tap.fill",
+          iconColor: .orange,
+          titleKey: "onboarding.tips.try_manual.title",
+          titleDefault: "Try Manually",
+          descKey: "onboarding.tips.try_manual.desc",
+          descDefault: "If you want to enter a dish manually, tap \"Try manually\". The app will then:\n\n• automatically recalculate calories\n• automatically update the health score"
+        )
 
-          Text(loc("onboarding.tips.try_manual.desc", "If the AI recognized a dish differently from what you actually ate, just tap on it and select \"Try manually\". You can then type the correct food name, adjust the portion, or update ingredients. The app will recalculate everything for you."))
-            .font(.system(size: 14, weight: .regular, design: .rounded))
-            .foregroundColor(AppTheme.textSecondary)
-            .lineSpacing(3)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.surface)
-        .cornerRadius(18)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        .padding(.horizontal, 20)
+        // --- 2. Additives (yellow) ---
+        featureCard(
+          icon: "cup.and.saucer.fill",
+          iconColor: .yellow,
+          titleKey: "onboarding.tips.addons.title",
+          titleDefault: "Additives",
+          descKey: "onboarding.tips.addons.desc2",
+          descDefault: "Want to add something extra to your food? Tap any dish and select \"Additives\" to customize it.\n\nExamples:\n• Coffee: sugar, honey, milk, lemon\n• Sushi: wasabi, soy sauce\n• Tea and other dishes supported."
+        )
 
-        // --- 2. Additional (coffee example) ---
-        VStack(spacing: 10) {
-          HStack(spacing: 10) {
-            ZStack {
-              Circle()
-                .fill(Color.orange.opacity(0.12))
-                .frame(width: 44, height: 44)
-              Image(systemName: "cup.and.saucer.fill")
-                .font(.system(size: 20))
-                .foregroundColor(.orange)
-            }
-            Text(loc("onboarding.tips.addons.title", "Additional Add ons"))
-              .font(.system(size: 18, weight: .bold, design: .rounded))
-              .foregroundColor(AppTheme.textPrimary)
-            Spacer()
-          }
+        // --- 3. Chess (purple, like in app) ---
+        featureCard(
+          icon: "square.grid.3x3.fill",
+          iconColor: .purple,
+          titleKey: "onboarding.tips.chess.title",
+          titleDefault: "Chess",
+          descKey: "onboarding.tips.chess.desc",
+          descDefault: "Track your score and see it update automatically for your opponent when you play together."
+        )
 
-          Text(loc("onboarding.tips.addons.desc2", "Tap any food and select \"Additional\" to see what you can add. For example, with coffee you can choose lemon 5g, honey 10g, milk 50g, or sugar. Each add on changes the healthiness score so you can compare: coffee with sugar (score 65) versus coffee with lemon (score 89). Works with sushi, tea, and many other dishes!"))
-            .font(.system(size: 14, weight: .regular, design: .rounded))
-            .foregroundColor(AppTheme.textSecondary)
-            .lineSpacing(3)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.surface)
-        .cornerRadius(18)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        .padding(.horizontal, 20)
-
-        // --- 3. Target Setting ---
-        VStack(spacing: 10) {
-          HStack(spacing: 10) {
-            ZStack {
-              Circle()
-                .fill(Color.green.opacity(0.12))
-                .frame(width: 44, height: 44)
-              Image(systemName: "target")
-                .font(.system(size: 20))
-                .foregroundColor(.green)
-            }
-            Text(loc("onboarding.tips.target.title", "Your Personal Plan"))
-              .font(.system(size: 18, weight: .bold, design: .rounded))
-              .foregroundColor(AppTheme.textPrimary)
-            Spacer()
-          }
-
-          Text(loc("onboarding.tips.target.desc", "Set your target weight and choose your activity level. The app will calculate a personalized plan with a timeline just for you. BMI is kept safe and never drops below 18.5. You can also pick an \"activity only\" option that focuses on weight loss through exercise rather than dietary changes. It is fully tailored to your real life situation!"))
-            .font(.system(size: 14, weight: .regular, design: .rounded))
-            .foregroundColor(AppTheme.textSecondary)
-            .lineSpacing(3)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.surface)
-        .cornerRadius(18)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        .padding(.horizontal, 20)
+        // --- 4. Activity tracking ---
+        featureCard(
+          icon: "flame.fill",
+          iconColor: .orange,
+          titleKey: "onboarding.tips.activities.title",
+          titleDefault: "Activity tracking",
+          descKey: "onboarding.tips.activities.desc",
+          descDefault: "Log gym, steps, treadmill, elliptical, yoga and more. Today's burned calories update automatically."
+        )
 
         Spacer().frame(height: 8)
       }
+    }
+  }
+
+  private var planStepView: some View {
+    VStack(spacing: 20) {
+      Spacer()
+      
+      // Icon
+      ZStack {
+        Circle()
+          .fill(Color.green.opacity(0.12))
+          .frame(width: 110, height: 110)
+        Image(systemName: "target")
+          .font(.system(size: 50, weight: .bold))
+          .foregroundColor(.green)
+      }
+      
+      VStack(spacing: 14) {
+        Text(loc("onboarding.plan.title", "Your Personal Plan 🎯"))
+          .font(.system(size: 30, weight: .bold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 24)
+        
+        Text(loc("onboarding.plan.subtitle", "Set a safe goal and let the app build a realistic path for you."))
+          .font(.system(size: 16, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(3)
+          .padding(.horizontal, 28)
+      }
+      
+      VStack(alignment: .leading, spacing: 10) {
+        PlanBulletRow(
+          icon: "scalemass.fill",
+          color: .green,
+          text: loc("onboarding.plan.point.weight", "Choose your target weight. BMI never goes below 18.5, so the goal stays safe.")
+        )
+        PlanBulletRow(
+          icon: "figure.walk.circle.fill",
+          color: .blue,
+          text: loc("onboarding.plan.point.activity", "Pick your activity level or use the activity only mode to focus on movement instead of diet.")
+        )
+        PlanBulletRow(
+          icon: "calendar.badge.clock",
+          color: .orange,
+          text: loc("onboarding.plan.point.timeline", "We calculate a daily calorie range and a timeline that fits your lifestyle.")
+        )
+      }
+      .padding(16)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(AppTheme.surface)
+      .cornerRadius(20)
+      .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+      .padding(.horizontal, 24)
+      
+      Spacer()
+      
+      // Hint: where to run it now
+      Text(loc("onboarding.plan.hint", "After this tutorial you can open Profile → Health to calculate your plan right away."))
+        .font(.system(size: 20, weight: .regular, design: .rounded))
+        .foregroundStyle(
+          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+        )
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 28)
+        .padding(.bottom, 8)
+    }
+  }
+
+  private static let plateSlideshowSlides: [(imageName: String, titleKey: String, titleDefault: String, score: Int, descKey: String, descDefault: String)] = [
+    ("onboarding_plate1", "onboarding.plates.slide1.title", "Avocado salad", 95, "onboarding.plates.slide1.desc", "Avocado, egg, tomato, cheese, olive. A real life example that often scores in the 90s."),
+    ("onboarding_plate2", "onboarding.plates.slide2.title", "Chicken breast bowl", 94, "onboarding.plates.slide2.desc", "Chicken breast, rice, avocado, cucumber. Filling and balanced, typical high score."),
+    ("onboarding_plate3", "onboarding.plates.slide3.title", "Chicken with broccoli and egg", 93, "onboarding.plates.slide3.desc", "Grilled chicken, broccoli, egg. Simple, high protein, high score."),
+    ("onboarding_plate1", "onboarding.plates.slide4.title", "Colorful balanced bowl", 88, "onboarding.plates.slide4.desc", "Grains, lean protein, healthy fats and many vegetables. Still a strong score."),
+    ("onboarding_plate2", "onboarding.plates.slide5.title", "Protein and whole grains", 80, "onboarding.plates.slide5.desc", "Salmon, egg, whole grains. Good balance, solid mid high score."),
+    ("onboarding_plate3", "onboarding.plates.slide6.title", "Simple green plate", 72, "onboarding.plates.slide6.desc", "Chicken, eggs, broccoli. Clean and simple; score reflects real life variety."),
+  ]
+
+  private var balancedPlateStepView: some View {
+    VStack(spacing: 14) {
+      Text(loc("onboarding.plates.title", "Balanced Plate and Score"))
+        .font(.system(size: 26, weight: .bold, design: .rounded))
+        .foregroundColor(AppTheme.textPrimary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
+      
+      Text(loc("onboarding.plates.subtitle", "The higher the score, the closer you are to balance and long term health."))
+        .font(.system(size: 14, weight: .regular, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+        .multilineTextAlignment(.center)
+        .lineSpacing(2)
+        .padding(.horizontal, 24)
+      
+      TabView {
+        ForEach(Array(Self.plateSlideshowSlides.enumerated()), id: \.offset) { _, slide in
+          BalancedPlateCard(
+            imageName: slide.imageName,
+            title: loc(slide.titleKey, slide.titleDefault),
+            scoreText: "\(loc("onboarding.plates.score_label", "Score")): \(slide.score)",
+            description: loc(slide.descKey, slide.descDefault)
+          )
+          .padding(.horizontal, 20)
+        }
+      }
+      .tabViewStyle(.page(indexDisplayMode: .automatic))
+      .indexViewStyle(.page(backgroundDisplayMode: .always))
+      .frame(minHeight: 320)
+      
+      VStack(spacing: 6) {
+        Text(loc("onboarding.plates.motivation.title", "Aim for Your Best Score"))
+          .font(.system(size: 15, weight: .semibold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+        Text(loc("onboarding.plates.motivation.desc", "When the score goes up, your plate is more balanced. Can you nudge today's score a little higher?"))
+          .font(.system(size: 13, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 24)
+      }
+      .padding(.bottom, 12)
+    }
+  }
+
+  private var teamStepView: some View {
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: 20) {
+        Spacer().frame(height: 12)
+        
+        Text(loc("onboarding.team.title", "Let's Build Eateria Together"))
+          .font(.system(size: 26, weight: .bold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 24)
+        
+        Text(loc("onboarding.team.message", "And lastly, we'd love to grow with you! Our audience is full of IT professionals and if you'd like to contribute to developing Eateria, help shape future releases, or implement new features, feel free to join our team or leave feedback!"))
+          .font(.system(size: 15, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(4)
+          .padding(.horizontal, 24)
+        
+        Text(loc("onboarding.team.signoff", "With 💜, team of Eateria "))
+          .font(.system(size: 16, weight: .semibold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+          .padding(.top, 4)
+        
+        HStack(spacing: 20) {
+          TeamMemberCard(
+            imageName: "team_eugen",
+            name: "Eugen",
+            title: loc("onboarding.team.role.founder", "Co-founder")
+          )
+          TeamMemberCard(
+            imageName: "team_olha",
+            name: "Olha",
+            title: loc("onboarding.team.role.founder2", "Co-founder")
+          )
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
+        
+        Button(action: { showFeedback = true }) {
+          HStack(spacing: 8) {
+            Image(systemName: "bubble.left.and.bubble.right.fill")
+            Text(loc("onboarding.team.leave_feedback", "Leave feedback"))
+              .font(.system(size: 16, weight: .semibold, design: .rounded))
+          }
+          .foregroundColor(.white)
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 14)
+          .background(
+            LinearGradient(
+              colors: [Color(red: 0.2, green: 0.5, blue: 0.9),
+                       Color(red: 0.15, green: 0.4, blue: 0.85)],
+              startPoint: .leading,
+              endPoint: .trailing
+            )
+          )
+          .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
+        
+        Spacer().frame(height: 16)
+      }
+    }
+    .sheet(isPresented: $showFeedback) {
+      FeedbackView(isPresented: $showFeedback)
     }
   }
 
@@ -1480,8 +1680,14 @@ struct OnboardingView: View {
         return loc("onboarding.tools.title", "Your Essential Tools 🍽️")
     case "pets":
         return loc("onboarding.pets.title", "Meet Your Pet Companion 🐾")
+    case "plan":
+        return loc("onboarding.plan.title", "Your Personal Plan 🎯")
+    case "balanced_plate":
+        return loc("onboarding.plates.title", "Balanced Plate and Score")
     case "smart_tips":
         return loc("onboarding.new_features.title", "New Features ✨")
+    case "team":
+        return loc("onboarding.team.title", "Let's Build Eateria Together")
     case "features":
         return loc("onboarding.features.title", "All in one Tracker 🚀")
     case "disclaimer":
@@ -1559,8 +1765,14 @@ struct OnboardingView: View {
         return loc("onboarding.tools.desc", "Small steps that make a big difference.")
     case "pets":
         return loc("onboarding.pets.desc", "Choose a pet that will motivate you on your journey.")
+    case "plan":
+        return loc("onboarding.plan.desc", "See how your goal and activity level turn into a safe, realistic plan.")
+    case "balanced_plate":
+        return loc("onboarding.plates.desc", "See how a balanced plate leads to a higher health score.")
     case "smart_tips":
         return loc("onboarding.new_features.subtitle", "Powerful tools to make your tracking even better.")
+    case "team":
+        return loc("onboarding.team.desc", "We'd love to grow with you.")
     case "features":
         return loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI.")
     case "language":
@@ -1616,5 +1828,124 @@ struct PetFeatureRow: View {
         .foregroundColor(AppTheme.textSecondary)
         .fixedSize(horizontal: false, vertical: true)
     }
+  }
+}
+
+struct PlanBulletRow: View {
+  let icon: String
+  let color: Color
+  let text: String
+  
+  var body: some View {
+    HStack(alignment: .top, spacing: 10) {
+      Image(systemName: icon)
+        .font(.system(size: 16))
+        .foregroundColor(color)
+        .frame(width: 24)
+      Text(text)
+        .font(.system(size: 14, weight: .regular, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+  }
+}
+
+struct BalancedPlateCard: View {
+  let imageName: String
+  let title: String
+  let scoreText: String
+  let description: String
+  
+  private var hasImage: Bool {
+    UIImage(named: imageName) != nil
+  }
+  
+  var body: some View {
+    VStack(spacing: 10) {
+      Group {
+        if hasImage {
+          Image(imageName)
+            .resizable()
+            .scaledToFit()
+        } else {
+          RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(AppTheme.textSecondary.opacity(0.12))
+            .overlay(
+              Image(systemName: "leaf.circle.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(AppTheme.textSecondary.opacity(0.4))
+            )
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .frame(minHeight: 160)
+      .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+      .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+      
+      HStack {
+        Text(title)
+          .font(.system(size: 17, weight: .semibold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        Text(scoreText)
+          .font(.system(size: 14, weight: .semibold, design: .rounded))
+          .foregroundColor(AppTheme.success)
+      }
+      
+      Text(description)
+        .font(.system(size: 14, weight: .regular, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(14)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(AppTheme.surface)
+    .cornerRadius(20)
+    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+    .padding(.horizontal, 22)
+  }
+}
+
+struct TeamMemberCard: View {
+  let imageName: String
+  let name: String
+  let title: String
+  
+  private var hasPhoto: Bool {
+    UIImage(named: imageName) != nil
+  }
+  
+  var body: some View {
+    VStack(spacing: 8) {
+      Group {
+        if hasPhoto {
+          Image(imageName)
+            .resizable()
+            .scaledToFill()
+        } else {
+          Image(systemName: "person.circle.fill")
+            .resizable()
+            .scaledToFit()
+            .foregroundStyle(AppTheme.textSecondary.opacity(0.6))
+        }
+      }
+      .frame(width: 88, height: 88)
+      .clipShape(Circle())
+      .overlay(
+        Circle()
+          .stroke(AppTheme.surface.opacity(0.5), lineWidth: 1)
+      )
+      Text(name)
+        .font(.system(size: 16, weight: .bold, design: .rounded))
+        .foregroundColor(AppTheme.textPrimary)
+      Text(title)
+        .font(.system(size: 12, weight: .medium, design: .rounded))
+        .foregroundColor(AppTheme.textSecondary)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 14)
+    .background(AppTheme.surface)
+    .cornerRadius(16)
+    .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
   }
 }

@@ -40,8 +40,27 @@ struct ProductRowView: View {
     if product.extras["soy_sauce_15g"] != nil { parts.append("🥢") }
     if product.extras["wasabi_3g"] != nil { parts.append("🌿") }
     if product.extras["spicy_pepper_5g"] != nil { parts.append("🌶") }
-    if product.addedSugarTsp > 0 { parts.append("🍬") }
+    // Sugar (refined/cube) shown via extrasIconsView, not emoji
     return parts.joined(separator: " ")
+  }
+
+  /// True if we have any extras to show (including added sugar)
+  private var hasExtras: Bool {
+    !extrasIconsText.isEmpty || product.addedSugarTsp > 0
+  }
+
+  @ViewBuilder
+  private var extrasIconsView: some View {
+    HStack(spacing: 4) {
+      if !extrasIconsText.isEmpty {
+        Text(extrasIconsText)
+      }
+      if product.addedSugarTsp > 0 {
+        Image(systemName: "cube.fill")
+          .font(.system(size: 12))
+          .foregroundColor(AppTheme.textSecondary)
+      }
+    }
   }
 
   var body: some View {
@@ -113,9 +132,9 @@ struct ProductRowView: View {
             .foregroundColor(AppTheme.textSecondary)
             .lineLimit(2)
 
-          // Extras icons on a dedicated line so they don't get truncated on some devices
-          if !extrasIconsText.isEmpty {
-            Text(extrasIconsText)
+          // Extras icons (refined sugar = cube, others = emoji)
+          if hasExtras {
+            extrasIconsView
               .font(.caption)
               .foregroundColor(AppTheme.textSecondary)
               .lineLimit(1)
@@ -315,50 +334,28 @@ struct HealthRatingRing: View {
     let color: Color
     
     private let circleSize: CGFloat = 40
-    private let heartSize: CGFloat = 50
     
     var body: some View {
-        // Show heart outline for excellent ratings (95-100)
-        if rating >= 95 {
-            ZStack {
-                // Background heart (light)
-                Image(systemName: "heart")
-                    .font(.system(size: 44))
-                    .foregroundColor(color.opacity(0.2))
-                
-                // Foreground heart (solid stroke)
-                Image(systemName: "heart")
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundColor(color)
-                
-                // Rating text
-                Text("\(rating)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(color)
-            }
-            .frame(width: heartSize, height: heartSize)
-        } else {
-            // Regular ring for other ratings
-            let maxRating: Double = 100.0
-            let progress = max(0, min(1.0, Double(rating) / maxRating))
+        // Always use circle (ring); heart is only for the average in the top bar
+        let maxRating: Double = 100.0
+        let progress = max(0, min(1.0, Double(rating) / maxRating))
+        
+        ZStack {
+            // Background track
+            Circle()
+                .stroke(color.opacity(0.2), lineWidth: 4)
             
-            ZStack {
-                // Background track
-                Circle()
-                    .stroke(color.opacity(0.2), lineWidth: 4)
-                
-                // Progress ring
-                Circle()
-                    .trim(from: 0, to: CGFloat(progress))
-                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                
-                // Rating text
-                Text("\(rating)")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(color)
-            }
-            .frame(width: circleSize, height: circleSize)
+            // Progress ring
+            Circle()
+                .trim(from: 0, to: CGFloat(progress))
+                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            
+            // Rating text
+            Text("\(rating)")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(color)
         }
+        .frame(width: circleSize, height: circleSize)
     }
 }

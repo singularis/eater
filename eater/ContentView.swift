@@ -147,6 +147,10 @@ struct ContentView: View {
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
+        if personWeight == 0 {
+          let w = UserDefaults.standard.double(forKey: "userWeight")
+          if w > 0 { personWeight = Float(w) }
+        }
         fetchDataWithLoading()
         refreshMacrosForCurrentView()
         setupDailyRefreshTimer()
@@ -208,6 +212,13 @@ struct ContentView: View {
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
           .environmentObject(authService)
+      }
+      .onChange(of: showUserProfile) { _, isVisible in
+        if !isVisible {
+          let w = UserDefaults.standard.double(forKey: "userWeight")
+          if w > 0 { personWeight = Float(w) }
+          loadLimitsFromUserDefaults()
+        }
       }
       .sheet(isPresented: $showHealthDisclaimer) {
         HealthDisclaimerView()
@@ -405,6 +416,27 @@ struct ContentView: View {
     .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
   }
 
+  /// Average health score of all tracked food items (today or current view). Nil when no scored items.
+  private var averageHealthScore: (score: Int, color: Color)? {
+    let scored = products.filter { $0.healthRating >= 0 }
+    guard !scored.isEmpty else { return nil }
+    let sum = scored.reduce(0) { $0 + $1.effectiveHealthRating }
+    let avg = (Double(sum) / Double(scored.count)).rounded()
+    let value = max(0, min(100, Int(avg)))
+    return (value, healthScoreColor(value))
+  }
+
+  private func healthScoreColor(_ rating: Int) -> Color {
+    switch rating {
+    case 0..<40: return Color(red: 1.0, green: 0.0, blue: 0.0)
+    case 40..<60: return Color(red: 1.0, green: 0.6, blue: 0.0)
+    case 60..<80: return Color(red: 0.85, green: 0.7, blue: 0.0)
+    case 80..<95: return Color(red: 0.5, green: 0.9, blue: 0.3)
+    case 95...100: return Color(red: 0.0, green: 1.0, blue: 0.0)
+    default: return Color.gray
+    }
+  }
+
   private var healthInfoButton: some View {
     Button(action: {
       HapticsService.shared.select()
@@ -417,18 +449,34 @@ struct ContentView: View {
             Circle()
               .stroke(
                 LinearGradient(
-                  gradient: Gradient(colors: [Color.blue.opacity(0.9), Color.blue.opacity(0.3)]),
+                  gradient: Gradient(colors: [(averageHealthScore?.color ?? Color.blue).opacity(0.9), (averageHealthScore?.color ?? Color.blue).opacity(0.3)]),
                   startPoint: .topLeading,
                   endPoint: .bottomTrailing
                 ),
                 lineWidth: 2
               )
           )
-          .shadow(color: Color.blue.opacity(0.4), radius: 6, x: 0, y: 3)
+          .shadow(color: (averageHealthScore?.color ?? Color.blue).opacity(0.4), radius: 6, x: 0, y: 3)
 
-        Image(systemName: "info.circle")
-          .font(.system(size: 18, weight: .semibold))
-          .foregroundColor(Color.blue)
+        if let avg = averageHealthScore {
+          ZStack {
+            Circle()
+              .stroke(avg.color.opacity(0.25), lineWidth: 3)
+            Circle()
+              .trim(from: 0, to: CGFloat(avg.score) / 100.0)
+              .stroke(avg.color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+            Text("\(avg.score)")
+              .font(.system(size: 14, weight: .bold, design: .rounded))
+              .foregroundColor(avg.color)
+              .minimumScaleFactor(0.7)
+          }
+          .frame(width: 36, height: 36)
+        } else {
+          Image(systemName: "info.circle")
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundColor(Color.blue)
+        }
       }
       .frame(width: 44, height: 44)
       .contentShape(Circle())
@@ -722,6 +770,9 @@ struct ContentView: View {
       products = FoodExtrasStore.shared.apply(to: cachedProducts)
       caloriesLeft = cachedCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
       personWeight = cachedWeight
+      if cachedWeight > 0 {
+        UserDefaults.standard.set(Double(cachedWeight), forKey: "userWeight")
+      }
       refreshMacrosForCurrentView()
     }
 
@@ -735,6 +786,7 @@ struct ContentView: View {
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
           self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
           self.personWeight = weight
+          // Custom date: do not overwrite userWeight (current weight is for today)
           self.isLoadingData = false
           self.isFetchingData = false
 
@@ -758,6 +810,9 @@ struct ContentView: View {
         FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
         self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
+        if weight > 0 {
+          UserDefaults.standard.set(Double(weight), forKey: "userWeight")
+        }
         self.isLoadingData = false
         self.isFetchingData = false
 
@@ -808,6 +863,9 @@ struct ContentView: View {
         self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
         self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
+        if weight > 0 {
+          UserDefaults.standard.set(Double(weight), forKey: "userWeight")
+        }
         self.isFetchingData = false
 
         // Recalculate calories if weight changed and user has health data
@@ -1290,6 +1348,8 @@ struct ContentView: View {
         self.isLoadingWeightPhoto = false
 
         if success {
+          self.personWeight = weight
+          UserDefaults.standard.set(Double(weight), forKey: "userWeight")
           // Clear both caches since weight was updated
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()

@@ -467,7 +467,8 @@ struct HealthSettingsView: View {
     }
   }
 
-  private func validateAndCalculateHealthData() -> Bool {
+  /// When showTargetWeightAlert is false (e.g. from recalcFromInputs), invalid target BMI is not shown as alert — only when user taps Save or Calculate.
+  private func validateAndCalculateHealthData(showTargetWeightAlert: Bool = true) -> Bool {
     invalidHealthDataMessage = ""
 
     let heightValue = parseDoubleFlexible(height)
@@ -504,9 +505,11 @@ struct HealthSettingsView: View {
       targetWeight = String(format: "%.1f", optimalWeight)
     }
 
-    // Validate BMI at target >= 18.5
+    // Validate BMI at target >= 18.5; only show alert when saving/calculating, not during editing
     if !isTargetBMIValid(heightCm: heightValue) {
-      showingTargetWeightAlert = true
+      if showTargetWeightAlert {
+        showingTargetWeightAlert = true
+      }
       return false
     }
 
@@ -544,7 +547,7 @@ struct HealthSettingsView: View {
   }
 
   private func recalcFromInputs() {
-    _ = validateAndCalculateHealthData()
+    _ = validateAndCalculateHealthData(showTargetWeightAlert: false)
   }
 
   private func currentTargetWeightValue() -> Double {

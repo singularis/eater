@@ -150,7 +150,7 @@ struct Product: Identifiable, Codable, Equatable {
     return false
   }
 
-  /// Heuristic: fruit or vegetable — no "Additional" extras (no sugar, no soy/wasabi/pepper).
+  /// Heuristic: fruit or vegetable — no "Additives" extras (no sugar, no soy/wasabi/pepper).
   var isFruitOrVegetable: Bool {
     let lower = name.lowercased()
     // Never treat soups as "fruit/vegetable" for UI purposes — users often want sauces/spices.

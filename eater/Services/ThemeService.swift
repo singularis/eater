@@ -206,7 +206,7 @@ class ThemeService: ObservableObject {
     switch action {
     case "food_logged", "good_food": return language == "uk" ? "Гав-гав! Смачна їжа! 🐶" : "Woof! Yummy food! 🐶"
     case "bad_food", "sugar", "alcohol": return language == "uk" ? "Гр-р-р! Це погана їжа! 😠" : "Grr! That's bad food! 😠"
-    case "activity_recorded": return language == "uk" ? "Гарний хлопець! Ще гуляти! 🐾" : "Good boy! More walkies! 🐾"
+    case "activity_recorded": return language == "uk" ? "Гарна робота! Ще гуляти! 🐾" : "Good job! More walkies! 🐾"
     case "goal_reached": return language == "uk" ? "Гав! Ти найкращий! 🏆" : "Woof! You're the best! 🏆"
     case "water_logged": return language == "uk" ? "Хап-хап! Ковток води! 💧" : "Slurp slurp! Water time! 💧"
     case "chess_won": return language == "uk" ? "Гав! Собака виграв! 🐶♟️" : "Woof! Doggo wins! 🐶♟️"

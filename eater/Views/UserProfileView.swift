@@ -121,6 +121,7 @@ struct UserProfileView: View {
                 let previews = themeService.getUniquePreviewImageNames(count: 5)
                 ScrollView(.horizontal, showsIndicators: false) {
                   HStack(spacing: 12) {
+                    Spacer(minLength: 0)
                     ForEach(previews, id: \.self) { imageName in
                       Image(imageName)
                         .resizable()
@@ -129,10 +130,12 @@ struct UserProfileView: View {
                         .clipShape(Circle())
                         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
+                    Spacer(minLength: 0)
                   }
                   .padding(.vertical, 8)
                   .padding(.horizontal, 2)
                 }
+                .frame(maxWidth: .infinity)
               }
               
               VStack(alignment: .leading, spacing: 12) {
@@ -145,7 +148,7 @@ struct UserProfileView: View {
                   .font(.caption)
                   .foregroundColor(AppTheme.textSecondary)
                 
-                // Friend Picker
+                // Friend Picker (5 mascots centered)
                 HStack(spacing: 12) {
                   ForEach(AppMascot.allCases, id: \.self) { mascot in
                     MascotButton(
@@ -158,6 +161,7 @@ struct UserProfileView: View {
                     }
                   }
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
               }
               
               Divider().padding(.horizontal, 8)
@@ -189,6 +193,109 @@ struct UserProfileView: View {
             }
             .padding(.vertical, 14)
             .cardContainer(padding: 14)
+
+            // Health Section (first)
+            sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
+            
+            if hasHealthData {
+              VStack(spacing: 12) {
+                healthMetricRow(
+                  label: loc("health.height.label", "Height:"),
+                  value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
+                  color: AppTheme.textPrimary
+                )
+
+                let currentBMI: Double = {
+                  let hm = userHeight / 100.0
+                  guard hm > 0, userWeight > 0 else { return 0 }
+                  return userWeight / (hm * hm)
+                }()
+                if currentBMI > 0 {
+                  healthMetricRow(
+                    label: loc("health.bmi.label", "BMI:"),
+                    value: String(format: "%.1f", currentBMI),
+                    color: AppTheme.textPrimary
+                  )
+                }
+                
+                healthMetricRow(
+                  label: loc("profile.targetweight", "Target Weight:"),
+                  value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
+                  color: AppTheme.success
+                )
+                
+                healthMetricRow(
+                  label: loc("profile.dailycalorie", "Daily Calorie Target:"),
+                  value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
+                  color: AppTheme.warning
+                )
+                
+                Button(action: {
+                  HapticsService.shared.select()
+                  showHealthSettings = true
+                }) {
+                  Text(loc("health.update.title", "Update Health Settings"))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                      RoundedRectangle(cornerRadius: 25, style: .continuous)
+                        .fill(
+                          LinearGradient(
+                            colors: [
+                              Color(red: 0.72, green: 0.62, blue: 0.92),
+                              Color(red: 0.65, green: 0.52, blue: 0.88)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                        )
+                    )
+                }
+                .buttonStyle(PressScaleButtonStyle())
+                .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
+              }
+              .cardContainer(padding: 14)
+            } else {
+              VStack(spacing: 12) {
+                Text(loc("profile.personalize", "Personalize Your Experience"))
+                  .font(.headline)
+                  .foregroundColor(AppTheme.textPrimary)
+                
+                Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textSecondary)
+                  .multilineTextAlignment(.center)
+                
+                Button(action: {
+                  HapticsService.shared.select()
+                  showHealthSettings = true
+                }) {
+                  Text(loc("health.update.title", "Setup Health Profile"))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                      RoundedRectangle(cornerRadius: 25, style: .continuous)
+                        .fill(
+                          LinearGradient(
+                            colors: [
+                              Color(red: 0.72, green: 0.62, blue: 0.92),
+                              Color(red: 0.65, green: 0.52, blue: 0.88)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                        )
+                    )
+                }
+                .buttonStyle(PressScaleButtonStyle())
+                .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
+              }
+              .cardContainer(padding: 14)
+            }
 
             // Actions Section
             sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
@@ -229,71 +336,6 @@ struct UserProfileView: View {
                 HapticsService.shared.select()
                 showNicknameSettings = true
               }
-            }
-
-            // Health Section
-            sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
-            
-            if hasHealthData {
-              VStack(spacing: 12) {
-                healthMetricRow(
-                  label: loc("health.height.label", "Height:"),
-                  value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
-                  color: AppTheme.textPrimary
-                )
-
-                let currentBMI: Double = {
-                  let hm = userHeight / 100.0
-                  guard hm > 0, userWeight > 0 else { return 0 }
-                  return userWeight / (hm * hm)
-                }()
-                if currentBMI > 0 {
-                  healthMetricRow(
-                    label: loc("health.bmi.label", "BMI:"),
-                    value: String(format: "%.1f", currentBMI),
-                    color: AppTheme.textPrimary
-                  )
-                }
-                
-                healthMetricRow(
-                  label: loc("profile.targetweight", "Target Weight:"),
-                  value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
-                  color: AppTheme.success
-                )
-                
-                healthMetricRow(
-                  label: loc("profile.dailycalorie", "Daily Calorie Target:"),
-                  value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
-                  color: AppTheme.warning
-                )
-                
-                Button(loc("health.update.title", "Update Health Settings")) {
-                  HapticsService.shared.select()
-                  showHealthSettings = true
-                }
-                .buttonStyle(SecondaryButtonStyle())
-                .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
-              }
-              .cardContainer(padding: 14)
-            } else {
-              VStack(spacing: 12) {
-                Text(loc("profile.personalize", "Personalize Your Experience"))
-                  .font(.headline)
-                  .foregroundColor(AppTheme.textPrimary)
-                
-                Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
-                  .font(.subheadline)
-                  .foregroundColor(AppTheme.textSecondary)
-                  .multilineTextAlignment(.center)
-                
-                Button(loc("health.update.title", "Setup Health Profile")) {
-                  HapticsService.shared.select()
-                  showHealthSettings = true
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
-              }
-              .cardContainer(padding: 14)
             }
 
             // Preferences Section
@@ -488,9 +530,19 @@ struct UserProfileView: View {
                     .fontWeight(.semibold)
                 }
                 .font(.subheadline)
+                .foregroundColor(Color(red: 0.42, green: 0.0, blue: 0.05))
                 .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                  RoundedRectangle(cornerRadius: 25, style: .continuous)
+                    .fill(Color.white)
+                )
+                .overlay(
+                  RoundedRectangle(cornerRadius: 25, style: .continuous)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
               }
-              .buttonStyle(SecondaryButtonStyle())
+              .buttonStyle(PressScaleButtonStyle())
               .accessibilityHint(loc("a11y.logout", "Signs you out of the app"))
 
               Button(action: {

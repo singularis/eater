@@ -7,6 +7,7 @@ enum ActivityType {
   case steps
   case treadmill
   case elliptical
+  case yoga
 }
 
 struct ActivitiesView: View {
@@ -87,6 +88,14 @@ struct ActivitiesView: View {
               subtitle: Localization.shared.tr("activities.elliptical.subtitle", default: "Enter calories"),
               icon: "figure.elliptical",
               color: .purple
+            )
+            
+            activityButton(
+              type: .yoga,
+              title: Localization.shared.tr("activities.yoga", default: "Yoga"),
+              subtitle: Localization.shared.tr("activities.yoga.subtitle", default: "Enter calories"),
+              icon: "figure.mind.and.body",
+              color: Color(red: 0.4, green: 0.6, blue: 0.5)
             )
           }
           .padding()
@@ -616,6 +625,8 @@ struct ActivitiesView: View {
       return Localization.shared.tr("activities.treadmill", default: "Treadmill")
     case .elliptical:
       return Localization.shared.tr("activities.elliptical", default: "Elliptical")
+    case .yoga:
+      return Localization.shared.tr("activities.yoga", default: "Yoga")
     case .chess:
       return Localization.shared.tr("activities.chess.name", default: "Chess")
     }
@@ -627,7 +638,7 @@ struct ActivitiesView: View {
       return Localization.shared.tr("activities.gym.prompt", default: "How many minutes did you train?")
     case .steps:
       return Localization.shared.tr("activities.steps.prompt", default: "How many steps did you walk?")
-    case .treadmill, .elliptical:
+    case .treadmill, .elliptical, .yoga:
       return Localization.shared.tr("activities.calories.prompt", default: "How many calories did you burn?")
     case .chess:
       return ""
@@ -640,7 +651,7 @@ struct ActivitiesView: View {
       return Localization.shared.tr("activities.gym.placeholder", default: "Minutes")
     case .steps:
       return Localization.shared.tr("activities.steps.placeholder", default: "Steps")
-    case .treadmill, .elliptical:
+    case .treadmill, .elliptical, .yoga:
       return Localization.shared.tr("activities.calories.placeholder", default: "Calories")
     case .chess:
       return ""
@@ -984,6 +995,9 @@ struct ActivitiesView: View {
       calories = value
     case .elliptical:
       activityName = "Elliptical"
+      calories = value
+    case .yoga:
+      activityName = "Yoga"
       calories = value
     case .chess:
       return
