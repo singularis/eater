@@ -19,7 +19,7 @@ struct UserProfileView: View {
   @State private var showAddFriends = false
   @State private var showNicknameSettings = false
   @AppStorage("user_nickname") private var userNickname: String = ""
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"  // "simplified" or "full"
+  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "full"  // "simplified" or "full"
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -648,6 +648,9 @@ struct UserProfileView: View {
 
     // Clear statistics cache before deleting account
     StatisticsService.shared.clearCache()
+    
+    // Clear persisted tutorials
+    KeychainHelper.shared.clearAll()
 
     // Immediately delete account and clear all user data from device
     authService.deleteAccountAndClearData()

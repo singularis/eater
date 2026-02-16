@@ -21,6 +21,7 @@ struct CameraButtonView: View {
   var onPhotoFailure: (() -> Void)?
   var onPhotoStarted: (() -> Void)?
   var onReturnToToday: (() -> Void)?
+  var onRequestTutorial: ((String) -> Void)?
 
   init(
     isLoadingFoodPhoto: Bool,
@@ -29,7 +30,8 @@ struct CameraButtonView: View {
     onPhotoSuccess: (() -> Void)?,
     onPhotoFailure: (() -> Void)?,
     onPhotoStarted: (() -> Void)?,
-    onReturnToToday: (() -> Void)? = nil
+    onReturnToToday: (() -> Void)? = nil,
+    onRequestTutorial: ((String) -> Void)? = nil
   ) {
     self.isLoadingFoodPhoto = isLoadingFoodPhoto
     self.selectedDate = selectedDate
@@ -38,6 +40,7 @@ struct CameraButtonView: View {
     self.onPhotoFailure = onPhotoFailure
     self.onPhotoStarted = onPhotoStarted
     self.onReturnToToday = onReturnToToday
+    self.onRequestTutorial = onRequestTutorial
   }
 
   var body: some View {
@@ -51,6 +54,10 @@ struct CameraButtonView: View {
 
         HStack(spacing: 0) {
           Button(action: {
+            if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
+                req("hasSeenCameraTutorial")
+                return
+            }
             HapticsService.shared.select()
             checkBackdating(sourceType: .photoLibrary)
           }) {
@@ -89,6 +96,10 @@ struct CameraButtonView: View {
             .frame(width: gapWidth)
 
           Button(action: {
+            if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
+                req("hasSeenCameraTutorial")
+                return
+            }
             HapticsService.shared.select()
             checkBackdating(sourceType: .camera)
           }) {

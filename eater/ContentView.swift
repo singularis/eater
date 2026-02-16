@@ -39,7 +39,9 @@ struct ContentView: View {
   @State private var alcoholIconColor: Color = .green
   @State private var lastAlcoholEventDate: Date? = nil
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
+  @State private var showMainAppTutorial = false
+  @State private var activeTutorialStep: MainAppTutorialView.TutorialStep? = nil
+  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "full"
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -59,6 +61,20 @@ struct ContentView: View {
   @State private var isLoadingFoodPhoto = false
   @State private var deletingProductTime: Int64? = nil
   @State private var isFetchingData = false  // Flag to prevent multiple simultaneous data fetches
+  @State private var selectedPage = 1 // 0 = Statistics, 1 = Home
+
+  // Tutorial pending action
+  enum PendingTutorialAction {
+      case none
+      case alcohol
+      case calendar
+      case healthInfo
+      case sport
+      case weight
+      case calories
+      case advice
+  }
+  @State private var pendingTutorialAction: PendingTutorialAction = .none
 
   // Full-screen photo states
   @State private var fullScreenPhotoData: FullScreenPhotoData? = nil
@@ -104,46 +120,49 @@ struct ContentView: View {
       AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
-      VStack(spacing: 2) {
-        topBarView
-        statsButtonsView
-          .frame(height: 60)
-        // Macros line (only in Full mode and when we have data)
-        if dataDisplayMode == "full" && hasMacrosData {
-          macrosLineView
-        }
+      TabView(selection: $selectedPage) {
+        // Statistics Screen
+        StatisticsView(isPresented: Binding(
+          get: { selectedPage == 0 },
+          set: { if !$0 { withAnimation { selectedPage = 1 } } }
+        ), targetChartType: .macros)
+        .tag(0)
 
-        ProductListView(
-          products: products,
-          onRefresh: refreshAction,
-          onDelete: deleteProductWithLoading,
-          onModify: modifyProductPortion,
-          onTryAgain: tryAgainProduct,
-          onAddSugar: addSugarToProduct,
-          onAddDrinkExtra: addExtraToProduct,
-          onAddFoodExtra: addExtraToProduct,
-          onPhotoTap: showFullScreenPhoto,
-          deletingProductTime: deletingProductTime,
-          onShareSuccess: {
-            StatisticsService.shared.clearExpiredCache()
-            ProductStorageService.shared.clearCache()
-            self.returnToToday()
+        // Main App Screen
+        VStack(spacing: 2) {
+          topBarView
+          statsButtonsView
+            .frame(height: 60)
+          // Macros line (only in Full mode and when we have data)
+          if dataDisplayMode == "full" && hasMacrosData {
+            macrosLineView
           }
-        )
-        .padding(.top, 0)
-        .gesture(
-          DragGesture(minimumDistance: 50, coordinateSpace: .local)
-            .onEnded { value in
-              if value.translation.width > 50 && abs(value.translation.height) < abs(value.translation.width) {
-                HapticsService.shared.select()
-                showStatistics = true
-              }
-            }
-        )
 
-        cameraButtonView
-          .padding(.top, 10)
+          ProductListView(
+            products: products,
+            onRefresh: refreshAction,
+            onDelete: deleteProductWithLoading,
+            onModify: modifyProductPortion,
+            onTryAgain: tryAgainProduct,
+            onAddSugar: addSugarToProduct,
+            onAddDrinkExtra: addExtraToProduct,
+            onAddFoodExtra: addExtraToProduct,
+            onPhotoTap: showFullScreenPhoto,
+            deletingProductTime: deletingProductTime,
+            onShareSuccess: {
+              StatisticsService.shared.clearExpiredCache()
+              ProductStorageService.shared.clearCache()
+              self.returnToToday()
+            }
+          )
+          .padding(.top, 0)
+          
+          cameraButtonView
+            .padding(.top, 10)
+        }
+        .tag(1)
       }
+      .tabViewStyle(.page(indexDisplayMode: .never))
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
@@ -155,18 +174,25 @@ struct ContentView: View {
         refreshMacrosForCurrentView()
         setupDailyRefreshTimer()
         setupActivityCaloriesObserver()
+
+        // Check which onboarding to show
+        var willShowOnboarding = false
         if !hasSeenOnboarding {
           onboardingMode = .initial
           showOnboarding = true
+          willShowOnboarding = true
         } else if AppSettingsService.shared.shouldShowHealthOnboarding {
             onboardingMode = .health
             showOnboarding = true
+            willShowOnboarding = true
         } else if AppSettingsService.shared.shouldShowSocialOnboarding {
             onboardingMode = .social
             showOnboarding = true
+            willShowOnboarding = true
         }
+
         fetchAlcoholStatus()
-      }
+      }  
       .onDisappear {
         stopDailyRefreshTimer()
       }
@@ -226,9 +252,7 @@ struct ContentView: View {
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
       }
-      .sheet(isPresented: $showStatistics) {
-        StatisticsView(isPresented: $showStatistics)
-      }
+      // StatisticsView is now part of the TabView, so we remove the sheet
       .sheet(isPresented: $showCalendarPicker) {
         CalendarDatePickerView(
           selectedDate: $selectedDate,
@@ -270,6 +294,26 @@ struct ContentView: View {
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
         isVisible: isLoadingFoodPhoto, message: loc("loading.photo", "Analyzing food photo..."))
+    }
+
+    .fullScreenCover(isPresented: $showMainAppTutorial) {
+        MainAppTutorialView(isPresented: $showMainAppTutorial)
+            .environmentObject(languageService)
+    }
+    .sheet(item: $activeTutorialStep, onDismiss: {
+        let action = pendingTutorialAction
+        pendingTutorialAction = .none
+        if action != .none {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                 executeAction(action)
+            }
+        }
+    }) { step in
+        MainAppTutorialView(isPresented: Binding(
+            get: { true },
+            set: { if !$0 { activeTutorialStep = nil } }
+        ), specificStep: step)
+            .environmentObject(languageService)
     }
     .id(languageService.currentCode)
   }
@@ -339,8 +383,7 @@ struct ContentView: View {
 
   private var alcoholButton: some View {
     Button(action: {
-      HapticsService.shared.select()
-      showAlcoholCalendar = true
+      checkTutorial(key: "hasSeenAlcoholTutorial", action: .alcohol)
     }) {
       ZStack {
         Circle()
@@ -391,9 +434,7 @@ struct ContentView: View {
         .onTapGesture {
           // Prevent opening calendar while loading data
           guard !isLoadingData else { return }
-          HapticsService.shared.select()
-          selectedDate = Date()
-          showCalendarPicker = true
+          checkTutorial(key: "hasSeenCalendarTutorial", action: .calendar)
         }
 
         if isViewingCustomDate {
@@ -439,8 +480,7 @@ struct ContentView: View {
 
   private var healthInfoButton: some View {
     Button(action: {
-      HapticsService.shared.select()
-      showHealthDisclaimer = true
+      checkTutorial(key: "hasSeenHealthScoreTutorial", action: .healthInfo)
     }) {
       ZStack {
         Circle()
@@ -486,8 +526,7 @@ struct ContentView: View {
 
   private var sportButton: some View {
     Button(action: {
-      HapticsService.shared.select()
-      showActivitiesView = true
+      checkTutorial(key: "hasSeenSportTutorial", action: .sport)
     }) {
       ZStack {
         Circle()
@@ -532,8 +571,7 @@ struct ContentView: View {
   private var weightButton: some View {
     let shadow = AppTheme.cardShadow
     return Button(action: {
-      HapticsService.shared.select()
-      showWeightActionSheet = true
+      checkTutorial(key: "hasSeenWeightTutorial", action: .weight)
     }) {
       ZStack {
         if isLoadingWeightPhoto {
@@ -606,10 +644,7 @@ struct ContentView: View {
     let adjustedSoftLimit = getAdjustedSoftLimit()
     let shadow = AppTheme.cardShadow
     return Button(action: {
-      HapticsService.shared.select()
-      tempSoftLimit = String(softLimit)
-      tempHardLimit = String(hardLimit)
-      showLimitsAlert = true
+      checkTutorial(key: "hasSeenCaloriesTutorial", action: .calories)
     }) {
       HStack(spacing: 4) {
         Image(systemName: themeService.icon(for: "flame.fill"))
@@ -645,27 +680,7 @@ struct ContentView: View {
     .cornerRadius(AppTheme.cornerRadius)
     .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     .onTapGesture {
-      HapticsService.shared.select()
-      isLoadingRecommendation = true
-      GRPCService().getRecommendation(days: 7, languageCode: languageService.currentCode) { recommendation in
-        DispatchQueue.main.async {
-          if recommendation.isEmpty {
-            self.recommendationText = loc(
-              "rec.fallback",
-              "We couldn't customize your advice right now, but here are some general wellness tips:\n\nConsistent habits build a healthy lifestyle. Start by incorporating more whole foods like vegetables, fruits, nuts, and legumes into your meals. These provide essential fiber and nutrients that processed food often lacks.\n\nTry to limit added sugars and heavily processed snacks, opting instead for natural sweetness from fruit. Staying hydrated is often overlooked but crucial for metabolism and energy.\n\nPhysical activity is the perfect partner to nutrition. Even a daily 30-minute walk can make a significant difference. Lastly, quality sleep is when your body repairs itself—prioritize it just as you do your meals.\n\n⚠️ Disclaimer: This guide is for informational purposes only and is not a substitute for professional medical advice."
-            )
-          } else {
-            self.recommendationText = recommendation
-          }
-          self.showRecommendation = true
-          HapticsService.shared.success()
-          self.isLoadingRecommendation = false
-          // Return to today after getting recommendation
-          if self.isViewingCustomDate {
-            self.returnToToday()
-          }
-        }
-      }
+      checkTutorial(key: "hasSeenAdviceTutorial", action: .advice)
     }
   }
 
@@ -736,6 +751,11 @@ struct ContentView: View {
       },
       onReturnToToday: {
         returnToToday()
+      },
+      onRequestTutorial: { key in
+          if let step = MainAppTutorialView.steps.first(where: { $0.key == key }) {
+              activeTutorialStep = step
+          }
       }
     )
     .buttonStyle(PrimaryButtonStyle())
@@ -752,6 +772,80 @@ struct ContentView: View {
       // Always return to today when user pulls to refresh
       returnToToday()
     }
+  }
+
+  // MARK: - Tutorial Checker
+  
+  private func checkTutorial(key: String, action: PendingTutorialAction) {
+      if KeychainHelper.shared.getBool(key) {
+          executeAction(action)
+      } else {
+          HapticsService.shared.select()
+          pendingTutorialAction = action
+          if let step = MainAppTutorialView.steps.first(where: { $0.key == key }) {
+              activeTutorialStep = step
+          } else {
+              executeAction(action)
+              pendingTutorialAction = .none
+          }
+      }
+  }
+
+  private func executeAction(_ action: PendingTutorialAction) {
+      switch action {
+      case .alcohol:
+          HapticsService.shared.select()
+          showAlcoholCalendar = true
+      case .calendar:
+          HapticsService.shared.select()
+          selectedDate = Date()
+          showCalendarPicker = true
+      case .healthInfo:
+          HapticsService.shared.select()
+          showHealthDisclaimer = true
+      case .sport:
+          HapticsService.shared.select()
+          showActivitiesView = true
+      case .weight:
+          HapticsService.shared.select()
+          showWeightActionSheet = true
+      case .calories:
+          HapticsService.shared.select()
+          tempSoftLimit = String(softLimit)
+          tempHardLimit = String(hardLimit)
+          showLimitsAlert = true
+      case .advice:
+          HapticsService.shared.select()
+          // Re-used request logic?
+          // The button logic calls `GRPCService...`.
+          // I cannot easily call the closure logic inside `recommendationButton` since it is local.
+          // BUT `recommendationButton` logic is: `isLoadingRecommendation = true; getRecommendation...`.
+          // I should ideally expose a `fetchRecommendation()` method?
+          // Or duplicate the logic here?
+          // Duplication is safest given constraints.
+          isLoadingRecommendation = true
+          GRPCService().getRecommendation(days: 7, languageCode: languageService.currentCode) { recommendation in
+            DispatchQueue.main.async {
+              if recommendation.isEmpty {
+                self.recommendationText = loc(
+                  "rec.fallback",
+                  "We couldn't customize your advice right now, but here are some general wellness tips:\n\nConsistent habits build a healthy lifestyle. Start by incorporating more whole foods like vegetables, fruits, nuts, and legumes into your meals. These provide essential fiber and nutrients that processed food often lacks.\n\nTry to limit added sugars and heavily processed snacks, opting instead for natural sweetness from fruit. Staying hydrated is often overlooked but crucial for metabolism and energy.\n\nPhysical activity is the perfect partner to nutrition. Even a daily 30-minute walk can make a significant difference. Lastly, quality sleep is when your body repairs itself—prioritize it just as you do your meals.\n\n⚠️ Disclaimer: This guide is for informational purposes only and is not a substitute for professional medical advice."
+                )
+              } else {
+                self.recommendationText = recommendation
+              }
+              self.showRecommendation = true
+              HapticsService.shared.success()
+              self.isLoadingRecommendation = false
+              // Return to today after getting recommendation
+              if self.isViewingCustomDate {
+                self.returnToToday()
+              }
+            }
+          }
+      case .none:
+          break
+      }
   }
 
   // MARK: - Data Fetching Methods

@@ -237,7 +237,7 @@ struct OnboardingView: View {
             .frame(width: 120, height: 120)
             .shadow(color: AppTheme.accent.opacity(0.2), radius: 10, x: 0, y: 5)
 
-        Image(systemName: step.icon)
+        Image(systemName: themeService.icon(for: step.icon))
             .font(.system(size: 50))
             .foregroundStyle(
                 LinearGradient(

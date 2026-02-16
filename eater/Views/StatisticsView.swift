@@ -3,6 +3,7 @@ import SwiftUI
 
 struct StatisticsView: View {
   @Binding var isPresented: Bool
+  var targetChartType: ChartType? = nil
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
@@ -113,6 +114,9 @@ struct StatisticsView: View {
         }
       }
       .onAppear {
+        if let target = targetChartType {
+          selectedChart = target
+        }
         loadData()
       }
     }
