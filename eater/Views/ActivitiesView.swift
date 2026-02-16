@@ -23,6 +23,7 @@ struct ActivitiesView: View {
   @AppStorage("todayActivityDate") private var todayActivityDate = ""
   @AppStorage("todaySportCalories") private var todaySportCalories = 0
   @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate = ""
+  @AppStorage("todayTrackedActivityTypes") private var todayTrackedActivityTypes = ""  // e.g. "gym,yoga"
   
   @State private var showChessWinnerSheet = false
   @State private var showOpponentPicker = false
@@ -32,6 +33,7 @@ struct ActivitiesView: View {
   @State private var pendingGameResult: String = "" // "me", "draw", or "opponent"
   @State private var isSyncingChess = false
   @State private var showChessHistory = false
+  @State private var showChessSheet = false
   @State private var cachedFriends: [(email: String, nickname: String)]? = nil
   
   var body: some View {
@@ -41,21 +43,11 @@ struct ActivitiesView: View {
         
         ScrollView {
           VStack(spacing: 20) {
-            // Chess Activity
-            chessActivityCard
-            
             // Burned Calories Counter
             burnedCaloriesCard
             
             Divider()
               .padding(.vertical, 10)
-            
-            // Other Activities Header
-            Text(Localization.shared.tr("activities.other", default: "Other Activities"))
-              .font(.headline)
-              .foregroundColor(AppTheme.textPrimary)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding(.horizontal)
             
             // Calorie-based activities
             activityButton(
@@ -73,6 +65,8 @@ struct ActivitiesView: View {
               icon: "figure.walk",
               color: .green
             )
+            
+            chessActivityButton
             
             activityButton(
               type: .treadmill,
@@ -131,7 +125,31 @@ struct ActivitiesView: View {
       .sheet(isPresented: $showActivityInputSheet) {
         activityInputSheet
       }
+      .sheet(isPresented: $showChessSheet) {
+        NavigationView {
+          ScrollView {
+            chessActivityCard
+              .padding(.bottom, 24)
+          }
+          .background(AppTheme.backgroundGradient.ignoresSafeArea())
+          .navigationTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
+          .navigationBarTitleDisplayMode(.inline)
+          .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+              Button(Localization.shared.tr("common.done", default: "Done")) {
+                showChessSheet = false
+              }
+              .foregroundColor(AppTheme.textPrimary)
+            }
+          }
+        }
+      }
       .onAppear {
+        // Clear tracked types if we're on a new day
+        let todayString = getCurrentUTCDateString()
+        if todaySportCaloriesDate != todayString {
+          todayTrackedActivityTypes = ""
+        }
         // Initialize player name if not set
         if chessPlayerName.isEmpty {
           if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
@@ -389,10 +407,77 @@ struct ActivitiesView: View {
     .padding(.horizontal)
   }
   
+  // MARK: - Chess Activity Button (opens sheet)
+  
+  private var chessActivityButton: some View {
+    let tracked = isTrackedToday(.chess)
+    return Button(action: {
+      HapticsService.shared.select()
+      showChessSheet = true
+    }) {
+      HStack {
+        Image(systemName: ThemeService.shared.icon(for: "square.grid.3x3.fill"))
+          .font(.title2)
+          .foregroundColor(tracked ? .white : .purple)
+          .frame(width: 40)
+        
+        VStack(alignment: .leading, spacing: 2) {
+          Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
+            .font(.headline)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
+          Text(Localization.shared.tr("activities.chess.subtitle", default: "Record games, view wins"))
+            .font(.caption)
+            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
+        }
+        
+        Spacer()
+        
+        Image(systemName: "chevron.right")
+          .font(.caption)
+          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
+      }
+      .padding()
+      .background(
+        Group {
+          if tracked {
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          } else {
+            AppTheme.surface
+          }
+        }
+      )
+      .cornerRadius(12)
+      .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+    }
+    .buttonStyle(.plain)
+    .padding(.horizontal)
+  }
+  
+  // MARK: - Tracked Today Helpers
+  
+  private func activityTypeKey(_ type: ActivityType) -> String {
+    switch type {
+    case .gym: return "gym"
+    case .steps: return "steps"
+    case .treadmill: return "treadmill"
+    case .elliptical: return "elliptical"
+    case .yoga: return "yoga"
+    case .chess: return "chess"
+    }
+  }
+  
+  private func isTrackedToday(_ type: ActivityType) -> Bool {
+    if type == .chess {
+      return lastChessDate == getCurrentUTCDateString()
+    }
+    return todayTrackedActivityTypes.contains(activityTypeKey(type))
+  }
+  
   // MARK: - Activity Button
   
   private func activityButton(type: ActivityType, title: String, subtitle: String, icon: String, color: Color) -> some View {
-    Button(action: {
+    let tracked = isTrackedToday(type)
+    return Button(action: {
       HapticsService.shared.select()
       selectedActivityType = type
       inputValue = ""
@@ -402,29 +487,38 @@ struct ActivitiesView: View {
         // Theme-aware icon
         Image(systemName: ThemeService.shared.icon(for: icon))
           .font(.title2)
-          .foregroundColor(color)
+          .foregroundColor(tracked ? .white : color)
           .frame(width: 40)
         
         VStack(alignment: .leading, spacing: 2) {
           Text(title)
             .font(.headline)
-            .foregroundColor(AppTheme.textPrimary)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
           Text(subtitle)
             .font(.caption)
-            .foregroundColor(AppTheme.textSecondary)
+            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
         }
         
         Spacer()
         
         Image(systemName: "chevron.right")
           .font(.caption)
-          .foregroundColor(AppTheme.textSecondary)
+          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
       }
       .padding()
-      .background(AppTheme.surface)
+      .background(
+        Group {
+          if tracked {
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          } else {
+            AppTheme.surface
+          }
+        }
+      )
       .cornerRadius(12)
       .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
     }
+    .buttonStyle(.plain)
     .padding(.horizontal)
   }
   
@@ -830,10 +924,11 @@ struct ActivitiesView: View {
   // MARK: - Reset Today's Activities
   
   private func resetTodayActivities() {
-    // Reset sport calories
+    // Reset sport calories and tracked types
     todaySportCalories = 0
     todaySportCaloriesDate = ""
     todayActivityDate = ""
+    todayTrackedActivityTypes = ""
     
     HapticsService.shared.warning()
     
@@ -1005,6 +1100,11 @@ struct ActivitiesView: View {
     
     // Mark activity for today
     todayActivityDate = getCurrentUTCDateString()
+    // Remember this type was tracked today (for green-purple button highlight)
+    let key = activityTypeKey(selectedActivityType)
+    if !todayTrackedActivityTypes.contains(key) {
+      todayTrackedActivityTypes = todayTrackedActivityTypes.isEmpty ? key : todayTrackedActivityTypes + "," + key
+    }
     
     // Notify parent view
     NotificationCenter.default.post(

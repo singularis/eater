@@ -86,11 +86,15 @@ struct AlcoholCalendarView: View {
         .font(.system(size: 17, weight: .bold, design: .rounded))
         .foregroundColor(AppTheme.textPrimary)
       Text(loc("alcohol.addiction_mode.subtitle", "Track alcohol intake and stay mindful."))
-        .font(.system(size: 15, weight: .medium, design: .rounded))
-        .foregroundColor(AppTheme.textSecondary)
+        .font(.system(size: 19, weight: .medium, design: .rounded))
+        .foregroundStyle(
+          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+        )
       Text(loc("alcohol.addiction_mode.desc", "Alcohol entries are automatically logged in your calendar, and the alcohol icon turns red to highlight the day."))
-        .font(.system(size: 14, weight: .regular, design: .rounded))
-        .foregroundColor(AppTheme.textSecondary)
+        .font(.system(size: 18, weight: .regular, design: .rounded))
+        .foregroundStyle(
+          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+        )
         .lineSpacing(3)
     }
     .frame(maxWidth: .infinity, alignment: .leading)

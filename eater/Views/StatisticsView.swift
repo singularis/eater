@@ -321,7 +321,7 @@ struct StatisticsView: View {
       .overlay(
         validWeightStats.isEmpty
           ? EmptyStateView(
-            systemImage: "scalemass",
+            systemImage: "figure.stand",
             title: loc("stats.weight.empty.title", "No weight data available"),
             subtitle: loc("stats.weight.empty.subtitle", "Submit weight via camera or manual entry")
           ) : nil

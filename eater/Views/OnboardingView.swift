@@ -82,7 +82,7 @@ struct OnboardingView: View {
               title: loc("onboarding.tools.title", "Your Essential Tools 🍽️"),
               description: loc("onboarding.tools.desc", "Small steps that make a big difference."),
               anchor: "tools",
-              icon: "scalemass.fill"
+              icon: "wrench.and.screwdriver"
             ),
             OnboardingStep(
               title: loc("onboarding.pets.title", "Meet Your Pet Companion 🐾"),
@@ -91,7 +91,7 @@ struct OnboardingView: View {
               icon: "pawprint.fill"
             ),
             OnboardingStep(
-              title: loc("onboarding.plan.title", "Your Personal Plan 🎯"),
+              title: loc("onboarding.plan.title", "Your Personal Plan 😎"),
               description: loc("onboarding.plan.desc", "See how your goal and activity level turn into a safe, realistic plan."),
               anchor: "plan",
               icon: "target"
@@ -272,22 +272,24 @@ struct OnboardingView: View {
   }
   
   private var toolsStepView: some View {
-    VStack(spacing: 16) {
-      // Title
-      Text(loc("onboarding.tools.title", "Your Essential Tools 🍽️"))
-        .font(.system(size: 34, weight: .bold, design: .rounded))
-        .foregroundColor(AppTheme.textPrimary)
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: 16) {
+        // Title
+        Text(loc("onboarding.tools.title", "Your Essential Tools 🍽️"))
+          .font(.system(size: 34, weight: .bold, design: .rounded))
+          .foregroundColor(AppTheme.textPrimary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 20)
+          .padding(.top, 10)
 
-      // Subtitle
-      Text(loc("onboarding.tools.subtitle", "These are small but very important steps toward healthier eating."))
-        .font(.system(size: 18, weight: .regular, design: .rounded))
-        .foregroundColor(AppTheme.textSecondary)
-        .multilineTextAlignment(.center)
-        .lineSpacing(4)
-        .padding(.horizontal, 24)
+        // Subtitle
+        Text(loc("onboarding.tools.subtitle", "These are small but very important steps toward healthier eating."))
+          .font(.system(size: 18, weight: .regular, design: .rounded))
+          .foregroundColor(AppTheme.textSecondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(4)
+          .fixedSize(horizontal: false, vertical: true)
+          .padding(.horizontal, 24)
 
       // --- Kitchen Scales Card ---
       HStack(spacing: 14) {
@@ -360,8 +362,10 @@ struct OnboardingView: View {
         }
 
         Text(loc("onboarding.tools.track.desc", "Even if something seems less healthy, keep tracking! No judgment, no stopping. That is the path to a balanced relationship with food. Every step toward awareness matters."))
-          .font(.system(size: 15, weight: .regular, design: .rounded))
-          .foregroundColor(AppTheme.textSecondary)
+          .font(.system(size: 18, weight: .regular, design: .rounded))
+          .foregroundStyle(
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          )
           .multilineTextAlignment(.center)
           .lineSpacing(3)
           .fixedSize(horizontal: false, vertical: true)
@@ -376,7 +380,8 @@ struct OnboardingView: View {
       )
       .padding(.horizontal, 20)
 
-      Spacer()
+        Spacer().frame(height: 24)
+      }
     }
   }
 
@@ -669,8 +674,10 @@ struct OnboardingView: View {
           .padding(.top, 12)
 
         Text(loc("onboarding.new_features.subtitle", "Powerful tools to make your tracking even better."))
-          .font(.system(size: 16, weight: .regular, design: .rounded))
-          .foregroundColor(AppTheme.textSecondary)
+          .font(.system(size: 19, weight: .regular, design: .rounded))
+          .foregroundStyle(
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          )
           .multilineTextAlignment(.center)
           .lineSpacing(3)
           .padding(.horizontal, 24)
@@ -721,11 +728,12 @@ struct OnboardingView: View {
   }
 
   private var planStepView: some View {
-    VStack(spacing: 20) {
-      Spacer()
-      
-      // Icon
-      ZStack {
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: 20) {
+        Spacer().frame(height: 16)
+        
+        // Icon
+        ZStack {
         Circle()
           .fill(Color.green.opacity(0.12))
           .frame(width: 110, height: 110)
@@ -735,7 +743,7 @@ struct OnboardingView: View {
       }
       
       VStack(spacing: 14) {
-        Text(loc("onboarding.plan.title", "Your Personal Plan 🎯"))
+        Text(loc("onboarding.plan.title", "Your Personal Plan 😎"))
           .font(.system(size: 30, weight: .bold, design: .rounded))
           .foregroundColor(AppTheme.textPrimary)
           .multilineTextAlignment(.center)
@@ -746,12 +754,13 @@ struct OnboardingView: View {
           .foregroundColor(AppTheme.textSecondary)
           .multilineTextAlignment(.center)
           .lineSpacing(3)
+          .fixedSize(horizontal: false, vertical: true)
           .padding(.horizontal, 28)
       }
       
       VStack(alignment: .leading, spacing: 10) {
         PlanBulletRow(
-          icon: "scalemass.fill",
+          icon: "heart.circle.fill",
           color: .green,
           text: loc("onboarding.plan.point.weight", "Choose your target weight. BMI never goes below 18.5, so the goal stays safe.")
         )
@@ -772,18 +781,19 @@ struct OnboardingView: View {
       .cornerRadius(20)
       .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
       .padding(.horizontal, 24)
-      
-      Spacer()
-      
-      // Hint: where to run it now
-      Text(loc("onboarding.plan.hint", "After this tutorial you can open Profile → Health to calculate your plan right away."))
-        .font(.system(size: 20, weight: .regular, design: .rounded))
-        .foregroundStyle(
-          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
-        )
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 28)
-        .padding(.bottom, 8)
+        
+        Spacer().frame(height: 16)
+        
+        // Hint: where to run it now
+        Text(loc("onboarding.plan.hint", "After this tutorial you can open\nProfile → Health\nto calculate your plan right away."))
+          .font(.system(size: 20, weight: .regular, design: .rounded))
+          .foregroundStyle(
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          )
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 28)
+          .padding(.bottom, 24)
+      }
     }
   }
 
@@ -832,8 +842,10 @@ struct OnboardingView: View {
           .font(.system(size: 15, weight: .semibold, design: .rounded))
           .foregroundColor(AppTheme.textPrimary)
         Text(loc("onboarding.plates.motivation.desc", "When the score goes up, your plate is more balanced. Can you nudge today's score a little higher?"))
-          .font(.system(size: 13, weight: .regular, design: .rounded))
-          .foregroundColor(AppTheme.textSecondary)
+          .font(.system(size: 16, weight: .regular, design: .rounded))
+          .foregroundStyle(
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          )
           .multilineTextAlignment(.center)
           .padding(.horizontal, 24)
       }
@@ -853,8 +865,10 @@ struct OnboardingView: View {
           .padding(.horizontal, 24)
         
         Text(loc("onboarding.team.message", "And lastly, we'd love to grow with you! Our audience is full of IT professionals and if you'd like to contribute to developing Eateria, help shape future releases, or implement new features, feel free to join our team or leave feedback!"))
-          .font(.system(size: 15, weight: .regular, design: .rounded))
-          .foregroundColor(AppTheme.textSecondary)
+          .font(.system(size: 18, weight: .regular, design: .rounded))
+          .foregroundStyle(
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          )
           .multilineTextAlignment(.center)
           .lineSpacing(4)
           .padding(.horizontal, 24)
@@ -927,7 +941,7 @@ struct OnboardingView: View {
                 desc: loc("feature.food_log.desc", "Snap food to count calories instantly.")
             )
             FeatureRow(
-                icon: "scalemass.fill",
+                icon: "viewfinder",
                 color: .purple,
                 title: loc("feature.scale.title", "Scale Reader"),
                 desc: loc("feature.scale.desc", "Snap your scale to log weight automatically.")
@@ -1361,7 +1375,7 @@ struct OnboardingView: View {
     }
     .alert(loc("onboarding.skip.title", "Skip Onboarding?"), isPresented: $showingSkipConfirmation) {
         Button(loc("onboarding.skip.continue", "Continue Tutorial"), role: .cancel) {}
-        Button(loc("onboarding.skip.skip", "Skip")) {
+        Button(loc("onboarding.skip.skip", "Skip"), role: .destructive) {
             completeOnboarding()
         }
     } message: {
@@ -1681,7 +1695,7 @@ struct OnboardingView: View {
     case "pets":
         return loc("onboarding.pets.title", "Meet Your Pet Companion 🐾")
     case "plan":
-        return loc("onboarding.plan.title", "Your Personal Plan 🎯")
+        return loc("onboarding.plan.title", "Your Personal Plan 😎")
     case "balanced_plate":
         return loc("onboarding.plates.title", "Balanced Plate and Score")
     case "smart_tips":
@@ -1837,13 +1851,13 @@ struct PlanBulletRow: View {
   let text: String
   
   var body: some View {
-    HStack(alignment: .top, spacing: 10) {
+    HStack(alignment: .top, spacing: 14) {
       Image(systemName: icon)
-        .font(.system(size: 16))
+        .font(.system(size: 22))
         .foregroundColor(color)
-        .frame(width: 24)
+        .frame(width: 32)
       Text(text)
-        .font(.system(size: 14, weight: .regular, design: .rounded))
+        .font(.system(size: 17, weight: .regular, design: .rounded))
         .foregroundColor(AppTheme.textSecondary)
         .fixedSize(horizontal: false, vertical: true)
     }

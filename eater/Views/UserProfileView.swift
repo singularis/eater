@@ -109,7 +109,7 @@ struct UserProfileView: View {
               }
               .frame(maxWidth: .infinity)
             }
-            .buttonStyle(GreenButtonStyle())
+            .buttonStyle(GreenToPurpleButtonStyle())
             .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
 
             // Theme Section
@@ -676,7 +676,9 @@ struct UserProfileView: View {
       userAge = userDefaults.integer(forKey: "userAge")
       userOptimalWeight = userDefaults.double(forKey: "userOptimalWeight")
       userTargetWeight = userDefaults.double(forKey: "userTargetWeight")
-      userRecommendedCalories = userDefaults.integer(forKey: "userRecommendedCalories")
+      // Use same source as main screen (ContentView) so "Daily Calorie Target" matches everywhere
+      let soft = CalorieLimitsStorageService.shared.load()?.softLimit ?? userDefaults.integer(forKey: "softLimit")
+      userRecommendedCalories = soft > 0 ? soft : userDefaults.integer(forKey: "userRecommendedCalories")
     }
   }
   

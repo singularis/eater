@@ -689,15 +689,15 @@ struct HealthSettingsView: View {
     userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
     userDefaults.set(true, forKey: "hasUserHealthData")
 
-    // Only update calorie limits if user hasn't set them manually
-    let hasManualCalorieLimits = userDefaults.bool(forKey: "hasManualCalorieLimits")
-    if !hasManualCalorieLimits {
-      // Set the calorie limits based on recommendations
-      let softLimit = recommendedCalories
-      let hardLimit = Int(Double(recommendedCalories) * 1.15)  // 15% above recommendation
-      userDefaults.set(softLimit, forKey: "softLimit")
-      userDefaults.set(hardLimit, forKey: "hardLimit")
-    }
+    // Always apply health-based limits when user saves in Health (new plan = new target)
+    let softLimit = recommendedCalories
+    let hardLimit = Int(Double(recommendedCalories) * 1.15)  // 15% above recommendation
+    userDefaults.set(softLimit, forKey: "softLimit")
+    userDefaults.set(hardLimit, forKey: "hardLimit")
+    userDefaults.set(false, forKey: "hasManualCalorieLimits")
+    // Persist to file storage so ContentView and Set Calorie Limits pick up the new limits
+    CalorieLimitsStorageService.shared.save(
+      .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
   }
 }
 

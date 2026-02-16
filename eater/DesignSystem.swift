@@ -161,6 +161,41 @@ struct PrimaryButtonStyle: ButtonStyle {
   }
 }
 
+struct GreenToPurpleButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    let shadow = AppTheme.cardShadow
+    return configuration.label
+      .padding()
+      .frame(maxWidth: .infinity)
+      .background(
+        ZStack {
+          LinearGradient(
+            colors: [.green, .purple],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+          RoundedRectangle(cornerRadius: 25, style: .continuous)
+            .fill(.white.opacity(0.1))
+            .blur(radius: 0.5)
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 25, style: .continuous)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
+      )
+      .foregroundColor(.white)
+      .shadow(
+        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
+        radius: shadow.radius,
+        x: shadow.x,
+        y: configuration.isPressed ? shadow.y - 2 : shadow.y
+      )
+      .scaleEffect(configuration.isPressed ? 0.98 : 1)
+      .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+  }
+}
+
 struct GreenButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     let shadow = AppTheme.cardShadow

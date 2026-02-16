@@ -1507,6 +1507,7 @@ struct ContentView: View {
     )
     CalorieLimitsStorageService.shared.save(limits)
     recalculateCalorieLimitsFromHealthData()  // Recalculate from health data
+    uiRefreshTrigger.toggle()  // Force UI to reflect new limits
   }
 
   private func recalculateCalorieLimitsFromHealthData() {
@@ -1537,7 +1538,20 @@ struct ContentView: View {
       }
     }
 
-    guard height > 0, weight > 0, age > 0 else { return }
+    guard height > 0, weight > 0, age > 0 else {
+      // Fallback: apply last saved health recommendation if available
+      let saved = userDefaults.integer(forKey: "userRecommendedCalories")
+      if saved > 0 {
+        softLimit = saved
+        hardLimit = Int(Double(saved) * 1.15)
+        CalorieLimitsStorageService.shared.save(
+          .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
+        userDefaults.set(softLimit, forKey: "softLimit")
+        userDefaults.set(hardLimit, forKey: "hardLimit")
+        userDefaults.set(saved, forKey: "userRecommendedCalories")
+      }
+      return
+    }
 
     // Calculate optimal weight using BMI (21.5 - middle of healthy range)
     let heightInMeters = height / 100.0
