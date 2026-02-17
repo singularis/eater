@@ -106,6 +106,7 @@ struct ContentView: View {
   @State private var carbs: Double = 0
   @State private var sugar: Double = 0
   private var hasMacrosData: Bool { (proteins + fats + carbs + sugar) > 0 }
+  @State private var showMacroTargets: Bool = false
 
   private var localizedDateFormatter: DateFormatter {
     let df = DateFormatter()
@@ -684,38 +685,124 @@ struct ContentView: View {
     }
   }
 
+  /// Daily macro targets (g) from calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
+  private func macroTargetsFromDailyKcal(_ kcal: Int) -> (protein: Double, fat: Double, carbs: Double, sugarMax: Double) {
+    guard kcal > 0 else { return (80, 53, 200, 40) }
+    let k = Double(kcal)
+    let protein = (k * 0.20) / 4.0
+    let fat = (k * 0.30) / 9.0
+    let carbs = (k * 0.50) / 4.0
+    return (protein, fat, carbs, 40.0)
+  }
+
   private var macrosLineView: some View {
-    let text = formattedMacrosLine()
     let shadow = AppTheme.cardShadow
-    return HStack {
+    let targets = macroTargetsFromDailyKcal(softLimit)
+    func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
+    // Green zones (ranges) for macros
+    let proteinLower = targets.protein * 0.8
+    let fatLower = targets.fat * 0.8
+    let fatUpper = targets.fat * 1.2
+    let carbLower = targets.carbs * 0.8
+    let sugarLower = 40.0
+    let sugarUpper = 50.0
+    let grams = loc("units.g", "g")
+    let proLabel = loc("macro.pro", "PRO")
+    let fatLabel = loc("macro.fat", "FAT")
+    let carLabel = loc("macro.car", "CAR")
+    let sugLabel = loc("macro.sug", "SUG")
+    // Colors with ranges:
+    // - Protein: < 80% target = yellow, >= 80% = green (no red, надлишок білка ок)
+    let proColor: Color =
+      proteins >= proteinLower ? AppTheme.success : AppTheme.warning
+    // - Fat: < 80% target = yellow, 80–120% = green, > 120% = red
+    let fatColor: Color =
+      fats < fatLower ? AppTheme.warning
+      : (fats <= fatUpper ? AppTheme.success : AppTheme.danger)
+    // - Carbs: < 80% target = yellow, >= 80% = green
+    let carColor: Color =
+      carbs >= carbLower ? AppTheme.success : AppTheme.warning
+    // - Sugar: < 40g = yellow, 40–50g = green, > 50g = red
+    let sugColor: Color =
+      sugar < sugarLower ? AppTheme.warning
+      : (sugar <= sugarUpper ? AppTheme.success : AppTheme.danger)
+
+    let line1 = proLabel + " " + fmt(targets.protein) + grams
+    let line2 = fatLabel + " " + fmt(targets.fat) + grams
+    let line3 = carLabel + " " + fmt(targets.carbs) + grams
+    let line4 = sugLabel + " 40–50" + grams
+    let targetsDescription = [line1, line2, line3, line4].joined(separator: "\n")
+
+    return Button(action: {
+      HapticsService.shared.select()
+      showMacroTargets = true
+    }) {
+      HStack(spacing: 6) {
+        Spacer(minLength: 0)
+        Text(proLabel + " " + fmt(proteins) + grams).foregroundColor(proColor)
+        Text("•").foregroundColor(AppTheme.textSecondary)
+        Text(fatLabel + " " + fmt(fats) + grams).foregroundColor(fatColor)
+        Text("•").foregroundColor(AppTheme.textSecondary)
+        Text(carLabel + " " + fmt(carbs) + grams).foregroundColor(carColor)
+        Text("•").foregroundColor(AppTheme.textSecondary)
+        Text(sugLabel + " " + fmt(sugar) + grams).foregroundColor(sugColor)
+        Spacer(minLength: 0)
+      }
+      .lineLimit(1)
+      .truncationMode(.tail)
+      .font(.system(size: 16, weight: .semibold, design: .rounded))
+      .minimumScaleFactor(0.85)
+      .frame(maxWidth: .infinity)
+      .padding(.horizontal, 16)
+      .padding(.vertical, 8)
+      .background(AppTheme.surface)
+      .cornerRadius(AppTheme.cornerRadius)
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+      .padding(.horizontal, -6)
+      .padding(.top, 6)
+    }
+    .buttonStyle(PlainButtonStyle())
+    .sheet(isPresented: $showMacroTargets) {
+      macroTargetsSheetContent(softLimit: softLimit)
+    }
+  }
+
+  private func macroTargetsSheetContent(softLimit: Int) -> some View {
+    let targets = macroTargetsFromDailyKcal(softLimit)
+    func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
+    let grams = loc("units.g", "g")
+    let proLabel = loc("macro.pro", "PRO")
+    let fatLabel = loc("macro.fat", "FAT")
+    let carLabel = loc("macro.car", "CAR")
+    let sugLabel = loc("macro.sug", "SUG")
+    let macroGreenPurple = Color(red: 0.22, green: 0.55, blue: 0.6)
+    return VStack(spacing: 0) {
       Spacer(minLength: 0)
-      Text(text)
-        .lineLimit(1)
-        .truncationMode(.tail)
-        .font(.system(size: 16, weight: .semibold, design: .rounded))
-        .minimumScaleFactor(0.85)
-        .foregroundColor(AppTheme.textPrimary)
+      Text(loc("macro.targets.alert.title", "Macro goals"))
+        .font(.subheadline.weight(.semibold))
+        .scaleEffect(1.25)
+        .foregroundColor(macroGreenPurple)
+      VStack(alignment: .center, spacing: 4) {
+        Text(proLabel + " " + fmt(targets.protein) + grams)
+        Text(fatLabel + " " + fmt(targets.fat) + grams)
+        Text(carLabel + " " + fmt(targets.carbs) + grams)
+        Text(sugLabel + " 40–50" + grams)
+      }
+      .font(.subheadline)
+      .foregroundColor(macroGreenPurple)
+      .padding(.top, 8)
+      Button(loc("common.ok", "OK")) {
+        showMacroTargets = false
+      }
+      .buttonStyle(PrimaryButtonStyle())
+      .padding(.top, 12)
       Spacer(minLength: 0)
     }
     .frame(maxWidth: .infinity)
-    .padding(.horizontal, 16)
-    .padding(.vertical, 8)
-    .background(AppTheme.surface)
-    .cornerRadius(AppTheme.cornerRadius)
-    .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
-    .padding(.horizontal, -6)
-    .padding(.top, 6)
-  }
-
-  private func formattedMacrosLine() -> String {
-    func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
-    let pro = loc("macro.pro", "PRO")
-    let fat = loc("macro.fat", "FAT")
-    let car = loc("macro.car", "CAR")
-    let sug = loc("macro.sug", "SUG")
-    let grams = loc("units.g", "g")
-    return pro + " " + fmt1(proteins) + grams + " • " + fat + " " + fmt1(fats) + grams + " • " + car
-      + " " + fmt1(carbs) + grams + " • " + sug + " " + fmt1(sugar) + grams
+    .padding(.horizontal, 24)
+    .padding(.vertical, 16)
+    .presentationDetents([.height(240)])
+    .presentationDragIndicator(.visible)
   }
 
   private var cameraButtonView: some View {

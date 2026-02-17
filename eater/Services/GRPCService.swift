@@ -991,17 +991,22 @@ class GRPCService {
         completion(false, error.localizedDescription)
         return
       }
-      
-      if let httpResponse = response as? HTTPURLResponse {
-        if httpResponse.statusCode == 200 {
-          completion(true, nil)
-        } else {
-          let errorMsg = "Server returned status code \(httpResponse.statusCode)"
-          completion(false, errorMsg)
-        }
-      } else {
+
+      guard let httpResponse = response as? HTTPURLResponse else {
         completion(false, "Invalid response")
+        return
       }
+      if httpResponse.statusCode == 200 {
+        completion(true, nil)
+        return
+      }
+      // Parse error body (detail or error) for 400/409
+      var errorMsg: String?
+      if let data = data, !data.isEmpty,
+         let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        errorMsg = (json["detail"] as? String) ?? (json["error"] as? String)
+      }
+      completion(false, errorMsg ?? "Server returned status code \(httpResponse.statusCode)")
     }
   }
 

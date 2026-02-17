@@ -1655,8 +1655,13 @@ struct OnboardingView: View {
       UserDefaults.standard.set(hard, forKey: "hardLimit")
   }
 
+  private static func isNicknameValidLatinLowercase(_ s: String) -> Bool {
+    let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789")
+    return s.unicodeScalars.allSatisfy { allowed.contains($0) }
+  }
+
   private func saveNickname(completion: @escaping (Bool) -> Void) {
-    let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     
     guard !trimmed.isEmpty else {
       nicknameError = loc("nickname.empty_error", "Nickname cannot be empty")
@@ -1669,10 +1674,14 @@ struct OnboardingView: View {
       completion(false)
       return
     }
+
+    guard Self.isNicknameValidLatinLowercase(trimmed) else {
+      nicknameError = loc("nickname.latin_lowercase_error", "Only Latin lowercase letters and digits (a-z, 0-9)")
+      completion(false)
+      return
+    }
     
-    // Check if user is logged in via token presence
     guard UserDefaults.standard.string(forKey: "auth_token") != nil else {
-         // Not logged in? Just save locally
          savedNickname = trimmed
          completion(true)
          return
@@ -1688,7 +1697,14 @@ struct OnboardingView: View {
           self.savedNickname = trimmed
           completion(true)
         } else {
-          self.nicknameError = errorMsg ?? loc("nickname.error", "Failed to update nickname")
+          let raw = (errorMsg ?? "").lowercased()
+          if raw.contains("already taken") || raw.contains("taken") {
+            self.nicknameError = loc("nickname.taken_error", "This nickname is already taken")
+          } else if raw.contains("latin") || raw.contains("lowercase") {
+            self.nicknameError = loc("nickname.latin_lowercase_error", "Only Latin lowercase letters and digits (a-z, 0-9)")
+          } else {
+            self.nicknameError = errorMsg ?? loc("nickname.error", "Failed to update nickname")
+          }
           HapticsService.shared.error()
           completion(false)
         }

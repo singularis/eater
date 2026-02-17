@@ -42,9 +42,13 @@ struct HealthSettingsView: View {
   private static let weightMin = 20.0
   private static let weightMax = 300.0
   private static let targetWeightMin = 20.0
-  private static let targetWeightMax = 300.0
+  private static let targetWeightMax = 300.0  // fallback; effective max is BMI-based below
   private static let ageMin = 10
   private static let ageMax = 120
+  /// Max BMI for target weight: standard healthy range upper bound
+  private static let bmiMaxStandard = 24.9
+  /// Max BMI when goal is weight gain (slightly higher healthy range)
+  private static let bmiMaxGain = 27.0
 
   func localizedActivityLevel(_ level: String) -> String {
     switch level {
@@ -134,18 +138,17 @@ struct HealthSettingsView: View {
 
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(loc("common.save", "Save")) {
-            // If user is still on the form screen, compute before saving
+            // Always validate before saving (including when editing target on results screen)
             if !showResults {
               if validateAndCalculateHealthData() {
                 showResults = true
               } else {
-                // validateAndCalculateHealthData may trigger target BMI alert;
-                // fall back to generic invalid-data alert otherwise.
-                if !showingTargetWeightAlert {
-                  showingHealthDataAlert = true
-                }
-                return
+                return  // one alert already set (health data or target weight)
               }
+            }
+            // Re-validate when on results screen (user may have edited target to invalid BMI)
+            if showResults && !validateAndCalculateHealthData(showTargetWeightAlert: true, showAlerts: true) {
+              return  // invalid target or fields — alert already shown, do not save
             }
             HapticsService.shared.success()
             saveHealthData()
@@ -167,7 +170,7 @@ struct HealthSettingsView: View {
         invalidHealthDataMessage.isEmpty
           ? loc(
             "health.invalid.msg",
-            "Please provide valid values for height (cm), weight (kg), and age (years)."
+            "Check your current weight and target weight. Height and age rarely need changing. An invalid target weight can harm your health. For weight gain, choose the \"Gain\" mode."
           )
           : invalidHealthDataMessage
       )
@@ -180,7 +183,7 @@ struct HealthSettingsView: View {
         String(
           format: loc(
             "health.target_invalid.msg",
-            "Your target BMI would be %.1f (min 18.5). Please choose a higher target weight."
+            "Target BMI: %.1f. The entered target weight is not allowed and can harm your health. For weight gain, choose the \"Gain\" mode to allow a higher target."
           ),
           bmi
         )
@@ -308,7 +311,7 @@ struct HealthSettingsView: View {
             }
           } else {
             HapticsService.shared.error()
-            showingHealthDataAlert = true
+            // validateAndCalculateHealthData already set one alert (health data or target weight)
           }
         }
         .buttonStyle(PrimaryButtonStyle())
@@ -487,8 +490,27 @@ struct HealthSettingsView: View {
     }
   }
 
-  /// When showTargetWeightAlert is false (e.g. from recalcFromInputs), invalid target BMI is not shown as alert — only when user taps Save or Calculate.
-  private func validateAndCalculateHealthData(showTargetWeightAlert: Bool = true) -> Bool {
+  private enum ValidationOutcome {
+    case success
+    case failureInvalidFields
+    case failureInvalidTargetWeight
+  }
+
+  /// When showTargetWeightAlert is false (e.g. from recalcFromInputs), invalid target BMI is not shown as alert.
+  /// When showAlerts is false (recalcFromInputs), no alert is shown and we don't overwrite the target field so the user can type.
+  private func validateAndCalculateHealthData(showTargetWeightAlert: Bool = true, showAlerts: Bool = true) -> Bool {
+    switch validateAndCalculateHealthDataOutcome(showTargetWeightAlert: showTargetWeightAlert, applyClampingToUI: showAlerts) {
+    case .success: return true
+    case .failureInvalidFields:
+      if showAlerts { showingHealthDataAlert = true }
+      return false
+    case .failureInvalidTargetWeight:
+      if showAlerts { showingTargetWeightAlert = true }
+      return false
+    }
+  }
+
+  private func validateAndCalculateHealthDataOutcome(showTargetWeightAlert: Bool = true, applyClampingToUI: Bool = true) -> ValidationOutcome {
     invalidHealthDataMessage = ""
 
     var heightValue = parseDoubleFlexible(height)
@@ -511,38 +533,40 @@ struct HealthSettingsView: View {
         format: loc("health.invalid.msg_fields", "Please check: %@"),
         invalidFields.joined(separator: ", ")
       )
-      return false
+      return .failureInvalidFields
     }
 
-    guard var h = heightValue, var w = weightValue, var a = ageValue else { return false }
+    guard var h = heightValue, var w = weightValue, var a = ageValue else { return .failureInvalidFields }
 
-    // Clamp to health-safe limits and update UI so user sees corrected values
+    // Clamp to health-safe limits (use clamped values for calculation; only update UI when saving/calculating)
     h = min(max(h, Self.heightMin), Self.heightMax)
     w = min(max(w, Self.weightMin), Self.weightMax)
     a = min(max(a, Self.ageMin), Self.ageMax)
-    if var t = targetValue {
-      t = min(max(t, Self.targetWeightMin), Self.targetWeightMax)
-      targetValue = t
-      targetWeight = String(format: "%.1f", t)
-    }
-    height = String(format: "%.0f", h)
-    weight = String(format: "%.1f", w)
-    age = String(a)
-    // Calculate optimal weight using BMI (21.5 - middle of healthy range)
     let heightInMeters = h / 100.0
+    let minTargetByBmi = heightInMeters * heightInMeters * 18.5  // min healthy BMI 18.5
+    if var t = targetValue {
+      let maxAllowed = min(Self.targetWeightMax, maxTargetWeightForCurrentHeight(heightCm: h))
+      t = min(max(t, minTargetByBmi), maxAllowed)
+      targetValue = t
+      if applyClampingToUI {
+        targetWeight = String(format: "%.1f", t)
+      }
+    }
+    if applyClampingToUI {
+      height = String(format: "%.0f", h)
+      weight = String(format: "%.1f", w)
+      age = String(a)
+    }
     optimalWeight = 21.5 * heightInMeters * heightInMeters
 
-    // Default target weight if empty (suggest optimal)
-    if parseDoubleFlexible(targetWeight) == nil || (parseDoubleFlexible(targetWeight) ?? 0) <= 0 {
+    // Default target weight if empty (suggest optimal) — only when applying to UI
+    if applyClampingToUI && (parseDoubleFlexible(targetWeight) == nil || (parseDoubleFlexible(targetWeight) ?? 0) <= 0) {
       targetWeight = String(format: "%.1f", optimalWeight)
     }
 
     // Validate BMI at target >= 18.5; only show alert when saving/calculating, not during editing
     if !isTargetBMIValid(heightCm: h) {
-      if showTargetWeightAlert {
-        showingTargetWeightAlert = true
-      }
-      return false
+      return showTargetWeightAlert ? .failureInvalidTargetWeight : .success
     }
 
     // Calculate BMR using Mifflin-St Jeor Equation
@@ -575,15 +599,24 @@ struct HealthSettingsView: View {
 
     applyGoalAndCompute(tdee: tdee, currentWeight: w)
 
-    return true
+    return .success
   }
 
   private func recalcFromInputs() {
-    _ = validateAndCalculateHealthData(showTargetWeightAlert: false)
+    _ = validateAndCalculateHealthData(showTargetWeightAlert: false, showAlerts: false)
   }
 
   private func currentTargetWeightValue() -> Double {
     parseDoubleFlexible(targetWeight) ?? optimalWeight
+  }
+
+  /// Max healthy target weight (kg) from height and goal: heightM² * BMI cap (24.9 standard, 27 for gain).
+  private func maxTargetWeightForCurrentHeight(heightCm: Double? = nil) -> Double {
+    let h = heightCm ?? parseDoubleFlexible(height) ?? 0
+    guard h > 0 else { return Self.targetWeightMax }
+    let hm = h / 100.0
+    let bmiCap = goalMode == .gain ? Self.bmiMaxGain : Self.bmiMaxStandard
+    return (hm * hm) * bmiCap
   }
 
   private func isTargetBMIValid(heightCm: Double? = nil) -> Bool {
@@ -592,7 +625,8 @@ struct HealthSettingsView: View {
     guard h > 0, t > 0 else { return true }
     let hm = h / 100.0
     let bmi = t / (hm * hm)
-    return bmi >= 18.5
+    let maxBmi = goalMode == .gain ? Self.bmiMaxGain : Self.bmiMaxStandard
+    return bmi >= 18.5 && bmi <= maxBmi
   }
 
   private func bmi(heightCm: Double, weightKg: Double) -> Double {
@@ -618,9 +652,11 @@ struct HealthSettingsView: View {
 
   private func targetBMIText() -> String {
     guard let bmi = targetBMIValue() else { return "" }
+    let maxBmi = goalMode == .gain ? Self.bmiMaxGain : Self.bmiMaxStandard
     return String(
-      format: loc("health.bmi.target", "Target BMI: %.1f (min 18.5)"),
-      bmi
+      format: loc("health.bmi.target.range", "Target BMI: %.1f (18.5–%.1f)"),
+      bmi,
+      maxBmi
     )
   }
 
@@ -632,12 +668,11 @@ struct HealthSettingsView: View {
   }
 
   private func suggestedMonths() -> [Int] {
-    guard let w = Double(weight), let t = Double(targetWeight) else { return [2, 4, 6] }
+    // Weight gain: always offer 2, 4, 6 months
+    if goalMode == .gain { return [2, 4, 6] }
+    guard let w = parseDoubleFlexible(weight), let t = parseDoubleFlexible(targetWeight) else { return [2, 4, 6] }
     let diff = abs(w - t)
-    // Healthy minimum pacing:
-    // - up to 5kg: min 2 months
-    // - up to 10kg: min 4 months
-    // - >10kg: min 6 months
+    // Lose: healthy minimum pacing
     if diff <= 1.0 { return [2] }
     if diff <= 5.0 { return [2, 4, 6] }
     if diff <= 10.0 { return [4, 6] }

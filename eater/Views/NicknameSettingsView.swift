@@ -4,6 +4,7 @@ struct NicknameSettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var nickname: String = ""
   @State private var isLoading: Bool = false
+  @State private var errorMessage: String = ""
   @State private var showAlert: Bool = false
   @State private var alertMessage: String = ""
   @State private var alertTitle: String = ""
@@ -60,11 +61,19 @@ struct NicknameSettingsView: View {
               .cornerRadius(AppTheme.cornerRadius)
               .overlay(
                 RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                  .stroke(AppTheme.divider, lineWidth: 1)
+                  .stroke(errorMessage.isEmpty ? AppTheme.divider : AppTheme.danger, lineWidth: 1)
               )
               .autocapitalization(.none)
               .disableAutocorrection(true)
               .disabled(isLoading)
+              .onChange(of: nickname) { _ in errorMessage = "" }
+            
+            if !errorMessage.isEmpty {
+              Text(errorMessage)
+                .font(.system(size: 13))
+                .foregroundColor(AppTheme.danger)
+                .padding(.leading, 4)
+            }
             
             // Character count
             Text("\(nickname.count)/50")
@@ -144,23 +153,31 @@ struct NicknameSettingsView: View {
     return email.contains("@privaterelay.appleid.com")
   }
   
+  /// Only Latin lowercase letters and digits (a-z, 0-9).
+  private static func isNicknameValid(_ s: String) -> Bool {
+    let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789")
+    return s.unicodeScalars.allSatisfy { allowed.contains($0) }
+  }
+
   private func saveNickname() {
-    let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     
     guard !trimmed.isEmpty else {
-      alertTitle = loc("error.title", "Error")
-      alertMessage = loc("nickname.empty_error", "Nickname cannot be empty")
-      showAlert = true
+      errorMessage = loc("nickname.empty_error", "Nickname cannot be empty")
       return
     }
     
     guard trimmed.count <= 50 else {
-      alertTitle = loc("error.title", "Error")
-      alertMessage = loc("nickname.length_error", "Nickname must be 50 characters or less")
-      showAlert = true
+      errorMessage = loc("nickname.length_error", "Nickname must be 50 characters or less")
+      return
+    }
+
+    guard Self.isNicknameValid(trimmed) else {
+      errorMessage = loc("nickname.latin_lowercase_error", "Only Latin lowercase letters and digits (a-z, 0-9)")
       return
     }
     
+    errorMessage = ""
     isLoading = true
     HapticsService.shared.select()
     
@@ -169,24 +186,25 @@ struct NicknameSettingsView: View {
         self.isLoading = false
         
         if success {
-          // Save nickname locally
           savedNickname = trimmed
-          
-          // Success feedback
+          nickname = trimmed
           HapticsService.shared.success()
           alertTitle = loc("success.title", "Success")
           alertMessage = loc("nickname.success", "Your nickname has been updated successfully!")
           showAlert = true
-          
-          // Dismiss after a brief delay
           DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             dismiss()
           }
         } else {
           HapticsService.shared.error()
-          alertTitle = loc("error.title", "Error")
-          alertMessage = errorMsg ?? loc("nickname.error", "Failed to update nickname. Please try again.")
-          showAlert = true
+          let raw = (errorMsg ?? "").lowercased()
+          if raw.contains("already taken") || raw.contains("taken") {
+            errorMessage = loc("nickname.taken_error", "This nickname is already taken")
+          } else if raw.contains("latin") || raw.contains("lowercase") {
+            errorMessage = loc("nickname.latin_lowercase_error", "Only Latin lowercase letters and digits (a-z, 0-9)")
+          } else {
+            errorMessage = errorMsg ?? loc("nickname.error", "Failed to update nickname. Please try again.")
+          }
         }
       }
     }

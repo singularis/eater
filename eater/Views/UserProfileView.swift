@@ -49,27 +49,56 @@ struct UserProfileView: View {
                 userEmail: authService.userEmail
               )
 
-              if !userNickname.isEmpty {
-                Text(userNickname)
-                  .font(.title2)
-                  .fontWeight(.bold)
-                  .foregroundColor(AppTheme.textPrimary)
-                
-                if let userName = authService.userName, !userName.isEmpty {
-                  Text(userName)
-                    .font(.subheadline)
+              Button(action: {
+                HapticsService.shared.select()
+                showNicknameSettings = true
+              }) {
+                VStack(spacing: 6) {
+                  if !userNickname.isEmpty {
+                    HStack(spacing: 8) {
+                      Text(userNickname)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppTheme.textPrimary)
+                      Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppTheme.accent)
+                    }
+                    if let userName = authService.userName, !userName.isEmpty {
+                      Text(userName)
+                        .font(.subheadline)
+                        .foregroundColor(AppTheme.textSecondary)
+                    }
+                  } else if let userName = authService.userName, !userName.isEmpty {
+                    HStack(spacing: 8) {
+                      Text(userName)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppTheme.textPrimary)
+                      Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppTheme.accent)
+                    }
+                  } else {
+                    HStack(spacing: 8) {
+                      Text(loc("profile.set_nickname", "Set Nickname"))
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppTheme.accent)
+                      Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppTheme.accent)
+                    }
+                  }
+                  Text(authService.userEmail ?? "No email")
+                    .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                 }
-              } else if let userName = authService.userName, !userName.isEmpty {
-                Text(userName)
-                  .font(.title2)
-                  .fontWeight(.bold)
-                  .foregroundColor(AppTheme.textPrimary)
+                .frame(maxWidth: .infinity)
               }
-
-              Text(authService.userEmail ?? "No email")
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
+              .buttonStyle(PlainButtonStyle())
+              .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
+              .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -326,15 +355,6 @@ struct UserProfileView: View {
               ) {
                 HapticsService.shared.select()
                 showAddFriends = true
-              }
-              
-              actionButton(
-                icon: "person.text.rectangle.fill",
-                title: loc("profile.set_nickname", "Set Nickname"),
-                accessibilityHint: loc("a11y.set_nickname", "Set a nickname for sharing with friends")
-              ) {
-                HapticsService.shared.select()
-                showNicknameSettings = true
               }
             }
 
