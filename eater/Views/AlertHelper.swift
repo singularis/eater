@@ -68,14 +68,20 @@ class AlertHelper {
     "salt": "health.phrase.salt",
   ]
 
+  /// Strip candy emoji so we show a sugar concept without the candy symbol
+  private static func stripCandyEmoji(_ s: String) -> String {
+    s.replacingOccurrences(of: " 🍬", with: "").replacingOccurrences(of: "🍬", with: "")
+  }
+
   /// Translates health/ingredient text from API (English) to current app language when we have a key
   private static func translateHealthText(_ text: String) -> String {
     let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !t.isEmpty else { return text }
-    if let key = healthPhraseToKey[t] {
-      return loc(key, t)
+    let normalized = stripCandyEmoji(t)
+    if let key = healthPhraseToKey[normalized] ?? healthPhraseToKey[t] {
+      return stripCandyEmoji(loc(key, normalized))
     }
-    return text
+    return stripCandyEmoji(text)
   }
 
   static func showAlert(
@@ -458,7 +464,7 @@ class AlertHelper {
               UIAlertAction(title: loc("portion.extra.milk", "Milk 50g"), style: .default) { _ in
                 onAddDrinkExtra?("milk_50g")
               })
-            let addSugarTitle = loc("portion.add_extra", "Add 1 tsp sugar ☕")
+            let addSugarTitle = loc("portion.add_extra", "Add 1 tsp sugar")
             additionalAlert.addAction(
               UIAlertAction(title: addSugarTitle, style: .default) { _ in
                 onAddSugar?()

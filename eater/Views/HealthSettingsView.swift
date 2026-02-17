@@ -30,10 +30,21 @@ struct HealthSettingsView: View {
 
   @State private var goalMode: GoalMode = .maintain
   @State private var selectedMonths: Int = 4
+  @State private var heartBeatScale: CGFloat = 1.0
 
   let activityLevels = [
     "Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extremely Active",
   ]
+
+  // Health-safe limits to avoid harmful or unrealistic values
+  private static let heightMin = 100.0
+  private static let heightMax = 250.0
+  private static let weightMin = 20.0
+  private static let weightMax = 300.0
+  private static let targetWeightMin = 20.0
+  private static let targetWeightMax = 300.0
+  private static let ageMin = 10
+  private static let ageMax = 120
 
   func localizedActivityLevel(_ level: String) -> String {
     switch level {
@@ -182,6 +193,15 @@ struct HealthSettingsView: View {
       Image(systemName: "heart.fill")
         .font(.system(size: 60))
         .foregroundColor(AppTheme.danger)
+        .scaleEffect(heartBeatScale)
+        .onAppear {
+          withAnimation(
+            .easeInOut(duration: 0.45)
+            .repeatForever(autoreverses: true)
+          ) {
+            heartBeatScale = 1.12
+          }
+        }
 
       Text(loc("health.update.title", "Update Your Health Data"))
         .font(.title)
@@ -471,12 +491,12 @@ struct HealthSettingsView: View {
   private func validateAndCalculateHealthData(showTargetWeightAlert: Bool = true) -> Bool {
     invalidHealthDataMessage = ""
 
-    let heightValue = parseDoubleFlexible(height)
-    let weightValue = parseDoubleFlexible(weight)
-    let targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    var heightValue = parseDoubleFlexible(height)
+    var weightValue = parseDoubleFlexible(weight)
+    var targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       ? nil
       : parseDoubleFlexible(targetWeight)
-    let ageValue = Int(age.trimmingCharacters(in: .whitespacesAndNewlines))
+    var ageValue = Int(age.trimmingCharacters(in: .whitespacesAndNewlines))
 
     var invalidFields: [String] = []
     if heightValue == nil || (heightValue ?? 0) <= 0 { invalidFields.append(loc("health.height", "Height (cm):")) }
@@ -494,10 +514,22 @@ struct HealthSettingsView: View {
       return false
     }
 
-    guard let heightValue, let weightValue, let ageValue else { return false }
+    guard var h = heightValue, var w = weightValue, var a = ageValue else { return false }
 
+    // Clamp to health-safe limits and update UI so user sees corrected values
+    h = min(max(h, Self.heightMin), Self.heightMax)
+    w = min(max(w, Self.weightMin), Self.weightMax)
+    a = min(max(a, Self.ageMin), Self.ageMax)
+    if var t = targetValue {
+      t = min(max(t, Self.targetWeightMin), Self.targetWeightMax)
+      targetValue = t
+      targetWeight = String(format: "%.1f", t)
+    }
+    height = String(format: "%.0f", h)
+    weight = String(format: "%.1f", w)
+    age = String(a)
     // Calculate optimal weight using BMI (21.5 - middle of healthy range)
-    let heightInMeters = heightValue / 100.0
+    let heightInMeters = h / 100.0
     optimalWeight = 21.5 * heightInMeters * heightInMeters
 
     // Default target weight if empty (suggest optimal)
@@ -506,7 +538,7 @@ struct HealthSettingsView: View {
     }
 
     // Validate BMI at target >= 18.5; only show alert when saving/calculating, not during editing
-    if !isTargetBMIValid(heightCm: heightValue) {
+    if !isTargetBMIValid(heightCm: h) {
       if showTargetWeightAlert {
         showingTargetWeightAlert = true
       }
@@ -516,9 +548,9 @@ struct HealthSettingsView: View {
     // Calculate BMR using Mifflin-St Jeor Equation
     let bmr: Double
     if isMale {
-      bmr = 10 * weightValue + 6.25 * heightValue - 5 * Double(ageValue) + 5
+      bmr = 10 * w + 6.25 * h - 5 * Double(a) + 5
     } else {
-      bmr = 10 * weightValue + 6.25 * heightValue - 5 * Double(ageValue) - 161
+      bmr = 10 * w + 6.25 * h - 5 * Double(a) - 161
     }
 
     // Activity multipliers
@@ -541,7 +573,7 @@ struct HealthSettingsView: View {
     // Calculate TDEE (Total Daily Energy Expenditure)
     let tdee = bmr * activityMultiplier
 
-    applyGoalAndCompute(tdee: tdee, currentWeight: weightValue)
+    applyGoalAndCompute(tdee: tdee, currentWeight: w)
 
     return true
   }

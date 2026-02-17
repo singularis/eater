@@ -17,7 +17,7 @@ enum AppMascot: String, CaseIterable {
   var displayName: String {
     switch self {
     case .none: return "Default"
-    case .cat: return "British Cat"
+    case .cat: return "Cat"
     case .dog: return "Root"
     }
   }

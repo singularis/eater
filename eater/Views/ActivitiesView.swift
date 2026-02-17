@@ -633,7 +633,7 @@ struct ActivitiesView: View {
           Button(action: {
             showChessWinnerSheet = false
           }) {
-            Text(Localization.shared.tr("common.cancel", default: "Cancel"))
+            Text(Localization.shared.tr("common.done", default: "Done"))
               .foregroundColor(AppTheme.textPrimary)
           }
         }
@@ -699,7 +699,7 @@ struct ActivitiesView: View {
           Button(action: {
             showActivityInputSheet = false
           }) {
-            Text(Localization.shared.tr("common.cancel", default: "Cancel"))
+            Text(Localization.shared.tr("common.done", default: "Done"))
               .foregroundColor(AppTheme.textPrimary)
           }
         }

@@ -214,7 +214,7 @@ struct UserProfileView: View {
                   healthMetricRow(
                     label: loc("health.bmi.label", "BMI:"),
                     value: String(format: "%.1f", currentBMI),
-                    color: AppTheme.textPrimary
+                    color: .blue
                   )
                 }
                 
@@ -569,8 +569,8 @@ struct UserProfileView: View {
       .navigationTitle(loc("nav.profile", "Profile"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button(loc("common.close", "Close")) {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button(loc("common.done", "Done")) {
             dismiss()
           }
           .foregroundColor(AppTheme.textPrimary)

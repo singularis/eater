@@ -40,11 +40,13 @@ struct AlcoholCalendarView: View {
       weekdayHeader
       monthGrid
       Spacer(minLength: 0)
-      Button(action: { isPresented = false }) {
-        Text(loc("common.close", "Close"))
-          .frame(maxWidth: .infinity)
+      HStack {
+        Spacer(minLength: 0)
+        Button(action: { isPresented = false }) {
+          Text(loc("common.done", "Done"))
+        }
+        .buttonStyle(PrimaryButtonStyle())
       }
-      .buttonStyle(PrimaryButtonStyle())
       .padding(.horizontal)
       .padding(.bottom, 12)
     }

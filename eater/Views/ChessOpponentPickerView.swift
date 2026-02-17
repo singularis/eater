@@ -92,7 +92,7 @@ struct ChessOpponentPickerView: View {
           Button(action: {
             dismiss()
           }) {
-            Text(Localization.shared.tr("common.cancel", default: "Cancel"))
+            Text(Localization.shared.tr("common.done", default: "Done"))
               .foregroundColor(AppTheme.textPrimary)
           }
         }

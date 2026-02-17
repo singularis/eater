@@ -43,13 +43,15 @@ struct CalendarDatePickerView: View {
         onDateSelected(dateString)
       }
 
-      Button(action: {
-        isPresented = false
-      }) {
-        Text(loc("common.cancel", "Cancel"))
-          .frame(maxWidth: .infinity)
+      HStack {
+        Spacer(minLength: 0)
+        Button(action: {
+          isPresented = false
+        }) {
+          Text(loc("common.done", "Done"))
+        }
+        .buttonStyle(SecondaryButtonStyle())
       }
-      .buttonStyle(SecondaryButtonStyle())
       .padding(.horizontal)
       .padding(.bottom, 20)
     }

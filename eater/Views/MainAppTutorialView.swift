@@ -132,22 +132,6 @@ struct MainAppTutorialView: View {
                         .padding()
                     }
                 }
-                .overlay(
-                    // "Done" button for specific step mode in top right
-                    Group {
-                        if specificStep != nil {
-                            HStack {
-                                Spacer()
-                                Button(action: finishTutorial) {
-                                    Text(loc("common.done", "Done"))
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .foregroundColor(AppTheme.accent)
-                                }
-                                .padding()
-                            }
-                        }
-                    }
-                )
                 
                 TabView(selection: $currentPage) {
                     ForEach(0..<displayedSteps.count, id: \.self) { index in

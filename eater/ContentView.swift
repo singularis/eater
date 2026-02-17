@@ -357,14 +357,14 @@ struct ContentView: View {
             Circle()
               .stroke(
                 LinearGradient(
-                  gradient: Gradient(colors: [Color(red: 0.4, green: 0.5, blue: 1.0).opacity(0.9), Color(red: 0.4, green: 0.5, blue: 1.0).opacity(0.3)]),
+                  gradient: Gradient(colors: [Color.green.opacity(0.9), Color.purple.opacity(0.9)]),
                   startPoint: .topLeading,
                   endPoint: .bottomTrailing
                 ),
                 lineWidth: 2
               )
           )
-          .shadow(color: Color(red: 0.4, green: 0.5, blue: 1.0).opacity(0.4), radius: 6, x: 0, y: 3)
+          .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
 
         ProfileImageView(
           profilePictureURL: authService.userProfilePictureURL,
