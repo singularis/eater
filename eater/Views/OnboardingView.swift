@@ -33,6 +33,10 @@ struct OnboardingView: View {
   @State private var isApplyingLanguage: Bool = false
   @State private var showFeedback: Bool = false
   @State private var platePageIndex: Int = 0
+  @State private var introTypedText: String = ""
+  @State private var introTypingIndex: Int = 0
+  @State private var introTypingTimer: Timer?
+  @State private var isIntroPulsing: Bool = false
   
   // Nickname State
   @AppStorage("user_nickname") private var savedNickname: String = ""
@@ -79,6 +83,12 @@ struct OnboardingView: View {
       switch mode {
       case .initial:
           return [
+            OnboardingStep(
+              title: "",
+              description: "",
+              anchor: "intro",
+              icon: "sparkles"
+            ),
             OnboardingStep(
               title: loc("onboarding.tools.title", "Your Essential Tools 🍽️"),
               description: loc("onboarding.tools.desc", "Small steps that make a big difference."),
@@ -172,6 +182,10 @@ struct OnboardingView: View {
   // Renamed to handle index
   private func defaultStepView(for index: Int) -> some View {
     let step = steps[index]
+    
+    if step.anchor == "intro" {
+        return AnyView(introStepView)
+    }
     
     if step.anchor == "tools" {
         return AnyView(toolsStepView)
@@ -383,6 +397,95 @@ struct OnboardingView: View {
 
         Spacer().frame(height: 24)
       }
+    }
+  }
+
+  // Intro step with typing effect, as if someone types the greeting
+  private var introFullText: String {
+    loc(
+      "onboarding.intro.full",
+      "Hello and welcome to Eateria!\nWe’re here to help you build a healthier lifestyle. Balance your meals, track daily activity, and work toward your personal goals step by step.\n\nWe’ll support you along the way.\nLet’s begin your journey to feeling your best!"
+    )
+  }
+
+  private var introStepView: some View {
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: 24) {
+        Spacer().frame(height: 24)
+
+        // Hero image: perfect circle, like the design
+        Group {
+          if UIImage(named: "onboarding_intro_pets") != nil {
+            Image("onboarding_intro_pets")
+              .resizable()
+          } else {
+            // Fallback to an existing onboarding image if custom asset is missing
+            Image("onboarding_plate1")
+              .resizable()
+          }
+        }
+        .scaledToFill()
+        .frame(width: 230, height: 230)
+        .clipShape(Circle())
+        .shadow(color: Color.black.opacity(0.25), radius: 14, x: 0, y: 8)
+        .scaleEffect(isIntroPulsing ? 1.05 : 0.97)
+        .animation(
+          .easeInOut(duration: 1.6).repeatForever(autoreverses: true),
+          value: isIntroPulsing
+        )
+
+        VStack(alignment: .leading, spacing: 16) {
+          // Typing-effect block
+          Text(introTypedText.isEmpty ? " " : introTypedText)
+            .font(.system(size: 19, weight: .regular, design: .monospaced))
+            .foregroundStyle(
+              LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+            )
+            .multilineTextAlignment(.leading)
+            .lineSpacing(5)
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+
+        Spacer(minLength: 16)
+      }
+      .padding(.bottom, 40)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .onAppear {
+      startIntroTyping()
+      isIntroPulsing = true
+    }
+    .onDisappear {
+      stopIntroTyping(reset: true)
+      isIntroPulsing = false
+    }
+  }
+
+  private func startIntroTyping() {
+    stopIntroTyping(reset: true)
+    let text = introFullText
+    introTypedText = ""
+    introTypingIndex = 0
+
+    // Simple typing timer – slower, about 15–18 chars/sec
+    introTypingTimer = Timer.scheduledTimer(withTimeInterval: 0.06, repeats: true) { timer in
+      guard introTypingIndex < text.count else {
+        timer.invalidate()
+        return
+      }
+      let idx = text.index(text.startIndex, offsetBy: introTypingIndex)
+      introTypedText.append(text[idx])
+      introTypingIndex += 1
+    }
+  }
+
+  private func stopIntroTyping(reset: Bool) {
+    introTypingTimer?.invalidate()
+    introTypingTimer = nil
+    if reset {
+      introTypedText = ""
+      introTypingIndex = 0
     }
   }
 
@@ -1881,6 +1984,67 @@ struct OnboardingView: View {
 
   // MARK: - View Components
 
+}
+
+// Simple star shape for clipping intro image
+struct StarShape: Shape {
+  let corners: Int
+  let smoothness: CGFloat
+
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    let center = CGPoint(x: rect.width / 2, y: rect.height / 2)
+    var angle: CGFloat = -.pi / 2
+    let angleIncrement = .pi * 2 / CGFloat(corners * 2)
+    let radius = min(rect.width, rect.height) / 2
+    let innerRadius = radius * smoothness
+
+    for i in 0..<(corners * 2) {
+      let r = (i % 2 == 0) ? radius : innerRadius
+      let x = center.x + cos(angle) * r
+      let y = center.y + sin(angle) * r
+      if i == 0 {
+        path.move(to: CGPoint(x: x, y: y))
+      } else {
+        path.addLine(to: CGPoint(x: x, y: y))
+      }
+      angle += angleIncrement
+    }
+    path.closeSubpath()
+    return path
+  }
+}
+
+/// Softer, rounded star / blob shape so the intro image is not clipped too aggressively.
+struct WavyStarShape: Shape {
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    let center = CGPoint(x: rect.midX, y: rect.midY)
+    let maxRadius = min(rect.width, rect.height) / 2
+
+    // Approximate a rounded 5‑point "starfish" using a smooth sinusoidal radius.
+    let steps = 180
+    for i in 0...steps {
+      let progress = Double(i) / Double(steps)
+      let theta = progress * 2 * Double.pi
+
+      // 5 gentle bumps around the circle.
+      let wave = 0.25 * sin(5 * theta)
+      let radius = maxRadius * CGFloat(0.75 + wave)
+
+      let x = center.x + cos(CGFloat(theta)) * radius
+      let y = center.y + sin(CGFloat(theta)) * radius
+
+      if i == 0 {
+        path.move(to: CGPoint(x: x, y: y))
+      } else {
+        path.addLine(to: CGPoint(x: x, y: y))
+      }
+    }
+
+    path.closeSubpath()
+    return path
+  }
 }
 
 // MARK: - Pet Theme Helpers
