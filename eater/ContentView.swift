@@ -1177,7 +1177,7 @@ struct ContentView: View {
         time: time,
         userEmail: userEmail,
         percentage: 100,
-        isTryAgain: true,
+        isTryManually: true,
         imageId: imageId,
         manualFoodName: newName
       ) { success in

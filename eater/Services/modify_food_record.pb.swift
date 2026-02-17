@@ -31,7 +31,7 @@ struct Eater_ModifyFoodRecordRequest: Sendable {
 
     var percentage: Int32 = 0
 
-    var isTryAgain: Bool = false
+    var isTryManually: Bool = false
 
     var manualFoodName: String = .init()
 
@@ -70,7 +70,7 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
         1: .same(proto: "time"),
         2: .standard(proto: "user_email"),
         3: .same(proto: "percentage"),
-        4: .standard(proto: "is_try_again"),
+        4: .standard(proto: "is_try_manually"),
         5: .standard(proto: "manual_food_name"),
         6: .standard(proto: "manual_insight"),
         7: .standard(proto: "manual_components"),
@@ -87,7 +87,7 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
             case 1: try decoder.decodeSingularInt64Field(value: &time)
             case 2: try decoder.decodeSingularStringField(value: &userEmail)
             case 3: try decoder.decodeSingularInt32Field(value: &percentage)
-            case 4: try decoder.decodeSingularBoolField(value: &isTryAgain)
+            case 4: try decoder.decodeSingularBoolField(value: &isTryManually)
             case 5: try decoder.decodeSingularStringField(value: &manualFoodName)
             case 6: try decoder.decodeSingularStringField(value: &manualInsight)
             case 7: try decoder.decodeRepeatedStringField(value: &manualComponents)
@@ -108,8 +108,8 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
         if percentage != 0 {
             try visitor.visitSingularInt32Field(value: percentage, fieldNumber: 3)
         }
-        if isTryAgain != false {
-            try visitor.visitSingularBoolField(value: isTryAgain, fieldNumber: 4)
+        if isTryManually != false {
+            try visitor.visitSingularBoolField(value: isTryManually, fieldNumber: 4)
         }
         if !manualFoodName.isEmpty {
             try visitor.visitSingularStringField(value: manualFoodName, fieldNumber: 5)
@@ -133,7 +133,7 @@ extension Eater_ModifyFoodRecordRequest: SwiftProtobuf.Message, SwiftProtobuf._M
         if lhs.time != rhs.time { return false }
         if lhs.userEmail != rhs.userEmail { return false }
         if lhs.percentage != rhs.percentage { return false }
-        if lhs.isTryAgain != rhs.isTryAgain { return false }
+        if lhs.isTryManually != rhs.isTryManually { return false }
         if lhs.manualFoodName != rhs.manualFoodName { return false }
         if lhs.manualInsight != rhs.manualInsight { return false }
         if lhs.manualComponents != rhs.manualComponents { return false }

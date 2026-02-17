@@ -339,10 +339,10 @@ class GRPCService {
   }
 
   func modifyFoodRecord(
-    time: Int64, 
-    userEmail: String, 
-    percentage: Int32, 
-    isTryAgain: Bool = false,
+    time: Int64,
+    userEmail: String,
+    percentage: Int32,
+    isTryManually: Bool = false,
     imageId: String = "",
     addedSugarTsp: Float = 0,
     manualFoodName: String = "",
@@ -352,7 +352,7 @@ class GRPCService {
     modifyFoodRequest.time = time
     modifyFoodRequest.userEmail = userEmail
     modifyFoodRequest.percentage = percentage
-    modifyFoodRequest.isTryAgain = isTryAgain
+    modifyFoodRequest.isTryManually = isTryManually
     modifyFoodRequest.imageID = imageId
     modifyFoodRequest.addedSugarTsp = addedSugarTsp
     modifyFoodRequest.manualFoodName = manualFoodName
