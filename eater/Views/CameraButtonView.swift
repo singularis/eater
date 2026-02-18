@@ -388,16 +388,17 @@ struct CameraView: UIViewControllerRepresentable {
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
         [weak self] products, calories, weight in
         DispatchQueue.main.async {
-            // Record that user snapped food today and cancel remaining reminders
             NotificationService.shared.recordFoodSnap()
-            // Play theme sound for the newly added food (health rating)
-            if let added = products.first(where: { $0.time == tempTimestamp })
+            let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
+            let overLimit = limit > 0 && calories > limit
+            if overLimit {
+              ThemeService.shared.playSound(for: "bad_food")
+            } else if let added = products.first(where: { $0.time == tempTimestamp })
               ?? products.max(by: { $0.time < $1.time }) {
               ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
             } else {
               ThemeService.shared.playSound(for: "good_food")
             }
-            // Call the success callback through the manager
             CameraCallbackManager.shared.callPhotoSuccess()
 
             self?.temporaryTimestamp = nil
@@ -556,16 +557,17 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
         [weak self] products, calories, weight in
         DispatchQueue.main.async {
-            // Record that user snapped food today and cancel remaining reminders
             NotificationService.shared.recordFoodSnap()
-            // Play theme sound for the newly added food (health rating)
-            if let added = products.first(where: { $0.time == tempTimestamp })
+            let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
+            let overLimit = limit > 0 && calories > limit
+            if overLimit {
+              ThemeService.shared.playSound(for: "bad_food")
+            } else if let added = products.first(where: { $0.time == tempTimestamp })
               ?? products.max(by: { $0.time < $1.time }) {
               ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
             } else {
               ThemeService.shared.playSound(for: "good_food")
             }
-            // Call the success callback through the manager
             CameraCallbackManager.shared.callPhotoSuccess()
 
             self?.temporaryTimestamp = nil
