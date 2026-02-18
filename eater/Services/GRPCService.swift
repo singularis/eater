@@ -1010,6 +1010,56 @@ class GRPCService {
     }
   }
 
+  // MARK: - Goal (target weight) Update
+
+  func updateGoal(
+    targetWeight: Double,
+    goalMode: String,
+    goalMonths: Int,
+    recommendedCalories: Int,
+    completion: @escaping (Bool) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/goal_update") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let body: [String: Any] = [
+      "target_weight": targetWeight,
+      "goal_mode": goalMode,
+      "goal_months": goalMonths,
+      "recommended_calories": recommendedCalories,
+    ]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200
+      else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
   // MARK: - Chess
 
   /// Record a chess game and synchronize with opponent

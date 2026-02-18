@@ -1065,6 +1065,7 @@ struct ContentView: View {
     let target = userDefaults.double(forKey: "userTargetWeight")
     let mode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
     guard target > 0 else { return }
+    guard userDefaults.bool(forKey: "hasUserHealthData") else { return }
 
     // Avoid spamming: at most once per UTC day
     let today = getCurrentUTCDateString()
@@ -1089,7 +1090,8 @@ struct ContentView: View {
     }
 
     if mode == "lose" {
-      if w <= target + tol {
+      // Only show "You did it!" when we actually crossed the goal (was above, now at or below)
+      if prev > target + tol, w <= target + tol {
         userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
         AlertHelper.showCelebration(
           title: loc("goal.reached.title", "You did it!"),
@@ -1111,7 +1113,8 @@ struct ContentView: View {
         )
       }
     } else if mode == "gain" {
-      if w >= target - tol {
+      // Only show when we actually crossed the goal (was below, now at or above)
+      if prev < target - tol, w >= target - tol {
         userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
         AlertHelper.showCelebration(
           title: loc("goal.reached.title", "You did it!"),
@@ -1811,7 +1814,8 @@ struct ContentView: View {
         recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
       }
     } else {
-      // Legacy fallback: compare to optimal weight
+      // Legacy fallback: compare to optimal weight for this calculation only.
+      // Do NOT overwrite userTargetWeight / userGoalMode — they may be set in Health and reset daily otherwise.
       let weightDifference = weight - optimalWeight
       let calorieAdjustment: Double
       if abs(weightDifference) < 2 {
@@ -1822,9 +1826,6 @@ struct ContentView: View {
         calorieAdjustment = 300
       }
       recommendedCalories = max(Int(tdee + calorieAdjustment), minCalories)
-      userDefaults.set(optimalWeight, forKey: "userTargetWeight")
-      userDefaults.set("lose", forKey: "userGoalMode")
-      userDefaults.set(4, forKey: "userGoalMonths")
     }
 
     // Update the calorie limits

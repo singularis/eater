@@ -765,6 +765,16 @@ struct HealthSettingsView: View {
     // Persist to file storage so ContentView and Set Calorie Limits pick up the new limits
     CalorieLimitsStorageService.shared.save(
       .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
+
+    // Best-effort: sync goal to backend so it survives reinstalls / other devices.
+    GRPCService().updateGoal(
+      targetWeight: targetStored,
+      goalMode: goalMode.rawValue,
+      goalMonths: (goalMode == .lose || goalMode == .gain) ? selectedMonths : 0,
+      recommendedCalories: recommendedCalories
+    ) { _ in
+      // Ignore result for now; local state is already updated.
+    }
   }
 }
 
