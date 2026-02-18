@@ -1,7 +1,7 @@
 import SwiftUI
 import Combine
 
-enum ActivityType {
+enum ActivityType: CaseIterable {
   case chess
   case gym
   case steps
@@ -94,6 +94,16 @@ struct ActivitiesView: View {
           }
           .padding()
         }
+
+        // Inline, compact activity input dialog over Activities background (without covering it)
+        if showActivityInputSheet {
+          VStack {
+            Spacer()
+            activityInputSheet
+              .padding(.horizontal, 24)
+              .padding(.bottom, 40)
+          }
+        }
       }
       .navigationTitle(Localization.shared.tr("activities.title", default: "Activities"))
       .navigationBarTitleDisplayMode(.inline)
@@ -145,11 +155,6 @@ struct ActivitiesView: View {
         }
       }
       .onAppear {
-        // Clear tracked types if we're on a new day
-        let todayString = getCurrentUTCDateString()
-        if todaySportCaloriesDate != todayString {
-          todayTrackedActivityTypes = ""
-        }
         // Initialize player name if not set
         if chessPlayerName.isEmpty {
           if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
@@ -214,7 +219,7 @@ struct ActivitiesView: View {
         Text(Localization.shared.tr("activities.burned.today", default: "Added to today's limit"))
           .font(.caption)
           .foregroundColor(.green)
-        
+
         // Reset Button
         Button(action: {
           resetTodayActivities()
@@ -465,12 +470,47 @@ struct ActivitiesView: View {
     case .chess: return "chess"
     }
   }
+
+  private func activityTypeFromKey(_ key: String) -> ActivityType? {
+    switch key {
+    case "gym": return .gym
+    case "steps": return .steps
+    case "treadmill": return .treadmill
+    case "elliptical": return .elliptical
+    case "yoga": return .yoga
+    case "chess": return .chess
+    default: return nil
+    }
+  }
   
   private func isTrackedToday(_ type: ActivityType) -> Bool {
     if type == .chess {
       return lastChessDate == getCurrentUTCDateString()
     }
     return todayTrackedActivityTypes.contains(activityTypeKey(type))
+  }
+
+  private func trackedActivitiesToday() -> [ActivityType] {
+    todayTrackedActivityTypes
+      .split(separator: ",")
+      .compactMap { activityTypeFromKey(String($0)) }
+  }
+
+  private func activityDisplayName(_ type: ActivityType) -> String {
+    switch type {
+    case .gym:
+      return Localization.shared.tr("activities.gym", default: "Gym")
+    case .steps:
+      return Localization.shared.tr("activities.steps", default: "Steps")
+    case .treadmill:
+      return Localization.shared.tr("activities.treadmill", default: "Treadmill")
+    case .elliptical:
+      return Localization.shared.tr("activities.elliptical", default: "Elliptical")
+    case .yoga:
+      return Localization.shared.tr("activities.yoga", default: "Yoga")
+    case .chess:
+      return Localization.shared.tr("activities.chess.name", default: "Chess")
+    }
   }
   
   // MARK: - Activity Button
@@ -644,67 +684,44 @@ struct ActivitiesView: View {
   // MARK: - Activity Input Sheet
   
   private var activityInputSheet: some View {
-    NavigationView {
-      ZStack {
-        AppTheme.backgroundGradient.ignoresSafeArea()
-        
-        VStack(spacing: 20) {
-          VStack(spacing: 8) {
-            Text(activityTitle)
-              .font(.title2.bold())
-              .foregroundColor(AppTheme.textPrimary)
-            
-            Text(activityPrompt)
-              .font(.subheadline)
-              .foregroundColor(AppTheme.textSecondary)
-              .multilineTextAlignment(.center)
-          }
-          .padding(.top, 30)
-          
-          TextField(activityPlaceholder, text: $inputValue)
-            .keyboardType(.numberPad)
-            .font(.title)
-            .multilineTextAlignment(.center)
-            .padding()
-            .background(AppTheme.surface)
-            .cornerRadius(12)
-            .padding(.horizontal)
-          
-          Spacer()
-          
-          Button(action: {
-            submitActivity()
-          }) {
-            Text(Localization.shared.tr("activities.submit", default: "Add to Today's Limit"))
-              .font(.headline)
-              .foregroundColor(.white)
-              .frame(maxWidth: .infinity)
-              .padding()
-              .background(
-                LinearGradient(
-                  gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
-                  startPoint: .leading,
-                  endPoint: .trailing
-                )
-              )
-              .cornerRadius(12)
-          }
-          .padding(.horizontal)
-          .padding(.bottom, 30)
-        }
-      }
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button(action: {
+    VStack(spacing: 20) {
+      HStack {
+        Text(activityTitle)
+          .font(.title2.bold())
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        Button {
+          let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+          if trimmed.isEmpty {
             showActivityInputSheet = false
-          }) {
-            Text(Localization.shared.tr("common.done", default: "Done"))
-              .foregroundColor(AppTheme.textPrimary)
+          } else {
+            submitActivity()
           }
+        } label: {
+          Text(Localization.shared.tr("common.done", default: "Done"))
+            .font(.headline)
+            .foregroundColor(AppTheme.accent)
         }
       }
+      
+      Text(activityPrompt)
+        .font(.subheadline)
+        .foregroundColor(AppTheme.textSecondary)
+        .multilineTextAlignment(.leading)
+      
+      TextField(activityPlaceholder, text: $inputValue)
+        .keyboardType(.numberPad)
+        .font(.title2)
+        .multilineTextAlignment(.center)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(12)
     }
+    .padding(20)
+    .background(AppTheme.surface)
+    .cornerRadius(18)
+    .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 8)
   }
   
   // MARK: - Helper Properties
@@ -1099,7 +1116,8 @@ struct ActivitiesView: View {
     }
     
     // Mark activity for today
-    todayActivityDate = getCurrentUTCDateString()
+    let todayISO = getCurrentUTCDateString()
+    todayActivityDate = todayISO
     // Remember this type was tracked today (for green-purple button highlight)
     let key = activityTypeKey(selectedActivityType)
     if !todayTrackedActivityTypes.contains(key) {
@@ -1117,6 +1135,16 @@ struct ActivitiesView: View {
         "value": value  // minutes or steps or calories
       ]
     )
+
+    // Persist activity log to backend (best-effort)
+    GRPCService().logActivity(
+      activityType: key,
+      value: value,
+      calories: calories,
+      dateISO: todayISO
+    ) { _ in
+      // ignore result for now
+    }
     
     showActivityInputSheet = false
     

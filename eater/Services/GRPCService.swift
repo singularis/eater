@@ -1060,6 +1060,95 @@ class GRPCService {
     }
   }
 
+  // MARK: - Activity Log
+
+  func logActivity(
+    activityType: String,
+    value: Int,
+    calories: Int,
+    dateISO: String,
+    completion: @escaping (Bool) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/activity_log") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+    let body: [String: Any] = [
+      "activity_type": activityType,
+      "value": value,
+      "calories": calories,
+      "time": nowMs,
+      "date": dateISO,
+    ]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
+  func getActivitySummary(
+    dateISO: String,
+    completion: @escaping (_ totalCalories: Int, _ types: [String]) -> Void
+  ) {
+    guard var components = URLComponents(string: "\(AppEnvironment.baseURL)/activity_summary") else {
+      completion(0, [])
+      return
+    }
+    components.queryItems = [URLQueryItem(name: "date", value: dateISO)]
+    guard let url = components.url else {
+      completion(0, [])
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if error != nil {
+        completion(0, [])
+        return
+      }
+      guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+            let data = data,
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      else {
+        completion(0, [])
+        return
+      }
+
+      let total = json["total_calories"] as? Int ?? 0
+      let types = json["activity_types"] as? [String] ?? []
+      completion(total, types)
+    }
+  }
+
   // MARK: - Chess
 
   /// Record a chess game and synchronize with opponent
