@@ -1,6 +1,26 @@
 import SwiftUI
 import Combine
 
+// Flat-top hexagon for honeycomb layout
+private struct HexagonShape: Shape {
+  func path(in rect: CGRect) -> Path {
+    let w = rect.width
+    let h = rect.height
+    let cx = w / 2
+    let r = min(w / 2, h / sqrt(3))
+    var path = Path()
+    for i in 0..<6 {
+      let angle = CGFloat(i) * .pi / 3 - .pi / 6
+      let x = cx + r * cos(angle)
+      let y = h / 2 + r * sin(angle)
+      if i == 0 { path.move(to: CGPoint(x: x, y: y)) }
+      else { path.addLine(to: CGPoint(x: x, y: y)) }
+    }
+    path.closeSubpath()
+    return path
+  }
+}
+
 enum ActivityType: CaseIterable {
   case chess
   case gym
@@ -31,6 +51,7 @@ struct ActivitiesView: View {
   @State private var showChessWinnerSheet = false
   @State private var showOpponentPicker = false
   @State private var showActivityInputSheet = false
+  @State private var showStatistics = false
   @State private var selectedActivityType: ActivityType = .treadmill
   @State private var inputValue = ""
   @State private var pendingGameResult: String = "" // "me", "draw", or "opponent"
@@ -56,48 +77,8 @@ struct ActivitiesView: View {
             Divider()
               .padding(.vertical, 10)
             
-            // Calorie-based activities
-            activityButton(
-              type: .gym,
-              title: Localization.shared.tr("activities.gym", default: "Gym"),
-              subtitle: Localization.shared.tr("activities.gym.subtitle", default: "Enter time"),
-              icon: "dumbbell.fill",
-              color: .orange
-            )
-            
-            activityButton(
-              type: .steps,
-              title: Localization.shared.tr("activities.steps", default: "Steps"),
-              subtitle: Localization.shared.tr("activities.steps.subtitle", default: "Enter step count"),
-              icon: "figure.walk",
-              color: .green
-            )
-            
-            chessActivityButton
-            
-            activityButton(
-              type: .treadmill,
-              title: Localization.shared.tr("activities.treadmill", default: "Treadmill"),
-              subtitle: Localization.shared.tr("activities.treadmill.subtitle", default: "Enter calories"),
-              icon: "figure.run",
-              color: .blue
-            )
-            
-            activityButton(
-              type: .elliptical,
-              title: Localization.shared.tr("activities.elliptical", default: "Elliptical"),
-              subtitle: Localization.shared.tr("activities.elliptical.subtitle", default: "Enter calories"),
-              icon: "figure.elliptical",
-              color: .purple
-            )
-            
-            activityButton(
-              type: .yoga,
-              title: Localization.shared.tr("activities.yoga", default: "Yoga"),
-              subtitle: Localization.shared.tr("activities.yoga.subtitle", default: "Enter calories"),
-              icon: "figure.mind.and.body",
-              color: Color(red: 0.4, green: 0.6, blue: 0.5)
-            )
+            // Activities as honeycomb: filled = tracked, outline = not yet
+            honeycombActivitiesView
           }
           .padding()
         }
@@ -123,6 +104,9 @@ struct ActivitiesView: View {
               .foregroundColor(AppTheme.textPrimary)
           }
         }
+      }
+      .sheet(isPresented: $showStatistics) {
+        ActivityStatisticsView(isPresented: $showStatistics)
       }
       .sheet(isPresented: $showChessWinnerSheet) {
         chessWinnerSheet
@@ -307,6 +291,175 @@ struct ActivitiesView: View {
     .id("burned-\(summaryTotalCalories)-\(summaryActivityTypes.joined(separator: ","))")
   }
   
+  // MARK: - Honeycomb layout
+  
+  // +20% size (88→106, 76→91)
+  private static let hexWidth: CGFloat = 106
+  private static let hexHeight: CGFloat = 91
+  
+  private var honeycombActivitiesView: some View {
+    let w = Self.hexWidth
+    let h = Self.hexHeight
+    
+    // Gap between cells so they don't overlap
+    let gap: CGFloat = 18
+    let stepX = w + gap
+    let stepY = h * CGFloat(sqrt(3)) / 2 + gap
+    
+    // Offset-grid: position (row, col) with step stepX, stepY
+    func gridX(row: Int, col: Int) -> CGFloat {
+      CGFloat(col) * stepX + CGFloat(row % 2) * (stepX / 2)
+    }
+    func gridY(row: Int) -> CGFloat {
+      CGFloat(row) * stepY
+    }
+    
+    // Grid center — statistics (reduced by 10%)
+    let centerRow = 1
+    let centerCol = 1
+    let centerScale: CGFloat = 1.35 * 0.9   // −10%
+    let centerW = w * centerScale
+    let centerH = h * centerScale
+    // Activities +5% size
+    let activityW = w * 1.05
+    let activityH = h * 1.05
+    let originX = gridX(row: centerRow, col: centerCol)
+    let originY = gridY(row: centerRow)
+    
+    // Neighbors for odd row (centerRow=1): left (1,0), right (1,2), up-left (0,1), up-right (0,2), down-left (2,1), down-right (2,2)
+    
+    return ZStack {
+      // Center: Statistics
+      honeycombCellStatistics()
+        .frame(width: centerW, height: centerH)
+        .offset(x: 0, y: 0)
+      
+      // Neighbors on offset-grid (+5% size)
+      honeycombCell(type: .elliptical, title: Localization.shared.tr("activities.elliptical", default: "Elliptical"), icon: "figure.elliptical", color: .purple)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 1, col: 0) - originX, y: gridY(row: 1) - originY)
+      
+      honeycombCell(type: .gym, title: Localization.shared.tr("activities.gym", default: "Gym"), icon: "dumbbell.fill", color: .orange)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 0, col: 1) - originX, y: gridY(row: 0) - originY)
+      
+      honeycombCell(type: .steps, title: Localization.shared.tr("activities.steps", default: "Steps"), icon: "figure.walk", color: .green)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 0, col: 2) - originX, y: gridY(row: 0) - originY)
+      
+      honeycombCell(type: .treadmill, title: Localization.shared.tr("activities.treadmill", default: "Treadmill"), icon: "figure.run", color: .blue)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 1, col: 2) - originX, y: gridY(row: 1) - originY)
+      
+      honeycombCell(type: .yoga, title: Localization.shared.tr("activities.yoga", default: "Yoga"), icon: "figure.mind.and.body", color: Color(red: 0.4, green: 0.6, blue: 0.5))
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 2, col: 1) - originX, y: gridY(row: 2) - originY)
+      
+      honeycombCellChess()
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 2, col: 2) - originX, y: gridY(row: 2) - originY)
+    }
+    .frame(maxWidth: .infinity)
+    .frame(height: 3 * stepY + h)
+    .padding(.vertical, 8)
+  }
+  
+  private func honeycombCellStatistics() -> some View {
+    Button(action: {
+      HapticsService.shared.select()
+      showStatistics = true
+    }) {
+      ZStack {
+        HexagonShape()
+          .fill(AppTheme.surface)
+        HexagonShape()
+          .stroke(Color.green.opacity(0.6), lineWidth: 2)
+        VStack(spacing: 8) {
+          Image(systemName: "chart.bar.fill")
+            .font(.title)
+            .foregroundColor(.green)
+          Text(Localization.shared.tr("activities.stats.short", default: "Stats"))
+            .font(.subheadline.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        .scaleEffect(1.25)
+      }
+      .clipShape(HexagonShape())
+      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+    }
+    .buttonStyle(.plain)
+  }
+  
+  private func honeycombCell(type: ActivityType, title: String, icon: String, color: Color) -> some View {
+    let tracked = isTrackedForViewedDate(type)
+    return Button(action: {
+      HapticsService.shared.select()
+      selectedActivityType = type
+      inputValue = ""
+      showActivityInputSheet = true
+    }) {
+      ZStack {
+        if tracked {
+          HexagonShape()
+            .fill(LinearGradient(colors: [.green, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+        } else {
+          HexagonShape()
+            .fill(AppTheme.surface)
+          HexagonShape()
+            .stroke(Color.green.opacity(0.6), lineWidth: 2)
+        }
+        VStack(spacing: 4) {
+          Image(systemName: ThemeService.shared.icon(for: icon))
+            .font(.title2)
+            .foregroundColor(tracked ? .white : color)
+          Text(title)
+            .font(.caption.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
+        }
+      }
+      .clipShape(HexagonShape())
+      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+    }
+    .buttonStyle(.plain)
+  }
+  
+  private func honeycombCellChess() -> some View {
+    let tracked = isTrackedForViewedDate(.chess)
+    return Button(action: {
+      HapticsService.shared.select()
+      showChessSheet = true
+    }) {
+      ZStack {
+        if tracked {
+          HexagonShape()
+            .fill(LinearGradient(colors: [.green, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+        } else {
+          HexagonShape()
+            .fill(AppTheme.surface)
+          HexagonShape()
+            .stroke(Color.green.opacity(0.6), lineWidth: 2)
+        }
+        VStack(spacing: 4) {
+          Image(systemName: ThemeService.shared.icon(for: "square.grid.3x3.fill"))
+            .font(.title2)
+            .foregroundColor(tracked ? .white : .purple)
+          Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
+            .font(.caption.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
+        }
+      }
+      .clipShape(HexagonShape())
+      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+    }
+    .buttonStyle(.plain)
+  }
+  
   // MARK: - Chess Activity Card
   
   private var chessActivityCard: some View {
@@ -486,13 +639,16 @@ struct ActivitiesView: View {
         VStack(alignment: .leading, spacing: 2) {
           Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
             .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundColor(tracked ? .white : AppTheme.textPrimary)
           Text(Localization.shared.tr("activities.chess.subtitle", default: "Record games, view wins"))
             .font(.caption)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
             .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
         }
-        
-        Spacer()
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
         
         Image(systemName: "chevron.right")
           .font(.caption)
@@ -512,7 +668,6 @@ struct ActivitiesView: View {
       .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
     }
     .buttonStyle(.plain)
-    .padding(.horizontal)
   }
   
   // MARK: - Tracked Today Helpers
@@ -599,13 +754,16 @@ struct ActivitiesView: View {
         VStack(alignment: .leading, spacing: 2) {
           Text(title)
             .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundColor(tracked ? .white : AppTheme.textPrimary)
           Text(subtitle)
             .font(.caption)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
             .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
         }
-        
-        Spacer()
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
         
         Image(systemName: "chevron.right")
           .font(.caption)
@@ -625,7 +783,6 @@ struct ActivitiesView: View {
       .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
     }
     .buttonStyle(.plain)
-    .padding(.horizontal)
   }
   
   // MARK: - Chess Winner Sheet

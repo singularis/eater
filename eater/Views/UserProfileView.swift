@@ -815,7 +815,7 @@ struct MascotButton: View {
                 .frame(width: 50, height: 50)
                 .clipShape(Circle())
             } else {
-              // Fallback: лапка замість емодзі
+              // Fallback: paw instead of emoji
               Image(systemName: "pawprint.circle.fill")
                 .font(.system(size: 32))
                 .foregroundColor(isSelected ? .white : AppTheme.textSecondary)

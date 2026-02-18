@@ -712,7 +712,7 @@ struct ContentView: View {
     let carLabel = loc("macro.car", "CAR")
     let sugLabel = loc("macro.sug", "SUG")
     // Colors with ranges:
-    // - Protein: < 80% target = yellow, >= 80% = green (no red, надлишок білка ок)
+    // - Protein: < 80% target = yellow, >= 80% = green (no red for excess)
     let proColor: Color =
       proteins >= proteinLower ? AppTheme.success : AppTheme.warning
     // - Fat: < 80% target = yellow, 80–120% = green, > 120% = red

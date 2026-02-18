@@ -116,18 +116,18 @@ enum AppMascot: String, CaseIterable {
     case .none:
       return systemIcon
     case .cat:
-      // Cat themed icons (лапки, рибка, зайчик замість стандартних)
+      // Cat themed icons (paws, fish, bunny instead of default)
       switch systemIcon {
       case "checkmark.circle.fill": return "pawprint.circle.fill"
       case "flame.fill": return "fish.fill"
       case "figure.run": return "hare.fill"  // cat chasing
       case "trophy.fill": return "crown.fill"
       case "heart.fill": return "suit.heart.fill"
-      case "wineglass", "wineglass.fill": return "pawprint.circle.fill"  // alcohol → лапка
+      case "wineglass", "wineglass.fill": return "pawprint.circle.fill"  // alcohol → paw
       default: return systemIcon
       }
     case .dog:
-      // Dog themed icons (лапки, кісточка, зайчик)
+      // Dog themed icons (paws, bone, bunny)
       switch systemIcon {
       case "checkmark.circle.fill": return "pawprint.circle.fill"
       // NOTE: `bone.fill` is not available on some iOS/SF Symbols versions → icon may disappear.
@@ -136,7 +136,7 @@ enum AppMascot: String, CaseIterable {
       case "figure.run": return "hare.fill"  // dog playing
       case "trophy.fill": return "medal.fill"
       case "heart.fill": return "suit.heart.fill"
-      case "wineglass", "wineglass.fill": return "pawprint.circle.fill"  // alcohol → лапка
+      case "wineglass", "wineglass.fill": return "pawprint.circle.fill"  // alcohol → paw
       default: return systemIcon
       }
     }
