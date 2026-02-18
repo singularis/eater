@@ -556,7 +556,7 @@ struct ContentView: View {
     .buttonStyle(PressScaleButtonStyle())
     .id("sport-\(todayActivityDate)-\(todaySportCalories)-\(uiRefreshTrigger)")
     .sheet(isPresented: $showActivitiesView) {
-      ActivitiesView()
+      ActivitiesView(dateISO: currentActivitiesDateISO())
     }
   }
 
@@ -1595,6 +1595,18 @@ struct ContentView: View {
       }
     }
     
+    // When activity is added for a date (today or past), refresh limit if we're viewing that date
+    NotificationCenter.default.addObserver(
+      forName: NSNotification.Name("ActivityCaloriesAddedForDate"),
+      object: nil,
+      queue: .main
+    ) { notification in
+      guard let dateISO = notification.userInfo?["dateISO"] as? String else { return }
+      if dateISO == self.currentActivitiesDateISO() {
+        self.uiRefreshTrigger.toggle()
+      }
+    }
+    
     // Observer for chess games
     NotificationCenter.default.addObserver(
       forName: NSNotification.Name("ChessGameRecorded"),
@@ -1842,15 +1854,24 @@ struct ContentView: View {
     userDefaults.set(userDefaults.double(forKey: "userTargetWeight") > 0 ? userDefaults.double(forKey: "userTargetWeight") : optimalWeight, forKey: "userOptimalWeight")
   }
 
-  private func getAdjustedSoftLimit() -> Int {
-    let todayString = getCurrentUTCDateString()
-
-    // Check if sport calories were added for today
-    if todaySportCaloriesDate == todayString && todaySportCalories > 0 {
-      return softLimit + todaySportCalories
+  /// Activity calories for the currently viewed date (today or custom). Used to add to daily limit.
+  private func activityCaloriesForViewedDate() -> Int {
+    if isViewingCustomDate, !currentViewingDateString.isEmpty {
+      let parts = currentViewingDateString.split(separator: "-")
+      if parts.count == 3, parts[0].count == 2, parts[1].count == 2, parts[2].count == 4 {
+        let dateISO = "\(parts[2])-\(parts[1])-\(parts[0])"
+        return UserDefaults.standard.integer(forKey: "activity_summary_total_\(dateISO)")
+      }
     }
+    let todayString = getCurrentUTCDateString()
+    if todaySportCaloriesDate == todayString, todaySportCalories > 0 {
+      return todaySportCalories
+    }
+    return 0
+  }
 
-    return softLimit
+  private func getAdjustedSoftLimit() -> Int {
+    return softLimit + activityCaloriesForViewedDate()
   }
 
   private func loadTodaySportCalories() {
@@ -2024,6 +2045,45 @@ struct ContentView: View {
       // Reschedule notifications for the new local day
       NotificationService.shared.handleDayChangeIfNeeded()
     }
+  }
+
+  // MARK: - Activities date helpers
+
+  /// ISO date (yyyy-MM-dd, UTC) for "today".
+  private func getCurrentISODateString() -> String {
+    let formatter = DateFormatter()
+    formatter.timeZone = TimeZone(abbreviation: "UTC")
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: Date())
+  }
+
+  /// ISO date string (yyyy-MM-dd) for the calendar day the user selected (local day, not UTC).
+  /// This way 17.02 in the calendar stays 2026-02-17 for API, not shifted to 16.02 by timezone.
+  private func getISODateString(for date: Date) -> String {
+    let cal = Calendar.current
+    let comps = cal.dateComponents([.year, .month, .day], from: date)
+    guard let y = comps.year, let m = comps.month, let d = comps.day else {
+      let f = DateFormatter()
+      f.timeZone = TimeZone(abbreviation: "UTC")
+      f.dateFormat = "yyyy-MM-dd"
+      return f.string(from: date)
+    }
+    return String(format: "%04d-%02d-%02d", y, m, d)
+  }
+
+  /// Date that ActivitiesView should use:
+  /// - if viewing Today → today's YYYY-MM-DD
+  /// - if calendar selected a custom date → that date's YYYY-MM-DD (from same string as main screen).
+  private func currentActivitiesDateISO() -> String {
+    if isViewingCustomDate, !currentViewingDateString.isEmpty {
+      // Use the exact date string we show (dd-MM-yyyy) so Activities match the main screen day
+      let parts = currentViewingDateString.split(separator: "-")
+      if parts.count == 3, parts[0].count == 2, parts[1].count == 2, parts[2].count == 4 {
+        return "\(parts[2])-\(parts[1])-\(parts[0])" // yyyy-MM-dd
+      }
+      return getISODateString(for: selectedDate)
+    }
+    return getCurrentISODateString()
   }
 }
 

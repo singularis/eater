@@ -25,6 +25,9 @@ struct ActivitiesView: View {
   @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate = ""
   @AppStorage("todayTrackedActivityTypes") private var todayTrackedActivityTypes = ""  // e.g. "gym,yoga"
   
+  /// Date (UTC, yyyy-MM-dd) for which we are showing and logging activities.
+  let dateISO: String
+  
   @State private var showChessWinnerSheet = false
   @State private var showOpponentPicker = false
   @State private var showActivityInputSheet = false
@@ -36,8 +39,12 @@ struct ActivitiesView: View {
   @State private var showChessSheet = false
   @State private var cachedFriends: [(email: String, nickname: String)]? = nil
   
+  // Activity summary for the selected date (for calories card + chips)
+  @State private var summaryTotalCalories: Int = 0
+  @State private var summaryActivityTypes: [String] = []
+  
   var body: some View {
-    NavigationView {
+    return NavigationView {
       ZStack {
         AppTheme.backgroundGradient.ignoresSafeArea()
         
@@ -163,7 +170,6 @@ struct ActivitiesView: View {
             chessPlayerName = email.components(separatedBy: "@").first ?? email
           }
         }
-        
         // Migration: Clean up old score system (ONE TIME ONLY)
         let migrationKey = "chessLeagueMigrationDone"
         if !UserDefaults.standard.bool(forKey: migrationKey) {
@@ -171,12 +177,9 @@ struct ActivitiesView: View {
           UserDefaults.standard.removeObject(forKey: "chessScoreStartOfDay")
           UserDefaults.standard.set(true, forKey: migrationKey)
         }
-        
-        // Pre-fetch friends list for chess opponent picker (cache it)
         prefetchFriends()
-        
-        // Sync chess data from backend (only if it has data or we have no local data)
         syncChessDataFromBackend()
+        loadActivitySummary()
       }
       .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("EnvironmentChanged"))) { _ in
         resetChessDataForEnvironmentSwitch()
@@ -190,13 +193,17 @@ struct ActivitiesView: View {
   // MARK: - Burned Calories Card
   
   private var burnedCaloriesCard: some View {
-    VStack(spacing: 15) {
+    let isToday = dateISO == getCurrentUTCDateString()
+    let cardTitle: String = isToday
+      ? Localization.shared.tr("activities.burned.title", default: "Today's Burned Calories")
+      : Localization.shared.tr("activities.burned.title.date", default: "Burned calories for %@").replacingOccurrences(of: "%@", with: formatDateForDisplay(dateISO))
+    return VStack(spacing: 15) {
       HStack {
         Image(systemName: "flame.fill")
           .font(.title2)
           .foregroundColor(.orange)
         
-        Text(Localization.shared.tr("activities.burned.title", default: "Today's Burned Calories"))
+        Text(cardTitle)
           .font(.title3.bold())
           .foregroundColor(AppTheme.textPrimary)
         
@@ -205,7 +212,7 @@ struct ActivitiesView: View {
       
       // Calories Display
       HStack(spacing: 8) {
-        Text("\(todaySportCalories)")
+        Text("\(summaryTotalCalories)")
           .font(.system(size: 48, weight: .bold))
           .foregroundColor(.orange)
         
@@ -215,19 +222,43 @@ struct ActivitiesView: View {
           .padding(.top, 10)
       }
       
-      if todaySportCalories > 0 {
-        Text(Localization.shared.tr("activities.burned.today", default: "Added to today's limit"))
-          .font(.caption)
-          .foregroundColor(.green)
-
-        // Reset Button
+      if summaryTotalCalories > 0 {
+        if isToday {
+          Text(Localization.shared.tr("activities.burned.today", default: "Added to today's limit"))
+            .font(.caption)
+            .foregroundColor(.green)
+        }
+        
+        // Reset: for today resets AppStorage + summary; for past date clears cache + summary for that date
         Button(action: {
-          resetTodayActivities()
+          if isToday {
+            resetTodayActivities()
+            summaryTotalCalories = 0
+            summaryActivityTypes = []
+          } else {
+            summaryTotalCalories = 0
+            summaryActivityTypes = []
+            saveActivitySummaryToCache(dateISO: dateISO, total: 0, types: [])
+            // Notify ContentView so the main screen updates limit/calories for this date immediately
+            NotificationCenter.default.post(
+              name: NSNotification.Name("ActivityCaloriesAddedForDate"),
+              object: nil,
+              userInfo: ["dateISO": dateISO]
+            )
+            HapticsService.shared.warning()
+            AlertHelper.showAlert(
+              title: Localization.shared.tr("activities.burned.reset.title", default: "Activities Reset"),
+              message: Localization.shared.tr("activities.burned.reset.date.msg", default: "Activities for this date have been reset."),
+              haptic: .success
+            )
+          }
         }) {
           HStack {
             Image(systemName: "arrow.counterclockwise")
               .font(.system(size: 14))
-            Text(Localization.shared.tr("activities.burned.reset", default: "Reset Today's Activities"))
+            Text(isToday
+                 ? Localization.shared.tr("activities.burned.reset", default: "Reset Today's Activities")
+                 : Localization.shared.tr("activities.burned.reset.date", default: "Reset"))
               .font(.caption)
           }
           .foregroundColor(.red)
@@ -237,6 +268,31 @@ struct ActivitiesView: View {
           .cornerRadius(10)
         }
         .padding(.top, 5)
+        
+        // Activity source chips: Yoga, Gym, …
+        if !summaryActivityTypes.isEmpty {
+          ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 8) {
+                ForEach(summaryActivityTypes, id: \.self) { key in
+                  Text(activitySummaryDisplayName(for: key))
+                    .font(.caption2.bold())
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                      Capsule()
+                        .fill(LinearGradient(
+                          colors: [.green.opacity(0.9), .purple.opacity(0.8)],
+                          startPoint: .leading,
+                          endPoint: .trailing
+                        ))
+                    )
+                }
+              }
+              .padding(.top, 2)
+          }
+          .padding(.top, 4)
+        }
       } else {
         Text(Localization.shared.tr("activities.burned.none", default: "No activities recorded today"))
           .font(.caption)
@@ -248,12 +304,13 @@ struct ActivitiesView: View {
     .cornerRadius(16)
     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
     .padding(.horizontal)
+    .id("burned-\(summaryTotalCalories)-\(summaryActivityTypes.joined(separator: ","))")
   }
   
   // MARK: - Chess Activity Card
   
   private var chessActivityCard: some View {
-    VStack(spacing: 15) {
+    return VStack(spacing: 15) {
       HStack {
         Image(systemName: "square.grid.3x3.fill")
           .font(.title2)
@@ -415,7 +472,7 @@ struct ActivitiesView: View {
   // MARK: - Chess Activity Button (opens sheet)
   
   private var chessActivityButton: some View {
-    let tracked = isTrackedToday(.chess)
+    let tracked = isTrackedForViewedDate(.chess)
     return Button(action: {
       HapticsService.shared.select()
       showChessSheet = true
@@ -489,6 +546,15 @@ struct ActivitiesView: View {
     }
     return todayTrackedActivityTypes.contains(activityTypeKey(type))
   }
+  
+  /// Highlight (green-purple) only activities tracked for the currently viewed date, not other dates.
+  private func isTrackedForViewedDate(_ type: ActivityType) -> Bool {
+    if type == .chess {
+      return (dateISO == getCurrentUTCDateString() && lastChessDate == dateISO)
+        || summaryActivityTypes.contains("chess")
+    }
+    return summaryActivityTypes.contains(activityTypeKey(type))
+  }
 
   private func trackedActivitiesToday() -> [ActivityType] {
     todayTrackedActivityTypes
@@ -516,7 +582,7 @@ struct ActivitiesView: View {
   // MARK: - Activity Button
   
   private func activityButton(type: ActivityType, title: String, subtitle: String, icon: String, color: Color) -> some View {
-    let tracked = isTrackedToday(type)
+    let tracked = isTrackedForViewedDate(type)
     return Button(action: {
       HapticsService.shared.select()
       selectedActivityType = type
@@ -565,7 +631,7 @@ struct ActivitiesView: View {
   // MARK: - Chess Winner Sheet
   
   private var chessWinnerSheet: some View {
-    NavigationView {
+    return NavigationView {
       ZStack {
         AppTheme.backgroundGradient.ignoresSafeArea()
         
@@ -684,7 +750,7 @@ struct ActivitiesView: View {
   // MARK: - Activity Input Sheet
   
   private var activityInputSheet: some View {
-    VStack(spacing: 20) {
+    return VStack(spacing: 20) {
       HStack {
         Text(activityTitle)
           .font(.title2.bold())
@@ -1082,6 +1148,76 @@ struct ActivitiesView: View {
     return Localization.shared.tr(key, default: Localization.shared.tr("chess.quote.loss.fallback", default: "💪 Learn from this game and come back stronger!"))
   }
   
+  // MARK: - Activity Summary (per selected date) + cache by date (like food for past date)
+  
+  private static func activitySummaryCacheKeyTotal(_ dateISO: String) -> String {
+    "activity_summary_total_\(dateISO)"
+  }
+  
+  private static func activitySummaryCacheKeyTypes(_ dateISO: String) -> String {
+    "activity_summary_types_\(dateISO)"
+  }
+  
+  private func loadActivitySummaryFromCache(dateISO: String) -> (total: Int, types: [String]) {
+    let ud = UserDefaults.standard
+    let total = ud.integer(forKey: Self.activitySummaryCacheKeyTotal(dateISO))
+    let typesStr = ud.string(forKey: Self.activitySummaryCacheKeyTypes(dateISO)) ?? ""
+    let types = typesStr.isEmpty ? [] : typesStr.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+    return (total, types)
+  }
+  
+  private func saveActivitySummaryToCache(dateISO: String, total: Int, types: [String]) {
+    let ud = UserDefaults.standard
+    ud.set(total, forKey: Self.activitySummaryCacheKeyTotal(dateISO))
+    ud.set(types.joined(separator: ","), forKey: Self.activitySummaryCacheKeyTypes(dateISO))
+  }
+  
+  private func loadActivitySummary() {
+    // 1) Apply cached value for this date first (so past date shows saved data on reopen, like food)
+    let cached = loadActivitySummaryFromCache(dateISO: dateISO)
+    if cached.total > 0 || !cached.types.isEmpty {
+      summaryTotalCalories = cached.total
+      summaryActivityTypes = cached.types
+    }
+    
+    GRPCService().getActivitySummary(dateISO: dateISO) { total, types in
+      DispatchQueue.main.async {
+        let isToday = self.dateISO == self.getCurrentUTCDateString()
+        // For today: if API returns 0 but we have local data (AppStorage), use it so card shows after reopen
+        if isToday, total == 0, self.todaySportCaloriesDate == self.getTodayDDMMYYYY(), self.todaySportCalories > 0 {
+          self.summaryTotalCalories = self.todaySportCalories
+          self.summaryActivityTypes = self.todayTrackedActivityTypes.isEmpty
+            ? []
+            : self.todayTrackedActivityTypes.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+          self.saveActivitySummaryToCache(dateISO: self.dateISO, total: self.summaryTotalCalories, types: self.summaryActivityTypes)
+          return
+        }
+        // Merge API with current state: take max total and union of types (so we don't lose user-added past-date data)
+        let mergedTotal = max(self.summaryTotalCalories, total)
+        var mergedTypes = Set(self.summaryActivityTypes)
+        mergedTypes.formUnion(types)
+        self.summaryTotalCalories = mergedTotal
+        self.summaryActivityTypes = Array(mergedTypes).sorted()
+        self.saveActivitySummaryToCache(dateISO: self.dateISO, total: self.summaryTotalCalories, types: self.summaryActivityTypes)
+      }
+    }
+  }
+  
+  /// Today in dd-MM-yyyy (UTC) to match ContentView / AppStorage
+  private func getTodayDDMMYYYY() -> String {
+    let f = DateFormatter()
+    f.timeZone = TimeZone(identifier: "UTC")
+    f.dateFormat = "dd-MM-yyyy"
+    return f.string(from: Date())
+  }
+  
+  private func activitySummaryDisplayName(for key: String) -> String {
+    if let type = activityTypeFromKey(key) {
+      return activityDisplayName(type)
+    }
+    return key.capitalized
+  }
+  
   private func submitActivity() {
     guard let value = Int(inputValue), value > 0 else {
       AlertHelper.showAlert(
@@ -1115,55 +1251,79 @@ struct ActivitiesView: View {
       return
     }
     
-    // Mark activity for today
+    // Check if selected date is "today" in UTC (for adjusting today's calorie limit/UI)
     let todayISO = getCurrentUTCDateString()
-    todayActivityDate = todayISO
-    // Remember this type was tracked today (for green-purple button highlight)
-    let key = activityTypeKey(selectedActivityType)
-    if !todayTrackedActivityTypes.contains(key) {
-      todayTrackedActivityTypes = todayTrackedActivityTypes.isEmpty ? key : todayTrackedActivityTypes + "," + key
+    let isToday = (dateISO == todayISO)
+    
+    if isToday {
+      todayActivityDate = todayISO
+      // Remember this type was tracked today (for green-purple button highlight)
+      let key = activityTypeKey(selectedActivityType)
+      if !todayTrackedActivityTypes.contains(key) {
+        todayTrackedActivityTypes = todayTrackedActivityTypes.isEmpty ? key : todayTrackedActivityTypes + "," + key
+      }
+      
+      // Notify parent view so ContentView can update today's sport calories
+      NotificationCenter.default.post(
+        name: NSNotification.Name("ActivityCaloriesAdded"),
+        object: nil,
+        userInfo: [
+          "calories": calories,
+          "activity": activityName,
+          "activityType": selectedActivityType,
+          "value": value  // minutes or steps or calories
+        ]
+      )
     }
     
-    // Notify parent view
+    let key = activityTypeKey(selectedActivityType)
+    
+    // Update card first so it repaints with new calories
+    summaryTotalCalories += calories
+    if !summaryActivityTypes.contains(key) {
+      summaryActivityTypes.append(key)
+    }
+    // Persist by date (same logic as food: past date data stays on reopen)
+    saveActivitySummaryToCache(dateISO: dateISO, total: summaryTotalCalories, types: summaryActivityTypes)
+    
+    // Notify so ContentView can add this date's activity to the daily limit (today or past)
     NotificationCenter.default.post(
-      name: NSNotification.Name("ActivityCaloriesAdded"),
+      name: NSNotification.Name("ActivityCaloriesAddedForDate"),
       object: nil,
-      userInfo: [
-        "calories": calories,
-        "activity": activityName,
-        "activityType": selectedActivityType,
-        "value": value  // minutes or steps or calories
-      ]
+      userInfo: ["dateISO": dateISO]
     )
-
-    // Persist activity log to backend (best-effort)
+    
     GRPCService().logActivity(
       activityType: key,
       value: value,
       calories: calories,
-      dateISO: todayISO
-    ) { _ in
-      // ignore result for now
-    }
+      dateISO: dateISO
+    ) { _ in }
     
-    showActivityInputSheet = false
-    
-    // Theme-aware motivational message
     let themeTitle = ThemeService.shared.getMotivationalMessage(
       for: "activity_recorded",
       language: LanguageService.shared.currentCode
     )
-    ThemeService.shared.playSound(for: "success")
-    
-    AlertHelper.showAlert(
-      title: themeTitle,
-      message: String(
-        format: Localization.shared.tr("activities.added.msg", default: "%d calories from %@ added to your daily limit."),
-        calories,
-        activityName
-      ),
-      haptic: .success
+    let message = String(
+      format: Localization.shared.tr("activities.added.msg", default: "%d calories from %@ added to your daily limit."),
+      calories,
+      activityName
     )
+    
+    // Close sheet and show alert after a tick so the card has time to re-render with new total
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+      self.showActivityInputSheet = false
+      ThemeService.shared.playSound(for: "success")
+      AlertHelper.showAlert(
+        title: themeTitle,
+        message: message,
+        haptic: .success
+      )
+    }
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+      self.loadActivitySummary()
+    }
   }
   
   // MARK: - Calorie Calculations
@@ -1206,6 +1366,16 @@ struct ActivitiesView: View {
     return "\(components[2]).\(components[1]).\(components[0])"
   }
   
+  /// Format yyyy-MM-dd for display in card title (e.g. "18 Feb 2026" or "18.02.2026")
+  private func formatDateForDisplay(_ dateISO: String) -> String {
+    let parts = dateISO.split(separator: "-")
+    guard parts.count == 3,
+          let y = Int(parts[0]), let m = Int(parts[1]), let d = Int(parts[2]) else {
+      return dateISO
+    }
+    return String(format: "%02d.%02d.%d", d, m, y)
+  }
+  
   private func getCurrentUTCDateString() -> String {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd"
@@ -1215,5 +1385,5 @@ struct ActivitiesView: View {
 }
 
 #Preview {
-  ActivitiesView()
+  ActivitiesView(dateISO: "2025-01-01")
 }
