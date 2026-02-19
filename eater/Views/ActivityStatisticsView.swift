@@ -12,8 +12,8 @@ struct ActivityStatisticsView: View {
   @AppStorage("chessOpponents") private var chessOpponentsJSON = "{}"
   @AppStorage("chessPlayerName") private var chessPlayerName = ""
   
-  /// Топ пісень MJ для «Today's top pick» (тап по собаці). Джерело: цей масив у коді.
-  /// Альбоми: Thriller, Bad, Dangerous, Off the Wall. Пісня на день: за номером дня в році (1–365) % кількість пісень — кожен календарний день має одну й ту саму пісню; вчора й сьогодні різні дні → різні пісні (якщо одна й та сама — перевір дату/час пристрою або що день справді змінився).
+  /// MJ songs list for the «Weekly» block (tap on central mascot). Source: this array in code below.
+  /// Albums: Thriller, Bad, Dangerous, Off the Wall. Song per day: (day of year 1–365) % count — each calendar day gets the same song; different days → different songs (if same — check device date/time or that day actually changed).
   private static let mjSongs: [(song: String, album: String)] = [
     ("Billie Jean", "Thriller"),
     ("Beat It", "Thriller"),
@@ -29,7 +29,7 @@ struct ActivityStatisticsView: View {
     ("Human Nature", "Thriller"),
   ]
   
-  /// Рекомендація на сьогодні: індекс = (день у році − 1) % 12. Список вище.
+  /// Today's recommendation: index = (day of year − 1) % 12. List above.
   private var todaysMJRecommendation: (song: String, album: String) {
     let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
     let index = (day - 1) % Self.mjSongs.count
@@ -161,7 +161,7 @@ struct ActivityStatisticsView: View {
     }
   }
   
-  /// У темній темі — нижнє «морське» світлення поверх основного фону.
+  /// In dark theme — bottom «sea» glow overlay on main background.
   private static let statsBottomGlowDark: LinearGradient = LinearGradient(
     colors: [
       Color.clear,
@@ -233,7 +233,7 @@ struct ActivityStatisticsView: View {
     .padding(.bottom, 24)
   }
   
-  /// Одна картка знизу: або статистика обраної активності (сесії, %), або «Today's top pick».
+  /// Single bottom card: either selected activity stats (sessions, %), or «Weekly».
   @ViewBuilder
   private var statsBottomCard: some View {
     if let key = selectedActivity, let orb = orbDataList.first(where: { $0.key == key }) {
@@ -275,7 +275,7 @@ struct ActivityStatisticsView: View {
   private var mjRecommendationCard: some View {
     let rec = todaysMJRecommendation
     return VStack(spacing: 8) {
-      Text(Localization.shared.tr("activities.stats.dog.recommendation.title", default: "Today's top pick"))
+      Text(Localization.shared.tr("activities.stats.dog.recommendation.title", default: "Weekly"))
         .font(.caption)
         .foregroundColor(AppTheme.textSecondary)
       Text(rec.song)
