@@ -1,5 +1,9 @@
 config.plist
 .DS_Store
+
+# Scripts (resize-image-half.sh тощо) — залишаємо в репо
+# scripts/
+
 xcuserdata/
 *.xcuserstate
 .vscode
