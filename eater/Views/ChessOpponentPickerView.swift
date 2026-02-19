@@ -5,10 +5,12 @@ struct ChessOpponentPickerView: View {
   @Binding var playerName: String
   @Binding var opponentName: String
   let onOpponentSelected: (String, String) -> Void  // (name, email)
+  var initialFriends: [(email: String, nickname: String)]? = nil
   
   @State private var friends: [(email: String, nickname: String)] = []
   @State private var isLoading = false
   @State private var totalCount = 0
+  @State private var showAddFriend = false
   
   var body: some View {
     NavigationView {
@@ -32,7 +34,20 @@ struct ChessOpponentPickerView: View {
               .font(.caption)
               .foregroundColor(AppTheme.textSecondary)
               .multilineTextAlignment(.center)
+              .multilineTextAlignment(.center)
               .padding(.horizontal, 40)
+            
+            Button(action: {
+              showAddFriend = true
+            }) {
+              Text(Localization.shared.tr("activities.chess.add_friend_btn", default: "Add Friend"))
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(AppTheme.accent)
+                .cornerRadius(10)
+            }
           }
         } else {
           ScrollView {
@@ -62,25 +77,50 @@ struct ChessOpponentPickerView: View {
       }
       .navigationTitle(Localization.shared.tr("activities.chess.select_opponent", default: "Select Opponent"))
       .navigationBarTitleDisplayMode(.inline)
+
       .toolbar {
+        ToolbarItem(placement: .navigationBarLeading) {
+          Button(action: {
+            showAddFriend = true
+          }) {
+            Image(systemName: "person.badge.plus")
+              .foregroundColor(AppTheme.textPrimary)
+          }
+        }
+        
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(action: {
             dismiss()
           }) {
-            Text(Localization.shared.tr("common.cancel", default: "Cancel"))
+            Text(Localization.shared.tr("common.done", default: "Done"))
               .foregroundColor(AppTheme.textPrimary)
           }
         }
       }
+      .sheet(isPresented: $showAddFriend) {
+        AddFriendsView(isPresented: $showAddFriend)
+          .onDisappear {
+            // Refresh list after adding friend
+            fetchFriends()
+          }
+      }
     }
     .onAppear {
-      fetchFriends()
+      // Use cached friends if available (instant display, no lag)
+      if let cached = initialFriends, !cached.isEmpty {
+        friends = cached
+        totalCount = cached.count
+        // Still refresh in the background for freshness
+        fetchFriendsInBackground()
+      } else {
+        fetchFriends()
+      }
       
       // Set player name from UserDefaults if not set
       if playerName.isEmpty {
         if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
           playerName = nickname
-        } else if let email = UserDefaults.standard.string(forKey: "currentUserEmail") {
+        } else if let email = UserDefaults.standard.string(forKey: "user_email") {
           playerName = email
         }
       }
@@ -136,6 +176,18 @@ struct ChessOpponentPickerView: View {
         self.isLoading = false
         self.friends = fetchedFriends
         self.totalCount = total
+      }
+    }
+  }
+  
+  /// Silently refresh friends list in background (no loading indicator since cached data is visible)
+  private func fetchFriendsInBackground() {
+    GRPCService().getFriends(offset: 0, limit: 100) { [self] fetchedFriends, total in
+      DispatchQueue.main.async {
+        if !fetchedFriends.isEmpty {
+          self.friends = fetchedFriends
+          self.totalCount = total
+        }
       }
     }
   }

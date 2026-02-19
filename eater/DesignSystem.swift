@@ -161,6 +161,83 @@ struct PrimaryButtonStyle: ButtonStyle {
   }
 }
 
+struct GreenToPurpleButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    let shadow = AppTheme.cardShadow
+    return configuration.label
+      .padding()
+      .frame(maxWidth: .infinity)
+      .background(
+        ZStack {
+          LinearGradient(
+            colors: [.green, .purple],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+          RoundedRectangle(cornerRadius: 25, style: .continuous)
+            .fill(.white.opacity(0.1))
+            .blur(radius: 0.5)
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 25, style: .continuous)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
+      )
+      .foregroundColor(.white)
+      .shadow(
+        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
+        radius: shadow.radius,
+        x: shadow.x,
+        y: configuration.isPressed ? shadow.y - 2 : shadow.y
+      )
+      .scaleEffect(configuration.isPressed ? 0.98 : 1)
+      .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+  }
+}
+
+struct GreenButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    let shadow = AppTheme.cardShadow
+    return configuration.label
+      .padding()
+      .frame(maxWidth: .infinity)
+      .background(
+        ZStack {
+           LinearGradient(
+             colors: [Color(red: 0.2, green: 0.78, blue: 0.35), Color(red: 0.1, green: 0.62, blue: 0.3)],
+             startPoint: .leading,
+             endPoint: .trailing
+           )
+           // Liquid overlay
+           RoundedRectangle(cornerRadius: 25, style: .continuous)
+             .fill(.white.opacity(0.1))
+             .blur(radius: 0.5)
+        }
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 25, style: .continuous)
+          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
+      )
+      .foregroundColor(.white)
+      .shadow(
+        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
+        radius: shadow.radius,
+        x: shadow.x,
+        y: configuration.isPressed ? shadow.y - 2 : shadow.y
+      )
+      .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+      .transaction { t in
+        if AppSettingsService.shared.reduceMotion { t.disablesAnimations = true }
+      }
+      .animation(
+        AppSettingsService.shared.reduceMotion
+          ? .none : .spring(response: 0.28, dampingFraction: 0.7, blendDuration: 0),
+        value: configuration.isPressed)
+  }
+}
+
 struct PressScaleButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label

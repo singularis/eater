@@ -185,8 +185,8 @@ final class LanguageService: ObservableObject {
   func shortRecommendationLabel() -> String {
     let map: [String: String] = [
       "ar": "نصيحة",    // naseeha (advice)
-      "be": "Пара",     // parada (advice) - short for парада
-      "bg": "Съвет",    // savet (advice)
+      "be": "Пара",
+      "bg": "Съвет",
       "bn": "পরামর্শ",   // paramarsha (advice)
       "cs": "Rada",     // rada (advice)
       "da": "Råd",      // råd (advice)
@@ -216,7 +216,7 @@ final class LanguageService: ObservableObject {
       "sv": "Råd",      // råd (advice)
       "th": "แนะนำ",     // khamnaenam (advice)
       "tr": "Tavsiye",  // tavsiye (advice)
-      "uk": "Порада",   // porada (advice) - NOT рада
+      "uk": "Порада",
       "ur": "مشورہ",    // mashwara (advice)
       "vi": "L.khuyên", // lời khuyên (advice)
       "zh": "建议",      // jiànyi (advice)

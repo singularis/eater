@@ -59,7 +59,7 @@ class GRPCService {
       return
     }
 
-    sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
+    sendRequest(request: request, retriesLeft: 0) { data, _, error in
       if error != nil {
         completion([], 0, 0)
         return
@@ -339,21 +339,23 @@ class GRPCService {
   }
 
   func modifyFoodRecord(
-    time: Int64, 
-    userEmail: String, 
-    percentage: Int32, 
-    isTryAgain: Bool = false,
+    time: Int64,
+    userEmail: String,
+    percentage: Int32,
+    isTryManually: Bool = false,
     imageId: String = "",
     addedSugarTsp: Float = 0,
+    manualFoodName: String = "",
     completion: @escaping (Bool) -> Void
   ) {
     var modifyFoodRequest = Eater_ModifyFoodRecordRequest()
     modifyFoodRequest.time = time
     modifyFoodRequest.userEmail = userEmail
     modifyFoodRequest.percentage = percentage
-    modifyFoodRequest.isTryAgain = isTryAgain
+    modifyFoodRequest.isTryManually = isTryManually
     modifyFoodRequest.imageID = imageId
     modifyFoodRequest.addedSugarTsp = addedSugarTsp
+    modifyFoodRequest.manualFoodName = manualFoodName
 
     do {
       let requestBody = try modifyFoodRequest.serializedData()
@@ -388,6 +390,60 @@ class GRPCService {
       }
     } catch {
       completion(false)
+    }
+  }
+
+  /// JSON endpoint to rename a food item manually, without re-triggering AI analysis.
+  func renameFood(
+    time: Int64,
+    userEmail: String,
+    newName: String,
+    completion: @escaping (Bool) -> Void
+  ) {
+    let payload: [String: Any] = [
+      "time": time,
+      "user_email": userEmail,
+      "manual_food_name": newName,
+    ]
+
+    guard let body = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+      completion(false)
+      return
+    }
+
+    guard var request = createRequest(
+      endpoint: "modify_food_manual", httpMethod: "POST", body: body)
+    else {
+      completion(false)
+      return
+    }
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+
+      if let response = response as? HTTPURLResponse {
+        if response.statusCode >= 200 && response.statusCode < 300 {
+          // If backend returns JSON with success flag, respect it; otherwise assume OK on 2xx.
+          if let data = data,
+            let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [
+              String: Any
+            ],
+            let success = json["success"] as? Bool
+          {
+            completion(success)
+          } else {
+            completion(true)
+          }
+        } else {
+          completion(false)
+        }
+      } else {
+        completion(false)
+      }
     }
   }
 
@@ -935,18 +991,365 @@ class GRPCService {
         completion(false, error.localizedDescription)
         return
       }
-      
-      if let httpResponse = response as? HTTPURLResponse {
-        if httpResponse.statusCode == 200 {
-          completion(true, nil)
-        } else {
-          let errorMsg = "Server returned status code \(httpResponse.statusCode)"
-          completion(false, errorMsg)
-        }
-      } else {
+
+      guard let httpResponse = response as? HTTPURLResponse else {
         completion(false, "Invalid response")
+        return
+      }
+      if httpResponse.statusCode == 200 {
+        completion(true, nil)
+        return
+      }
+      // Parse error body (detail or error) for 400/409
+      var errorMsg: String?
+      if let data = data, !data.isEmpty,
+         let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        errorMsg = (json["detail"] as? String) ?? (json["error"] as? String)
+      }
+      completion(false, errorMsg ?? "Server returned status code \(httpResponse.statusCode)")
+    }
+  }
+
+  // MARK: - Goal (target weight) Update
+
+  func updateGoal(
+    targetWeight: Double,
+    goalMode: String,
+    goalMonths: Int,
+    recommendedCalories: Int,
+    completion: @escaping (Bool) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/goal_update") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let body: [String: Any] = [
+      "target_weight": targetWeight,
+      "goal_mode": goalMode,
+      "goal_months": goalMonths,
+      "recommended_calories": recommendedCalories,
+    ]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200
+      else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
+  // MARK: - Activity Log
+
+  func logActivity(
+    activityType: String,
+    value: Int,
+    calories: Int,
+    dateISO: String,
+    completion: @escaping (Bool) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/activity_log") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+    let body: [String: Any] = [
+      "activity_type": activityType,
+      "value": value,
+      "calories": calories,
+      "time": nowMs,
+      "date": dateISO,
+    ]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
+  func getActivitySummary(
+    dateISO: String,
+    completion: @escaping (_ totalCalories: Int, _ types: [String]) -> Void
+  ) {
+    guard var components = URLComponents(string: "\(AppEnvironment.baseURL)/activity_summary") else {
+      completion(0, [])
+      return
+    }
+    components.queryItems = [URLQueryItem(name: "date", value: dateISO)]
+    guard let url = components.url else {
+      completion(0, [])
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if error != nil {
+        completion(0, [])
+        return
+      }
+      guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+            let data = data,
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      else {
+        completion(0, [])
+        return
+      }
+
+      let total = json["total_calories"] as? Int ?? 0
+      let types = json["activity_types"] as? [String] ?? []
+      completion(total, types)
+    }
+  }
+
+  // MARK: - Chess
+
+  /// Record a chess game and synchronize with opponent
+  func recordChessGame(
+    playerEmail: String,
+    opponentEmail: String,
+    result: String,
+    completion: @escaping (Bool, String?, String?) -> Void
+  ) {
+    let requestDict: [String: Any] = [
+      "player_email": playerEmail,
+      "opponent_email": opponentEmail,
+      "result": result,
+      "timestamp": Int64(Date().timeIntervalSince1970 * 1000)
+    ]
+    
+    guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
+      completion(false, nil, nil)
+      return
+    }
+    
+    guard var urlRequest = createRequest(endpoint: "record_chess_game", httpMethod: "POST", body: body) else {
+      completion(false, nil, nil)
+      return
+    }
+    
+    urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, nil, nil)
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, nil, nil)
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, nil, nil)
+          return
+        }
+        
+        if let success = responseDict["success"] as? Bool, success {
+          let playerWins = responseDict["player_wins"] as? Int ?? 0
+          let playerLosses = responseDict["player_losses"] as? Int ?? 0
+          let opponentWins = responseDict["opponent_wins"] as? Int ?? 0
+          let opponentLosses = responseDict["opponent_losses"] as? Int ?? 0
+          
+          completion(true, "\(playerWins):\(playerLosses)", "\(opponentWins):\(opponentLosses)")
+        } else {
+          completion(false, nil, nil)
+        }
+      } catch {
+        completion(false, nil, nil)
+      }
+    }
+  }
+  
+  /// Get chess statistics for current user
+  func getChessStats(
+    userEmail: String,
+    opponentEmail: String? = nil,
+    completion: @escaping (Bool, String?, String?, String?) -> Void
+  ) {
+    var requestDict: [String: Any] = ["user_email": userEmail]
+    if let opponent = opponentEmail {
+      requestDict["opponent_email"] = opponent
+    }
+    
+    guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
+      completion(false, nil, nil, nil)
+      return
+    }
+    
+    guard var urlRequest = createRequest(endpoint: "autocomplete/get_chess_stats", httpMethod: "POST", body: body) else {
+      completion(false, nil, nil, nil)
+      return
+    }
+    
+    urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, nil, nil, nil)
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, nil, nil, nil)
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, nil, nil, nil)
+          return
+        }
+        
+        let score = responseDict["score"] as? String ?? "0:0"
+        let opponentName = responseDict["opponent_name"] as? String
+        let lastGameDate = responseDict["last_game_date"] as? String
+        
+        completion(true, score, opponentName, lastGameDate)
+      } catch {
+        completion(false, nil, nil, nil)
+      }
+    }
+  }
+  
+  /// Get chess history (list of past games)
+  /// - Parameters:
+  ///   - limit: Number of games to fetch (default 50)
+  ///   - offset: Offset for pagination (default 0)
+  ///   - completion: Callback with success flag, total count, and list of games
+  func getChessHistory(
+    limit: Int = 50,
+    offset: Int = 0,
+    completion: @escaping (Bool, Int, [[String: Any]]) -> Void
+  ) {
+    let endpoint = "autocomplete/get_chess_history?limit=\(limit)&offset=\(offset)"
+    guard let urlRequest = createRequest(endpoint: endpoint, httpMethod: "GET") else {
+      completion(false, 0, [])
+      return
+    }
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, 0, [])
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, 0, [])
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, 0, [])
+          return
+        }
+        
+        let total = responseDict["total"] as? Int ?? 0
+        let games = responseDict["games"] as? [[String: Any]] ?? []
+        
+        completion(true, total, games)
+      } catch {
+        completion(false, 0, [])
+      }
+    }
+  }
+
+  /// Get all chess data (total wins + all opponent scores)
+  func getAllChessData(
+    completion: @escaping (Bool, Int, [String: String]) -> Void
+  ) {
+    guard let urlRequest = createRequest(endpoint: "autocomplete/get_all_chess_data", httpMethod: "GET") else {
+      completion(false, 0, [:])
+      return
+    }
+    
+    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
+      if error != nil {
+        completion(false, 0, [:])
+        return
+      }
+      
+      guard let data = data else {
+        completion(false, 0, [:])
+        return
+      }
+      
+      do {
+        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+          completion(false, 0, [:])
+          return
+        }
+        
+        let totalWins = responseDict["total_wins"] as? Int ?? 0
+        
+        // Handle both old (String) and new (Object) formats for opponents
+        var simpleOpponents: [String: String] = [:]
+        
+        if let rawOpponents = responseDict["opponents"] as? [String: Any] {
+          for (email, value) in rawOpponents {
+            if let scoreStr = value as? String {
+              simpleOpponents[email] = scoreStr
+            } else if let detailedObj = value as? [String: Any],
+                      let scoreStr = detailedObj["score"] as? String {
+              simpleOpponents[email] = scoreStr
+            }
+          }
+        }
+        
+        completion(true, totalWins, simpleOpponents)
+      } catch {
+        completion(false, 0, [:])
       }
     }
   }
 }
-

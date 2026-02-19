@@ -21,6 +21,7 @@ struct CameraButtonView: View {
   var onPhotoFailure: (() -> Void)?
   var onPhotoStarted: (() -> Void)?
   var onReturnToToday: (() -> Void)?
+  var onRequestTutorial: ((String) -> Void)?
 
   init(
     isLoadingFoodPhoto: Bool,
@@ -29,7 +30,8 @@ struct CameraButtonView: View {
     onPhotoSuccess: (() -> Void)?,
     onPhotoFailure: (() -> Void)?,
     onPhotoStarted: (() -> Void)?,
-    onReturnToToday: (() -> Void)? = nil
+    onReturnToToday: (() -> Void)? = nil,
+    onRequestTutorial: ((String) -> Void)? = nil
   ) {
     self.isLoadingFoodPhoto = isLoadingFoodPhoto
     self.selectedDate = selectedDate
@@ -38,6 +40,7 @@ struct CameraButtonView: View {
     self.onPhotoFailure = onPhotoFailure
     self.onPhotoStarted = onPhotoStarted
     self.onReturnToToday = onReturnToToday
+    self.onRequestTutorial = onRequestTutorial
   }
 
   var body: some View {
@@ -51,6 +54,10 @@ struct CameraButtonView: View {
 
         HStack(spacing: 0) {
           Button(action: {
+            if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
+                req("hasSeenCameraTutorial")
+                return
+            }
             HapticsService.shared.select()
             checkBackdating(sourceType: .photoLibrary)
           }) {
@@ -89,6 +96,10 @@ struct CameraButtonView: View {
             .frame(width: gapWidth)
 
           Button(action: {
+            if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
+                req("hasSeenCameraTutorial")
+                return
+            }
             HapticsService.shared.select()
             checkBackdating(sourceType: .camera)
           }) {
@@ -375,20 +386,23 @@ struct CameraView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] products, _, _ in
-        // Record that user snapped food today and cancel remaining reminders
-        NotificationService.shared.recordFoodSnap()
-        // Play theme sound for the newly added food (health rating)
-        if let added = products.first(where: { $0.time == tempTimestamp })
-          ?? products.max(by: { $0.time < $1.time }) {
-          ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
-        } else {
-          ThemeService.shared.playSound(for: "good_food")
-        }
-        // Call the success callback through the manager
-        CameraCallbackManager.shared.callPhotoSuccess()
+        [weak self] products, calories, weight in
+        DispatchQueue.main.async {
+            NotificationService.shared.recordFoodSnap()
+            let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
+            let overLimit = limit > 0 && calories > limit
+            if overLimit {
+              ThemeService.shared.playSound(for: "bad_food")
+            } else if let added = products.first(where: { $0.time == tempTimestamp })
+              ?? products.max(by: { $0.time < $1.time }) {
+              ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+            } else {
+              ThemeService.shared.playSound(for: "good_food")
+            }
+            CameraCallbackManager.shared.callPhotoSuccess()
 
-        self?.temporaryTimestamp = nil
+            self?.temporaryTimestamp = nil
+        }
       }
     }
 
@@ -541,20 +555,23 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] products, _, _ in
-        // Record that user snapped food today and cancel remaining reminders
-        NotificationService.shared.recordFoodSnap()
-        // Play theme sound for the newly added food (health rating)
-        if let added = products.first(where: { $0.time == tempTimestamp })
-          ?? products.max(by: { $0.time < $1.time }) {
-          ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
-        } else {
-          ThemeService.shared.playSound(for: "good_food")
-        }
-        // Call the success callback through the manager
-        CameraCallbackManager.shared.callPhotoSuccess()
+        [weak self] products, calories, weight in
+        DispatchQueue.main.async {
+            NotificationService.shared.recordFoodSnap()
+            let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
+            let overLimit = limit > 0 && calories > limit
+            if overLimit {
+              ThemeService.shared.playSound(for: "bad_food")
+            } else if let added = products.first(where: { $0.time == tempTimestamp })
+              ?? products.max(by: { $0.time < $1.time }) {
+              ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+            } else {
+              ThemeService.shared.playSound(for: "good_food")
+            }
+            CameraCallbackManager.shared.callPhotoSuccess()
 
-        self?.temporaryTimestamp = nil
+            self?.temporaryTimestamp = nil
+        }
       }
     }
 

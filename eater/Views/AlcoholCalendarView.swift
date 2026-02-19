@@ -35,15 +35,18 @@ struct AlcoholCalendarView: View {
 
   var body: some View {
     VStack(spacing: 12) {
+      addictionModeExplanation
       header
       weekdayHeader
       monthGrid
       Spacer(minLength: 0)
-      Button(action: { isPresented = false }) {
-        Text(loc("common.close", "Close"))
-          .frame(maxWidth: .infinity)
+      HStack {
+        Spacer(minLength: 0)
+        Button(action: { isPresented = false }) {
+          Text(loc("common.done", "Done"))
+        }
+        .buttonStyle(PrimaryButtonStyle())
       }
-      .buttonStyle(PrimaryButtonStyle())
       .padding(.horizontal)
       .padding(.bottom, 12)
     }
@@ -77,6 +80,31 @@ struct AlcoholCalendarView: View {
           }
         }
     )
+  }
+
+  private var addictionModeExplanation: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(loc("alcohol.addiction_mode.title", "🍷 Addiction Mode"))
+        .font(.system(size: 17, weight: .bold, design: .rounded))
+        .foregroundColor(AppTheme.textPrimary)
+      Text(loc("alcohol.addiction_mode.subtitle", "Track alcohol intake and stay mindful."))
+        .font(.system(size: 19, weight: .medium, design: .rounded))
+        .foregroundStyle(
+          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+        )
+      Text(loc("alcohol.addiction_mode.desc", "Alcohol entries are automatically logged in your calendar, and the alcohol icon turns red to highlight the day."))
+        .font(.system(size: 18, weight: .regular, design: .rounded))
+        .foregroundStyle(
+          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+        )
+        .lineSpacing(3)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 20)
+    .padding(.vertical, 12)
+    .background(AppTheme.surface.opacity(0.8))
+    .cornerRadius(12)
+    .padding(.horizontal, 16)
   }
 
   private var header: some View {

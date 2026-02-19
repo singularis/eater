@@ -12,13 +12,14 @@ struct UserProfileView: View {
   @State private var userWeight: Double = 0
   @State private var userAge: Int = 0
   @State private var userOptimalWeight: Double = 0
+  @State private var userTargetWeight: Double = 0
   @State private var userRecommendedCalories: Int = 0
   @State private var showStatistics = false
   @State private var showFeedback = false
   @State private var showAddFriends = false
   @State private var showNicknameSettings = false
   @AppStorage("user_nickname") private var userNickname: String = ""
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"  // "simplified" or "full"
+  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "full"  // "simplified" or "full"
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -48,43 +49,122 @@ struct UserProfileView: View {
                 userEmail: authService.userEmail
               )
 
-              if !userNickname.isEmpty {
-                Text(userNickname)
-                  .font(.title2)
-                  .fontWeight(.bold)
-                  .foregroundColor(AppTheme.textPrimary)
-                
-                if let userName = authService.userName, !userName.isEmpty {
-                  Text(userName)
-                    .font(.subheadline)
+              Button(action: {
+                HapticsService.shared.select()
+                showNicknameSettings = true
+              }) {
+                VStack(spacing: 6) {
+                  if !userNickname.isEmpty {
+                    HStack(spacing: 8) {
+                      Text(userNickname)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppTheme.textPrimary)
+                      Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppTheme.accent)
+                    }
+                    if let userName = authService.userName, !userName.isEmpty {
+                      Text(userName)
+                        .font(.subheadline)
+                        .foregroundColor(AppTheme.textSecondary)
+                    }
+                  } else if let userName = authService.userName, !userName.isEmpty {
+                    HStack(spacing: 8) {
+                      Text(userName)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppTheme.textPrimary)
+                      Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppTheme.accent)
+                    }
+                  } else {
+                    HStack(spacing: 8) {
+                      Text(loc("profile.set_nickname", "Set Nickname"))
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppTheme.accent)
+                      Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppTheme.accent)
+                    }
+                  }
+                  Text(authService.userEmail ?? "No email")
+                    .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                 }
-              } else if let userName = authService.userName, !userName.isEmpty {
-                Text(userName)
-                  .font(.title2)
-                  .fontWeight(.bold)
-                  .foregroundColor(AppTheme.textPrimary)
+                .frame(maxWidth: .infinity)
               }
-
-              Text(authService.userEmail ?? "No email")
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
+              .buttonStyle(PlainButtonStyle())
+              .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
+              .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .cardContainer(padding: 16)
 
+            // Watch me first! Section
+            Button(action: {
+              HapticsService.shared.select()
+              showOnboarding = true
+            }) {
+              HStack(spacing: 12) {
+                // Cat image
+                if let catImage = AppMascot.cat.happyImage() {
+                  Image(catImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                }
+
+                HStack {
+                  Image(systemName: "play.circle.fill")
+                  Text(loc("profile.watch_me_first", "Watch me first!"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+
+                // Dog image
+                if let dogImage = AppMascot.dog.happyImage() {
+                  Image(dogImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                }
+              }
+              .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(GreenToPurpleButtonStyle())
+            .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
+
             // Theme Section
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
             
             VStack(spacing: 14) {
-              // Preview of current mascot (two different images: happy and gym)
+              // Preview of current mascot (5 states for clarity)
               if themeService.currentMascot != .none {
-                HStack(spacing: 16) {
-                  MascotAvatarView(state: .happy, size: 60)
-                  MascotAvatarView(state: .gym, size: 60)
+                let previews = themeService.getUniquePreviewImageNames(count: 5)
+                ScrollView(.horizontal, showsIndicators: false) {
+                  HStack(spacing: 12) {
+                    Spacer(minLength: 0)
+                    ForEach(previews, id: \.self) { imageName in
+                      Image(imageName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 56, height: 56)
+                        .clipShape(Circle())
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    }
+                    Spacer(minLength: 0)
+                  }
+                  .padding(.vertical, 8)
+                  .padding(.horizontal, 2)
                 }
-                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
               }
               
               VStack(alignment: .leading, spacing: 12) {
@@ -97,7 +177,7 @@ struct UserProfileView: View {
                   .font(.caption)
                   .foregroundColor(AppTheme.textSecondary)
                 
-                // Friend Picker
+                // Friend Picker (5 mascots centered)
                 HStack(spacing: 12) {
                   ForEach(AppMascot.allCases, id: \.self) { mascot in
                     MascotButton(
@@ -110,6 +190,7 @@ struct UserProfileView: View {
                     }
                   }
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
               }
               
               Divider().padding(.horizontal, 8)
@@ -142,6 +223,109 @@ struct UserProfileView: View {
             .padding(.vertical, 14)
             .cardContainer(padding: 14)
 
+            // Health Section (first)
+            sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
+            
+            if hasHealthData {
+              VStack(spacing: 12) {
+                healthMetricRow(
+                  label: loc("health.height.label", "Height:"),
+                  value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
+                  color: AppTheme.textPrimary
+                )
+
+                let currentBMI: Double = {
+                  let hm = userHeight / 100.0
+                  guard hm > 0, userWeight > 0 else { return 0 }
+                  return userWeight / (hm * hm)
+                }()
+                if currentBMI > 0 {
+                  healthMetricRow(
+                    label: loc("health.bmi.label", "BMI:"),
+                    value: String(format: "%.1f", currentBMI),
+                    color: .blue
+                  )
+                }
+                
+                healthMetricRow(
+                  label: loc("profile.targetweight", "Target Weight:"),
+                  value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
+                  color: AppTheme.success
+                )
+                
+                healthMetricRow(
+                  label: loc("profile.dailycalorie", "Daily Calorie Target:"),
+                  value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
+                  color: AppTheme.warning
+                )
+                
+                Button(action: {
+                  HapticsService.shared.select()
+                  showHealthSettings = true
+                }) {
+                  Text(loc("health.update.title", "Update Health Settings"))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                      RoundedRectangle(cornerRadius: 25, style: .continuous)
+                        .fill(
+                          LinearGradient(
+                            colors: [
+                              Color(red: 0.72, green: 0.62, blue: 0.92),
+                              Color(red: 0.65, green: 0.52, blue: 0.88)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                        )
+                    )
+                }
+                .buttonStyle(PressScaleButtonStyle())
+                .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
+              }
+              .cardContainer(padding: 14)
+            } else {
+              VStack(spacing: 12) {
+                Text(loc("profile.personalize", "Personalize Your Experience"))
+                  .font(.headline)
+                  .foregroundColor(AppTheme.textPrimary)
+                
+                Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textSecondary)
+                  .multilineTextAlignment(.center)
+                
+                Button(action: {
+                  HapticsService.shared.select()
+                  showHealthSettings = true
+                }) {
+                  Text(loc("health.update.title", "Setup Health Profile"))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                      RoundedRectangle(cornerRadius: 25, style: .continuous)
+                        .fill(
+                          LinearGradient(
+                            colors: [
+                              Color(red: 0.72, green: 0.62, blue: 0.92),
+                              Color(red: 0.65, green: 0.52, blue: 0.88)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                        )
+                    )
+                }
+                .buttonStyle(PressScaleButtonStyle())
+                .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
+              }
+              .cardContainer(padding: 14)
+            }
+
             // Actions Section
             sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
             
@@ -172,67 +356,6 @@ struct UserProfileView: View {
                 HapticsService.shared.select()
                 showAddFriends = true
               }
-              
-              actionButton(
-                icon: "person.text.rectangle.fill",
-                title: loc("profile.set_nickname", "Set Nickname"),
-                accessibilityHint: loc("a11y.set_nickname", "Set a nickname for sharing with friends")
-              ) {
-                HapticsService.shared.select()
-                showNicknameSettings = true
-              }
-            }
-
-            // Health Section
-            sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
-            
-            if hasHealthData {
-              VStack(spacing: 12) {
-                healthMetricRow(
-                  label: loc("health.height.label", "Height:"),
-                  value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
-                  color: AppTheme.textPrimary
-                )
-                
-                healthMetricRow(
-                  label: loc("profile.targetweight", "Target Weight:"),
-                  value: String(format: "%.1f", userOptimalWeight) + " \(loc("units.kg", "kg"))",
-                  color: AppTheme.success
-                )
-                
-                healthMetricRow(
-                  label: loc("profile.dailycalorie", "Daily Calorie Target:"),
-                  value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
-                  color: AppTheme.warning
-                )
-                
-                Button(loc("health.update.title", "Update Health Settings")) {
-                  HapticsService.shared.select()
-                  showHealthSettings = true
-                }
-                .buttonStyle(SecondaryButtonStyle())
-                .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
-              }
-              .cardContainer(padding: 14)
-            } else {
-              VStack(spacing: 12) {
-                Text(loc("profile.personalize", "Personalize Your Experience"))
-                  .font(.headline)
-                  .foregroundColor(AppTheme.textPrimary)
-                
-                Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
-                  .font(.subheadline)
-                  .foregroundColor(AppTheme.textSecondary)
-                  .multilineTextAlignment(.center)
-                
-                Button(loc("health.update.title", "Setup Health Profile")) {
-                  HapticsService.shared.select()
-                  showHealthSettings = true
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
-              }
-              .cardContainer(padding: 14)
             }
 
             // Preferences Section
@@ -333,24 +456,23 @@ struct UserProfileView: View {
                 .background(useDevEnvironment ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
                 .cornerRadius(8)
                 .onChange(of: useDevEnvironment) { _, newValue in
-                  print("Environment changed to \(newValue ? "DEV" : "PROD"), clearing and refetching local chess data")
+                  print("Environment changed to \(newValue ? "DEV" : "PROD")")
                   
-                  let keys = [
+                  // Clear caches that depend on the backend environment
+                  ProductStorageService.shared.clearCache()
+                  StatisticsService.shared.clearExpiredCache()
+                  
+                  // Clear local chess data so we don't mix environments
+                  let chessKeys = [
                     "chessTotalWins", "chessOpponents", "lastChessDate",
                     "chessWinsStartOfDay", "chessOpponentsStartOfDay",
-                    "chessPlayerName", "chessOpponentName", "chessOpponentEmail"
+                    "chessOpponentName", "chessOpponentEmail"
                   ]
-                  keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+                  chessKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
                   
-                  GRPCService().getAllChessData { success, totalWins, opponents in
-                    if success {
-                      UserDefaults.standard.set(totalWins, forKey: "chessTotalWins")
-                      
-                      if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
-                         let jsonString = String(data: jsonData, encoding: .utf8) {
-                        UserDefaults.standard.set(jsonString, forKey: "chessOpponents")
-                      }
-                    }
+                  // Notify all views (including ActivitiesView) about the environment change
+                  DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    NotificationCenter.default.post(name: NSNotification.Name("EnvironmentChanged"), object: nil)
                   }
                 }
               }
@@ -419,22 +541,6 @@ struct UserProfileView: View {
             
             VStack(spacing: 10) {
               Button(action: {
-                HapticsService.shared.select()
-                showOnboarding = true
-              }) {
-                HStack {
-                  Image(systemName: "book.fill")
-                  Text(loc("profile.tutorial", "Tutorial"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-              }
-              .buttonStyle(PrimaryButtonStyle())
-              .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
-
-              Button(action: {
                 HapticsService.shared.warning()
                 logout()
               }) {
@@ -444,9 +550,19 @@ struct UserProfileView: View {
                     .fontWeight(.semibold)
                 }
                 .font(.subheadline)
+                .foregroundColor(Color(red: 0.42, green: 0.0, blue: 0.05))
                 .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                  RoundedRectangle(cornerRadius: 25, style: .continuous)
+                    .fill(Color.white)
+                )
+                .overlay(
+                  RoundedRectangle(cornerRadius: 25, style: .continuous)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
               }
-              .buttonStyle(SecondaryButtonStyle())
+              .buttonStyle(PressScaleButtonStyle())
               .accessibilityHint(loc("a11y.logout", "Signs you out of the app"))
 
               Button(action: {
@@ -473,8 +589,8 @@ struct UserProfileView: View {
       .navigationTitle(loc("nav.profile", "Profile"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button(loc("common.close", "Close")) {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button(loc("common.done", "Done")) {
             dismiss()
           }
           .foregroundColor(AppTheme.textPrimary)
@@ -527,6 +643,14 @@ struct UserProfileView: View {
   private func logout() {
     // Clear statistics cache before logging out
     StatisticsService.shared.clearCache()
+    
+    // Clear chess data (ActivitiesView AppStorage) so it doesn't persist to other accounts/environments
+    let chessKeys = [
+      "chessTotalWins", "chessOpponents", "lastChessDate",
+      "chessWinsStartOfDay", "chessOpponentsStartOfDay",
+      "chessOpponentName", "chessOpponentEmail"
+    ]
+    chessKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
 
     // Sign out user and clear local data
     authService.signOut()
@@ -544,6 +668,9 @@ struct UserProfileView: View {
 
     // Clear statistics cache before deleting account
     StatisticsService.shared.clearCache()
+    
+    // Clear persisted tutorials
+    KeychainHelper.shared.clearAll()
 
     // Immediately delete account and clear all user data from device
     authService.deleteAccountAndClearData()
@@ -571,7 +698,10 @@ struct UserProfileView: View {
       userWeight = userDefaults.double(forKey: "userWeight")
       userAge = userDefaults.integer(forKey: "userAge")
       userOptimalWeight = userDefaults.double(forKey: "userOptimalWeight")
-      userRecommendedCalories = userDefaults.integer(forKey: "userRecommendedCalories")
+      userTargetWeight = userDefaults.double(forKey: "userTargetWeight")
+      // Use same source as main screen (ContentView) so "Daily Calorie Target" matches everywhere
+      let soft = CalorieLimitsStorageService.shared.load()?.softLimit ?? userDefaults.integer(forKey: "softLimit")
+      userRecommendedCalories = soft > 0 ? soft : userDefaults.integer(forKey: "userRecommendedCalories")
     }
   }
   
@@ -685,7 +815,7 @@ struct MascotButton: View {
                 .frame(width: 50, height: 50)
                 .clipShape(Circle())
             } else {
-              // Fallback: лапка замість емодзі
+              // Fallback: paw instead of emoji
               Image(systemName: "pawprint.circle.fill")
                 .font(.system(size: 32))
                 .foregroundColor(isSelected ? .white : AppTheme.textSecondary)

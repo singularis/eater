@@ -1,11 +1,33 @@
 import SwiftUI
+import Combine
 
-enum ActivityType {
+// Flat-top hexagon for honeycomb layout
+private struct HexagonShape: Shape {
+  func path(in rect: CGRect) -> Path {
+    let w = rect.width
+    let h = rect.height
+    let cx = w / 2
+    let r = min(w / 2, h / sqrt(3))
+    var path = Path()
+    for i in 0..<6 {
+      let angle = CGFloat(i) * .pi / 3 - .pi / 6
+      let x = cx + r * cos(angle)
+      let y = h / 2 + r * sin(angle)
+      if i == 0 { path.move(to: CGPoint(x: x, y: y)) }
+      else { path.addLine(to: CGPoint(x: x, y: y)) }
+    }
+    path.closeSubpath()
+    return path
+  }
+}
+
+enum ActivityType: CaseIterable {
   case chess
   case gym
   case steps
   case treadmill
   case elliptical
+  case yoga
 }
 
 struct ActivitiesView: View {
@@ -21,71 +43,54 @@ struct ActivitiesView: View {
   @AppStorage("todayActivityDate") private var todayActivityDate = ""
   @AppStorage("todaySportCalories") private var todaySportCalories = 0
   @AppStorage("todaySportCaloriesDate") private var todaySportCaloriesDate = ""
+  @AppStorage("todayTrackedActivityTypes") private var todayTrackedActivityTypes = ""  // e.g. "gym,yoga"
+  
+  /// Date (UTC, yyyy-MM-dd) for which we are showing and logging activities.
+  let dateISO: String
   
   @State private var showChessWinnerSheet = false
   @State private var showOpponentPicker = false
   @State private var showActivityInputSheet = false
+  @State private var showStatistics = false
   @State private var selectedActivityType: ActivityType = .treadmill
   @State private var inputValue = ""
   @State private var pendingGameResult: String = "" // "me", "draw", or "opponent"
+  @State private var isSyncingChess = false
+  @State private var showChessHistory = false
+  @State private var showChessSheet = false
+  @State private var cachedFriends: [(email: String, nickname: String)]? = nil
+  
+  // Activity summary for the selected date (for calories card + chips)
+  @State private var summaryTotalCalories: Int = 0
+  @State private var summaryActivityTypes: [String] = []
   
   var body: some View {
-    NavigationView {
+    return NavigationView {
       ZStack {
         AppTheme.backgroundGradient.ignoresSafeArea()
         
         ScrollView {
           VStack(spacing: 20) {
-            // Chess Activity
-            chessActivityCard
-            
             // Burned Calories Counter
             burnedCaloriesCard
             
             Divider()
               .padding(.vertical, 10)
             
-            // Other Activities Header
-            Text(Localization.shared.tr("activities.other", default: "Other Activities"))
-              .font(.headline)
-              .foregroundColor(AppTheme.textPrimary)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding(.horizontal)
-            
-            // Calorie-based activities
-            activityButton(
-              type: .gym,
-              title: Localization.shared.tr("activities.gym", default: "Gym"),
-              subtitle: Localization.shared.tr("activities.gym.subtitle", default: "Enter time"),
-              icon: "dumbbell.fill",
-              color: .orange
-            )
-            
-            activityButton(
-              type: .steps,
-              title: Localization.shared.tr("activities.steps", default: "Steps"),
-              subtitle: Localization.shared.tr("activities.steps.subtitle", default: "Enter step count"),
-              icon: "figure.walk",
-              color: .green
-            )
-            
-            activityButton(
-              type: .treadmill,
-              title: Localization.shared.tr("activities.treadmill", default: "Treadmill"),
-              subtitle: Localization.shared.tr("activities.treadmill.subtitle", default: "Enter calories"),
-              icon: "figure.run",
-              color: .blue
-            )
-            
-            activityButton(
-              type: .elliptical,
-              title: Localization.shared.tr("activities.elliptical", default: "Elliptical"),
-              subtitle: Localization.shared.tr("activities.elliptical.subtitle", default: "Enter calories"),
-              icon: "figure.elliptical",
-              color: .purple
-            )
+            // Activities as honeycomb: filled = tracked, outline = not yet
+            honeycombActivitiesView
           }
           .padding()
+        }
+
+        // Inline, compact activity input dialog over Activities background (without covering it)
+        if showActivityInputSheet {
+          VStack {
+            Spacer()
+            activityInputSheet
+              .padding(.horizontal, 24)
+              .padding(.bottom, 40)
+          }
         }
       }
       .navigationTitle(Localization.shared.tr("activities.title", default: "Activities"))
@@ -100,6 +105,9 @@ struct ActivitiesView: View {
           }
         }
       }
+      .sheet(isPresented: $showStatistics) {
+        ActivityStatisticsView(isPresented: $showStatistics)
+      }
       .sheet(isPresented: $showChessWinnerSheet) {
         chessWinnerSheet
       }
@@ -111,39 +119,57 @@ struct ActivitiesView: View {
             chessOpponentEmail = opponentEmail
             showOpponentPicker = false
             recordChessGame(winner: pendingGameResult)
-          }
+          },
+          initialFriends: cachedFriends
         )
       }
       .sheet(isPresented: $showActivityInputSheet) {
         activityInputSheet
       }
+      .sheet(isPresented: $showChessSheet) {
+        NavigationView {
+          ScrollView {
+            chessActivityCard
+              .padding(.bottom, 24)
+          }
+          .background(AppTheme.backgroundGradient.ignoresSafeArea())
+          .navigationTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
+          .navigationBarTitleDisplayMode(.inline)
+          .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+              Button(Localization.shared.tr("common.done", default: "Done")) {
+                showChessSheet = false
+              }
+              .foregroundColor(AppTheme.textPrimary)
+            }
+          }
+        }
+      }
       .onAppear {
-        print("🎮 ActivitiesView appeared")
-        print("🎮 chessTotalWins: \(chessTotalWins)")
-        print("🎮 chessOpponents: \(chessOpponents)")
-        
         // Initialize player name if not set
         if chessPlayerName.isEmpty {
           if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
             chessPlayerName = nickname
-          } else if let email = UserDefaults.standard.string(forKey: "currentUserEmail") {
+          } else if let email = UserDefaults.standard.string(forKey: "user_email") {
             chessPlayerName = email.components(separatedBy: "@").first ?? email
           }
         }
-        
         // Migration: Clean up old score system (ONE TIME ONLY)
         let migrationKey = "chessLeagueMigrationDone"
         if !UserDefaults.standard.bool(forKey: migrationKey) {
-          print("🎮 Running migration cleanup...")
-          // Just remove old keys, don't reset new system
           UserDefaults.standard.removeObject(forKey: "chessScore")
           UserDefaults.standard.removeObject(forKey: "chessScoreStartOfDay")
           UserDefaults.standard.set(true, forKey: migrationKey)
-          print("🎮 Migration done, keeping chessTotalWins=\(chessTotalWins)")
         }
-        
-        // Sync chess data from backend (only if it has data or we have no local data)
+        prefetchFriends()
         syncChessDataFromBackend()
+        loadActivitySummary()
+      }
+      .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("EnvironmentChanged"))) { _ in
+        resetChessDataForEnvironmentSwitch()
+      }
+      .sheet(isPresented: $showChessHistory) {
+        ChessOpponentsHistoryView(opponentsJSON: chessOpponents, isPresented: $showChessHistory)
       }
     }
   }
@@ -151,13 +177,17 @@ struct ActivitiesView: View {
   // MARK: - Burned Calories Card
   
   private var burnedCaloriesCard: some View {
-    VStack(spacing: 15) {
+    let isToday = dateISO == getCurrentUTCDateString()
+    let cardTitle: String = isToday
+      ? Localization.shared.tr("activities.burned.title", default: "Today's Burned Calories")
+      : Localization.shared.tr("activities.burned.title.date", default: "Burned calories for %@").replacingOccurrences(of: "%@", with: formatDateForDisplay(dateISO))
+    return VStack(spacing: 15) {
       HStack {
         Image(systemName: "flame.fill")
           .font(.title2)
           .foregroundColor(.orange)
         
-        Text(Localization.shared.tr("activities.burned.title", default: "Today's Burned Calories"))
+        Text(cardTitle)
           .font(.title3.bold())
           .foregroundColor(AppTheme.textPrimary)
         
@@ -166,7 +196,7 @@ struct ActivitiesView: View {
       
       // Calories Display
       HStack(spacing: 8) {
-        Text("\(todaySportCalories)")
+        Text("\(summaryTotalCalories)")
           .font(.system(size: 48, weight: .bold))
           .foregroundColor(.orange)
         
@@ -176,19 +206,43 @@ struct ActivitiesView: View {
           .padding(.top, 10)
       }
       
-      if todaySportCalories > 0 {
-        Text(Localization.shared.tr("activities.burned.today", default: "Added to today's limit"))
-          .font(.caption)
-          .foregroundColor(.green)
+      if summaryTotalCalories > 0 {
+        if isToday {
+          Text(Localization.shared.tr("activities.burned.today", default: "Added to today's limit"))
+            .font(.caption)
+            .foregroundColor(.green)
+        }
         
-        // Reset Button
+        // Reset: for today resets AppStorage + summary; for past date clears cache + summary for that date
         Button(action: {
-          resetTodayActivities()
+          if isToday {
+            resetTodayActivities()
+            summaryTotalCalories = 0
+            summaryActivityTypes = []
+          } else {
+            summaryTotalCalories = 0
+            summaryActivityTypes = []
+            saveActivitySummaryToCache(dateISO: dateISO, total: 0, types: [])
+            // Notify ContentView so the main screen updates limit/calories for this date immediately
+            NotificationCenter.default.post(
+              name: NSNotification.Name("ActivityCaloriesAddedForDate"),
+              object: nil,
+              userInfo: ["dateISO": dateISO]
+            )
+            HapticsService.shared.warning()
+            AlertHelper.showAlert(
+              title: Localization.shared.tr("activities.burned.reset.title", default: "Activities Reset"),
+              message: Localization.shared.tr("activities.burned.reset.date.msg", default: "Activities for this date have been reset."),
+              haptic: .success
+            )
+          }
         }) {
           HStack {
             Image(systemName: "arrow.counterclockwise")
               .font(.system(size: 14))
-            Text(Localization.shared.tr("activities.burned.reset", default: "Reset Today's Activities"))
+            Text(isToday
+                 ? Localization.shared.tr("activities.burned.reset", default: "Reset Today's Activities")
+                 : Localization.shared.tr("activities.burned.reset.date", default: "Reset"))
               .font(.caption)
           }
           .foregroundColor(.red)
@@ -198,6 +252,31 @@ struct ActivitiesView: View {
           .cornerRadius(10)
         }
         .padding(.top, 5)
+        
+        // Activity source chips: Yoga, Gym, …
+        if !summaryActivityTypes.isEmpty {
+          ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 8) {
+                ForEach(summaryActivityTypes, id: \.self) { key in
+                  Text(activitySummaryDisplayName(for: key))
+                    .font(.caption2.bold())
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                      Capsule()
+                        .fill(LinearGradient(
+                          colors: [.green.opacity(0.9), .purple.opacity(0.8)],
+                          startPoint: .leading,
+                          endPoint: .trailing
+                        ))
+                    )
+                }
+              }
+              .padding(.top, 2)
+          }
+          .padding(.top, 4)
+        }
       } else {
         Text(Localization.shared.tr("activities.burned.none", default: "No activities recorded today"))
           .font(.caption)
@@ -209,12 +288,182 @@ struct ActivitiesView: View {
     .cornerRadius(16)
     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
     .padding(.horizontal)
+    .id("burned-\(summaryTotalCalories)-\(summaryActivityTypes.joined(separator: ","))")
+  }
+  
+  // MARK: - Honeycomb layout
+  
+  // +20% size (88→106, 76→91)
+  private static let hexWidth: CGFloat = 106
+  private static let hexHeight: CGFloat = 91
+  
+  private var honeycombActivitiesView: some View {
+    let w = Self.hexWidth
+    let h = Self.hexHeight
+    
+    // Gap between cells so they don't overlap
+    let gap: CGFloat = 18
+    let stepX = w + gap
+    let stepY = h * CGFloat(sqrt(3)) / 2 + gap
+    
+    // Offset-grid: position (row, col) with step stepX, stepY
+    func gridX(row: Int, col: Int) -> CGFloat {
+      CGFloat(col) * stepX + CGFloat(row % 2) * (stepX / 2)
+    }
+    func gridY(row: Int) -> CGFloat {
+      CGFloat(row) * stepY
+    }
+    
+    // Grid center — statistics (reduced by 10%)
+    let centerRow = 1
+    let centerCol = 1
+    let centerScale: CGFloat = 1.35 * 0.9   // −10%
+    let centerW = w * centerScale
+    let centerH = h * centerScale
+    // Activities +5% size
+    let activityW = w * 1.05
+    let activityH = h * 1.05
+    let originX = gridX(row: centerRow, col: centerCol)
+    let originY = gridY(row: centerRow)
+    
+    // Neighbors for odd row (centerRow=1): left (1,0), right (1,2), up-left (0,1), up-right (0,2), down-left (2,1), down-right (2,2)
+    
+    return ZStack {
+      // Center: Statistics
+      honeycombCellStatistics()
+        .frame(width: centerW, height: centerH)
+        .offset(x: 0, y: 0)
+      
+      // Neighbors on offset-grid (+5% size)
+      honeycombCell(type: .elliptical, title: Localization.shared.tr("activities.elliptical", default: "Elliptical"), icon: "figure.elliptical", color: .purple)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 1, col: 0) - originX, y: gridY(row: 1) - originY)
+      
+      honeycombCell(type: .gym, title: Localization.shared.tr("activities.gym", default: "Gym"), icon: "dumbbell.fill", color: .orange)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 0, col: 1) - originX, y: gridY(row: 0) - originY)
+      
+      honeycombCell(type: .steps, title: Localization.shared.tr("activities.steps", default: "Steps"), icon: "figure.walk", color: .green)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 0, col: 2) - originX, y: gridY(row: 0) - originY)
+      
+      honeycombCell(type: .treadmill, title: Localization.shared.tr("activities.treadmill", default: "Treadmill"), icon: "figure.run", color: .blue)
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 1, col: 2) - originX, y: gridY(row: 1) - originY)
+      
+      honeycombCell(type: .yoga, title: Localization.shared.tr("activities.yoga", default: "Yoga"), icon: "figure.mind.and.body", color: Color(red: 0.4, green: 0.6, blue: 0.5))
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 2, col: 1) - originX, y: gridY(row: 2) - originY)
+      
+      honeycombCellChess()
+        .frame(width: activityW, height: activityH)
+        .offset(x: gridX(row: 2, col: 2) - originX, y: gridY(row: 2) - originY)
+    }
+    .frame(maxWidth: .infinity)
+    .frame(height: 3 * stepY + h)
+    .padding(.vertical, 8)
+  }
+  
+  private func honeycombCellStatistics() -> some View {
+    Button(action: {
+      HapticsService.shared.select()
+      showStatistics = true
+    }) {
+      ZStack {
+        HexagonShape()
+          .fill(AppTheme.surface)
+        HexagonShape()
+          .stroke(Color.green.opacity(0.6), lineWidth: 2)
+        VStack(spacing: 8) {
+          Image(systemName: "chart.bar.fill")
+            .font(.title)
+            .foregroundColor(.green)
+          Text(Localization.shared.tr("activities.stats.short", default: "Stats"))
+            .font(.subheadline.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        .scaleEffect(1.25)
+      }
+      .clipShape(HexagonShape())
+      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+    }
+    .buttonStyle(.plain)
+  }
+  
+  private func honeycombCell(type: ActivityType, title: String, icon: String, color: Color) -> some View {
+    let tracked = isTrackedForViewedDate(type)
+    return Button(action: {
+      HapticsService.shared.select()
+      selectedActivityType = type
+      inputValue = ""
+      showActivityInputSheet = true
+    }) {
+      ZStack {
+        if tracked {
+          HexagonShape()
+            .fill(LinearGradient(colors: [.green, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+        } else {
+          HexagonShape()
+            .fill(AppTheme.surface)
+          HexagonShape()
+            .stroke(Color.green.opacity(0.6), lineWidth: 2)
+        }
+        VStack(spacing: 4) {
+          Image(systemName: ThemeService.shared.icon(for: icon))
+            .font(.title2)
+            .foregroundColor(tracked ? .white : color)
+          Text(title)
+            .font(.caption.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
+        }
+      }
+      .clipShape(HexagonShape())
+      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+    }
+    .buttonStyle(.plain)
+  }
+  
+  private func honeycombCellChess() -> some View {
+    let tracked = isTrackedForViewedDate(.chess)
+    return Button(action: {
+      HapticsService.shared.select()
+      showChessSheet = true
+    }) {
+      ZStack {
+        if tracked {
+          HexagonShape()
+            .fill(LinearGradient(colors: [.green, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+        } else {
+          HexagonShape()
+            .fill(AppTheme.surface)
+          HexagonShape()
+            .stroke(Color.green.opacity(0.6), lineWidth: 2)
+        }
+        VStack(spacing: 4) {
+          Image(systemName: ThemeService.shared.icon(for: "square.grid.3x3.fill"))
+            .font(.title2)
+            .foregroundColor(tracked ? .white : .purple)
+          Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
+            .font(.caption.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
+        }
+      }
+      .clipShape(HexagonShape())
+      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+    }
+    .buttonStyle(.plain)
   }
   
   // MARK: - Chess Activity Card
   
   private var chessActivityCard: some View {
-    VStack(spacing: 15) {
+    return VStack(spacing: 15) {
       HStack {
         Image(systemName: "square.grid.3x3.fill")
           .font(.title2)
@@ -224,10 +473,41 @@ struct ActivitiesView: View {
           .font(.title3.bold())
           .foregroundColor(AppTheme.textPrimary)
         
+        Button(action: {
+          HapticsService.shared.select()
+          showChessHistory = true
+        }) {
+          Image(systemName: "clock.arrow.circlepath")
+            .font(.caption)
+          Text(Localization.shared.tr("activities.chess.history", default: "History"))
+            .font(.caption.bold())
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(8)
+        .foregroundColor(.blue)
+        
         Spacer()
+        
+        if isSyncingChess {
+          ProgressView()
+            .scaleEffect(0.8)
+        }
+        
+        // Environment indicator
+        if AppEnvironment.useDevEnvironment {
+          Text("DEV")
+            .font(.system(size: 9, weight: .heavy))
+            .foregroundColor(.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Color.red)
+            .cornerRadius(4)
+        }
       }
       
-      // Total Wins and League ("Перемог: 1")
+      // Total Wins and League
       VStack(spacing: 8) {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
           Text(Localization.shared.tr("activities.chess.wins_label", default: "Wins:"))
@@ -247,17 +527,64 @@ struct ActivitiesView: View {
           .cornerRadius(12)
       }
       
-      // Current Opponent Score (if exists)
+      // Current / Last Opponent Score (clearer W-L format)
       if !chessOpponentName.isEmpty, !chessOpponentEmail.isEmpty,
          let opponentScore = getOpponentScore(chessOpponentEmail) {
-        VStack(spacing: 4) {
+        let parts = opponentScore.split(separator: ":")
+        let myW = parts.count == 2 ? String(parts[0]) : "0"
+        let opW = parts.count == 2 ? String(parts[1]) : "0"
+        
+        VStack(spacing: 6) {
           Text("\(Localization.shared.tr("activities.chess.vs", default: "vs")) \(chessOpponentName)")
             .font(.caption)
             .foregroundColor(AppTheme.textSecondary)
-          Text(opponentScore)
-            .font(.subheadline.bold())
-            .foregroundColor(AppTheme.textPrimary)
+          
+          HStack(spacing: 12) {
+            VStack(spacing: 2) {
+              Text(myW)
+                .font(.title2.bold())
+                .foregroundColor(.green)
+              Text(Localization.shared.tr("activities.chess.wins_short", default: "W"))
+                .font(.caption2)
+                .foregroundColor(AppTheme.textSecondary)
+            }
+            
+            Text("—")
+              .font(.title3)
+              .foregroundColor(AppTheme.textSecondary)
+            
+            VStack(spacing: 2) {
+              Text(opW)
+                .font(.title2.bold())
+                .foregroundColor(.red)
+              Text(Localization.shared.tr("activities.chess.losses_short", default: "L"))
+                .font(.caption2)
+                .foregroundColor(AppTheme.textSecondary)
+            }
+          }
+          
+          // Quick rematch button
+          Button(action: {
+            HapticsService.shared.select()
+            showChessWinnerSheet = true
+          }) {
+            HStack(spacing: 4) {
+              Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.system(size: 12))
+              Text(Localization.shared.tr("activities.chess.rematch", default: "Rematch"))
+                .font(.caption.bold())
+            }
+            .foregroundColor(.purple)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(Color.purple.opacity(0.12))
+            .cornerRadius(10)
+          }
         }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 12)
+        .background(AppTheme.surface.opacity(0.5))
+        .cornerRadius(12)
       }
       
       if !lastChessDate.isEmpty {
@@ -295,10 +622,123 @@ struct ActivitiesView: View {
     .padding(.horizontal)
   }
   
+  // MARK: - Chess Activity Button (opens sheet)
+  
+  private var chessActivityButton: some View {
+    let tracked = isTrackedForViewedDate(.chess)
+    return Button(action: {
+      HapticsService.shared.select()
+      showChessSheet = true
+    }) {
+      HStack {
+        Image(systemName: ThemeService.shared.icon(for: "square.grid.3x3.fill"))
+          .font(.title2)
+          .foregroundColor(tracked ? .white : .purple)
+          .frame(width: 40)
+        
+        VStack(alignment: .leading, spacing: 2) {
+          Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
+            .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
+          Text(Localization.shared.tr("activities.chess.subtitle", default: "Record games, view wins"))
+            .font(.caption)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
+        }
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+        
+        Image(systemName: "chevron.right")
+          .font(.caption)
+          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
+      }
+      .padding()
+      .background(
+        Group {
+          if tracked {
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          } else {
+            AppTheme.surface
+          }
+        }
+      )
+      .cornerRadius(12)
+      .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+    }
+    .buttonStyle(.plain)
+  }
+  
+  // MARK: - Tracked Today Helpers
+  
+  private func activityTypeKey(_ type: ActivityType) -> String {
+    switch type {
+    case .gym: return "gym"
+    case .steps: return "steps"
+    case .treadmill: return "treadmill"
+    case .elliptical: return "elliptical"
+    case .yoga: return "yoga"
+    case .chess: return "chess"
+    }
+  }
+
+  private func activityTypeFromKey(_ key: String) -> ActivityType? {
+    switch key {
+    case "gym": return .gym
+    case "steps": return .steps
+    case "treadmill": return .treadmill
+    case "elliptical": return .elliptical
+    case "yoga": return .yoga
+    case "chess": return .chess
+    default: return nil
+    }
+  }
+  
+  private func isTrackedToday(_ type: ActivityType) -> Bool {
+    if type == .chess {
+      return lastChessDate == getCurrentUTCDateString()
+    }
+    return todayTrackedActivityTypes.contains(activityTypeKey(type))
+  }
+  
+  /// Highlight (green-purple) only activities tracked for the currently viewed date, not other dates.
+  private func isTrackedForViewedDate(_ type: ActivityType) -> Bool {
+    if type == .chess {
+      return (dateISO == getCurrentUTCDateString() && lastChessDate == dateISO)
+        || summaryActivityTypes.contains("chess")
+    }
+    return summaryActivityTypes.contains(activityTypeKey(type))
+  }
+
+  private func trackedActivitiesToday() -> [ActivityType] {
+    todayTrackedActivityTypes
+      .split(separator: ",")
+      .compactMap { activityTypeFromKey(String($0)) }
+  }
+
+  private func activityDisplayName(_ type: ActivityType) -> String {
+    switch type {
+    case .gym:
+      return Localization.shared.tr("activities.gym", default: "Gym")
+    case .steps:
+      return Localization.shared.tr("activities.steps", default: "Steps")
+    case .treadmill:
+      return Localization.shared.tr("activities.treadmill", default: "Treadmill")
+    case .elliptical:
+      return Localization.shared.tr("activities.elliptical", default: "Elliptical")
+    case .yoga:
+      return Localization.shared.tr("activities.yoga", default: "Yoga")
+    case .chess:
+      return Localization.shared.tr("activities.chess.name", default: "Chess")
+    }
+  }
+  
   // MARK: - Activity Button
   
   private func activityButton(type: ActivityType, title: String, subtitle: String, icon: String, color: Color) -> some View {
-    Button(action: {
+    let tracked = isTrackedForViewedDate(type)
+    return Button(action: {
       HapticsService.shared.select()
       selectedActivityType = type
       inputValue = ""
@@ -308,36 +748,47 @@ struct ActivitiesView: View {
         // Theme-aware icon
         Image(systemName: ThemeService.shared.icon(for: icon))
           .font(.title2)
-          .foregroundColor(color)
+          .foregroundColor(tracked ? .white : color)
           .frame(width: 40)
         
         VStack(alignment: .leading, spacing: 2) {
           Text(title)
             .font(.headline)
-            .foregroundColor(AppTheme.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
           Text(subtitle)
             .font(.caption)
-            .foregroundColor(AppTheme.textSecondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
         }
-        
-        Spacer()
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
         
         Image(systemName: "chevron.right")
           .font(.caption)
-          .foregroundColor(AppTheme.textSecondary)
+          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
       }
       .padding()
-      .background(AppTheme.surface)
+      .background(
+        Group {
+          if tracked {
+            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+          } else {
+            AppTheme.surface
+          }
+        }
+      )
       .cornerRadius(12)
       .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
     }
-    .padding(.horizontal)
+    .buttonStyle(.plain)
   }
   
   // MARK: - Chess Winner Sheet
   
   private var chessWinnerSheet: some View {
-    NavigationView {
+    return NavigationView {
       ZStack {
         AppTheme.backgroundGradient.ignoresSafeArea()
         
@@ -352,7 +803,9 @@ struct ActivitiesView: View {
           Button(action: { 
             pendingGameResult = "me"
             showChessWinnerSheet = false
-            showOpponentPicker = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showOpponentPicker = true
+            }
           }) {
             VStack {
               Image(systemName: "person.fill")
@@ -372,7 +825,9 @@ struct ActivitiesView: View {
           Button(action: { 
             pendingGameResult = "draw"
             showChessWinnerSheet = false
-            showOpponentPicker = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showOpponentPicker = true
+            }
           }) {
             VStack {
               Image(systemName: "equal")
@@ -392,7 +847,9 @@ struct ActivitiesView: View {
           Button(action: { 
             pendingGameResult = "opponent"
             showChessWinnerSheet = false
-            showOpponentPicker = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showOpponentPicker = true
+            }
           }) {
             VStack {
               Image(systemName: "person.2.fill")
@@ -439,7 +896,7 @@ struct ActivitiesView: View {
           Button(action: {
             showChessWinnerSheet = false
           }) {
-            Text(Localization.shared.tr("common.cancel", default: "Cancel"))
+            Text(Localization.shared.tr("common.done", default: "Done"))
               .foregroundColor(AppTheme.textPrimary)
           }
         }
@@ -450,67 +907,44 @@ struct ActivitiesView: View {
   // MARK: - Activity Input Sheet
   
   private var activityInputSheet: some View {
-    NavigationView {
-      ZStack {
-        AppTheme.backgroundGradient.ignoresSafeArea()
-        
-        VStack(spacing: 20) {
-          VStack(spacing: 8) {
-            Text(activityTitle)
-              .font(.title2.bold())
-              .foregroundColor(AppTheme.textPrimary)
-            
-            Text(activityPrompt)
-              .font(.subheadline)
-              .foregroundColor(AppTheme.textSecondary)
-              .multilineTextAlignment(.center)
-          }
-          .padding(.top, 30)
-          
-          TextField(activityPlaceholder, text: $inputValue)
-            .keyboardType(.numberPad)
-            .font(.title)
-            .multilineTextAlignment(.center)
-            .padding()
-            .background(AppTheme.surface)
-            .cornerRadius(12)
-            .padding(.horizontal)
-          
-          Spacer()
-          
-          Button(action: {
-            submitActivity()
-          }) {
-            Text(Localization.shared.tr("activities.submit", default: "Add to Today's Limit"))
-              .font(.headline)
-              .foregroundColor(.white)
-              .frame(maxWidth: .infinity)
-              .padding()
-              .background(
-                LinearGradient(
-                  gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
-                  startPoint: .leading,
-                  endPoint: .trailing
-                )
-              )
-              .cornerRadius(12)
-          }
-          .padding(.horizontal)
-          .padding(.bottom, 30)
-        }
-      }
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button(action: {
+    return VStack(spacing: 20) {
+      HStack {
+        Text(activityTitle)
+          .font(.title2.bold())
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        Button {
+          let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+          if trimmed.isEmpty {
             showActivityInputSheet = false
-          }) {
-            Text(Localization.shared.tr("common.cancel", default: "Cancel"))
-              .foregroundColor(AppTheme.textPrimary)
+          } else {
+            submitActivity()
           }
+        } label: {
+          Text(Localization.shared.tr("common.done", default: "Done"))
+            .font(.headline)
+            .foregroundColor(AppTheme.accent)
         }
       }
+      
+      Text(activityPrompt)
+        .font(.subheadline)
+        .foregroundColor(AppTheme.textSecondary)
+        .multilineTextAlignment(.leading)
+      
+      TextField(activityPlaceholder, text: $inputValue)
+        .keyboardType(.numberPad)
+        .font(.title2)
+        .multilineTextAlignment(.center)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(AppTheme.surfaceAlt)
+        .cornerRadius(12)
     }
+    .padding(20)
+    .background(AppTheme.surface)
+    .cornerRadius(18)
+    .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 8)
   }
   
   // MARK: - Helper Properties
@@ -525,6 +959,8 @@ struct ActivitiesView: View {
       return Localization.shared.tr("activities.treadmill", default: "Treadmill")
     case .elliptical:
       return Localization.shared.tr("activities.elliptical", default: "Elliptical")
+    case .yoga:
+      return Localization.shared.tr("activities.yoga", default: "Yoga")
     case .chess:
       return Localization.shared.tr("activities.chess.name", default: "Chess")
     }
@@ -536,7 +972,7 @@ struct ActivitiesView: View {
       return Localization.shared.tr("activities.gym.prompt", default: "How many minutes did you train?")
     case .steps:
       return Localization.shared.tr("activities.steps.prompt", default: "How many steps did you walk?")
-    case .treadmill, .elliptical:
+    case .treadmill, .elliptical, .yoga:
       return Localization.shared.tr("activities.calories.prompt", default: "How many calories did you burn?")
     case .chess:
       return ""
@@ -549,7 +985,7 @@ struct ActivitiesView: View {
       return Localization.shared.tr("activities.gym.placeholder", default: "Minutes")
     case .steps:
       return Localization.shared.tr("activities.steps.placeholder", default: "Steps")
-    case .treadmill, .elliptical:
+    case .treadmill, .elliptical, .yoga:
       return Localization.shared.tr("activities.calories.placeholder", default: "Calories")
     case .chess:
       return ""
@@ -619,14 +1055,10 @@ struct ActivitiesView: View {
   private func recordChessGame(winner: String) {
     let today = getCurrentUTCDateString()
     
-    print("🎮 Recording chess game: winner=\(winner), opponent=\(chessOpponentName)")
-    print("🎮 Before: chessTotalWins=\(chessTotalWins)")
-    
     // If this is the first game today, save current state as "start of day"
     if lastChessDate != today {
       chessWinsStartOfDay = chessTotalWins
       chessOpponentsStartOfDay = chessOpponents
-      print("🎮 New day! Saved start of day: wins=\(chessWinsStartOfDay), opponents=\(chessOpponentsStartOfDay)")
     }
     
     // Get current opponent's score
@@ -638,44 +1070,49 @@ struct ActivitiesView: View {
         myWins = Int(components[0]) ?? 0
         opponentWins = Int(components[1]) ?? 0
       }
-      print("🎮 Current score vs \(chessOpponentName) (\(chessOpponentEmail)): \(myWins):\(opponentWins)")
     }
     
     // Check for league promotion BEFORE updating
     let oldLeague = getLeague()
     
     // Update scores
-    print("🎮 BEFORE update: chessTotalWins=\(chessTotalWins)")
     switch winner {
     case "me":
       myWins += 1
       chessTotalWins += 1
-      print("🎮 ✅ I won! myWins=\(myWins), chessTotalWins=\(chessTotalWins)")
     case "opponent":
       opponentWins += 1
-      print("🎮 Opponent won! opponentWins=\(opponentWins), chessTotalWins=\(chessTotalWins)")
     case "draw":
-      print("🎮 Draw! chessTotalWins=\(chessTotalWins)")
       break
     default:
       break
     }
-    print("🎮 AFTER update: chessTotalWins=\(chessTotalWins)")
     
     // Save opponent score locally
     if !chessOpponentEmail.isEmpty {
       updateOpponentScore(chessOpponentEmail, myWins: myWins, opponentWins: opponentWins)
-      print("🎮 Updated opponent score for \(chessOpponentEmail): \(myWins):\(opponentWins)")
-      print("🎮 All opponents: \(chessOpponents)")
     }
     
     lastChessDate = today
     todayActivityDate = today
     
+    // Щоб шахи були видно в статистиці (планети): додати "chess" у кеш активностей на сьогодні.
+    let cached = loadActivitySummaryFromCache(dateISO: today)
+    if !cached.types.contains("chess") {
+      var types = cached.types
+      types.append("chess")
+      saveActivitySummaryToCache(dateISO: today, total: cached.total, types: types)
+    }
+    
+    // Кожна партія = одна сесія (перемога, поразка чи нічия). Зберігаємо кількість ігор за день.
+    let chessCountKey = "activity_summary_chess_count_\(today)"
+    let prevCount = UserDefaults.standard.integer(forKey: chessCountKey)
+    UserDefaults.standard.set(prevCount + 1, forKey: chessCountKey)
+    
     showChessWinnerSheet = false
     
     // Sync with backend
-    if let playerEmail = UserDefaults.standard.string(forKey: "currentUserEmail"),
+    if let playerEmail = UserDefaults.standard.string(forKey: "user_email"),
        !chessOpponentEmail.isEmpty {
       let backendResult: String
       switch winner {
@@ -685,22 +1122,11 @@ struct ActivitiesView: View {
       default: backendResult = "draw"
       }
       
-      print("🎮 Syncing with backend: \(playerEmail) vs \(chessOpponentEmail), result=\(backendResult)")
-      
       GRPCService().recordChessGame(
         playerEmail: playerEmail,
         opponentEmail: chessOpponentEmail,
         result: backendResult
-      ) { success, playerScore, opponentScore in
-        if success {
-          print("✅ Backend sync successful: player=\(playerScore ?? "?"), opponent=\(opponentScore ?? "?")")
-          // Note: Not reloading from backend to preserve local state
-        } else {
-          print("⚠️ Backend sync failed, but local data saved")
-        }
-      }
-    } else {
-      print("⚠️ Cannot sync to backend: missing player or opponent email")
+      ) { _, _, _ in }
     }
     
     // Notify ContentView to update sport icon
@@ -713,10 +1139,6 @@ struct ActivitiesView: View {
     // Check for league promotion
     let newLeague = getLeague()
     let wasPromoted = (newLeague != oldLeague && winner == "me")
-    
-    if wasPromoted {
-      print("🎉 PROMOTION! Old: \(oldLeague) → New: \(newLeague) (Total wins: \(chessTotalWins))")
-    }
     
     let message: String
     switch winner {
@@ -755,10 +1177,11 @@ struct ActivitiesView: View {
   // MARK: - Reset Today's Activities
   
   private func resetTodayActivities() {
-    // Reset sport calories
+    // Reset sport calories and tracked types
     todaySportCalories = 0
     todaySportCaloriesDate = ""
     todayActivityDate = ""
+    todayTrackedActivityTypes = ""
     
     HapticsService.shared.warning()
     
@@ -775,14 +1198,19 @@ struct ActivitiesView: View {
     // Only reset if there were games today
     guard lastChessDate == getCurrentUTCDateString() else { return }
     
-    print("🎮 Resetting today's chess games")
-    print("🎮 Before reset: wins=\(chessTotalWins), opponents=\(chessOpponents)")
+    let today = getCurrentUTCDateString()
     
     // Restore wins and opponent scores to start of day
     chessTotalWins = chessWinsStartOfDay
     chessOpponents = chessOpponentsStartOfDay
     
-    print("🎮 After reset: wins=\(chessTotalWins), opponents=\(chessOpponents)")
+    // Обнулити кількість партій за сьогодні в статистиці та прибрати chess з типів за день
+    UserDefaults.standard.removeObject(forKey: "activity_summary_chess_count_\(today)")
+    var cached = loadActivitySummaryFromCache(dateISO: today)
+    if let idx = cached.types.firstIndex(of: "chess") {
+      cached.types.remove(at: idx)
+      saveActivitySummaryToCache(dateISO: today, total: cached.total, types: cached.types)
+    }
     
     // Get yesterday's date
     let calendar = Calendar.current
@@ -819,36 +1247,62 @@ struct ActivitiesView: View {
   // MARK: - Sync Chess Data
   
   private func syncChessDataFromBackend() {
-    print("🎮 Syncing chess data from backend...")
-    print("🎮 Current local state: totalWins=\(chessTotalWins), opponents=\(chessOpponents)")
+    guard !isSyncingChess else { return }
+    isSyncingChess = true
     
     GRPCService().getAllChessData { success, totalWins, opponents in
-      if success {
-        print("🎮 Backend response: totalWins=\(totalWins), opponents=\(opponents)")
+      DispatchQueue.main.async {
+        self.isSyncingChess = false
         
-        DispatchQueue.main.async {
+        if success {
           let hasBackendData = totalWins > 0 || !opponents.isEmpty
-          let hasLocalData = self.chessTotalWins > 0 || self.chessOpponents != "{}"
           
           if hasBackendData {
-            // Backend has data - use it
-            print("🎮 ✅ Backend has data, updating from backend")
             self.chessTotalWins = totalWins
             
             if let jsonData = try? JSONSerialization.data(withJSONObject: opponents),
                let jsonString = String(data: jsonData, encoding: .utf8) {
               self.chessOpponents = jsonString
             }
-          } else if hasLocalData {
-            // Backend empty but we have local data - KEEP local
-            print("🎮 ⚠️ Backend empty, keeping local data: totalWins=\(self.chessTotalWins)")
-          } else {
-            // Both empty
-            print("🎮 Both backend and local empty")
+          } else if self.chessTotalWins == 0 && self.chessOpponents == "{}" {
+            self.chessTotalWins = 0
+            self.chessOpponents = "{}"
           }
         }
-      } else {
-        print("⚠️ Failed to connect to backend, keeping local data")
+      }
+    }
+  }
+  
+  // MARK: - Environment Switch Support
+  
+  private func resetChessDataForEnvironmentSwitch() {
+    
+    // Reset all chess-related @AppStorage values to defaults
+    chessTotalWins = 0
+    chessOpponents = "{}"
+    lastChessDate = ""
+    chessWinsStartOfDay = 0
+    chessOpponentsStartOfDay = "{}"
+    chessOpponentName = ""
+    chessOpponentEmail = ""
+    // Keep chessPlayerName - it's the user's own name
+    
+    // Clear friends cache (friends list may differ per environment)
+    cachedFriends = nil
+    
+    // Re-sync from the new environment's backend
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      self.syncChessDataFromBackend()
+      self.prefetchFriends()
+    }
+  }
+  
+  // MARK: - Friends Cache
+  
+  private func prefetchFriends() {
+    GRPCService().getFriends(offset: 0, limit: 100) { fetchedFriends, _ in
+      DispatchQueue.main.async {
+        self.cachedFriends = fetchedFriends
       }
     }
   }
@@ -872,6 +1326,76 @@ struct ActivitiesView: View {
   private func getRandomLossQuote() -> String {
     let key = Self.chessQuoteLossKeys.randomElement() ?? "chess.quote.loss.1"
     return Localization.shared.tr(key, default: Localization.shared.tr("chess.quote.loss.fallback", default: "💪 Learn from this game and come back stronger!"))
+  }
+  
+  // MARK: - Activity Summary (per selected date) + cache by date (like food for past date)
+  
+  private static func activitySummaryCacheKeyTotal(_ dateISO: String) -> String {
+    "activity_summary_total_\(dateISO)"
+  }
+  
+  private static func activitySummaryCacheKeyTypes(_ dateISO: String) -> String {
+    "activity_summary_types_\(dateISO)"
+  }
+  
+  private func loadActivitySummaryFromCache(dateISO: String) -> (total: Int, types: [String]) {
+    let ud = UserDefaults.standard
+    let total = ud.integer(forKey: Self.activitySummaryCacheKeyTotal(dateISO))
+    let typesStr = ud.string(forKey: Self.activitySummaryCacheKeyTypes(dateISO)) ?? ""
+    let types = typesStr.isEmpty ? [] : typesStr.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+    return (total, types)
+  }
+  
+  private func saveActivitySummaryToCache(dateISO: String, total: Int, types: [String]) {
+    let ud = UserDefaults.standard
+    ud.set(total, forKey: Self.activitySummaryCacheKeyTotal(dateISO))
+    ud.set(types.joined(separator: ","), forKey: Self.activitySummaryCacheKeyTypes(dateISO))
+  }
+  
+  private func loadActivitySummary() {
+    // 1) Apply cached value for this date first (so past date shows saved data on reopen, like food)
+    let cached = loadActivitySummaryFromCache(dateISO: dateISO)
+    if cached.total > 0 || !cached.types.isEmpty {
+      summaryTotalCalories = cached.total
+      summaryActivityTypes = cached.types
+    }
+    
+    GRPCService().getActivitySummary(dateISO: dateISO) { total, types in
+      DispatchQueue.main.async {
+        let isToday = self.dateISO == self.getCurrentUTCDateString()
+        // For today: if API returns 0 but we have local data (AppStorage), use it so card shows after reopen
+        if isToday, total == 0, self.todaySportCaloriesDate == self.getTodayDDMMYYYY(), self.todaySportCalories > 0 {
+          self.summaryTotalCalories = self.todaySportCalories
+          self.summaryActivityTypes = self.todayTrackedActivityTypes.isEmpty
+            ? []
+            : self.todayTrackedActivityTypes.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+          self.saveActivitySummaryToCache(dateISO: self.dateISO, total: self.summaryTotalCalories, types: self.summaryActivityTypes)
+          return
+        }
+        // Merge API with current state: take max total and union of types (so we don't lose user-added past-date data)
+        let mergedTotal = max(self.summaryTotalCalories, total)
+        var mergedTypes = Set(self.summaryActivityTypes)
+        mergedTypes.formUnion(types)
+        self.summaryTotalCalories = mergedTotal
+        self.summaryActivityTypes = Array(mergedTypes).sorted()
+        self.saveActivitySummaryToCache(dateISO: self.dateISO, total: self.summaryTotalCalories, types: self.summaryActivityTypes)
+      }
+    }
+  }
+  
+  /// Today in dd-MM-yyyy (UTC) to match ContentView / AppStorage
+  private func getTodayDDMMYYYY() -> String {
+    let f = DateFormatter()
+    f.timeZone = TimeZone(identifier: "UTC")
+    f.dateFormat = "dd-MM-yyyy"
+    return f.string(from: Date())
+  }
+  
+  private func activitySummaryDisplayName(for key: String) -> String {
+    if let type = activityTypeFromKey(key) {
+      return activityDisplayName(type)
+    }
+    return key.capitalized
   }
   
   private func submitActivity() {
@@ -900,43 +1424,86 @@ struct ActivitiesView: View {
     case .elliptical:
       activityName = "Elliptical"
       calories = value
+    case .yoga:
+      activityName = "Yoga"
+      calories = value
     case .chess:
       return
     }
     
-    // Mark activity for today
-    todayActivityDate = getCurrentUTCDateString()
+    // Check if selected date is "today" in UTC (for adjusting today's calorie limit/UI)
+    let todayISO = getCurrentUTCDateString()
+    let isToday = (dateISO == todayISO)
     
-    // Notify parent view
+    if isToday {
+      todayActivityDate = todayISO
+      // Remember this type was tracked today (for green-purple button highlight)
+      let key = activityTypeKey(selectedActivityType)
+      if !todayTrackedActivityTypes.contains(key) {
+        todayTrackedActivityTypes = todayTrackedActivityTypes.isEmpty ? key : todayTrackedActivityTypes + "," + key
+      }
+      
+      // Notify parent view so ContentView can update today's sport calories
+      NotificationCenter.default.post(
+        name: NSNotification.Name("ActivityCaloriesAdded"),
+        object: nil,
+        userInfo: [
+          "calories": calories,
+          "activity": activityName,
+          "activityType": selectedActivityType,
+          "value": value  // minutes or steps or calories
+        ]
+      )
+    }
+    
+    let key = activityTypeKey(selectedActivityType)
+    
+    // Update card first so it repaints with new calories
+    summaryTotalCalories += calories
+    if !summaryActivityTypes.contains(key) {
+      summaryActivityTypes.append(key)
+    }
+    // Persist by date (same logic as food: past date data stays on reopen)
+    saveActivitySummaryToCache(dateISO: dateISO, total: summaryTotalCalories, types: summaryActivityTypes)
+    
+    // Notify so ContentView can add this date's activity to the daily limit (today or past)
     NotificationCenter.default.post(
-      name: NSNotification.Name("ActivityCaloriesAdded"),
+      name: NSNotification.Name("ActivityCaloriesAddedForDate"),
       object: nil,
-      userInfo: [
-        "calories": calories,
-        "activity": activityName,
-        "activityType": selectedActivityType,
-        "value": value  // minutes or steps or calories
-      ]
+      userInfo: ["dateISO": dateISO]
     )
     
-    showActivityInputSheet = false
+    GRPCService().logActivity(
+      activityType: key,
+      value: value,
+      calories: calories,
+      dateISO: dateISO
+    ) { _ in }
     
-    // Theme-aware motivational message
     let themeTitle = ThemeService.shared.getMotivationalMessage(
       for: "activity_recorded",
       language: LanguageService.shared.currentCode
     )
-    ThemeService.shared.playSound(for: "success")
-    
-    AlertHelper.showAlert(
-      title: themeTitle,
-      message: String(
-        format: Localization.shared.tr("activities.added.msg", default: "%d calories from %@ added to your daily limit."),
-        calories,
-        activityName
-      ),
-      haptic: .success
+    let message = String(
+      format: Localization.shared.tr("activities.added.msg", default: "%d calories from %@ added to your daily limit."),
+      calories,
+      activityName
     )
+    
+    // Close sheet and show alert after a tick so the card has time to re-render with new total
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+      self.showActivityInputSheet = false
+      ThemeService.shared.playSound(for: "success")
+      AlertHelper.showAlert(
+        title: themeTitle,
+        message: message,
+        haptic: .success
+      )
+    }
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+      self.loadActivitySummary()
+    }
   }
   
   // MARK: - Calorie Calculations
@@ -979,6 +1546,16 @@ struct ActivitiesView: View {
     return "\(components[2]).\(components[1]).\(components[0])"
   }
   
+  /// Format yyyy-MM-dd for display in card title (e.g. "18 Feb 2026" or "18.02.2026")
+  private func formatDateForDisplay(_ dateISO: String) -> String {
+    let parts = dateISO.split(separator: "-")
+    guard parts.count == 3,
+          let y = Int(parts[0]), let m = Int(parts[1]), let d = Int(parts[2]) else {
+      return dateISO
+    }
+    return String(format: "%02d.%02d.%d", d, m, y)
+  }
+  
   private func getCurrentUTCDateString() -> String {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd"
@@ -988,5 +1565,5 @@ struct ActivitiesView: View {
 }
 
 #Preview {
-  ActivitiesView()
+  ActivitiesView(dateISO: "2025-01-01")
 }

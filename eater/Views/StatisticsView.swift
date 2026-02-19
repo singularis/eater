@@ -3,14 +3,15 @@ import SwiftUI
 
 struct StatisticsView: View {
   @Binding var isPresented: Bool
+  var targetChartType: ChartType? = nil
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
-  @State private var selectedChart: ChartType = .insights
+  @AppStorage("selectedChartType") private var selectedChart: ChartType = .insights
 
   private let statisticsService = StatisticsService.shared
 
-  enum ChartType: CaseIterable {
+  enum ChartType: String, CaseIterable {
     case insights
     case calories
     case macros
@@ -113,6 +114,9 @@ struct StatisticsView: View {
         }
       }
       .onAppear {
+        if let target = targetChartType {
+          selectedChart = target
+        }
         loadData()
       }
     }
@@ -321,7 +325,7 @@ struct StatisticsView: View {
       .overlay(
         validWeightStats.isEmpty
           ? EmptyStateView(
-            systemImage: "scalemass",
+            systemImage: "figure.stand",
             title: loc("stats.weight.empty.title", "No weight data available"),
             subtitle: loc("stats.weight.empty.subtitle", "Submit weight via camera or manual entry")
           ) : nil

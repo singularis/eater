@@ -7,6 +7,8 @@ struct ProductRowView: View {
   let onModify: (Int64, String, Int32) -> Void
   let onTryAgain: (Int64, String) -> Void
   let onAddSugar: (Int64, String) -> Void
+  var onAddDrinkExtra: ((Int64, String, String) -> Void)? = nil  // time, foodName, extraKey
+  var onAddFoodExtra: ((Int64, String, String) -> Void)? = nil  // time, foodName, extraKey
   let onShareSuccess: () -> Void
 
   @State private var remoteImage: UIImage? = nil
@@ -20,6 +22,45 @@ struct ProductRowView: View {
     }
     // Then try remotely fetched image
     return remoteImage
+  }
+
+  private var detailsText: String {
+    "\(product.totalCalories) \(loc("units.kcal", "kcal")) • \(product.totalWeight)\(loc("units.gram_suffix", "g"))"
+  }
+
+  private var ingredientsText: String {
+    product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")
+  }
+
+  private var extrasIconsText: String {
+    var parts: [String] = []
+    if product.extras["lemon_5g"] != nil { parts.append("🍋") }
+    if product.extras["honey_10g"] != nil { parts.append("🍯") }
+    if product.extras["milk_50g"] != nil { parts.append("🥛") }
+    if product.extras["soy_sauce_15g"] != nil { parts.append("🥢") }
+    if product.extras["wasabi_3g"] != nil { parts.append("🌿") }
+    if product.extras["spicy_pepper_5g"] != nil { parts.append("🌶") }
+    // Sugar (refined/cube) shown via extrasIconsView, not emoji
+    return parts.joined(separator: " ")
+  }
+
+  /// True if we have any extras to show (including added sugar)
+  private var hasExtras: Bool {
+    !extrasIconsText.isEmpty || product.addedSugarTsp > 0
+  }
+
+  @ViewBuilder
+  private var extrasIconsView: some View {
+    HStack(spacing: 4) {
+      if !extrasIconsText.isEmpty {
+        Text(extrasIconsText)
+      }
+      if product.addedSugarTsp > 0 {
+        Image(systemName: "cube.fill")
+          .font(.system(size: 12))
+          .foregroundColor(AppTheme.textSecondary)
+      }
+    }
   }
 
   var body: some View {
@@ -82,36 +123,32 @@ struct ProductRowView: View {
             .font(.headline)
             .foregroundColor(AppTheme.textPrimary)
 
-          // Show total calories (including added sugar)
-          let caloriesDisplay = product.addedSugarTsp > 0 
-            ? "\(product.totalCalories) \(loc("units.kcal", "kcal")) (\(product.calories) + \(Int(product.addedSugarTsp * 20))☕)"
-            : "\(product.calories) \(loc("units.kcal", "kcal"))"
-          let details = "\(caloriesDisplay) • \(product.weight)\(loc("units.gram_suffix", "g"))"
-          Text(details)
+          Text(detailsText)
             .font(.subheadline)
             .foregroundColor(AppTheme.textSecondary)
 
-          // Show ingredients and sugar info
-          if product.addedSugarTsp > 0 {
-            let sugarText = product.addedSugarTsp == 1 
-              ? loc("sugar.added.1tsp", "🍬 +1 tsp sugar")
-              : String(format: loc("sugar.added.multiple", "🍬 +%.1f tsp sugar"), product.addedSugarTsp)
-            Text("\(product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")) • \(sugarText)")
+          Text(ingredientsText)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
+            .lineLimit(2)
+
+          // Extras icons (refined sugar = cube, others = emoji)
+          if hasExtras {
+            extrasIconsView
               .font(.caption)
               .foregroundColor(AppTheme.textSecondary)
-              .lineLimit(2)
-          } else {
-            Text(product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", "))
-              .font(.caption)
-              .foregroundColor(AppTheme.textSecondary)
-              .lineLimit(2)
+              .lineLimit(1)
           }
         }
         .onTapGesture {
           HapticsService.shared.lightImpact()
           AlertHelper.showPortionSelectionAlert(
-            foodName: product.name, originalWeight: product.weight, time: product.time,
+            foodName: product.name,
+            originalWeight: product.weight,
+            time: product.time,
             imageId: product.imageId,
+            isDrink: product.isDrink,
+            isFruitOrVegetable: product.isFruitOrVegetable,
             onPortionSelected: { percentage in
               HapticsService.shared.success()
               onModify(product.time, product.name, percentage)
@@ -120,9 +157,19 @@ struct ProductRowView: View {
               HapticsService.shared.select()
               onTryAgain(product.time, product.imageId)
             },
-            onAddSugar: {
+            onAddSugar: product.isDrink
+              ? {
+                HapticsService.shared.success()
+                onAddSugar(product.time, product.name)
+              }
+              : nil,
+            onAddDrinkExtra: product.isDrink ? { key in
               HapticsService.shared.success()
-              onAddSugar(product.time, product.name)
+              onAddDrinkExtra?(product.time, product.name, key)
+            } : nil,
+            onAddFoodExtra: product.isDrink ? nil : { key in
+              HapticsService.shared.success()
+              onAddFoodExtra?(product.time, product.name, key)
             },
             onShareSuccess: onShareSuccess)
         }
@@ -138,7 +185,10 @@ struct ProductRowView: View {
           .scaleEffect(0.8)
           .padding(.trailing, 8)
       } else if product.healthRating >= 0 {
-        HealthRatingRing(rating: product.healthRating, color: getHealthRatingColor(rating: product.healthRating))
+        HealthRatingRing(
+          rating: product.effectiveHealthRating,
+          color: getHealthRatingColor(rating: product.effectiveHealthRating)
+        )
           .frame(width: 44, height: 44)
           .onTapGesture {
             HapticsService.shared.select()
@@ -284,50 +334,28 @@ struct HealthRatingRing: View {
     let color: Color
     
     private let circleSize: CGFloat = 40
-    private let heartSize: CGFloat = 50
     
     var body: some View {
-        // Show heart outline for excellent ratings (95-100)
-        if rating >= 95 {
-            ZStack {
-                // Background heart (light)
-                Image(systemName: "heart")
-                    .font(.system(size: 44))
-                    .foregroundColor(color.opacity(0.2))
-                
-                // Foreground heart (solid stroke)
-                Image(systemName: "heart")
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundColor(color)
-                
-                // Rating text
-                Text("\(rating)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(color)
-            }
-            .frame(width: heartSize, height: heartSize)
-        } else {
-            // Regular ring for other ratings
-            let maxRating: Double = 100.0
-            let progress = max(0, min(1.0, Double(rating) / maxRating))
+        // Always use circle (ring); heart is only for the average in the top bar
+        let maxRating: Double = 100.0
+        let progress = max(0, min(1.0, Double(rating) / maxRating))
+        
+        ZStack {
+            // Background track
+            Circle()
+                .stroke(color.opacity(0.2), lineWidth: 4)
             
-            ZStack {
-                // Background track
-                Circle()
-                    .stroke(color.opacity(0.2), lineWidth: 4)
-                
-                // Progress ring
-                Circle()
-                    .trim(from: 0, to: CGFloat(progress))
-                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                
-                // Rating text
-                Text("\(rating)")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(color)
-            }
-            .frame(width: circleSize, height: circleSize)
+            // Progress ring
+            Circle()
+                .trim(from: 0, to: CGFloat(progress))
+                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            
+            // Rating text
+            Text("\(rating)")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(color)
         }
+        .frame(width: circleSize, height: circleSize)
     }
 }

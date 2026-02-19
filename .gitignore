@@ -1,5 +1,9 @@
 config.plist
 .DS_Store
+
+# Scripts (resize-image-half.sh тощо) — залишаємо в репо
+# scripts/
+
 xcuserdata/
 *.xcuserstate
 .vscode
@@ -20,3 +24,4 @@ eater/config.plist.local
 eater/Info.plist
 Info.plist
 Info.plist
+COMMIT_MSG.txt
