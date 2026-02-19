@@ -3,12 +3,17 @@ import SwiftUI
 /// Living Orbs: behavior visualization — central core (user) + orbs (activities).
 /// Orb size = frequency, distance = consistency, no overlap, subtle motion.
 struct ActivityStatisticsView: View {
+  @Environment(\.colorScheme) private var colorScheme
   @Binding var isPresented: Bool
   @StateObject private var themeService = ThemeService.shared
   @State private var selectedActivity: String? = nil
   @State private var timeRange: TimeRange = .week
   @State private var showDogRecommendation: Bool = false
+  @AppStorage("chessOpponents") private var chessOpponentsJSON = "{}"
+  @AppStorage("chessPlayerName") private var chessPlayerName = ""
   
+  /// Топ пісень MJ для «Today's top pick» (тап по собаці). Джерело: цей масив у коді.
+  /// Альбоми: Thriller, Bad, Dangerous, Off the Wall. Пісня на день: за номером дня в році (1–365) % кількість пісень — кожен календарний день має одну й ту саму пісню; вчора й сьогодні різні дні → різні пісні (якщо одна й та сама — перевір дату/час пристрою або що день справді змінився).
   private static let mjSongs: [(song: String, album: String)] = [
     ("Billie Jean", "Thriller"),
     ("Beat It", "Thriller"),
@@ -24,6 +29,7 @@ struct ActivityStatisticsView: View {
     ("Human Nature", "Thriller"),
   ]
   
+  /// Рекомендація на сьогодні: індекс = (день у році − 1) % 12. Список вище.
   private var todaysMJRecommendation: (song: String, album: String) {
     let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
     let index = (day - 1) % Self.mjSongs.count
@@ -57,6 +63,7 @@ struct ActivityStatisticsView: View {
   
   private static let totalKeyPrefix = "activity_summary_total_"
   private static let typesKeyPrefix = "activity_summary_types_"
+  private static let chessCountKeyPrefix = "activity_summary_chess_count_"
   private static let activityOrder = ["gym", "steps", "treadmill", "elliptical", "yoga", "chess"]
   
   private struct DayEntry: Identifiable {
@@ -130,11 +137,19 @@ struct ActivityStatisticsView: View {
   
   private var orbDataList: [OrbData] {
     let entries = filteredEntries
-    let totalSessions = entries.reduce(0) { $0 + $1.types.count }
+    let ud = UserDefaults.standard
+    var totalSessions = entries.reduce(0) { $0 + $1.types.count }
     var sessionsPer: [String: Int] = [:]
     for e in entries {
       for t in e.types {
-        sessionsPer[t, default: 0] += 1
+        if t == "chess" {
+          let count = ud.integer(forKey: Self.chessCountKeyPrefix + e.dateISO)
+          let games = count > 0 ? count : 1
+          sessionsPer["chess", default: 0] += games
+          totalSessions += (games - 1)
+        } else {
+          sessionsPer[t, default: 0] += 1
+        }
       }
     }
     let daysInRange = max(1, totalDaysInRange)
@@ -146,17 +161,8 @@ struct ActivityStatisticsView: View {
     }
   }
   
-  private static let statsBackgroundGradient: LinearGradient = LinearGradient(
-    colors: [
-      Color(red: 0.07, green: 0.05, blue: 0.12),
-      Color(red: 0.06, green: 0.07, blue: 0.11),
-      Color(red: 0.05, green: 0.09, blue: 0.11)
-    ],
-    startPoint: .top,
-    endPoint: .center
-  )
-  
-  private static let statsBottomGlow: LinearGradient = LinearGradient(
+  /// У темній темі — нижнє «морське» світлення поверх основного фону.
+  private static let statsBottomGlowDark: LinearGradient = LinearGradient(
     colors: [
       Color.clear,
       Color(red: 0.12, green: 0.28, blue: 0.32).opacity(0.35),
@@ -189,9 +195,11 @@ struct ActivityStatisticsView: View {
   @ViewBuilder
   private var statsRootStack: some View {
     ZStack {
-      Self.statsBackgroundGradient.ignoresSafeArea()
-      Self.statsBottomGlow.ignoresSafeArea()
-      if allEntries.isEmpty {
+      AppTheme.backgroundGradient.ignoresSafeArea()
+      if colorScheme == .dark {
+        Self.statsBottomGlowDark.ignoresSafeArea()
+      }
+      if filteredEntries.isEmpty {
         emptyView
       } else {
         statsContentStack
@@ -203,7 +211,6 @@ struct ActivityStatisticsView: View {
     ZStack {
       statsMainColumn
       statsTapToDismissOverlay
-      statsOrbInfoOverlay
     }
     .animation(.easeInOut(duration: 0.28), value: selectedActivity)
     .animation(.easeInOut(duration: 0.4), value: timeRange)
@@ -211,7 +218,7 @@ struct ActivityStatisticsView: View {
   }
   
   private var statsMainColumn: some View {
-    let centralImage: String? = themeService.currentMascot == .dog ? "stats_dog_gym" : (themeService.currentMascot == .cat ? AppMascot.cat.happyImage() : nil)
+    let centralImage: String? = themeService.currentMascot == .dog ? "stats_dog_gym" : (themeService.currentMascot == .cat ? "stats_cat_gym" : nil)
     return VStack(spacing: 0) {
       timeRangePicker
       LivingOrbsView(
@@ -221,12 +228,35 @@ struct ActivityStatisticsView: View {
         centralImageName: centralImage,
         onCentralTap: themeService.currentMascot == .dog ? { showDogRecommendation = true } : nil
       )
-      if showDogRecommendation {
-        mjRecommendationCard
-          .padding(.horizontal, 24)
-          .padding(.bottom, 16)
-          .transition(.opacity.combined(with: .scale(scale: 0.96)))
-      }
+      statsBottomCard
+    }
+    .padding(.bottom, 24)
+  }
+  
+  /// Одна картка знизу: або статистика обраної активності (сесії, %), або «Today's top pick».
+  @ViewBuilder
+  private var statsBottomCard: some View {
+    if let key = selectedActivity, let orb = orbDataList.first(where: { $0.key == key }) {
+      orbInfoCard(orb)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+        .onTapGesture {
+          withAnimation(.easeInOut(duration: 0.25)) { selectedActivity = nil }
+        }
+        .gesture(
+          DragGesture(minimumDistance: 20)
+            .onEnded { value in
+              if value.translation.height > 50 {
+                withAnimation(.easeOut(duration: 0.25)) { selectedActivity = nil }
+              }
+            }
+        )
+    } else if showDogRecommendation {
+      mjRecommendationCard
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
     }
   }
   
@@ -239,24 +269,6 @@ struct ActivityStatisticsView: View {
         .onTapGesture {
           withAnimation(.easeInOut(duration: 0.25)) { selectedActivity = nil }
         }
-    }
-  }
-  
-  @ViewBuilder
-  private var statsOrbInfoOverlay: some View {
-    if let key = selectedActivity, let orb = orbDataList.first(where: { $0.key == key }) {
-      orbInfoCard(orb)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 16)
-        .transition(.opacity.combined(with: .scale(scale: 0.96)))
-        .gesture(
-          DragGesture(minimumDistance: 20)
-            .onEnded { value in
-              if value.translation.height > 50 {
-                withAnimation(.easeOut(duration: 0.25)) { selectedActivity = nil }
-              }
-            }
-        )
     }
   }
   
@@ -311,8 +323,22 @@ struct ActivityStatisticsView: View {
     .animation(.easeInOut(duration: 0.32), value: timeRange)
   }
   
+  private var chessOpponentsScores: [(opponentLabel: String, wins: Int, losses: Int)] {
+    guard let data = chessOpponentsJSON.data(using: .utf8),
+          let dict = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+      return []
+    }
+    return dict.map { email, scoreStr -> (String, Int, Int) in
+      let parts = scoreStr.split(separator: ":")
+      let wins = parts.count == 2 ? Int(parts[0]) ?? 0 : 0
+      let losses = parts.count == 2 ? Int(parts[1]) ?? 0 : 0
+      let label = email.contains("@") ? String(email.prefix(upTo: email.firstIndex(of: "@") ?? email.endIndex)) : email
+      return (label, wins, losses)
+    }.sorted { $0.1 + $0.2 > $1.1 + $1.2 }
+  }
+  
   private func orbInfoCard(_ orb: OrbData) -> some View {
-    VStack(spacing: 6) {
+    VStack(alignment: .leading, spacing: 8) {
       Text(activityDisplayName(orb.key))
         .font(.headline)
         .foregroundColor(AppTheme.textPrimary)
@@ -322,9 +348,25 @@ struct ActivityStatisticsView: View {
       Text("\(orb.percentage)% \(Localization.shared.tr("activities.stats.of.activities", default: "of your activities"))")
         .font(.caption)
         .foregroundColor(activityColor(orb.key))
+      
+      if orb.key == "chess", !chessOpponentsScores.isEmpty {
+        Divider()
+          .background(AppTheme.textSecondary.opacity(0.3))
+          .padding(.vertical, 4)
+        Text(Localization.shared.tr("activities.stats.chess.scores", default: "Scores"))
+          .font(.caption)
+          .foregroundColor(AppTheme.textSecondary)
+        ForEach(Array(chessOpponentsScores.prefix(4).enumerated()), id: \.offset) { _, item in
+          let you = chessPlayerName.isEmpty ? Localization.shared.tr("activities.chess.me", default: "You") : chessPlayerName
+          Text("\(you) vs \(item.opponentLabel): \(item.wins):\(item.losses)")
+            .font(.caption)
+            .foregroundColor(AppTheme.textPrimary)
+            .lineLimit(1)
+        }
+      }
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
     .padding()
-    .frame(maxWidth: .infinity)
     .background(AppTheme.surface)
     .cornerRadius(12)
   }

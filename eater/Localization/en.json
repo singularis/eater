@@ -26,6 +26,7 @@
   "activities.stats.range.3_Months": "3 Months",
   "activities.stats.dog.recommendation.title": "Today's top pick",
   "activities.stats.dog.recommendation.gym": "Great to run to at the gym",
+  "activities.stats.chess.scores": "Scores",
   "activities.calories.added": "Calories Added",
   "activities.calories.added_msg": "%d calories from %@ added to your daily limit.",
   "activities.calories.placeholder": "Enter calories",

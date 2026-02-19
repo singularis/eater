@@ -44,13 +44,16 @@ struct LivingOrbsView: View {
   var body: some View {
     GeometryReader { geo in
       orbScene(geo: geo)
+        .clipped()
     }
     .frame(height: 420)
   }
   
   private func orbScene(geo: GeometryProxy) -> some View {
     let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-    let maxR = min(geo.size.width, geo.size.height) * 0.48
+    let minDim = min(geo.size.width, geo.size.height)
+    let maxOrbRadius: CGFloat = 65
+    let maxR = min(minDim * 0.48, (minDim / 2) - 8 - maxOrbRadius)
     let layout = computeLayout(center: center, maxRadius: maxR)
     return orbTimeline(center: center, layout: layout, size: geo.size)
       .animation(.easeInOut(duration: 0.4), value: layoutAnimationKey)
@@ -148,9 +151,22 @@ struct LivingOrbsView: View {
           .fill(Color.white.opacity(0.15))
           .frame(width: size, height: size)
           .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 3))
-        Image(systemName: "person.fill")
+        Image(systemName: "star.fill")
           .font(.system(size: 72, weight: .medium))
-          .foregroundStyle(Color.white.opacity(0.9))
+          .foregroundStyle(
+            LinearGradient(
+              colors: [
+                Color.white,
+                Color(white: 0.92),
+                Color(white: 0.72),
+                Color(white: 0.55)
+              ],
+              startPoint: .topLeading,
+              endPoint: .bottomTrailing
+            )
+          )
+          .shadow(color: Color.white.opacity(0.6), radius: 2, x: -1, y: -1)
+          .shadow(color: Color.black.opacity(0.35), radius: 4, x: 2, y: 2)
       }
     }
     .frame(width: size + 24, height: size + 24)

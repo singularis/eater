@@ -1096,6 +1096,19 @@ struct ActivitiesView: View {
     lastChessDate = today
     todayActivityDate = today
     
+    // Щоб шахи були видно в статистиці (планети): додати "chess" у кеш активностей на сьогодні.
+    let cached = loadActivitySummaryFromCache(dateISO: today)
+    if !cached.types.contains("chess") {
+      var types = cached.types
+      types.append("chess")
+      saveActivitySummaryToCache(dateISO: today, total: cached.total, types: types)
+    }
+    
+    // Кожна партія = одна сесія (перемога, поразка чи нічия). Зберігаємо кількість ігор за день.
+    let chessCountKey = "activity_summary_chess_count_\(today)"
+    let prevCount = UserDefaults.standard.integer(forKey: chessCountKey)
+    UserDefaults.standard.set(prevCount + 1, forKey: chessCountKey)
+    
     showChessWinnerSheet = false
     
     // Sync with backend
@@ -1185,9 +1198,19 @@ struct ActivitiesView: View {
     // Only reset if there were games today
     guard lastChessDate == getCurrentUTCDateString() else { return }
     
+    let today = getCurrentUTCDateString()
+    
     // Restore wins and opponent scores to start of day
     chessTotalWins = chessWinsStartOfDay
     chessOpponents = chessOpponentsStartOfDay
+    
+    // Обнулити кількість партій за сьогодні в статистиці та прибрати chess з типів за день
+    UserDefaults.standard.removeObject(forKey: "activity_summary_chess_count_\(today)")
+    var cached = loadActivitySummaryFromCache(dateISO: today)
+    if let idx = cached.types.firstIndex(of: "chess") {
+      cached.types.remove(at: idx)
+      saveActivitySummaryToCache(dateISO: today, total: cached.total, types: cached.types)
+    }
     
     // Get yesterday's date
     let calendar = Calendar.current
