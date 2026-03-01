@@ -164,10 +164,7 @@ final class AuthenticationService: NSObject, ObservableObject {
   // MARK: - Network Layer
 
   private func requestToken(with tokenRequest: TokenRequest) async throws -> TokenResponse {
-    let authUrlString = "\(AppEnvironment.baseURL)/eater_auth"
-    print("🔵 [AuthService] Preparing to request token from: \(authUrlString)")
-    guard let url = URL(string: authUrlString) else {
-      print("🔴 [AuthService] Bad URL generated: \(authUrlString)")
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/eater_auth") else {
       throw URLError(.badURL)
     }
 
@@ -176,31 +173,17 @@ final class AuthenticationService: NSObject, ObservableObject {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.timeoutInterval = 30.0
     request.httpBody = try JSONEncoder().encode(tokenRequest)
-    
-    print("🔵 [AuthService] Sending request to \(url)")
-    if let bodyStr = String(data: request.httpBody!, encoding: .utf8) {
-        // Redact idToken in logs to avoid spam
-        let safeBody = bodyStr.replacingOccurrences(of: tokenRequest.idToken, with: "[REDACTED_TOKEN_TRUNCATED]")
-        print("🔵 [AuthService] Request body: \(safeBody)")
-    }
 
     do {
       let (data, response) = try await URLSession.shared.data(for: request)
 
       guard let httpResponse = response as? HTTPURLResponse else {
-        print("🔴 [AuthService] Bad server response (not HTTPURLResponse)")
         throw URLError(.badServerResponse)
       }
 
-      print("🔵 [AuthService] Response status code: \(httpResponse.statusCode)")
-
       if httpResponse.statusCode == 200 {
-        print("🟢 [AuthService] Successfully decoded TokenResponse.")
         return try JSONDecoder().decode(TokenResponse.self, from: data)
       } else {
-        let errStr = String(data: data, encoding: .utf8) ?? "unknown error body"
-        print("🔴 [AuthService] Authentication failed with status \(httpResponse.statusCode). Body: \(errStr)")
-        
         if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
           throw NSError(
             domain: "AuthError", code: httpResponse.statusCode,
@@ -210,7 +193,6 @@ final class AuthenticationService: NSObject, ObservableObject {
         }
       }
     } catch {
-      print("🔴 [AuthService] requestToken encountered an error: \(error.localizedDescription)")
       throw error
     }
   }
@@ -244,7 +226,6 @@ final class AuthenticationService: NSObject, ObservableObject {
           guard let self = self else { return }
 
           if let error = error {
-            print("🔴 [AuthService] GIDSignIn error: \(error.localizedDescription)")
             self.isLoading = false
             return
           }
@@ -253,12 +234,10 @@ final class AuthenticationService: NSObject, ObservableObject {
             let email = user.profile?.email,
             let idToken = user.idToken?.tokenString
           else {
-            print("🔴 [AuthService] GIDSignIn missing user or idToken")
             self.isLoading = false
             return
           }
 
-          print("🔵 [AuthService] GIDSignIn complete for \(email), dispatching success handler")
           self.isLoading = true // Show loader during our backend call
           await self.handleAuthenticationSuccess(
             provider: "google",
@@ -293,7 +272,6 @@ final class AuthenticationService: NSObject, ObservableObject {
   private func handleAuthenticationSuccess(
     provider: String, idToken: String, email: String, name: String?, profilePictureURL: String?
   ) async {
-    print("🔵 [AuthService] handleAuthenticationSuccess called for provider: \(provider), email: \(email)")
     do {
       let tokenRequest = TokenRequest(
         provider: provider,
@@ -303,13 +281,10 @@ final class AuthenticationService: NSObject, ObservableObject {
         profilePictureURL: profilePictureURL
       )
 
-      print("🔵 [AuthService] About to call requestToken...")
       let tokenResponse = try await requestToken(with: tokenRequest)
-      print("🟢 [AuthService] requestToken succeeded. Updating auth state.")
       updateAuthenticationState(with: tokenResponse)
 
     } catch {
-      print("🔴 [AuthService] handleAuthenticationSuccess error: \(error.localizedDescription)")
       isLoading = false
     }
   }
@@ -470,7 +445,6 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
         let identityToken = appleIDCredential.identityToken,
         let tokenString = String(data: identityToken, encoding: .utf8)
       else {
-        print("🔴 [AuthService] Apple Sign In: Missing token or credential")
         self.isLoading = false
         return
       }
@@ -478,13 +452,11 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
 
       let email = appleIDCredential.email ?? extractEmailFromAppleToken(tokenString)
       guard let finalEmail = email else {
-        print("🔴 [AuthService] Apple Sign In: Could not extract email from identityToken")
         self.isLoading = false
         return
       }
 
       let name = extractName(from: appleIDCredential.fullName)
-      print("🔵 [AuthService] Apple Sign In completed for \(finalEmail). Dispatching to success handler.")
 
       self.isLoading = true // Show loader during our backend call
       await handleAuthenticationSuccess(
@@ -501,7 +473,6 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
     controller _: ASAuthorizationController, didCompleteWithError error: Error
   ) {
     Task { @MainActor in
-      print("🔴 [AuthService] Apple Sign in encountered error: \(error.localizedDescription)")
       self.currentAuthorizationController = nil
       self.isLoading = false
     }
