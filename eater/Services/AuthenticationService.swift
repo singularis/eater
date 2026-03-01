@@ -164,7 +164,10 @@ final class AuthenticationService: NSObject, ObservableObject {
   // MARK: - Network Layer
 
   private func requestToken(with tokenRequest: TokenRequest) async throws -> TokenResponse {
-    guard let url = URL(string: "\(AppEnvironment.baseURL)/eater_auth") else {
+    let authUrlString = "\(AppEnvironment.baseURL)/eater_auth"
+    print("🔵 [AuthService] Preparing to request token from: \(authUrlString)")
+    guard let url = URL(string: authUrlString) else {
+      print("🔴 [AuthService] Bad URL generated: \(authUrlString)")
       throw URLError(.badURL)
     }
 
@@ -173,23 +176,42 @@ final class AuthenticationService: NSObject, ObservableObject {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.timeoutInterval = 30.0
     request.httpBody = try JSONEncoder().encode(tokenRequest)
-
-    let (data, response) = try await URLSession.shared.data(for: request)
-
-    guard let httpResponse = response as? HTTPURLResponse else {
-      throw URLError(.badServerResponse)
+    
+    print("🔵 [AuthService] Sending request to \(url)")
+    if let bodyStr = String(data: request.httpBody!, encoding: .utf8) {
+        // Redact idToken in logs to avoid spam
+        let safeBody = bodyStr.replacingOccurrences(of: tokenRequest.idToken, with: "[REDACTED_TOKEN_TRUNCATED]")
+        print("🔵 [AuthService] Request body: \(safeBody)")
     }
 
-    if httpResponse.statusCode == 200 {
-      return try JSONDecoder().decode(TokenResponse.self, from: data)
-    } else {
-      if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
-        throw NSError(
-          domain: "AuthError", code: httpResponse.statusCode,
-          userInfo: [NSLocalizedDescriptionKey: errorResponse.message ?? errorResponse.error])
-      } else {
+    do {
+      let (data, response) = try await URLSession.shared.data(for: request)
+
+      guard let httpResponse = response as? HTTPURLResponse else {
+        print("🔴 [AuthService] Bad server response (not HTTPURLResponse)")
         throw URLError(.badServerResponse)
       }
+
+      print("🔵 [AuthService] Response status code: \(httpResponse.statusCode)")
+
+      if httpResponse.statusCode == 200 {
+        print("🟢 [AuthService] Successfully decoded TokenResponse.")
+        return try JSONDecoder().decode(TokenResponse.self, from: data)
+      } else {
+        let errStr = String(data: data, encoding: .utf8) ?? "unknown error body"
+        print("🔴 [AuthService] Authentication failed with status \(httpResponse.statusCode). Body: \(errStr)")
+        
+        if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+          throw NSError(
+            domain: "AuthError", code: httpResponse.statusCode,
+            userInfo: [NSLocalizedDescriptionKey: errorResponse.message ?? errorResponse.error])
+        } else {
+          throw URLError(.badServerResponse)
+        }
+      }
+    } catch {
+      print("🔴 [AuthService] requestToken encountered an error: \(error.localizedDescription)")
+      throw error
     }
   }
 
@@ -207,43 +229,45 @@ final class AuthenticationService: NSObject, ObservableObject {
       return
     }
 
-    isLoading = true
-
     let config = GIDConfiguration(clientID: clientID)
     GIDSignIn.sharedInstance.configuration = config
 
-    guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene ?? UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first,
-      let rootVC = window.rootViewController
-    else {
-      isLoading = false
-      return
-    }
+    // Delay presentation explicitly to allow SwiftUI interactions (like Button press animations) to conclude
+    DispatchQueue.main.async {
+      guard let topVC = UIApplication.topMostViewController else {
+        print("🔴 [AuthService] Could not find topMostViewController to present GIDSignIn")
+        return
+      }
 
-    GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { [weak self] result, error in
-      Task { @MainActor in
-        guard let self = self else { return }
+      GIDSignIn.sharedInstance.signIn(withPresenting: topVC) { [weak self] result, error in
+        Task { @MainActor in
+          guard let self = self else { return }
 
-        if let error = error {
-          self.isLoading = false
-          return
+          if let error = error {
+            print("🔴 [AuthService] GIDSignIn error: \(error.localizedDescription)")
+            self.isLoading = false
+            return
+          }
+
+          guard let user = result?.user,
+            let email = user.profile?.email,
+            let idToken = user.idToken?.tokenString
+          else {
+            print("🔴 [AuthService] GIDSignIn missing user or idToken")
+            self.isLoading = false
+            return
+          }
+
+          print("🔵 [AuthService] GIDSignIn complete for \(email), dispatching success handler")
+          self.isLoading = true // Show loader during our backend call
+          await self.handleAuthenticationSuccess(
+            provider: "google",
+            idToken: idToken,
+            email: email,
+            name: user.profile?.name,
+            profilePictureURL: user.profile?.imageURL(withDimension: 120)?.absoluteString
+          )
         }
-
-        guard let user = result?.user,
-          let email = user.profile?.email,
-          let idToken = user.idToken?.tokenString
-        else {
-          self.isLoading = false
-          return
-        }
-
-        await self.handleAuthenticationSuccess(
-          provider: "google",
-          idToken: idToken,
-          email: email,
-          name: user.profile?.name,
-          profilePictureURL: user.profile?.imageURL(withDimension: 120)?.absoluteString
-        )
       }
     }
   }
@@ -255,8 +279,6 @@ final class AuthenticationService: NSObject, ObservableObject {
         return
       }
     #endif
-
-    isLoading = true
 
     let request = ASAuthorizationAppleIDProvider().createRequest()
     request.requestedScopes = [.fullName, .email]
@@ -271,6 +293,7 @@ final class AuthenticationService: NSObject, ObservableObject {
   private func handleAuthenticationSuccess(
     provider: String, idToken: String, email: String, name: String?, profilePictureURL: String?
   ) async {
+    print("🔵 [AuthService] handleAuthenticationSuccess called for provider: \(provider), email: \(email)")
     do {
       let tokenRequest = TokenRequest(
         provider: provider,
@@ -280,10 +303,13 @@ final class AuthenticationService: NSObject, ObservableObject {
         profilePictureURL: profilePictureURL
       )
 
+      print("🔵 [AuthService] About to call requestToken...")
       let tokenResponse = try await requestToken(with: tokenRequest)
+      print("🟢 [AuthService] requestToken succeeded. Updating auth state.")
       updateAuthenticationState(with: tokenResponse)
 
     } catch {
+      print("🔴 [AuthService] handleAuthenticationSuccess error: \(error.localizedDescription)")
       isLoading = false
     }
   }
@@ -444,18 +470,23 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
         let identityToken = appleIDCredential.identityToken,
         let tokenString = String(data: identityToken, encoding: .utf8)
       else {
+        print("🔴 [AuthService] Apple Sign In: Missing token or credential")
         self.isLoading = false
         return
       }
 
+
       let email = appleIDCredential.email ?? extractEmailFromAppleToken(tokenString)
       guard let finalEmail = email else {
+        print("🔴 [AuthService] Apple Sign In: Could not extract email from identityToken")
         self.isLoading = false
         return
       }
 
       let name = extractName(from: appleIDCredential.fullName)
+      print("🔵 [AuthService] Apple Sign In completed for \(finalEmail). Dispatching to success handler.")
 
+      self.isLoading = true // Show loader during our backend call
       await handleAuthenticationSuccess(
         provider: "apple",
         idToken: tokenString,
@@ -467,11 +498,44 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
   }
 
   func authorizationController(
-    controller _: ASAuthorizationController, didCompleteWithError _: Error
+    controller _: ASAuthorizationController, didCompleteWithError error: Error
   ) {
     Task { @MainActor in
+      print("🔴 [AuthService] Apple Sign in encountered error: \(error.localizedDescription)")
       self.currentAuthorizationController = nil
       self.isLoading = false
     }
+  }
+}
+
+// MARK: - View Controller Presentation Helper
+
+extension UIApplication {
+  static var topMostViewController: UIViewController? {
+    let scenes = UIApplication.shared.connectedScenes
+    let windowScene = scenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+      ?? scenes.first as? UIWindowScene
+    guard let window = windowScene?.windows.first(where: { $0.isKeyWindow }) ?? windowScene?.windows.first else {
+      return nil
+    }
+    return getTopViewController(for: window.rootViewController)
+  }
+
+  private static func getTopViewController(for rootViewController: UIViewController?) -> UIViewController? {
+    guard let rootViewController = rootViewController else { return nil }
+
+    if let presentedViewController = rootViewController.presentedViewController {
+      return getTopViewController(for: presentedViewController)
+    }
+
+    if let navigationController = rootViewController as? UINavigationController {
+      return getTopViewController(for: navigationController.visibleViewController)
+    }
+
+    if let tabBarController = rootViewController as? UITabBarController {
+      return getTopViewController(for: tabBarController.selectedViewController)
+    }
+
+    return rootViewController
   }
 }
