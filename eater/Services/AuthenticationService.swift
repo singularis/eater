@@ -81,6 +81,8 @@ final class AuthenticationService: NSObject, ObservableObject {
   @Published var userName: String?
   @Published var userProfilePictureURL: String?
   @Published var isLoading = false
+  
+  private var currentAuthorizationController: ASAuthorizationController?
 
   override init() {
     super.init()
@@ -210,8 +212,9 @@ final class AuthenticationService: NSObject, ObservableObject {
     let config = GIDConfiguration(clientID: clientID)
     GIDSignIn.sharedInstance.configuration = config
 
-    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let rootVC = windowScene.windows.first?.rootViewController
+    guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene ?? UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first,
+      let rootVC = window.rootViewController
     else {
       isLoading = false
       return
@@ -258,10 +261,11 @@ final class AuthenticationService: NSObject, ObservableObject {
     let request = ASAuthorizationAppleIDProvider().createRequest()
     request.requestedScopes = [.fullName, .email]
 
-    let authorizationController = ASAuthorizationController(authorizationRequests: [request])
-    authorizationController.delegate = self
-    authorizationController.presentationContextProvider = self
-    authorizationController.performRequests()
+    let controller = ASAuthorizationController(authorizationRequests: [request])
+    controller.delegate = self
+    controller.presentationContextProvider = self
+    self.currentAuthorizationController = controller
+    controller.performRequests()
   }
 
   private func handleAuthenticationSuccess(
@@ -422,8 +426,8 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
   ASAuthorizationControllerPresentationContextProviding
 {
   func presentationAnchor(for _: ASAuthorizationController) -> ASPresentationAnchor {
-    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let window = windowScene.windows.first
+    guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene ?? UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first
     else {
       return ASPresentationAnchor()
     }
@@ -435,6 +439,7 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
     didCompleteWithAuthorization authorization: ASAuthorization
   ) {
     Task { @MainActor in
+      self.currentAuthorizationController = nil
       guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
         let identityToken = appleIDCredential.identityToken,
         let tokenString = String(data: identityToken, encoding: .utf8)
@@ -465,6 +470,7 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
     controller _: ASAuthorizationController, didCompleteWithError _: Error
   ) {
     Task { @MainActor in
+      self.currentAuthorizationController = nil
       self.isLoading = false
     }
   }
