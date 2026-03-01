@@ -5,14 +5,14 @@ struct AppEnvironment {
 
     static var useDevEnvironment: Bool {
         get {
+            #if !DEBUG
+            return false // Always false in production releases
+            #else
             if UserDefaults.standard.object(forKey: useDevEnvKey) == nil {
-                #if DEBUG
                 return true
-                #else
-                return false
-                #endif
             }
             return UserDefaults.standard.bool(forKey: useDevEnvKey)
+            #endif
         }
         set {
             UserDefaults.standard.set(newValue, forKey: useDevEnvKey)

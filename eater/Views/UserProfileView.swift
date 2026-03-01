@@ -441,6 +441,7 @@ struct UserProfileView: View {
               
               Divider().padding(.horizontal, 8)
               
+              #if DEBUG
               // Dev Environment
               VStack(alignment: .leading, spacing: 8) {
                 Text(loc("profile.dev_environment", "Dev Environment"))
@@ -479,6 +480,7 @@ struct UserProfileView: View {
               .padding(.horizontal, 8)
               
               Divider().padding(.horizontal, 8)
+              #endif
               
               // Save Photos to Library
               HStack(spacing: 12) {

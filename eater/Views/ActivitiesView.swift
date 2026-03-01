@@ -495,6 +495,7 @@ struct ActivitiesView: View {
             .scaleEffect(0.8)
         }
         
+        #if DEBUG
         // Environment indicator
         if AppEnvironment.useDevEnvironment {
           Text("DEV")
@@ -505,6 +506,7 @@ struct ActivitiesView: View {
             .background(Color.red)
             .cornerRadius(4)
         }
+        #endif
       }
       
       // Total Wins and League

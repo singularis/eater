@@ -330,6 +330,7 @@ struct ContentView: View {
         }
         Spacer()
         HStack(spacing: 24) {
+          #if DEBUG
           if useDevEnvironment {
             Text("DEV")
               .font(.system(size: 10, weight: .heavy))
@@ -339,6 +340,7 @@ struct ContentView: View {
               .background(Color.red)
               .cornerRadius(4)
           }
+          #endif
           healthInfoButton
           sportButton
         }
