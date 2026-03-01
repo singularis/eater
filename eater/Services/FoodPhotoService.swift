@@ -70,7 +70,7 @@ class FoodPhotoService {
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
 
-    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+    if let token = KeychainHelper.shared.read("auth_token") {
       request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 

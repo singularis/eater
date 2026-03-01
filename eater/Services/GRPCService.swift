@@ -24,7 +24,7 @@ class GRPCService {
     // Set timeout if provided (for faster app startup on slow networks), otherwise default to 45 seconds
     request.timeoutInterval = timeout ?? 45
 
-    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+    if let token = KeychainHelper.shared.read("auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
@@ -973,7 +973,7 @@ class GRPCService {
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
     
-    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+    if let token = KeychainHelper.shared.read("auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
     
@@ -1028,7 +1028,7 @@ class GRPCService {
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+    if let token = KeychainHelper.shared.read("auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
@@ -1077,7 +1077,7 @@ class GRPCService {
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+    if let token = KeychainHelper.shared.read("auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
@@ -1126,7 +1126,7 @@ class GRPCService {
 
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
-    if let token = UserDefaults.standard.string(forKey: "auth_token") {
+    if let token = KeychainHelper.shared.read("auth_token") {
       request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 

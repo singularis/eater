@@ -1681,7 +1681,7 @@ struct OnboardingView: View {
       return
     }
     
-    guard UserDefaults.standard.string(forKey: "auth_token") != nil else {
+    guard KeychainHelper.shared.read("auth_token") != nil else {
          savedNickname = trimmed
          completion(true)
          return

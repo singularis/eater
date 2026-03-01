@@ -142,7 +142,7 @@ struct AddFriendsView: View {
 
   private func setupSocket() {
     let socket = FriendsSearchWebSocket(tokenProvider: {
-      UserDefaults.standard.string(forKey: "auth_token")
+      KeychainHelper.shared.read("auth_token")
     })
     self.socket = socket
     socket.onStateChange = { state in
