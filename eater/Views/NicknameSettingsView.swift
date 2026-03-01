@@ -66,7 +66,7 @@ struct NicknameSettingsView: View {
               .autocapitalization(.none)
               .disableAutocorrection(true)
               .disabled(isLoading)
-              .onChange(of: nickname) { _ in errorMessage = "" }
+              .onChange(of: nickname) { errorMessage = "" }
             
             if !errorMessage.isEmpty {
               Text(errorMessage)

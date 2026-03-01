@@ -395,9 +395,9 @@ struct HealthSettingsView: View {
         .padding()
         .background(AppTheme.surfaceAlt)
         .cornerRadius(AppTheme.smallRadius)
-        .onChange(of: targetWeight) { _ in recalcFromInputs() }
-        .onChange(of: goalMode) { _ in recalcFromInputs() }
-        .onChange(of: selectedMonths) { _ in recalcFromInputs() }
+        .onChange(of: targetWeight) { recalcFromInputs() }
+        .onChange(of: goalMode) { recalcFromInputs() }
+        .onChange(of: selectedMonths) { recalcFromInputs() }
 
         VStack(spacing: 8) {
           HStack(spacing: 8) {
@@ -513,12 +513,12 @@ struct HealthSettingsView: View {
   private func validateAndCalculateHealthDataOutcome(showTargetWeightAlert: Bool = true, applyClampingToUI: Bool = true) -> ValidationOutcome {
     invalidHealthDataMessage = ""
 
-    var heightValue = parseDoubleFlexible(height)
-    var weightValue = parseDoubleFlexible(weight)
-    var targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    let heightValue = parseDoubleFlexible(height)
+    let weightValue = parseDoubleFlexible(weight)
+    let targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       ? nil
       : parseDoubleFlexible(targetWeight)
-    var ageValue = Int(age.trimmingCharacters(in: .whitespacesAndNewlines))
+    let ageValue = Int(age.trimmingCharacters(in: .whitespacesAndNewlines))
 
     var invalidFields: [String] = []
     if heightValue == nil || (heightValue ?? 0) <= 0 { invalidFields.append(loc("health.height", "Height (cm):")) }

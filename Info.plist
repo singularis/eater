@@ -25,11 +25,7 @@
 	<string>This app accesses your photo library to allow you to select existing photos of food for nutritional analysis.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app saves the food photos you take to your photo library for your memories.</string>
-	<key>UIDeviceFamily</key>
-	<array>
-		<integer>1</integer>
-		<integer>2</integer>
-	</array>
+
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

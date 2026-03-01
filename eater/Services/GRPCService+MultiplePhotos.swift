@@ -19,13 +19,6 @@ extension GRPCService {
       return
     }
     
-    let timestamp: String
-    if let timestampMillis = timestampMillis {
-      let date = Date(timeIntervalSince1970: TimeInterval(timestampMillis) / 1000)
-      timestamp = ISO8601DateFormatter().string(from: date)
-    } else {
-      timestamp = ISO8601DateFormatter().string(from: Date())
-    }
     
     // Option 1: Send as single batch (requires backend support)
     // sendAsBatch(images: images, photoType: photoType, timestamp: timestamp, completion: completion)

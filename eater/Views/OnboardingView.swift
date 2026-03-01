@@ -1770,7 +1770,7 @@ struct OnboardingView: View {
            .autocapitalization(.none)
            .disableAutocorrection(true)
            .disabled(isNicknameLoading)
-           .onChange(of: nickname) { _ in nicknameError = nil }
+           .onChange(of: nickname) { nicknameError = nil }
 
          if let error = nicknameError {
              Text(error)

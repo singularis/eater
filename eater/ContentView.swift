@@ -177,19 +177,15 @@ struct ContentView: View {
         setupActivityCaloriesObserver()
 
         // Check which onboarding to show
-        var willShowOnboarding = false
         if !hasSeenOnboarding {
           onboardingMode = .initial
           showOnboarding = true
-          willShowOnboarding = true
         } else if AppSettingsService.shared.shouldShowHealthOnboarding {
             onboardingMode = .health
             showOnboarding = true
-            willShowOnboarding = true
         } else if AppSettingsService.shared.shouldShowSocialOnboarding {
             onboardingMode = .social
             showOnboarding = true
-            willShowOnboarding = true
         }
 
         fetchAlcoholStatus()
@@ -197,15 +193,15 @@ struct ContentView: View {
       .onDisappear {
         stopDailyRefreshTimer()
       }
-      .onChange(of: todaySportCalories) { _ in
+      .onChange(of: todaySportCalories) {
         // Force UI refresh when sport calories change
         uiRefreshTrigger.toggle()
       }
-      .onChange(of: todayActivityDate) { _ in
+      .onChange(of: todayActivityDate) {
         // Force UI refresh when activity date changes
         uiRefreshTrigger.toggle()
       }
-      .onChange(of: scenePhase) { newPhase in
+      .onChange(of: scenePhase) { _, newPhase in
         if newPhase == .inactive || newPhase == .background {
           if isViewingCustomDate {
              returnToToday()
@@ -733,7 +729,6 @@ struct ContentView: View {
     let line2 = fatLabel + " " + fmt(targets.fat) + grams
     let line3 = carLabel + " " + fmt(targets.carbs) + grams
     let line4 = sugLabel + " 40–50" + grams
-    let targetsDescription = [line1, line2, line3, line4].joined(separator: "\n")
 
     return Button(action: {
       HapticsService.shared.select()

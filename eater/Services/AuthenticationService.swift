@@ -225,7 +225,7 @@ final class AuthenticationService: NSObject, ObservableObject {
         Task { @MainActor in
           guard let self = self else { return }
 
-          if let error = error {
+          if error != nil {
             self.isLoading = false
             return
           }

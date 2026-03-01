@@ -97,7 +97,7 @@ struct MultiplePhotoUploadButton: View {
     .sheet(isPresented: $showPicker) {
       MultiplePhotoPicker(selectedImages: $selectedImages)
     }
-    .onChange(of: selectedImages) { newImages in
+    .onChange(of: selectedImages) { _, newImages in
       guard !newImages.isEmpty else { return }
       isUploading = true
       

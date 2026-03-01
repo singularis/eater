@@ -56,7 +56,7 @@ struct ChessOpponentsHistoryView: View {
           }
         }
       }
-      .onChange(of: selectedTab) { newValue in
+      .onChange(of: selectedTab) { _, newValue in
         if newValue == 1 && !historyLoaded {
           loadHistory()
         }
