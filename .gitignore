@@ -1,4 +1,5 @@
 config.plist
+Secrets.xcconfig
 .DS_Store
 
 # Scripts (resize-image-half.sh тощо) — залишаємо в репо
@@ -21,7 +22,4 @@ eater/config.plist.development
 eater/config.plist.test
 eater/config.plist.production
 eater/config.plist.local
-eater/Info.plist
-Info.plist
-Info.plist
 COMMIT_MSG.txt
