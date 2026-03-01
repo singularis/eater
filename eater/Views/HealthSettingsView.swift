@@ -515,7 +515,7 @@ struct HealthSettingsView: View {
 
     let heightValue = parseDoubleFlexible(height)
     let weightValue = parseDoubleFlexible(weight)
-    let targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      var targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       ? nil
       : parseDoubleFlexible(targetWeight)
     let ageValue = Int(age.trimmingCharacters(in: .whitespacesAndNewlines))
