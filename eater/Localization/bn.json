@@ -397,10 +397,10 @@
   "macro.fat": "চর্বি",
   "macro.pro": "প্রোটিন",
   "macro.sug": "চিনি",
-  "manual_food.error": "Failed to update dish name. Please try again.",
-  "manual_food.msg": "সঠিক খাবারের নাম লিখুন। এটি আপনার লগে বর্তমান নামটি প্রতিস্থাপন করবে।",
-  "manual_food.success.msg": "Dish name was updated to '%@'.",
-  "manual_food.success.title": "Name updated",
+  "manual_food.error": "খাবারের নাম আপডেট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+  "manual_food.msg": "সঠিক খাবারের নাম লিখুন। এটি আপনার লগের বর্তমান নাম পরিবর্তন করবে।",
+  "manual_food.success.msg": "খাবারের নাম '%@' এ আপডেট করা হয়েছে।",
+  "manual_food.success.title": "নাম আপডেট করা হয়েছে",
   "manual_food.title": "খাবারের নাম ঠিক করুন",
   "nav.addfriends": "বন্ধু যোগ করুন",
   "nav.health_settings": "স্বাস্থ্য সেটিংস",
@@ -664,5 +664,11 @@
   "weight.record_failed.msg": "ওজন রেকর্ড করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
   "weight.recorded.msg": "আপনার ওজন সফলভাবে রেকর্ড করা হয়েছে।",
   "weight.recorded.title": "ওজন রেকর্ড হয়েছে",
-  "weight.take_photo": "ছবি তুলুন"
+  "weight.take_photo": "ছবি তুলুন",
+  "error.network.title": "সংযোগ ত্রুটি",
+  "error.network.food_timeout": "দুঃখিত, মনে হচ্ছে নেটওয়ার্ক সমস্যা আছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন। ইতিমধ্যে, আপনার স্বাস্থ্যকর খাবার উপভোগ করুন! 🥗",
+  "error.network.generic": "আমরা দুঃখিত. নেটওয়ার্ক সংযোগ সমস্যা. অনুগ্রহ করে পরে আবার চেষ্টা করুন.",
+  "common.apply": "প্রয়োগ করুন",
+  "portion.custom.manual_placeholder": "উদাঃ 146.4",
+  "portion.updated.msg.grams": "'%@' সফলভাবে %g গ্রামে আপডেট করা হয়েছে।"
 }

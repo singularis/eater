@@ -82,7 +82,7 @@ struct ProductListView: View {
   let products: [Product]
   let onRefresh: () -> Void
   let onDelete: (Int64) -> Void
-  let onModify: (Int64, String, Int32) -> Void
+  let onModify: (Int64, String, Int32, Double?) -> Void
   let onTryAgain: (Int64, String) -> Void
   let onAddSugar: (Int64, String) -> Void
   var onAddDrinkExtra: ((Int64, String, String) -> Void)? = nil

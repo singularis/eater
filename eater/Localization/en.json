@@ -689,5 +689,11 @@
   "weight.record_failed.msg": "Failed to record your weight. Please try again.",
   "weight.recorded.msg": "Your weight has been successfully recorded.",
   "weight.recorded.title": "Weight Recorded",
-  "weight.take_photo": "Take Photo"
+  "weight.take_photo": "Take Photo",
+  "error.network.title": "Connection Error",
+  "error.network.food_timeout": "We're sorry, there seems to be a network issue. Please try again later. In the meantime, enjoy your healthy meal! 🥗",
+  "error.network.generic": "We are sorry. Network connection. Please try later.",
+  "common.apply": "Apply",
+  "portion.custom.manual_placeholder": "e.g. 146.4",
+  "portion.updated.msg.grams": "Successfully updated '%@' to %g g."
 }

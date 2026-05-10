@@ -371,7 +371,7 @@ class AlertHelper {
     imageId: String = "",
     isDrink: Bool,
     isFruitOrVegetable: Bool = false,
-    onPortionSelected: @escaping (Int32) -> Void,
+    onPortionSelected: @escaping (Int32, Double?) -> Void,
     onTryAgain: (() -> Void)? = nil,
     onAddSugar: (() -> Void)? = nil,
     onAddDrinkExtra: ((String) -> Void)? = nil,
@@ -426,7 +426,7 @@ class AlertHelper {
     for portion in portions {
       alert.addAction(
         UIAlertAction(title: portion.title, style: .default) { _ in
-          onPortionSelected(portion.percentage)
+          onPortionSelected(portion.percentage, nil)
         })
     }
 
@@ -529,7 +529,7 @@ class AlertHelper {
   }
 
   static func showCustomPortionAlert(
-    foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void
+    foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32, Double?) -> Void
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,
@@ -542,11 +542,13 @@ class AlertHelper {
     let customPortionVC = CustomPortionViewController(
       foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
     let navController = UINavigationController(rootViewController: customPortionVC)
-    navController.modalPresentationStyle = .pageSheet
+    navController.modalPresentationStyle = UIModalPresentationStyle.pageSheet
 
-    if let sheet = navController.sheetPresentationController {
-      sheet.detents = [.medium()]
-      sheet.prefersGrabberVisible = true
+    if #available(iOS 15.0, *) {
+      if let sheet = navController.sheetPresentationController {
+        sheet.detents = [.medium()]
+        sheet.prefersGrabberVisible = true
+      }
     }
 
     rootViewController.present(navController, animated: true)
@@ -747,11 +749,12 @@ private final class CelebrationViewController: UIViewController {
 private class CustomPortionViewController: UIViewController {
   private let foodName: String
   private let originalWeight: Int
-  private let onPortionSelected: (Int32) -> Void
+  private let onPortionSelected: (Int32, Double?) -> Void
   private var scrollView: UIScrollView!
   private var stackView: UIStackView!
+  private var manualInputTextField: UITextField!
 
-  init(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void) {
+  init(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32, Double?) -> Void) {
     self.foodName = foodName
     self.originalWeight = originalWeight
     self.onPortionSelected = onPortionSelected
@@ -809,6 +812,47 @@ private class CustomPortionViewController: UIViewController {
     separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
     stackView.addArrangedSubview(separator)
 
+    // Add manual input section
+    let manualStack = UIStackView()
+    manualStack.axis = .horizontal
+    manualStack.spacing = 12
+    manualStack.alignment = .center
+
+    let textField = UITextField()
+    textField.placeholder = loc("portion.custom.manual_placeholder", "e.g. 146.4")
+    textField.keyboardType = .decimalPad
+    textField.borderStyle = .roundedRect
+    textField.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    self.manualInputTextField = textField
+    manualStack.addArrangedSubview(textField)
+
+    let applyButton = UIButton(type: .system)
+    applyButton.setTitle(loc("common.apply", "Apply"), for: .normal)
+    applyButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+    applyButton.backgroundColor = UIColor.systemBlue
+    applyButton.setTitleColor(.white, for: .normal)
+    applyButton.layer.cornerRadius = 8
+    // Fallback if contentEdgeInsets is deprecated or just use layout constraints
+    if #available(iOS 15.0, *) {
+      var config = UIButton.Configuration.filled()
+      config.title = loc("common.apply", "Apply")
+      config.baseBackgroundColor = .systemBlue
+      applyButton.configuration = config
+    } else {
+      applyButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+    }
+    applyButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    applyButton.addTarget(self, action: #selector(manualApplyTapped), for: .touchUpInside)
+    manualStack.addArrangedSubview(applyButton)
+
+    stackView.addArrangedSubview(manualStack)
+    
+    // Add another separator
+    let separator2 = UIView()
+    separator2.backgroundColor = .separator
+    separator2.heightAnchor.constraint(equalToConstant: 1).isActive = true
+    stackView.addArrangedSubview(separator2)
+
     // Create percentage options from 10% to 300% in 10% increments
     let percentageOptions = stride(from: 10, through: 300, by: 10).map { Int32($0) }
 
@@ -855,10 +899,25 @@ private class CustomPortionViewController: UIViewController {
     dismiss(animated: true)
   }
 
+  @objc private func manualApplyTapped() {
+    guard let text = manualInputTextField.text?.replacingOccurrences(of: ",", with: "."),
+          let grams = Double(text),
+          grams > 0 else {
+      return
+    }
+    
+    let percentage = Int32(max(1, round((grams / Double(originalWeight)) * 100.0)))
+    
+    manualInputTextField.resignFirstResponder()
+    dismiss(animated: true) { [weak self] in
+      self?.onPortionSelected(percentage, grams)
+    }
+  }
+
   @objc private func percentageButtonTapped(_ sender: UIButton) {
     let percentage = Int32(sender.tag)
     dismiss(animated: true) { [weak self] in
-      self?.onPortionSelected(percentage)
+      self?.onPortionSelected(percentage, nil)
     }
   }
 }

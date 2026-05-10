@@ -4,7 +4,7 @@ struct ProductRowView: View {
   let product: Product
   let deletingProductTime: Int64?
   let onPhotoTap: (UIImage?, String) -> Void
-  let onModify: (Int64, String, Int32) -> Void
+  let onModify: (Int64, String, Int32, Double?) -> Void
   let onTryAgain: (Int64, String) -> Void
   let onAddSugar: (Int64, String) -> Void
   var onAddDrinkExtra: ((Int64, String, String) -> Void)? = nil  // time, foodName, extraKey
@@ -149,9 +149,9 @@ struct ProductRowView: View {
             imageId: product.imageId,
             isDrink: product.isDrink,
             isFruitOrVegetable: product.isFruitOrVegetable,
-            onPortionSelected: { percentage in
+            onPortionSelected: { percentage, grams in
               HapticsService.shared.success()
-              onModify(product.time, product.name, percentage)
+              onModify(product.time, product.name, percentage, grams)
             },
             onTryAgain: {
               HapticsService.shared.select()

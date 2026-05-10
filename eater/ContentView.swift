@@ -725,11 +725,6 @@ struct ContentView: View {
       sugar < sugarLower ? AppTheme.warning
       : (sugar <= sugarUpper ? AppTheme.success : AppTheme.danger)
 
-    let line1 = proLabel + " " + fmt(targets.protein) + grams
-    let line2 = fatLabel + " " + fmt(targets.fat) + grams
-    let line3 = carLabel + " " + fmt(targets.carbs) + grams
-    let line4 = sugLabel + " 40–50" + grams
-
     return Button(action: {
       HapticsService.shared.select()
       showMacroTargets = true
@@ -1258,6 +1253,7 @@ struct ContentView: View {
       initialText: product.name,
       confirmTitle: loc("common.save", "Save")
     ) { newName in
+      self.deletingProductTime = time
       // Re-analyze the existing photo using the user-provided dish name,
       // so calories/grams/health rating update (not just the title).
       GRPCService().modifyFoodRecord(
@@ -1269,6 +1265,7 @@ struct ContentView: View {
         manualFoodName: newName
       ) { success in
         DispatchQueue.main.async {
+          self.deletingProductTime = nil
           if success {
             // Clear caches and refresh so updated nutrition/health comes from backend
             StatisticsService.shared.clearExpiredCache()
@@ -1304,6 +1301,7 @@ struct ContentView: View {
       return
     }
     
+    self.deletingProductTime = time
     // Add 1 teaspoon of sugar (1 tsp = ~5g, ~20 calories)
     GRPCService().modifyFoodRecord(
       time: time,
@@ -1312,6 +1310,7 @@ struct ContentView: View {
       addedSugarTsp: 1.0
     ) { success in
       DispatchQueue.main.async {
+        self.deletingProductTime = nil
         if success {
           // Optimistically update UI + local store so sugar icon and calories/grams update immediately
           FoodExtrasStore.shared.addSugar(time: time, tsp: 1)
@@ -1369,7 +1368,7 @@ struct ContentView: View {
     ProductStorageService.shared.saveProducts(self.products, calories: self.caloriesLeft, weight: self.personWeight)
   }
 
-  func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
+  func modifyProductPortion(time: Int64, foodName: String, percentage: Int32, requestedGrams: Double? = nil) {
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
@@ -1378,20 +1377,31 @@ struct ContentView: View {
       return
     }
 
+    self.deletingProductTime = time
     GRPCService().modifyFoodRecord(time: time, userEmail: userEmail, percentage: percentage) {
       success in
       DispatchQueue.main.async {
+        self.deletingProductTime = nil
         if success {
           // Clear both caches since food was modified
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
 
           // Show success message
+          let alertMsg: String
+          if let grams = requestedGrams {
+             alertMsg = String(
+               format: loc("portion.updated.msg.grams", "Successfully updated '%@' to %g g."),
+               foodName, grams)
+          } else {
+             alertMsg = String(
+               format: loc("portion.updated.msg", "Successfully updated '%@' to %d%% portion."),
+               foodName, percentage)
+          }
+
           AlertHelper.showAlert(
             title: loc("portion.updated.title", "Portion Updated"),
-            message: String(
-              format: loc("portion.updated.msg", "Successfully updated '%@' to %d%% portion."),
-            foodName, percentage),
+            message: alertMsg,
           haptic: .success
           ) {
             // Always return to today after modifying food portion

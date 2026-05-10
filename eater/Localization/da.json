@@ -397,10 +397,10 @@
   "macro.fat": "FED",
   "macro.pro": "PROT",
   "macro.sug": "SUK",
-  "manual_food.error": "Failed to update dish name. Please try again.",
-  "manual_food.msg": "Indtast det korrekte navn på retten. Det erstatter det nuværende navn i din log.",
-  "manual_food.success.msg": "Dish name was updated to '%@'.",
-  "manual_food.success.title": "Name updated",
+  "manual_food.error": "Kunne ikke opdatere retnavnet. Prøv venligst igen.",
+  "manual_food.msg": "Indtast det korrekte retnavn. Dette vil erstatte det nuværende navn i din log.",
+  "manual_food.success.msg": "Retnavn blev opdateret til '%@'.",
+  "manual_food.success.title": "Navn opdateret",
   "manual_food.title": "Ret madnavn",
   "nav.addfriends": "Tilføj Venner",
   "nav.health_settings": "Sundhedsindstillinger",
@@ -664,5 +664,11 @@
   "weight.record_failed.msg": "Kunne ikke registrere vægt. Prøv igen.",
   "weight.recorded.msg": "Din vægt blev registreret.",
   "weight.recorded.title": "Vægt registreret",
-  "weight.take_photo": "Tag foto"
+  "weight.take_photo": "Tag foto",
+  "error.network.title": "Forbindelsesfejl",
+  "error.network.food_timeout": "Beklager, der ser ud til at være et netværksproblem. Prøv venligst igen senere. I mellemtiden kan du nyde dit sunde måltid! 🥗",
+  "error.network.generic": "Vi beklager. Netværksforbindelsesproblem. Prøv venligst senere.",
+  "common.apply": "Anvend",
+  "portion.custom.manual_placeholder": "f.eks. 146.4",
+  "portion.updated.msg.grams": "Opdaterede '%@' til %g g."
 }
