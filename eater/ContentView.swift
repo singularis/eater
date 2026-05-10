@@ -1368,7 +1368,7 @@ struct ContentView: View {
     ProductStorageService.shared.saveProducts(self.products, calories: self.caloriesLeft, weight: self.personWeight)
   }
 
-  func modifyProductPortion(time: Int64, foodName: String, percentage: Int32) {
+  func modifyProductPortion(time: Int64, foodName: String, percentage: Int32, requestedGrams: Double? = nil) {
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
@@ -1388,11 +1388,20 @@ struct ContentView: View {
           ProductStorageService.shared.clearCache()
 
           // Show success message
+          let alertMsg: String
+          if let grams = requestedGrams {
+             alertMsg = String(
+               format: loc("portion.updated.msg.grams", "Successfully updated '%@' to %g g."),
+               foodName, grams)
+          } else {
+             alertMsg = String(
+               format: loc("portion.updated.msg", "Successfully updated '%@' to %d%% portion."),
+               foodName, percentage)
+          }
+
           AlertHelper.showAlert(
             title: loc("portion.updated.title", "Portion Updated"),
-            message: String(
-              format: loc("portion.updated.msg", "Successfully updated '%@' to %d%% portion."),
-            foodName, percentage),
+            message: alertMsg,
           haptic: .success
           ) {
             // Always return to today after modifying food portion

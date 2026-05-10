@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Üzgünüz, bir ağ sorunu var gibi görünüyor. Lütfen daha sonra tekrar deneyin. Bu arada sağlıklı yemeğinizin tadını çıkarın! 🥗",
   "error.network.generic": "Özür dileriz. Ağ bağlantısı sorunu var. Lütfen daha sonra tekrar deneyin.",
   "common.apply": "Uygula",
-  "portion.custom.manual_placeholder": "örn. 146.4"
+  "portion.custom.manual_placeholder": "örn. 146.4",
+  "portion.updated.msg.grams": "'%@' başarıyla %g g olarak güncellendi."
 }

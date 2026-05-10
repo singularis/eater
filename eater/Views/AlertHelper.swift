@@ -371,7 +371,7 @@ class AlertHelper {
     imageId: String = "",
     isDrink: Bool,
     isFruitOrVegetable: Bool = false,
-    onPortionSelected: @escaping (Int32) -> Void,
+    onPortionSelected: @escaping (Int32, Double?) -> Void,
     onTryAgain: (() -> Void)? = nil,
     onAddSugar: (() -> Void)? = nil,
     onAddDrinkExtra: ((String) -> Void)? = nil,
@@ -426,7 +426,7 @@ class AlertHelper {
     for portion in portions {
       alert.addAction(
         UIAlertAction(title: portion.title, style: .default) { _ in
-          onPortionSelected(portion.percentage)
+          onPortionSelected(portion.percentage, nil)
         })
     }
 
@@ -529,7 +529,7 @@ class AlertHelper {
   }
 
   static func showCustomPortionAlert(
-    foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void
+    foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32, Double?) -> Void
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,

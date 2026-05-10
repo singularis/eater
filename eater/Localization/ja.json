@@ -669,5 +669,6 @@
   "error.network.food_timeout": "申し訳ありませんが、ネットワークの問題が発生しているようです。後でもう一度お試しください。それまでは、健康的な食事をお楽しみください！ 🥗",
   "error.network.generic": "申し訳ありません。ネットワーク接続の問題です。後でもう一度お試しください。",
   "common.apply": "適用する",
-  "portion.custom.manual_placeholder": "例: 146.4"
+  "portion.custom.manual_placeholder": "例: 146.4",
+  "portion.updated.msg.grams": "'%@'を%g gに正常に更新しました。"
 }

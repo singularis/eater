@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Sajnáljuk, úgy tűnik, hálózati probléma van. Kérjük, próbáld újra később. Addig is, élvezd az egészséges ételedet! 🥗",
   "error.network.generic": "Sajnáljuk. Hálózati kapcsolati hiba. Kérjük, próbálja újra később.",
   "common.apply": "Alkalmaz",
-  "portion.custom.manual_placeholder": "pl. 146.4"
+  "portion.custom.manual_placeholder": "pl. 146.4",
+  "portion.updated.msg.grams": "'%@' sikeresen frissítve %g g-ra."
 }

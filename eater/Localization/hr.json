@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Žao nam je, čini se da postoji problem s mrežom. Pokušajte ponovno kasnije. U međuvremenu, uživajte u svom zdravom obroku! 🥗",
   "error.network.generic": "Žao nam je. Problem s mrežnom vezom. Molimo pokušajte kasnije.",
   "common.apply": "Primijeni",
-  "portion.custom.manual_placeholder": "npr. 146.4"
+  "portion.custom.manual_placeholder": "npr. 146.4",
+  "portion.updated.msg.grams": "Uspješno ažurirano '%@' na %g g."
 }

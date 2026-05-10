@@ -669,5 +669,6 @@
   "error.network.food_timeout": "দুঃখিত, মনে হচ্ছে নেটওয়ার্ক সমস্যা আছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন। ইতিমধ্যে, আপনার স্বাস্থ্যকর খাবার উপভোগ করুন! 🥗",
   "error.network.generic": "আমরা দুঃখিত. নেটওয়ার্ক সংযোগ সমস্যা. অনুগ্রহ করে পরে আবার চেষ্টা করুন.",
   "common.apply": "প্রয়োগ করুন",
-  "portion.custom.manual_placeholder": "উদাঃ 146.4"
+  "portion.custom.manual_placeholder": "উদাঃ 146.4",
+  "portion.updated.msg.grams": "'%@' সফলভাবে %g গ্রামে আপডেট করা হয়েছে।"
 }

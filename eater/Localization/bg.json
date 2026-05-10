@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Съжаляваме, изглежда има проблем с мрежата. Моля, опитайте отново по-късно. Междувременно се насладете на здравословното си хранене! 🥗",
   "error.network.generic": "Съжаляваме. Проблем с мрежовата връзка. Моля, опитайте по-късно.",
   "common.apply": "Приложи",
-  "portion.custom.manual_placeholder": "напр. 146.4"
+  "portion.custom.manual_placeholder": "напр. 146.4",
+  "portion.updated.msg.grams": "Успешно обновихме '%@' на %g г."
 }

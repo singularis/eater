@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Прыносім прабачэнні, здаецца, ёсць праблема з сеткай. Калі ласка, паспрабуйце пазней. А пакуль, смачна есці! 🥗",
   "error.network.generic": "Прыносім прабачэнні. Памылка падключэння да сеткі. Калі ласка, паспрабуйце пазней.",
   "common.apply": "Ужыць",
-  "portion.custom.manual_placeholder": "напр. 146.4"
+  "portion.custom.manual_placeholder": "напр. 146.4",
+  "portion.updated.msg.grams": "'%@' паспяхова абноўлена да %g г."
 }

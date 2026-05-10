@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Atvainojamies, šķiet, ir tīkla problēma. Lūdzu, mēģiniet vēlreiz vēlāk. Tikmēr izbaudiet savu veselīgo maltīti! 🥗",
   "error.network.generic": "Atvainojiet. Tīkla savienojuma problēma. Lūdzu, vēlāk mēģiniet vēlreiz.",
   "common.apply": "Pielietot",
-  "portion.custom.manual_placeholder": "piem. 146.4"
+  "portion.custom.manual_placeholder": "piem. 146.4",
+  "portion.updated.msg.grams": "Veiksmīgi atjaunināts '%@' uz %g g."
 }

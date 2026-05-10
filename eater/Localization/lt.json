@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Atsiprašome, atrodo, kad yra tinklo problema. Bandykite dar kartą vėliau. Tuo tarpu, mėgaukitės sveiku maistu! 🥗",
   "error.network.generic": "Atsiprašome. Tinklo ryšio problema. Bandykite dar kartą vėliau.",
   "common.apply": "Taikyti",
-  "portion.custom.manual_placeholder": "pvz. 146.4"
+  "portion.custom.manual_placeholder": "pvz. 146.4",
+  "portion.updated.msg.grams": "Sėkmingai atnaujinta: '%@' iki %g g."
 }

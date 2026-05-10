@@ -694,5 +694,6 @@
   "error.network.food_timeout": "We're sorry, there seems to be a network issue. Please try again later. In the meantime, enjoy your healthy meal! 🥗",
   "error.network.generic": "We are sorry. Network connection. Please try later.",
   "common.apply": "Apply",
-  "portion.custom.manual_placeholder": "e.g. 146.4"
+  "portion.custom.manual_placeholder": "e.g. 146.4",
+  "portion.updated.msg.grams": "Successfully updated '%@' to %g g."
 }

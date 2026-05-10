@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Ospravedlňujeme sa, zdá sa, že je problém so sieťou. Skúste to prosím znova neskôr. Medzitým si vychutnajte svoje zdravé jedlo! 🥗",
   "error.network.generic": "Ospravedlňujeme sa. Problém so sieťovým pripojením. Skúste to znova neskôr.",
   "common.apply": "Použiť",
-  "portion.custom.manual_placeholder": "napr. 146.4"
+  "portion.custom.manual_placeholder": "napr. 146.4",
+  "portion.updated.msg.grams": "Úspešne aktualizované '%@' na %g g."
 }

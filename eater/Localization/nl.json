@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Sorry, er lijkt een netwerkprobleem te zijn. Probeer het later opnieuw. Geniet ondertussen van je gezonde maaltijd! 🥗",
   "error.network.generic": "Het spijt ons. Er is een probleem met de netwerkverbinding. Probeer het later opnieuw.",
   "common.apply": "Toepassen",
-  "portion.custom.manual_placeholder": "bijv. 146.4"
+  "portion.custom.manual_placeholder": "bijv. 146.4",
+  "portion.updated.msg.grams": "'%@' succesvol bijgewerkt naar %g g."
 }

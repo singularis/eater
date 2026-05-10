@@ -669,5 +669,6 @@
   "error.network.food_timeout": "ہم معذرت خواہ ہیں، ایسا لگتا ہے کہ نیٹ ورک کا کوئی مسئلہ ہے۔ براہ کرم بعد میں دوبارہ کوشش کریں۔ اس دوران، اپنے صحت مند کھانے سے لطف اندوز ہوں! 🥗",
   "error.network.generic": "ہم معذرت خواہ ہیں۔ نیٹ ورک کنکشن کا مسئلہ ہے۔ براہ کرم بعد میں دوبارہ کوشش کریں۔",
   "common.apply": "لاگو کریں",
-  "portion.custom.manual_placeholder": "مثال 146.4"
+  "portion.custom.manual_placeholder": "مثال 146.4",
+  "portion.updated.msg.grams": "'%@' کو کامیابی سے %g گرام میں اپڈیٹ کر دیا گیا۔"
 }

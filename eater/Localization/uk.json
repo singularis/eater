@@ -694,5 +694,6 @@
   "error.network.food_timeout": "Вибачте, здається, виникла проблема з мережею. Будь ласка, спробуйте ще раз пізніше. Тим часом, насолоджуйтесь своєю здоровою їжею! 🥗",
   "error.network.generic": "Вибачте. Проблема з підключенням до мережі. Будь ласка, спробуйте пізніше.",
   "common.apply": "Застосувати",
-  "portion.custom.manual_placeholder": "напр. 146.4"
+  "portion.custom.manual_placeholder": "напр. 146.4",
+  "portion.updated.msg.grams": "Успішно оновлено '%@' до %g г."
 }

@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Vabandame, tundub, et on võrguprobleem. Palun proovige hiljem uuesti. Seniks aga nautige oma tervislikku einet! 🥗",
   "error.network.generic": "Vabandame. Võrguühenduse probleem. Palun proovige hiljem uuesti.",
   "common.apply": "Rakenda",
-  "portion.custom.manual_placeholder": "nt 146.4"
+  "portion.custom.manual_placeholder": "nt 146.4",
+  "portion.updated.msg.grams": "'%@' edukalt värskendatud %g g-ni."
 }

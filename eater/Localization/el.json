@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Λυπούμαστε, φαίνεται να υπάρχει πρόβλημα δικτύου. Δοκιμάστε ξανά αργότερα. Στο μεταξύ, απολαύστε το υγιεινό σας γεύμα! 🥗",
   "error.network.generic": "Λυπούμαστε. Πρόβλημα σύνδεσης δικτύου. Παρακαλώ δοκιμάστε ξανά αργότερα.",
   "common.apply": "Εφαρμογή",
-  "portion.custom.manual_placeholder": "π.χ. 146.4"
+  "portion.custom.manual_placeholder": "π.χ. 146.4",
+  "portion.updated.msg.grams": "Ενημερώθηκε επιτυχώς το '%@' σε %g γρ."
 }

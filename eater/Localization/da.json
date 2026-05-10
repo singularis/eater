@@ -669,5 +669,6 @@
   "error.network.food_timeout": "Beklager, der ser ud til at være et netværksproblem. Prøv venligst igen senere. I mellemtiden kan du nyde dit sunde måltid! 🥗",
   "error.network.generic": "Vi beklager. Netværksforbindelsesproblem. Prøv venligst senere.",
   "common.apply": "Anvend",
-  "portion.custom.manual_placeholder": "f.eks. 146.4"
+  "portion.custom.manual_placeholder": "f.eks. 146.4",
+  "portion.updated.msg.grams": "Opdaterede '%@' til %g g."
 }
