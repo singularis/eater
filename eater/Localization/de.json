@@ -667,5 +667,7 @@
   "weight.take_photo": "Foto aufnehmen",
   "error.network.title": "Verbindungsfehler",
   "error.network.food_timeout": "Entschuldigung, es scheint ein Netzwerkproblem zu geben. Bitte versuche es später erneut. Lass dir in der Zwischenzeit dein gesundes Essen schmecken! 🥗",
-  "error.network.generic": "Es tut uns leid. Netzwerkverbindungsproblem. Bitte versuchen Sie es später noch einmal."
+  "error.network.generic": "Es tut uns leid. Netzwerkverbindungsproblem. Bitte versuchen Sie es später noch einmal.",
+  "common.apply": "Anwenden",
+  "portion.custom.manual_placeholder": "z.B. 146.4"
 }

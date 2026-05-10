@@ -667,5 +667,7 @@
   "weight.take_photo": "Uzņemt foto",
   "error.network.title": "Savienojuma kļūda",
   "error.network.food_timeout": "Atvainojamies, šķiet, ir tīkla problēma. Lūdzu, mēģiniet vēlreiz vēlāk. Tikmēr izbaudiet savu veselīgo maltīti! 🥗",
-  "error.network.generic": "Atvainojiet. Tīkla savienojuma problēma. Lūdzu, vēlāk mēģiniet vēlreiz."
+  "error.network.generic": "Atvainojiet. Tīkla savienojuma problēma. Lūdzu, vēlāk mēģiniet vēlreiz.",
+  "common.apply": "Pielietot",
+  "portion.custom.manual_placeholder": "piem. 146.4"
 }

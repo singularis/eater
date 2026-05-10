@@ -667,5 +667,7 @@
   "weight.take_photo": "Zrób zdjęcie",
   "error.network.title": "Błąd połączenia",
   "error.network.food_timeout": "Przepraszamy, wygląda na to, że jest problem z siecią. Spróbuj ponownie później. W międzyczasie ciesz się swoim zdrowym posiłkiem! 🥗",
-  "error.network.generic": "Przepraszamy. Problem z połączeniem sieciowym. Spróbuj ponownie później."
+  "error.network.generic": "Przepraszamy. Problem z połączeniem sieciowym. Spróbuj ponownie później.",
+  "common.apply": "Zastosuj",
+  "portion.custom.manual_placeholder": "np. 146.4"
 }

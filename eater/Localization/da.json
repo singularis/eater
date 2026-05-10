@@ -667,5 +667,7 @@
   "weight.take_photo": "Tag foto",
   "error.network.title": "Forbindelsesfejl",
   "error.network.food_timeout": "Beklager, der ser ud til at være et netværksproblem. Prøv venligst igen senere. I mellemtiden kan du nyde dit sunde måltid! 🥗",
-  "error.network.generic": "Vi beklager. Netværksforbindelsesproblem. Prøv venligst senere."
+  "error.network.generic": "Vi beklager. Netværksforbindelsesproblem. Prøv venligst senere.",
+  "common.apply": "Anvend",
+  "portion.custom.manual_placeholder": "f.eks. 146.4"
 }

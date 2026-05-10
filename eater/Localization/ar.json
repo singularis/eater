@@ -667,5 +667,7 @@
   "weight.take_photo": "التقاط صورة",
   "error.network.title": "خطأ في الاتصال",
   "error.network.food_timeout": "نعتذر، يبدو أن هناك مشكلة في الشبكة. يرجى المحاولة لاحقاً. في غضون ذلك، استمتع بوجبتك الصحية! 🥗",
-  "error.network.generic": "نحن نعتذر. يوجد مشكلة في الاتصال بالشبكة. يرجى المحاولة لاحقاً."
+  "error.network.generic": "نحن نعتذر. يوجد مشكلة في الاتصال بالشبكة. يرجى المحاولة لاحقاً.",
+  "common.apply": "تطبيق",
+  "portion.custom.manual_placeholder": "مثال 146.4"
 }

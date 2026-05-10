@@ -667,5 +667,7 @@
   "weight.take_photo": "Scatta foto",
   "error.network.title": "Errore di connessione",
   "error.network.food_timeout": "Ci dispiace, sembra esserci un problema di rete. Riprova più tardi. Nel frattempo, goditi il tuo pasto sano! 🥗",
-  "error.network.generic": "Siamo spiacenti. Problema di connessione di rete. Riprova più tardi."
+  "error.network.generic": "Siamo spiacenti. Problema di connessione di rete. Riprova più tardi.",
+  "common.apply": "Applica",
+  "portion.custom.manual_placeholder": "es. 146.4"
 }

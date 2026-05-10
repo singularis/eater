@@ -667,5 +667,7 @@
   "weight.take_photo": "Tee foto",
   "error.network.title": "Ühenduse viga",
   "error.network.food_timeout": "Vabandame, tundub, et on võrguprobleem. Palun proovige hiljem uuesti. Seniks aga nautige oma tervislikku einet! 🥗",
-  "error.network.generic": "Vabandame. Võrguühenduse probleem. Palun proovige hiljem uuesti."
+  "error.network.generic": "Vabandame. Võrguühenduse probleem. Palun proovige hiljem uuesti.",
+  "common.apply": "Rakenda",
+  "portion.custom.manual_placeholder": "nt 146.4"
 }

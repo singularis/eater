@@ -667,5 +667,7 @@
   "weight.take_photo": "Fă o fotografie",
   "error.network.title": "Eroare de conexiune",
   "error.network.food_timeout": "Ne pare rău, se pare că există o problemă de rețea. Vă rugăm să încercați din nou mai târziu. Între timp, bucurați-vă de masa sănătoasă! 🥗",
-  "error.network.generic": "Ne pare rău. Există o problemă de conexiune la rețea. Vă rugăm să încercați din nou mai târziu."
+  "error.network.generic": "Ne pare rău. Există o problemă de conexiune la rețea. Vă rugăm să încercați din nou mai târziu.",
+  "common.apply": "Aplică",
+  "portion.custom.manual_placeholder": "ex. 146.4"
 }

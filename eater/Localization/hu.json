@@ -667,5 +667,7 @@
   "weight.take_photo": "Fénykép készítése",
   "error.network.title": "Csatlakozási hiba",
   "error.network.food_timeout": "Sajnáljuk, úgy tűnik, hálózati probléma van. Kérjük, próbáld újra később. Addig is, élvezd az egészséges ételedet! 🥗",
-  "error.network.generic": "Sajnáljuk. Hálózati kapcsolati hiba. Kérjük, próbálja újra később."
+  "error.network.generic": "Sajnáljuk. Hálózati kapcsolati hiba. Kérjük, próbálja újra később.",
+  "common.apply": "Alkalmaz",
+  "portion.custom.manual_placeholder": "pl. 146.4"
 }

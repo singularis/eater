@@ -667,5 +667,7 @@
   "weight.take_photo": "Tirar foto",
   "error.network.title": "Erro de conexão",
   "error.network.food_timeout": "Desculpe, parece haver um problema de rede. Por favor, tente novamente mais tarde. Enquanto isso, aproveite sua refeição saudável! 🥗",
-  "error.network.generic": "Pedimos desculpas. Problema de conexão com a rede. Por favor, tente novamente mais tarde."
+  "error.network.generic": "Pedimos desculpas. Problema de conexão com a rede. Por favor, tente novamente mais tarde.",
+  "common.apply": "Aplicar",
+  "portion.custom.manual_placeholder": "ex. 146.4"
 }

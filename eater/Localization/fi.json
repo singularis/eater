@@ -667,5 +667,7 @@
   "weight.take_photo": "Ota kuva",
   "error.network.title": "Yhteysvirhe",
   "error.network.food_timeout": "Pahoittelut, verkossa näyttää olevan ongelma. Yritä myöhemmin uudelleen. Sillä välin, nauti terveellisestä ateriastasi! 🥗",
-  "error.network.generic": "Olemme pahoillamme. Verkkoyhteysongelma. Yritä myöhemmin uudelleen."
+  "error.network.generic": "Olemme pahoillamme. Verkkoyhteysongelma. Yritä myöhemmin uudelleen.",
+  "common.apply": "Käytä",
+  "portion.custom.manual_placeholder": "esim. 146.4"
 }

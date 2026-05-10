@@ -667,5 +667,7 @@
   "weight.take_photo": "Ħu ritratt",
   "error.network.title": "Żball ta' Konnessjoni",
   "error.network.food_timeout": "Jiddispjaċina, jidher li hemm problema ta' netwerk. Jekk jogħġbok ipprova mill-ġdid aktar tard. Sadanittant, gawdi l-ikla sana tiegħek! 🥗",
-  "error.network.generic": "Jiddispjaċina. Hemm problema bil-konnessjoni tan-netwerk. Jekk jogħġbok ipprova aktar tard."
+  "error.network.generic": "Jiddispjaċina. Hemm problema bil-konnessjoni tan-netwerk. Jekk jogħġbok ipprova aktar tard.",
+  "common.apply": "Applika",
+  "portion.custom.manual_placeholder": "e.ż. 146.4"
 }

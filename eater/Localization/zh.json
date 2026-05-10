@@ -667,5 +667,7 @@
   "weight.take_photo": "拍照",
   "error.network.title": "连接错误",
   "error.network.food_timeout": "很抱歉，似乎存在网络问题。请稍后再试。同时，请尽情享用您的健康大餐吧！ 🥗",
-  "error.network.generic": "很抱歉。网络连接出现问题。请稍后再试。"
+  "error.network.generic": "很抱歉。网络连接出现问题。请稍后再试。",
+  "common.apply": "应用",
+  "portion.custom.manual_placeholder": "例如 146.4"
 }

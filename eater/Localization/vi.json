@@ -667,5 +667,7 @@
   "weight.take_photo": "Chụp ảnh",
   "error.network.title": "Lỗi kết nối",
   "error.network.food_timeout": "Xin lỗi, dường như có sự cố mạng. Vui lòng thử lại sau. Trong lúc chờ đợi, hãy thưởng thức bữa ăn lành mạnh của bạn nhé! 🥗",
-  "error.network.generic": "Chúng tôi xin lỗi. Có vấn đề về kết nối mạng. Vui lòng thử lại sau."
+  "error.network.generic": "Chúng tôi xin lỗi. Có vấn đề về kết nối mạng. Vui lòng thử lại sau.",
+  "common.apply": "Áp dụng",
+  "portion.custom.manual_placeholder": "vd 146.4"
 }

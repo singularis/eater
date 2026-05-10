@@ -667,5 +667,7 @@
   "weight.take_photo": "Nufotografuoti",
   "error.network.title": "Ryšio klaida",
   "error.network.food_timeout": "Atsiprašome, atrodo, kad yra tinklo problema. Bandykite dar kartą vėliau. Tuo tarpu, mėgaukitės sveiku maistu! 🥗",
-  "error.network.generic": "Atsiprašome. Tinklo ryšio problema. Bandykite dar kartą vėliau."
+  "error.network.generic": "Atsiprašome. Tinklo ryšio problema. Bandykite dar kartą vėliau.",
+  "common.apply": "Taikyti",
+  "portion.custom.manual_placeholder": "pvz. 146.4"
 }

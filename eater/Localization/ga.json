@@ -667,5 +667,7 @@
   "weight.take_photo": "Tóg grianghraf",
   "error.network.title": "Earráid Cheangail",
   "error.network.food_timeout": "Tá brón orainn, is cosúil go bhfuil fadhb líonra ann. Bain triail eile as ar ball. Idir an dá linn, bain sult as do bhéile sláintiúil! 🥗",
-  "error.network.generic": "Tá brón orainn. Fadhb le nasc líonra. Bain triail eile as ar ball, le do thoil."
+  "error.network.generic": "Tá brón orainn. Fadhb le nasc líonra. Bain triail eile as ar ball, le do thoil.",
+  "common.apply": "Cuir i bhfeidhm",
+  "portion.custom.manual_placeholder": "m.sh. 146.4"
 }
