@@ -910,14 +910,14 @@ private class CustomPortionViewController: UIViewController {
     
     manualInputTextField.resignFirstResponder()
     dismiss(animated: true) { [weak self] in
-      self?.onPortionSelected(percentage)
+      self?.onPortionSelected(percentage, grams)
     }
   }
 
   @objc private func percentageButtonTapped(_ sender: UIButton) {
     let percentage = Int32(sender.tag)
     dismiss(animated: true) { [weak self] in
-      self?.onPortionSelected(percentage)
+      self?.onPortionSelected(percentage, nil)
     }
   }
 }
