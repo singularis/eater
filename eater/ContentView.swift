@@ -725,11 +725,6 @@ struct ContentView: View {
       sugar < sugarLower ? AppTheme.warning
       : (sugar <= sugarUpper ? AppTheme.success : AppTheme.danger)
 
-    let line1 = proLabel + " " + fmt(targets.protein) + grams
-    let line2 = fatLabel + " " + fmt(targets.fat) + grams
-    let line3 = carLabel + " " + fmt(targets.carbs) + grams
-    let line4 = sugLabel + " 40–50" + grams
-
     return Button(action: {
       HapticsService.shared.select()
       showMacroTargets = true

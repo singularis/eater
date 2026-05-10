@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package eater;
+
+message AlcoholDaySummary {
+  int32 total_drinks = 1;
+  int32 total_calories = 2;
+  repeated string drinks_of_day = 3;
+}
+
+message AlcoholEvent {
+  int64 time = 1;
+  string date = 2;
+  string drink_name = 3;
+  int32 calories = 4;
+  int32 quantity = 5;
+}
+
+message GetAlcoholLatestRequest {
+}
+
+message GetAlcoholLatestResponse {
+  AlcoholDaySummary today_summary = 1;
+}
+
+message GetAlcoholRangeRequest {
+  string start_date = 1;
+  string end_date = 2;
+}
+
+message GetAlcoholRangeResponse {
+  repeated AlcoholEvent events = 1;
+}
