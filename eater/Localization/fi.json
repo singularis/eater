@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Painon tallennus epäonnistui. Yritä uudelleen.",
   "weight.recorded.msg": "Painosi on tallennettu onnistuneesti.",
   "weight.recorded.title": "Paino tallennettu",
-  "weight.take_photo": "Ota kuva"
+  "weight.take_photo": "Ota kuva",
+  "error.network.title": "Yhteysvirhe",
+  "error.network.food_timeout": "Pahoittelut, verkossa näyttää olevan ongelma. Yritä myöhemmin uudelleen. Sillä välin, nauti terveellisestä ateriastasi! 🥗",
+  "error.network.generic": "Olemme pahoillamme. Verkkoyhteysongelma. Yritä myöhemmin uudelleen."
 }

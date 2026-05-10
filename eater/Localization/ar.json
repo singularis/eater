@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "فشل تسجيل وزنك. حاول مرة أخرى.",
   "weight.recorded.msg": "تم تسجيل وزنك بنجاح.",
   "weight.recorded.title": "تم تسجيل الوزن",
-  "weight.take_photo": "التقاط صورة"
+  "weight.take_photo": "التقاط صورة",
+  "error.network.title": "خطأ في الاتصال",
+  "error.network.food_timeout": "نعتذر، يبدو أن هناك مشكلة في الشبكة. يرجى المحاولة لاحقاً. في غضون ذلك، استمتع بوجبتك الصحية! 🥗",
+  "error.network.generic": "نحن نعتذر. يوجد مشكلة في الاتصال بالشبكة. يرجى المحاولة لاحقاً."
 }

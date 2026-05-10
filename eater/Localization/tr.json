@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Kilo kaydı başarısız. Tekrar deneyin.",
   "weight.recorded.msg": "Kilonuz başarıyla kaydedildi.",
   "weight.recorded.title": "Kilo kaydedildi",
-  "weight.take_photo": "Fotoğraf çek"
+  "weight.take_photo": "Fotoğraf çek",
+  "error.network.title": "Bağlantı Hatası",
+  "error.network.food_timeout": "Üzgünüz, bir ağ sorunu var gibi görünüyor. Lütfen daha sonra tekrar deneyin. Bu arada sağlıklı yemeğinizin tadını çıkarın! 🥗",
+  "error.network.generic": "Özür dileriz. Ağ bağlantısı sorunu var. Lütfen daha sonra tekrar deneyin."
 }

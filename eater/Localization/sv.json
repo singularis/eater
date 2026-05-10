@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Det gick inte att registrera vikten. Försök igen.",
   "weight.recorded.msg": "Din vikt har registrerats.",
   "weight.recorded.title": "Vikt registrerad",
-  "weight.take_photo": "Ta foto"
+  "weight.take_photo": "Ta foto",
+  "error.network.title": "Anslutningsfel",
+  "error.network.food_timeout": "Tyvärr verkar det finnas ett nätverksproblem. Vänligen försök igen senare. Njut av din hälsosamma måltid under tiden! 🥗",
+  "error.network.generic": "Vi ber om ursäkt. Nätverksanslutningsproblem. Vänligen försök igen senare."
 }

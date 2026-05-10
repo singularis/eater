@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Registrazione del peso non riuscita. Riprova.",
   "weight.recorded.msg": "Il tuo peso è stato registrato con successo.",
   "weight.recorded.title": "Peso registrato",
-  "weight.take_photo": "Scatta foto"
+  "weight.take_photo": "Scatta foto",
+  "error.network.title": "Errore di connessione",
+  "error.network.food_timeout": "Ci dispiace, sembra esserci un problema di rete. Riprova più tardi. Nel frattempo, goditi il tuo pasto sano! 🥗",
+  "error.network.generic": "Siamo spiacenti. Problema di connessione di rete. Riprova più tardi."
 }

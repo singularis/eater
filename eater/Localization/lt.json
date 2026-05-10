@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Nepavyko įrašyti svorio. Bandykite dar kartą.",
   "weight.recorded.msg": "Jūsų svoris sėkmingai įrašytas.",
   "weight.recorded.title": "Svoris įrašytas",
-  "weight.take_photo": "Nufotografuoti"
+  "weight.take_photo": "Nufotografuoti",
+  "error.network.title": "Ryšio klaida",
+  "error.network.food_timeout": "Atsiprašome, atrodo, kad yra tinklo problema. Bandykite dar kartą vėliau. Tuo tarpu, mėgaukitės sveiku maistu! 🥗",
+  "error.network.generic": "Atsiprašome. Tinklo ryšio problema. Bandykite dar kartą vėliau."
 }

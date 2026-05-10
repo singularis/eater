@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "체중 기록에 실패했습니다. 다시 시도하세요.",
   "weight.recorded.msg": "체중이 성공적으로 기록되었습니다.",
   "weight.recorded.title": "체중 기록됨",
-  "weight.take_photo": "사진 촬영"
+  "weight.take_photo": "사진 촬영",
+  "error.network.title": "연결 오류",
+  "error.network.food_timeout": "죄송합니다. 네트워크에 문제가 있는 것 같습니다. 나중에 다시 시도해 주세요. 그 동안 건강한 식사를 즐기세요! 🥗",
+  "error.network.generic": "죄송합니다. 네트워크 연결 문제가 발생했습니다. 나중에 다시 시도해주세요."
 }

@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Gewicht konnte nicht erfasst werden. Bitte erneut versuchen.",
   "weight.recorded.msg": "Ihr Gewicht wurde erfolgreich erfasst.",
   "weight.recorded.title": "Gewicht erfasst",
-  "weight.take_photo": "Foto aufnehmen"
+  "weight.take_photo": "Foto aufnehmen",
+  "error.network.title": "Verbindungsfehler",
+  "error.network.food_timeout": "Entschuldigung, es scheint ein Netzwerkproblem zu geben. Bitte versuche es später erneut. Lass dir in der Zwischenzeit dein gesundes Essen schmecken! 🥗",
+  "error.network.generic": "Es tut uns leid. Netzwerkverbindungsproblem. Bitte versuchen Sie es später noch einmal."
 }

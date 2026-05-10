@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Kaalu salvestamine ebaõnnestus. Proovige uuesti.",
   "weight.recorded.msg": "Teie kaal on edukalt salvestatud.",
   "weight.recorded.title": "Kaal salvestatud",
-  "weight.take_photo": "Tee foto"
+  "weight.take_photo": "Tee foto",
+  "error.network.title": "Ühenduse viga",
+  "error.network.food_timeout": "Vabandame, tundub, et on võrguprobleem. Palun proovige hiljem uuesti. Seniks aga nautige oma tervislikku einet! 🥗",
+  "error.network.generic": "Vabandame. Võrguühenduse probleem. Palun proovige hiljem uuesti."
 }

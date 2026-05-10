@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Záznam hmotnosti zlyhal. Skúste znova.",
   "weight.recorded.msg": "Vaša hmotnosť bola úspešne zaznamenaná.",
   "weight.recorded.title": "Hmotnosť zaznamenaná",
-  "weight.take_photo": "Odfotiť"
+  "weight.take_photo": "Odfotiť",
+  "error.network.title": "Chyba pripojenia",
+  "error.network.food_timeout": "Ospravedlňujeme sa, zdá sa, že je problém so sieťou. Skúste to prosím znova neskôr. Medzitým si vychutnajte svoje zdravé jedlo! 🥗",
+  "error.network.generic": "Ospravedlňujeme sa. Problém so sieťovým pripojením. Skúste to znova neskôr."
 }

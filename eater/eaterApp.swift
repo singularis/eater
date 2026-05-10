@@ -9,28 +9,33 @@ struct AppNameApp: App {
 
   var body: some Scene {
     WindowGroup {
-      if authService.isAuthenticated {
-        ContentView()
-          .preferredColorScheme(appSettings.scheme)
-          .tint(AppTheme.accent)
-          .environmentObject(authService)
-          .environmentObject(LanguageService.shared)
-          .environmentObject(appSettings)
-          .id(LanguageService.shared.currentCode)
-          .onAppear {
-            NotificationService.shared.initializeOnLaunch() 
-          }
-      } else {
-        LoginView()
-          .preferredColorScheme(appSettings.scheme)
-          .tint(AppTheme.accent)
-          .environmentObject(authService)
-          .environmentObject(LanguageService.shared)
-          .environmentObject(appSettings)
-          .id(LanguageService.shared.currentCode)
-          .onAppear {
-            NotificationService.shared.initializeOnLaunch()
-          }
+      Group {
+        if authService.isAuthenticated {
+          ContentView()
+            .preferredColorScheme(appSettings.scheme)
+            .tint(AppTheme.accent)
+            .environmentObject(authService)
+            .environmentObject(LanguageService.shared)
+            .environmentObject(appSettings)
+            .id(LanguageService.shared.currentCode)
+            .onAppear {
+              NotificationService.shared.initializeOnLaunch() 
+            }
+        } else {
+          LoginView()
+            .preferredColorScheme(appSettings.scheme)
+            .tint(AppTheme.accent)
+            .environmentObject(authService)
+            .environmentObject(LanguageService.shared)
+            .environmentObject(appSettings)
+            .id(LanguageService.shared.currentCode)
+            .onAppear {
+              NotificationService.shared.initializeOnLaunch()
+            }
+        }
+      }
+      .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ForceLogout"))) { _ in
+        authService.signOut()
       }
     }
   }

@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Ir-reġistrazzjoni tal-piż falliet. Erġa’ pprova.",
   "weight.recorded.msg": "Il-piż tiegħek ġie rreġistrat b’suċċess.",
   "weight.recorded.title": "Il-piż irreġistrat",
-  "weight.take_photo": "Ħu ritratt"
+  "weight.take_photo": "Ħu ritratt",
+  "error.network.title": "Żball ta' Konnessjoni",
+  "error.network.food_timeout": "Jiddispjaċina, jidher li hemm problema ta' netwerk. Jekk jogħġbok ipprova mill-ġdid aktar tard. Sadanittant, gawdi l-ikla sana tiegħek! 🥗",
+  "error.network.generic": "Jiddispjaċina. Hemm problema bil-konnessjoni tan-netwerk. Jekk jogħġbok ipprova aktar tard."
 }

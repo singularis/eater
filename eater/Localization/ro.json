@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Nu s-a putut înregistra greutatea. Încearcă din nou.",
   "weight.recorded.msg": "Greutatea ta a fost înregistrată cu succes.",
   "weight.recorded.title": "Greutate înregistrată",
-  "weight.take_photo": "Fă o fotografie"
+  "weight.take_photo": "Fă o fotografie",
+  "error.network.title": "Eroare de conexiune",
+  "error.network.food_timeout": "Ne pare rău, se pare că există o problemă de rețea. Vă rugăm să încercați din nou mai târziu. Între timp, bucurați-vă de masa sănătoasă! 🥗",
+  "error.network.generic": "Ne pare rău. Există o problemă de conexiune la rețea. Vă rugăm să încercați din nou mai târziu."
 }

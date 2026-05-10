@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Svara reģistrācija neizdevās. Mēģiniet vēlreiz.",
   "weight.recorded.msg": "Jūsu svars ir veiksmīgi reģistrēts.",
   "weight.recorded.title": "Svars reģistrēts",
-  "weight.take_photo": "Uzņemt foto"
+  "weight.take_photo": "Uzņemt foto",
+  "error.network.title": "Savienojuma kļūda",
+  "error.network.food_timeout": "Atvainojamies, šķiet, ir tīkla problēma. Lūdzu, mēģiniet vēlreiz vēlāk. Tikmēr izbaudiet savu veselīgo maltīti! 🥗",
+  "error.network.generic": "Atvainojiet. Tīkla savienojuma problēma. Lūdzu, vēlāk mēģiniet vēlreiz."
 }

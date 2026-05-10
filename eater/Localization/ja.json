@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "体重の記録に失敗しました。もう一度お試しください。",
   "weight.recorded.msg": "体重が正常に記録されました。",
   "weight.recorded.title": "体重を記録しました",
-  "weight.take_photo": "写真を撮る"
+  "weight.take_photo": "写真を撮る",
+  "error.network.title": "接続エラー",
+  "error.network.food_timeout": "申し訳ありませんが、ネットワークの問題が発生しているようです。後でもう一度お試しください。それまでは、健康的な食事をお楽しみください！ 🥗",
+  "error.network.generic": "申し訳ありません。ネットワーク接続の問題です。後でもう一度お試しください。"
 }

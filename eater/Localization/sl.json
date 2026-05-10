@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Zabeležitev teže ni uspela. Poskusi znova.",
   "weight.recorded.msg": "Tvoja teža je bila uspešno zabeležena.",
   "weight.recorded.title": "Teža zabeležena",
-  "weight.take_photo": "Posnemi fotografijo"
+  "weight.take_photo": "Posnemi fotografijo",
+  "error.network.title": "Napaka pri povezavi",
+  "error.network.food_timeout": "Žal se zdi, da gre za težavo z omrežjem. Prosimo, poskusite znova kasneje. Medtem uživajte v svojem zdravem obroku! 🥗",
+  "error.network.generic": "Žal nam je. Težava z omrežno povezavo. Prosimo, poskusite kasneje."
 }

@@ -46,6 +46,22 @@ class GRPCService {
           completion(nil, nil, error)
         }
       } else {
+        if let httpResponse = response as? HTTPURLResponse {
+          // Check for token update from backend
+          if let newToken = httpResponse.value(forHTTPHeaderField: "Authorization") {
+            let tokenString = newToken.replacingOccurrences(of: "Bearer ", with: "")
+            KeychainHelper.shared.save(tokenString, for: "auth_token")
+          } else if let newToken = httpResponse.value(forHTTPHeaderField: "x-new-token") {
+            KeychainHelper.shared.save(newToken, for: "auth_token")
+          }
+          
+          // Trigger logout if access is forbidden/unauthorized
+          if httpResponse.statusCode == 403 || httpResponse.statusCode == 401 {
+            DispatchQueue.main.async {
+              NotificationCenter.default.post(name: NSNotification.Name("ForceLogout"), object: nil)
+            }
+          }
+        }
         completion(data, response, error)
       }
     }
@@ -121,15 +137,28 @@ class GRPCService {
       let serializedData = try photoMessage.serializedData()
       guard
         var request = createRequest(
-          endpoint: "eater_receive_photo", httpMethod: "POST", body: serializedData)
+          endpoint: "eater_receive_photo", httpMethod: "POST", body: serializedData, timeout: 30.0)
       else {
         completion(false)
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
+          DispatchQueue.main.async {
+            if photoType == "weight_prompt" {
+              AlertHelper.showAlert(
+                title: loc("error.network.title", "Connection Error"),
+                message: loc("error.network.generic", "We are sorry. Network connection. Please try later.")
+              )
+            } else {
+              AlertHelper.showAlert(
+                title: loc("error.network.title", "Connection Error"),
+                message: loc("error.network.food_timeout", "We are sorry. Network connection. Please try later. And eat healthy food!")
+              )
+            }
+          }
           completion(false)
           return
         }

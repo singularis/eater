@@ -1258,6 +1258,7 @@ struct ContentView: View {
       initialText: product.name,
       confirmTitle: loc("common.save", "Save")
     ) { newName in
+      self.deletingProductTime = time
       // Re-analyze the existing photo using the user-provided dish name,
       // so calories/grams/health rating update (not just the title).
       GRPCService().modifyFoodRecord(
@@ -1269,6 +1270,7 @@ struct ContentView: View {
         manualFoodName: newName
       ) { success in
         DispatchQueue.main.async {
+          self.deletingProductTime = nil
           if success {
             // Clear caches and refresh so updated nutrition/health comes from backend
             StatisticsService.shared.clearExpiredCache()
@@ -1304,6 +1306,7 @@ struct ContentView: View {
       return
     }
     
+    self.deletingProductTime = time
     // Add 1 teaspoon of sugar (1 tsp = ~5g, ~20 calories)
     GRPCService().modifyFoodRecord(
       time: time,
@@ -1312,6 +1315,7 @@ struct ContentView: View {
       addedSugarTsp: 1.0
     ) { success in
       DispatchQueue.main.async {
+        self.deletingProductTime = nil
         if success {
           // Optimistically update UI + local store so sugar icon and calories/grams update immediately
           FoodExtrasStore.shared.addSugar(time: time, tsp: 1)
@@ -1378,9 +1382,11 @@ struct ContentView: View {
       return
     }
 
+    self.deletingProductTime = time
     GRPCService().modifyFoodRecord(time: time, userEmail: userEmail, percentage: percentage) {
       success in
       DispatchQueue.main.async {
+        self.deletingProductTime = nil
         if success {
           // Clear both caches since food was modified
           StatisticsService.shared.clearExpiredCache()

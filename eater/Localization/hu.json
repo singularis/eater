@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "A testsúly rögzítése nem sikerült. Próbálja újra.",
   "weight.recorded.msg": "Testsúlyát sikeresen rögzítettük.",
   "weight.recorded.title": "Testsúly rögzítve",
-  "weight.take_photo": "Fénykép készítése"
+  "weight.take_photo": "Fénykép készítése",
+  "error.network.title": "Csatlakozási hiba",
+  "error.network.food_timeout": "Sajnáljuk, úgy tűnik, hálózati probléma van. Kérjük, próbáld újra később. Addig is, élvezd az egészséges ételedet! 🥗",
+  "error.network.generic": "Sajnáljuk. Hálózati kapcsolati hiba. Kérjük, próbálja újra később."
 }

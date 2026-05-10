@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "记录体重失败。请重试。",
   "weight.recorded.msg": "您的体重已成功记录。",
   "weight.recorded.title": "体重已记录",
-  "weight.take_photo": "拍照"
+  "weight.take_photo": "拍照",
+  "error.network.title": "连接错误",
+  "error.network.food_timeout": "很抱歉，似乎存在网络问题。请稍后再试。同时，请尽情享用您的健康大餐吧！ 🥗",
+  "error.network.generic": "很抱歉。网络连接出现问题。请稍后再试。"
 }

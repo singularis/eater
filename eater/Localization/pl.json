@@ -664,5 +664,8 @@
   "weight.record_failed.msg": "Nie udało się zapisać wagi. Spróbuj ponownie.",
   "weight.recorded.msg": "Twoja waga została pomyślnie zapisana.",
   "weight.recorded.title": "Waga zapisana",
-  "weight.take_photo": "Zrób zdjęcie"
+  "weight.take_photo": "Zrób zdjęcie",
+  "error.network.title": "Błąd połączenia",
+  "error.network.food_timeout": "Przepraszamy, wygląda na to, że jest problem z siecią. Spróbuj ponownie później. W międzyczasie ciesz się swoim zdrowym posiłkiem! 🥗",
+  "error.network.generic": "Przepraszamy. Problem z połączeniem sieciowym. Spróbuj ponownie później."
 }
