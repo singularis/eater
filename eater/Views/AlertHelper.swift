@@ -542,11 +542,13 @@ class AlertHelper {
     let customPortionVC = CustomPortionViewController(
       foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
     let navController = UINavigationController(rootViewController: customPortionVC)
-    navController.modalPresentationStyle = .pageSheet
+    navController.modalPresentationStyle = UIModalPresentationStyle.pageSheet
 
-    if let sheet = navController.sheetPresentationController {
-      sheet.detents = [.medium()]
-      sheet.prefersGrabberVisible = true
+    if #available(iOS 15.0, *) {
+      if let sheet = navController.sheetPresentationController {
+        sheet.detents = [.medium()]
+        sheet.prefersGrabberVisible = true
+      }
     }
 
     rootViewController.present(navController, animated: true)
@@ -747,12 +749,12 @@ private final class CelebrationViewController: UIViewController {
 private class CustomPortionViewController: UIViewController {
   private let foodName: String
   private let originalWeight: Int
-  private let onPortionSelected: (Int32) -> Void
+  private let onPortionSelected: (Int32, Double?) -> Void
   private var scrollView: UIScrollView!
   private var stackView: UIStackView!
   private var manualInputTextField: UITextField!
 
-  init(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32) -> Void) {
+  init(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32, Double?) -> Void) {
     self.foodName = foodName
     self.originalWeight = originalWeight
     self.onPortionSelected = onPortionSelected
