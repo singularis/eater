@@ -1,4 +1,46 @@
 import SwiftUI
+import UIKit
+
+/// Weak holder for the ancestor `.page`-style TabView's own paging UIScrollView,
+/// discovered once per row via `PagingScrollViewFinder`.
+private final class PagingScrollViewRef {
+  weak var scrollView: UIScrollView?
+}
+
+/// Invisible, non-hit-testable helper that walks up the view hierarchy to find
+/// the ancestor paging scroll view. It never participates in touch delivery
+/// (`isUserInteractionEnabled = false`), so it can't ever intercept taps meant
+/// for the row's own buttons — it only exists to hand back a reference.
+private struct PagingScrollViewFinder: UIViewRepresentable {
+  let ref: PagingScrollViewRef
+
+  func makeUIView(context: Context) -> FinderView {
+    let view = FinderView()
+    view.isUserInteractionEnabled = false
+    view.backgroundColor = .clear
+    view.ref = ref
+    return view
+  }
+
+  func updateUIView(_ uiView: FinderView, context: Context) {}
+
+  final class FinderView: UIView {
+    weak var ref: PagingScrollViewRef?
+
+    override func didMoveToWindow() {
+      super.didMoveToWindow()
+      guard ref?.scrollView == nil else { return }
+      var current: UIView? = superview
+      while let view = current {
+        if let scrollView = view as? UIScrollView, scrollView.isPagingEnabled {
+          ref?.scrollView = scrollView
+          return
+        }
+        current = view.superview
+      }
+    }
+  }
+}
 
 // Custom swipe-to-delete (left) / swipe-to-camera (right) row so the gesture
 // wins over TabView's paging swipe.
@@ -17,6 +59,22 @@ private struct SwipeToDeleteRow<Content: View>: View {
   private let cameraTriggerThreshold: CGFloat = 70
   @State private var offset: CGFloat = 0
   @State private var showDeleteConfirmation = false
+  @State private var pagingScrollViewRef = PagingScrollViewRef()
+
+  /// The parent TabView(.page) claims horizontal drags for itself very early —
+  /// often before our own DragGesture (minimumDistance: 24) even starts
+  /// recognizing — which is why swiping a row used to do nothing. This
+  /// zero-threshold gesture runs alongside it purely to disable the ancestor's
+  /// paging gesture the instant a horizontal drag begins, so our real swipe
+  /// gesture below gets an uncontested shot at the touch.
+  private func releasePagingGesture(for translation: CGSize) {
+    guard abs(translation.width) > abs(translation.height), abs(translation.width) > 4 else { return }
+    pagingScrollViewRef.scrollView?.panGestureRecognizer.isEnabled = false
+  }
+
+  private func restorePagingGesture() {
+    pagingScrollViewRef.scrollView?.panGestureRecognizer.isEnabled = true
+  }
 
   private func animateSwipeHintPulse() {
     withAnimation(.easeOut(duration: 0.35)) { offset = cameraRevealMax }
@@ -105,6 +163,15 @@ private struct SwipeToDeleteRow<Content: View>: View {
           .disabled(isDisabled)
           .opacity(isDisabled ? 0.5 : 1)
         }
+        .simultaneousGesture(
+          DragGesture(minimumDistance: 0)
+            .onChanged { value in
+              releasePagingGesture(for: value.translation)
+            }
+            .onEnded { _ in
+              restorePagingGesture()
+            }
+        )
         .highPriorityGesture(
           DragGesture(minimumDistance: 24)
             .onChanged { value in
@@ -123,11 +190,17 @@ private struct SwipeToDeleteRow<Content: View>: View {
             }
         )
     }
+    .background(PagingScrollViewFinder(ref: pagingScrollViewRef))
     .clipped()
     .onChange(of: playSwipeHintPulse) { _, newValue in
       if newValue {
         animateSwipeHintPulse()
       }
+    }
+    .onDisappear {
+      // Safety net: never leave the page-swipe gesture disabled if a row
+      // disappears mid-drag (e.g. the item was deleted or scrolled away).
+      restorePagingGesture()
     }
     .alert(
       loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
