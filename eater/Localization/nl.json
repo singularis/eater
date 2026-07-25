@@ -631,6 +631,8 @@
   "share.custom.title": "Aangepast percentage",
   "share.fail.msg": "Kon niet delen met %@",
   "share.fail.title": "Mislukt",
+  "share.login_required.message": "Maak een account aan of log in om eten met vrienden te delen.",
+  "share.login_required.title": "Inloggen vereist",
   "share.percentage.custom": "Aangepast...",
   "share.percentage.title": "Hoeveel heeft je vriend gegeten?",
   "share.success.msg": "%d%% gedeeld met %@",

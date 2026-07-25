@@ -631,6 +631,8 @@
   "share.custom.title": "Céatadán saincheaptha",
   "share.fail.msg": "Níorbh fhéidir roinnt le %@",
   "share.fail.title": "Theip",
+  "share.login_required.message": "Cruthaigh cuntas nó logáil isteach chun bia a roinnt le cairde.",
+  "share.login_required.title": "Logáil isteach ag teastáil",
   "share.percentage.custom": "Saincheaptha...",
   "share.percentage.title": "Cé mhéad a d'ith do chara?",
   "share.success.msg": "Roinnte %d%% le %@",

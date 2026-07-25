@@ -632,6 +632,8 @@
   "share.custom.title": "Mukautettu prosenttiosuus",
   "share.fail.msg": "Jakaminen käyttäjän %@ kanssa epäonnistui",
   "share.fail.title": "Epäonnistui",
+  "share.login_required.message": "Luo tili tai kirjaudu sisään jakaaksesi ruokaa ystävien kanssa.",
+  "share.login_required.title": "Kirjautuminen vaaditaan",
   "share.percentage.custom": "Mukautettu...",
   "share.percentage.title": "Kuinka paljon ystäväsi söi?",
   "share.success.msg": "Jaettu %d%% käyttäjän %@ kanssa",

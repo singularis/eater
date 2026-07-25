@@ -632,6 +632,8 @@
   "share.custom.title": "Власний відсоток",
   "share.fail.msg": "Не вдалося поділитися з %@",
   "share.fail.title": "Помилка",
+  "share.login_required.message": "Створіть обліковий запис або увійдіть, щоб ділитися їжею з друзями.",
+  "share.login_required.title": "Потрібен вхід",
   "share.percentage.custom": "Власний...",
   "share.percentage.title": "Скільки з'їв ваш друг?",
   "share.success.msg": "Поширено %d%% з %@",

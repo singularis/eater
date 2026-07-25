@@ -631,6 +631,8 @@
   "share.custom.title": "Kohandatud protsent",
   "share.fail.msg": "Ei õnnestunud jagada kasutajaga %@",
   "share.fail.title": "Ebaõnnestus",
+  "share.login_required.message": "Toidu jagamiseks sõpradega loo konto või logi sisse.",
+  "share.login_required.title": "Nõutav on sisselogimine",
   "share.percentage.custom": "Kohandatud...",
   "share.percentage.title": "Kui palju su sõber sõi?",
   "share.success.msg": "Jagatud %d%% kasutajaga %@",

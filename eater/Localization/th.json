@@ -632,6 +632,8 @@
   "share.custom.title": "เปอร์เซ็นต์กำหนดเอง",
   "share.fail.msg": "ไม่สามารถแชร์กับ %@ ได้",
   "share.fail.title": "ล้มเหลว",
+  "share.login_required.message": "สร้างบัญชีหรือเข้าสู่ระบบเพื่อแชร์อาหารกับเพื่อน",
+  "share.login_required.title": "ต้องเข้าสู่ระบบ",
   "share.percentage.custom": "กำหนดเอง...",
   "share.percentage.title": "เพื่อนของคุณกินไปเท่าไหร่?",
   "share.success.msg": "แชร์ %d%% กับ %@",

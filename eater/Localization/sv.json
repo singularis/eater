@@ -631,6 +631,8 @@
   "share.custom.title": "Anpassad procent",
   "share.fail.msg": "Det gick inte att dela med %@",
   "share.fail.title": "Misslyckades",
+  "share.login_required.message": "Skapa ett konto eller logga in för att dela mat med vänner.",
+  "share.login_required.title": "Inloggning krävs",
   "share.percentage.custom": "Anpassad...",
   "share.percentage.title": "Hur mycket åt din vän?",
   "share.success.msg": "Delade %d%% med %@",

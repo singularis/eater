@@ -632,6 +632,8 @@
   "share.custom.title": "نسبة مخصصة",
   "share.fail.msg": "تعذرت المشاركة مع %@",
   "share.fail.title": "فشل",
+  "share.login_required.message": "أنشئ حسابًا أو سجّل الدخول لمشاركة الطعام مع أصدقائك.",
+  "share.login_required.title": "تسجيل الدخول مطلوب",
   "share.percentage.custom": "مخصص...",
   "share.percentage.title": "كم أكل صديقك؟",
   "share.success.msg": "تمت المشاركة بنسبة %d%% مع %@",

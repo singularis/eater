@@ -632,6 +632,8 @@
   "share.custom.title": "Perċentwal personalizzat",
   "share.fail.msg": "Ma setax jaqsam ma' %@",
   "share.fail.title": "Falla",
+  "share.login_required.message": "Oħloq kont jew illogja biex taqsam ikel mal-ħbieb.",
+  "share.login_required.title": "Meħtieġ Login",
   "share.percentage.custom": "Personalizzat...",
   "share.percentage.title": "Kemm kiel il-ħabib tiegħek?",
   "share.success.msg": "Maqsum %d%% ma' %@",

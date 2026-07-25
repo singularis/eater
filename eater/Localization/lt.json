@@ -632,6 +632,8 @@
   "share.custom.title": "Pasirinktinis procentas",
   "share.fail.msg": "Nepavyko bendrinti su %@",
   "share.fail.title": "Nepavyko",
+  "share.login_required.message": "Sukurkite paskyrą arba prisijunkite, kad galėtumėte dalytis maistu su draugais.",
+  "share.login_required.title": "Reikia prisijungti",
   "share.percentage.custom": "Pasirinktinai...",
   "share.percentage.title": "Kiek suvalgė jūsų draugas?",
   "share.success.msg": "Bendrinta %d%% su %@",

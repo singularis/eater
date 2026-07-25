@@ -631,6 +631,8 @@
   "share.custom.title": "Benutzerdefinierter Prozentsatz",
   "share.fail.msg": "Teilen mit %@ nicht möglich",
   "share.fail.title": "Fehlgeschlagen",
+  "share.login_required.message": "Erstelle ein Konto oder melde dich an, um Mahlzeiten mit Freunden zu teilen.",
+  "share.login_required.title": "Anmeldung erforderlich",
   "share.percentage.custom": "Benutzerdefiniert...",
   "share.percentage.title": "Wie viel hat dein Freund gegessen?",
   "share.success.msg": "%d%% mit %@ geteilt",

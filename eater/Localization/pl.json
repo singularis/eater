@@ -632,6 +632,8 @@
   "share.custom.title": "Niestandardowy procent",
   "share.fail.msg": "Nie udało się udostępnić dla %@",
   "share.fail.title": "Niepowodzenie",
+  "share.login_required.message": "Załóż konto lub zaloguj się, aby udostępniać jedzenie znajomym.",
+  "share.login_required.title": "Wymagane logowanie",
   "share.percentage.custom": "Niestandardowy...",
   "share.percentage.title": "Ile zjadł twój znajomy?",
   "share.success.msg": "Udostępniono %d%% dla %@",

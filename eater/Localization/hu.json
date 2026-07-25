@@ -632,6 +632,8 @@
   "share.custom.title": "Egyéni százalék",
   "share.fail.msg": "Nem sikerült megosztani ezzel: %@",
   "share.fail.title": "Sikertelen",
+  "share.login_required.message": "Hozz létre fiókot, vagy jelentkezz be, hogy ételt oszthass meg barátaiddal.",
+  "share.login_required.title": "Bejelentkezés szükséges",
   "share.percentage.custom": "Egyéni...",
   "share.percentage.title": "Mennyit evett a barátod?",
   "share.success.msg": "%d%% megosztva vele: %@",

@@ -631,6 +631,8 @@
   "share.custom.title": "Odstotek po meri",
   "share.fail.msg": "Deljenje z %@ ni uspelo",
   "share.fail.title": "Neuspešno",
+  "share.login_required.message": "Ustvarite račun ali se prijavite, če želite deliti hrano s prijatelji.",
+  "share.login_required.title": "Potrebna je prijava",
   "share.percentage.custom": "Po meri...",
   "share.percentage.title": "Koliko je pojedel tvoj prijatelj?",
   "share.success.msg": "Deljeno %d%% z %@",

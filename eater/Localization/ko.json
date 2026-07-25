@@ -632,6 +632,8 @@
   "share.custom.title": "사용자 지정 비율",
   "share.fail.msg": "%@님과 공유할 수 없습니다",
   "share.fail.title": "실패",
+  "share.login_required.message": "친구와 음식을 공유하려면 계정을 만들거나 로그인하세요.",
+  "share.login_required.title": "로그인이 필요합니다",
   "share.percentage.custom": "사용자 지정...",
   "share.percentage.title": "친구가 얼마나 먹었나요?",
   "share.success.msg": "%@님과 %d%% 공유됨",

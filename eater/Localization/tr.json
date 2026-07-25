@@ -631,6 +631,8 @@
   "share.custom.title": "Özel yüzde",
   "share.fail.msg": "%@ ile paylaşılamadı",
   "share.fail.title": "Başarısız",
+  "share.login_required.message": "Arkadaşlarınla yemek paylaşmak için hesap oluştur veya giriş yap.",
+  "share.login_required.title": "Giriş gerekli",
   "share.percentage.custom": "Özel...",
   "share.percentage.title": "Arkadaşın ne kadar yedi?",
   "share.success.msg": "%@ ile %%%d paylaşıldı",

@@ -631,6 +631,8 @@
   "share.custom.title": "Персонализиран процент",
   "share.fail.msg": "Неуспешно споделяне с %@",
   "share.fail.title": "Неуспешно",
+  "share.login_required.message": "Създайте акаунт или влезте, за да споделяте храна с приятели.",
+  "share.login_required.title": "Изисква се вход",
   "share.percentage.custom": "Персонализирано...",
   "share.percentage.title": "Колко изяде вашият приятел?",
   "share.success.msg": "Споделено %d%% с %@",

@@ -631,6 +631,8 @@
   "share.custom.title": "Percentuale personalizzata",
   "share.fail.msg": "Impossibile condividere con %@",
   "share.fail.title": "Non riuscito",
+  "share.login_required.message": "Crea un account o accedi per condividere il cibo con gli amici.",
+  "share.login_required.title": "Accesso richiesto",
   "share.percentage.custom": "Personalizzato...",
   "share.percentage.title": "Quanto ha mangiato il tuo amico?",
   "share.success.msg": "Condiviso %d%% con %@",

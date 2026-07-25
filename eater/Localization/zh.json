@@ -632,6 +632,8 @@
   "share.custom.title": "自定义百分比",
   "share.fail.msg": "无法与 %@ 共享",
   "share.fail.title": "失败",
+  "share.login_required.message": "创建账户或登录以与朋友分享美食。",
+  "share.login_required.title": "需要登录",
   "share.percentage.custom": "自定义...",
   "share.percentage.title": "你的朋友吃了多少？",
   "share.success.msg": "已与 %@ 共享 %d%%",

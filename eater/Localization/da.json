@@ -632,6 +632,8 @@
   "share.custom.title": "Brugerdefineret procent",
   "share.fail.msg": "Kunne ikke dele med %@",
   "share.fail.title": "Mislykkedes",
+  "share.login_required.message": "Opret en konto eller log ind for at dele mad med venner.",
+  "share.login_required.title": "Login påkrævet",
   "share.percentage.custom": "Brugerdefineret...",
   "share.percentage.title": "Hvor meget spiste din ven?",
   "share.success.msg": "Delt %d%% med %@",

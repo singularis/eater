@@ -632,6 +632,8 @@
   "share.custom.title": "Vlastní procento",
   "share.fail.msg": "Nepodařilo se sdílet s %@",
   "share.fail.title": "Selhalo",
+  "share.login_required.message": "Vytvořte si účet nebo se přihlaste, abyste mohli sdílet jídlo s přáteli.",
+  "share.login_required.title": "Vyžadováno přihlášení",
   "share.percentage.custom": "Vlastní...",
   "share.percentage.title": "Kolik toho váš přítel snědl?",
   "share.success.msg": "Sdíleno %d%% s %@",

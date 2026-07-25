@@ -11,8 +11,10 @@ struct ProductRowView: View {
   var onAddFoodExtra: ((Int64, String, String) -> Void)? = nil  // time, foodName, extraKey
   let onShareSuccess: () -> Void
 
+  @EnvironmentObject private var authService: AuthenticationService
   @State private var remoteImage: UIImage? = nil
   @State private var isLoadingImage: Bool = false
+  @State private var showShareLoginPrompt = false
 
   /// Returns the best available image: local first, then remote fetched
   private var displayImage: UIImage? {
@@ -183,9 +185,13 @@ struct ProductRowView: View {
   private var shareIconButton: some View {
     Button(action: {
       HapticsService.shared.lightImpact()
-      AlertHelper.showShareFriends(
-        foodName: product.name, time: product.time, imageId: product.imageId,
-        onShareSuccess: onShareSuccess)
+      if authService.isAnonymous {
+        showShareLoginPrompt = true
+      } else {
+        AlertHelper.showShareFriends(
+          foodName: product.name, time: product.time, imageId: product.imageId,
+          onShareSuccess: onShareSuccess)
+      }
     }) {
       Image(systemName: "square.and.arrow.up")
         .font(.system(size: 14, weight: .semibold))
@@ -196,6 +202,19 @@ struct ProductRowView: View {
         .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
     }
     .buttonStyle(.plain)
+    .alert(
+      loc("share.login_required.title", "Login Required"), isPresented: $showShareLoginPrompt
+    ) {
+      Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
+      Button(loc("login.prompt.confirm", "Login Now")) {
+        authService.signOut()
+      }
+    } message: {
+      Text(
+        loc(
+          "share.login_required.message",
+          "Create an account or log in to share food with friends."))
+    }
   }
 
   private var moreOptionsIconButton: some View {

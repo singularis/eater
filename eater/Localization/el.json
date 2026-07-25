@@ -632,6 +632,8 @@
   "share.custom.title": "Προσαρμοσμένο ποσοστό",
   "share.fail.msg": "Δεν ήταν δυνατή η κοινοποίηση με %@",
   "share.fail.title": "Απέτυχε",
+  "share.login_required.message": "Δημιουργήστε λογαριασμό ή συνδεθείτε για να μοιράζεστε φαγητό με φίλους.",
+  "share.login_required.title": "Απαιτείται σύνδεση",
   "share.percentage.custom": "Προσαρμογή...",
   "share.percentage.title": "Πόσο έφαγε ο φίλος σου;",
   "share.success.msg": "Κοινοποιήθηκε %d%% με %@",

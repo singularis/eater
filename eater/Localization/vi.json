@@ -631,6 +631,8 @@
   "share.custom.title": "Tỷ lệ phần trăm tùy chỉnh",
   "share.fail.msg": "Không thể chia sẻ với %@",
   "share.fail.title": "Thất bại",
+  "share.login_required.message": "Tạo tài khoản hoặc đăng nhập để chia sẻ món ăn với bạn bè.",
+  "share.login_required.title": "Yêu cầu đăng nhập",
   "share.percentage.custom": "Tùy chỉnh...",
   "share.percentage.title": "Bạn của bạn đã ăn bao nhiêu?",
   "share.success.msg": "Đã chia sẻ %d%% với %@",

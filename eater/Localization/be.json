@@ -632,6 +632,8 @@
   "share.custom.title": "Уласны працэнт",
   "share.fail.msg": "Не ўдалося падзяліцца з %@",
   "share.fail.title": "Памылка",
+  "share.login_required.message": "Стварыце ўліковы запіс або ўвайдзіце, каб дзяліцца ежай з сябрамі.",
+  "share.login_required.title": "Патрэбны ўваход",
   "share.percentage.custom": "Уласны...",
   "share.percentage.title": "Колькі з'еў ваш сябар?",
   "share.success.msg": "Абагулена %d%% з %@",

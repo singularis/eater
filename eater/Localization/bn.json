@@ -632,6 +632,8 @@
   "share.custom.title": "কাস্টম শতাংশ",
   "share.fail.msg": "%@ এর সাথে শেয়ার করা যায়নি",
   "share.fail.title": "ব্যর্থ হয়েছে",
+  "share.login_required.message": "বন্ধুদের সাথে খাবার শেয়ার করতে অ্যাকাউন্ট তৈরি করুন বা লগইন করুন।",
+  "share.login_required.title": "লগইন প্রয়োজন",
   "share.percentage.custom": "কাস্টম...",
   "share.percentage.title": "আপনার বন্ধু কতটা খেয়েছে?",
   "share.success.msg": "%@ এর সাথে %d%% শেয়ার করা হয়েছে",
