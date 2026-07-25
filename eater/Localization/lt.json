@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Ištrinti maistą?",
   "list.empty.subtitle": "Pridėkite savo pirmą patiekalą iš pradinio ekrano.",
   "list.empty.title": "Dar nėra patiekalų",
+  "list.swipe_camera.hint": "Patarimas: perbraukite maistą į dešinę, kad greitai nufotografuotumėte dar kartą",
   "loading.food": "Kraunami maisto duomenys...",
   "loading.photo": "Analizuojama maisto nuotrauka...",
   "loading.scale": "Skaitomos svarstyklės...",

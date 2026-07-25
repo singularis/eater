@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Odstrániť jedlo?",
   "list.empty.subtitle": "Pridajte svoje prvé jedlo z domovskej obrazovky.",
   "list.empty.title": "Zatiaľ žiadne jedlá",
+  "list.swipe_camera.hint": "Tip: Potiahnutím jedla doprava rýchlo odfotíte ďalší záber",
   "loading.food": "Načítanie údajov o jedle...",
   "loading.photo": "Analýza fotografie jedla...",
   "loading.scale": "Čítanie váhy...",

@@ -7,6 +7,9 @@ private struct SwipeToDeleteRow<Content: View>: View {
   let isDisabled: Bool
   let deleteLabel: String
   var onSwipeRight: (() -> Void)? = nil
+  /// Toggled once by the parent list to nudge this row and reveal the swipe-camera
+  /// affordance for first-time discovery, without actually opening the camera.
+  var playSwipeHintPulse: Bool = false
   @ViewBuilder let content: () -> Content
 
   private let deleteWidth: CGFloat = 100
@@ -14,6 +17,13 @@ private struct SwipeToDeleteRow<Content: View>: View {
   private let cameraTriggerThreshold: CGFloat = 70
   @State private var offset: CGFloat = 0
   @State private var showDeleteConfirmation = false
+
+  private func animateSwipeHintPulse() {
+    withAnimation(.easeOut(duration: 0.35)) { offset = cameraRevealMax }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+      withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { offset = 0 }
+    }
+  }
 
   /// 0...1 — hide red background when not swiping left
   private var deleteRevealProgress: CGFloat {
@@ -114,6 +124,11 @@ private struct SwipeToDeleteRow<Content: View>: View {
         )
     }
     .clipped()
+    .onChange(of: playSwipeHintPulse) { _, newValue in
+      if newValue {
+        animateSwipeHintPulse()
+      }
+    }
     .alert(
       loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
     ) {
@@ -146,8 +161,36 @@ struct ProductListView: View {
   let onShareSuccess: () -> Void
   var onSwipeRight: (() -> Void)? = nil
 
+  private static let swipeCameraHintKey = "hasSeenSwipeCameraHint"
+  @State private var showSwipeCameraHintBanner = false
+  @State private var swipeHintPulseTrigger = false
+
   var sortedProducts: [Product] {
     products.sorted { $0.time > $1.time }
+  }
+
+  private var shouldOfferSwipeCameraHint: Bool {
+    onSwipeRight != nil && !KeychainHelper.shared.getBool(Self.swipeCameraHintKey)
+  }
+
+  private func dismissSwipeCameraHint() {
+    KeychainHelper.shared.setBool(true, for: Self.swipeCameraHintKey)
+    withAnimation(.easeOut(duration: 0.25)) {
+      showSwipeCameraHintBanner = false
+    }
+  }
+
+  private func maybeShowSwipeCameraHint() {
+    guard shouldOfferSwipeCameraHint else { return }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+      withAnimation(.easeIn(duration: 0.3)) {
+        showSwipeCameraHintBanner = true
+      }
+      swipeHintPulseTrigger = true
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+        dismissSwipeCameraHint()
+      }
+    }
   }
 
   var body: some View {
@@ -177,39 +220,86 @@ struct ProductListView: View {
           onRefresh()
         }
       } else {
-        List {
-          ForEach(sortedProducts) { product in
-            SwipeToDeleteRow(
-              onDelete: { onDelete(product.time) },
-              isDisabled: deletingProductTime == product.time,
-              deleteLabel: loc("common.remove", "Remove"),
-              onSwipeRight: onSwipeRight
-            ) {
-              ProductRowView(
-                product: product,
-                deletingProductTime: deletingProductTime,
-                onPhotoTap: onPhotoTap,
-                onModify: onModify,
-                onTryAgain: onTryAgain,
-                onAddSugar: onAddSugar,
-                onAddDrinkExtra: onAddDrinkExtra,
-                onAddFoodExtra: onAddFoodExtra,
-                onShareSuccess: onShareSuccess
-              )
+        ZStack(alignment: .top) {
+          List {
+            ForEach(sortedProducts) { product in
+              SwipeToDeleteRow(
+                onDelete: { onDelete(product.time) },
+                isDisabled: deletingProductTime == product.time,
+                deleteLabel: loc("common.remove", "Remove"),
+                onSwipeRight: onSwipeRight,
+                playSwipeHintPulse: product.time == sortedProducts.first?.time && swipeHintPulseTrigger
+              ) {
+                ProductRowView(
+                  product: product,
+                  deletingProductTime: deletingProductTime,
+                  onPhotoTap: onPhotoTap,
+                  onModify: onModify,
+                  onTryAgain: onTryAgain,
+                  onAddSugar: onAddSugar,
+                  onAddDrinkExtra: onAddDrinkExtra,
+                  onAddFoodExtra: onAddFoodExtra,
+                  onShareSuccess: onShareSuccess
+                )
+              }
+              .listRowBackground(Color.clear)
+              .listRowSeparatorTint(AppTheme.textSecondary.opacity(0.3))
+              .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
             }
-            .listRowBackground(Color.clear)
-            .listRowSeparatorTint(AppTheme.textSecondary.opacity(0.3))
-            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+          }
+          .scrollContentBackground(.hidden)
+          .listStyle(.plain)
+          .padding(.top, 0)
+          .refreshable {
+            onRefresh()
+          }
+          .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.2), value: products)
+          .onAppear {
+            maybeShowSwipeCameraHint()
+          }
+
+          if showSwipeCameraHintBanner {
+            SwipeCameraHintBanner(onDismiss: dismissSwipeCameraHint)
+              .padding(.horizontal, 16)
+              .padding(.top, 8)
+              .transition(.move(edge: .top).combined(with: .opacity))
+              .zIndex(1)
           }
         }
-        .scrollContentBackground(.hidden)
-        .listStyle(.plain)
-        .padding(.top, 0)
-        .refreshable {
-          onRefresh()
-        }
-        .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.2), value: products)
       }
+    }
+  }
+}
+
+/// One-time, dismissible hint that teaches the swipe-right-for-camera gesture.
+private struct SwipeCameraHintBanner: View {
+  let onDismiss: () -> Void
+
+  var body: some View {
+    HStack(spacing: 10) {
+      Image(systemName: "camera.fill")
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundColor(AppTheme.success)
+
+      Text(loc("list.swipe_camera.hint", "Tip: Swipe a meal right to quickly snap another photo"))
+        .font(.footnote.weight(.medium))
+        .foregroundColor(AppTheme.textPrimary)
+        .fixedSize(horizontal: false, vertical: true)
+
+      Spacer(minLength: 4)
+
+      Button(action: onDismiss) {
+        Image(systemName: "xmark.circle.fill")
+          .font(.system(size: 16))
+          .foregroundColor(AppTheme.textSecondary.opacity(0.6))
+      }
+      .buttonStyle(.plain)
+    }
+    .padding(.horizontal, 14)
+    .padding(.vertical, 10)
+    .cardContainer(padding: 0)
+    .onTapGesture {
+      onDismiss()
     }
   }
 }

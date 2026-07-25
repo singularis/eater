@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Ștergeți alimentul?",
   "list.empty.subtitle": "Adaugă prima masă din ecranul de pornire.",
   "list.empty.title": "Încă nu există mese",
+  "list.swipe_camera.hint": "Sfat: Glisează o masă spre dreapta pentru a face rapid o altă fotografie",
   "loading.food": "Se încarcă datele alimentare...",
   "loading.photo": "Se analizează fotografia mâncării...",
   "loading.scale": "Se citește cântarul...",

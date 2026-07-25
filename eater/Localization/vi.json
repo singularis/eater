@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Xóa món ăn?",
   "list.empty.subtitle": "Thêm bữa ăn đầu tiên của bạn từ màn hình chính.",
   "list.empty.title": "Chưa có bữa ăn nào",
+  "list.swipe_camera.hint": "Mẹo: Vuốt một món ăn sang phải để nhanh chóng chụp thêm ảnh khác",
   "loading.food": "Đang tải dữ liệu thức ăn...",
   "loading.photo": "Đang phân tích ảnh thức ăn...",
   "loading.scale": "Đang đọc cân...",

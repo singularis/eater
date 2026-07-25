@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Slet mad?",
   "list.empty.subtitle": "Tilføj dit første måltid fra startskærmen.",
   "list.empty.title": "Ingen måltider endnu",
+  "list.swipe_camera.hint": "Tip: Stryg et måltid til højre for hurtigt at tage endnu et billede",
   "loading.food": "Indlæser maddata...",
   "loading.photo": "Analyserer madfoto...",
   "loading.scale": "Læser vægt...",

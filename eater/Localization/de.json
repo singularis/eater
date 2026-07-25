@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Essen löschen?",
   "list.empty.subtitle": "Fügen Sie Ihre erste Mahlzeit vom Startbildschirm hinzu.",
   "list.empty.title": "Noch keine Mahlzeiten",
+  "list.swipe_camera.hint": "Tipp: Wische eine Mahlzeit nach rechts, um schnell ein weiteres Foto zu machen",
   "loading.food": "Lade Lebensmitteldaten...",
   "loading.photo": "Analysiere Essensfoto...",
   "loading.scale": "Lese Waage ab...",

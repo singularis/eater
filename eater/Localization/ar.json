@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "حذف الطعام؟",
   "list.empty.subtitle": "أضف وجبتك الأولى من الشاشة الرئيسية.",
   "list.empty.title": "لا توجد وجبات بعد",
+  "list.swipe_camera.hint": "نصيحة: اسحب أي وجبة لليمين لالتقاط صورة أخرى بسرعة",
   "loading.food": "جاري تحميل بيانات الطعام...",
   "loading.photo": "جاري تحليل صورة الطعام...",
   "loading.scale": "جاري قراءة الميزان...",

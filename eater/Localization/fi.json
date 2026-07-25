@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Poistetaanko ruoka?",
   "list.empty.subtitle": "Lisää ensimmäinen ateriasi aloitusnäytöltä.",
   "list.empty.title": "Ei vielä aterioita",
+  "list.swipe_camera.hint": "Vinkki: Pyyhkäise ateriaa oikealle ottaaksesi nopeasti toisen kuvan",
   "loading.food": "Ladataan ruokatietoja...",
   "loading.photo": "Analysoidaan ruokakuvaa...",
   "loading.scale": "Luetaan vaakaa...",

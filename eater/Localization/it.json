@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Eliminare il cibo?",
   "list.empty.subtitle": "Aggiungi il tuo primo pasto dalla schermata iniziale.",
   "list.empty.title": "Nessun pasto ancora",
+  "list.swipe_camera.hint": "Suggerimento: scorri un pasto verso destra per scattare rapidamente un'altra foto",
   "loading.food": "Caricamento dati alimentari...",
   "loading.photo": "Analisi foto del cibo...",
   "loading.scale": "Lettura bilancia...",

@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "음식을 삭제할까요?",
   "list.empty.subtitle": "홈 화면에서 첫 식사를 추가하세요.",
   "list.empty.title": "아직 식사가 없습니다",
+  "list.swipe_camera.hint": "팁: 음식을 오른쪽으로 스와이프하면 빠르게 다른 사진을 찍을 수 있어요",
   "loading.food": "음식 데이터 로딩 중...",
   "loading.photo": "음식 사진 분석 중...",
   "loading.scale": "체중계 읽는 중...",

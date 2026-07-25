@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Dzēst ēdienu?",
   "list.empty.subtitle": "Pievienojiet savu pirmo ēdienu no sākuma ekrāna.",
   "list.empty.title": "Vēl nav ēdienu",
+  "list.swipe_camera.hint": "Padoms: pavelciet ēdienu pa labi, lai ātri uzņemtu vēl vienu fotoattēlu",
   "loading.food": "Ielādē ēdiena datus...",
   "loading.photo": "Analizē ēdiena fotogrāfiju...",
   "loading.scale": "Lasa svarus...",

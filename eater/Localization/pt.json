@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Eliminar alimento?",
   "list.empty.subtitle": "Adicione sua primeira refeição na tela inicial.",
   "list.empty.title": "Ainda sem refeições",
+  "list.swipe_camera.hint": "Dica: Deslize uma refeição para a direita para tirar rapidamente outra foto",
   "loading.food": "Carregando dados alimentares...",
   "loading.photo": "Analisando foto da comida...",
   "loading.scale": "Lendo balança...",
