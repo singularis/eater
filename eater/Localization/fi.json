@@ -635,6 +635,7 @@
   "share.login_required.message": "Luo tili tai kirjaudu sisään jakaaksesi ruokaa ystävien kanssa.",
   "share.login_required.title": "Kirjautuminen vaaditaan",
   "share.percentage.custom": "Mukautettu...",
+  "share.percentage.same": "Sama määrä",
   "share.percentage.title": "Kuinka paljon ystäväsi söi?",
   "share.success.msg": "Jaettu %d%% käyttäjän %@ kanssa",
   "share.success.title": "Jaettu",

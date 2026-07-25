@@ -633,6 +633,7 @@
   "share.login_required.message": "Creați un cont sau autentificați-vă pentru a distribui mâncare prietenilor.",
   "share.login_required.title": "Este necesară autentificarea",
   "share.percentage.custom": "Personalizat...",
+  "share.percentage.same": "Aceeași cantitate",
   "share.percentage.title": "Cât a mâncat prietenul tău?",
   "share.success.msg": "Distribuit %d%% cu %@",
   "share.success.title": "Distribuit",

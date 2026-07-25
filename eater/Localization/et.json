@@ -634,6 +634,7 @@
   "share.login_required.message": "Toidu jagamiseks sõpradega loo konto või logi sisse.",
   "share.login_required.title": "Nõutav on sisselogimine",
   "share.percentage.custom": "Kohandatud...",
+  "share.percentage.same": "Sama kogus",
   "share.percentage.title": "Kui palju su sõber sõi?",
   "share.success.msg": "Jagatud %d%% kasutajaga %@",
   "share.success.title": "Jagatud",

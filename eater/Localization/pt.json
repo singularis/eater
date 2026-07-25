@@ -634,6 +634,7 @@
   "share.login_required.message": "Crie uma conta ou faça login para compartilhar comida com amigos.",
   "share.login_required.title": "Login necessário",
   "share.percentage.custom": "Personalizado...",
+  "share.percentage.same": "Mesma quantidade",
   "share.percentage.title": "Quanto seu amigo comeu?",
   "share.success.msg": "Compartilhado %d%% com %@",
   "share.success.title": "Compartilhado",

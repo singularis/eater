@@ -635,6 +635,7 @@
   "share.login_required.message": "สร้างบัญชีหรือเข้าสู่ระบบเพื่อแชร์อาหารกับเพื่อน",
   "share.login_required.title": "ต้องเข้าสู่ระบบ",
   "share.percentage.custom": "กำหนดเอง...",
+  "share.percentage.same": "จำนวนเท่ากัน",
   "share.percentage.title": "เพื่อนของคุณกินไปเท่าไหร่?",
   "share.success.msg": "แชร์ %d%% กับ %@",
   "share.success.title": "แชร์แล้ว",

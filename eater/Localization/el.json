@@ -635,6 +635,7 @@
   "share.login_required.message": "Δημιουργήστε λογαριασμό ή συνδεθείτε για να μοιράζεστε φαγητό με φίλους.",
   "share.login_required.title": "Απαιτείται σύνδεση",
   "share.percentage.custom": "Προσαρμογή...",
+  "share.percentage.same": "Ίδια ποσότητα",
   "share.percentage.title": "Πόσο έφαγε ο φίλος σου;",
   "share.success.msg": "Κοινοποιήθηκε %d%% με %@",
   "share.success.title": "Κοινοποιήθηκε",

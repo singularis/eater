@@ -635,6 +635,7 @@
   "share.login_required.message": "Załóż konto lub zaloguj się, aby udostępniać jedzenie znajomym.",
   "share.login_required.title": "Wymagane logowanie",
   "share.percentage.custom": "Niestandardowy...",
+  "share.percentage.same": "Taka sama ilość",
   "share.percentage.title": "Ile zjadł twój znajomy?",
   "share.success.msg": "Udostępniono %d%% dla %@",
   "share.success.title": "Udostępniono",

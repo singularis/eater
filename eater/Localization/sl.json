@@ -634,6 +634,7 @@
   "share.login_required.message": "Ustvarite račun ali se prijavite, če želite deliti hrano s prijatelji.",
   "share.login_required.title": "Potrebna je prijava",
   "share.percentage.custom": "Po meri...",
+  "share.percentage.same": "Enaka količina",
   "share.percentage.title": "Koliko je pojedel tvoj prijatelj?",
   "share.success.msg": "Deljeno %d%% z %@",
   "share.success.title": "Deljeno",

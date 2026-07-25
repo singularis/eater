@@ -635,6 +635,7 @@
   "share.login_required.message": "友達と食事を共有するには、アカウントを作成するかログインしてください。",
   "share.login_required.title": "ログインが必要です",
   "share.percentage.custom": "カスタム...",
+  "share.percentage.same": "同じ量",
   "share.percentage.title": "友達はどのくらい食べましたか？",
   "share.success.msg": "%@と%d%%を共有しました",
   "share.success.title": "共有しました",

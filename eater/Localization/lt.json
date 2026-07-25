@@ -635,6 +635,7 @@
   "share.login_required.message": "Sukurkite paskyrą arba prisijunkite, kad galėtumėte dalytis maistu su draugais.",
   "share.login_required.title": "Reikia prisijungti",
   "share.percentage.custom": "Pasirinktinai...",
+  "share.percentage.same": "Toks pat kiekis",
   "share.percentage.title": "Kiek suvalgė jūsų draugas?",
   "share.success.msg": "Bendrinta %d%% su %@",
   "share.success.title": "Bendrinta",

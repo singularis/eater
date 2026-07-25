@@ -635,6 +635,7 @@
   "share.login_required.message": "Vytvořte si účet nebo se přihlaste, abyste mohli sdílet jídlo s přáteli.",
   "share.login_required.title": "Vyžadováno přihlášení",
   "share.percentage.custom": "Vlastní...",
+  "share.percentage.same": "Stejné množství",
   "share.percentage.title": "Kolik toho váš přítel snědl?",
   "share.success.msg": "Sdíleno %d%% s %@",
   "share.success.title": "Sdíleno",

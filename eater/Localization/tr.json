@@ -634,6 +634,7 @@
   "share.login_required.message": "Arkadaşlarınla yemek paylaşmak için hesap oluştur veya giriş yap.",
   "share.login_required.title": "Giriş gerekli",
   "share.percentage.custom": "Özel...",
+  "share.percentage.same": "Aynı miktar",
   "share.percentage.title": "Arkadaşın ne kadar yedi?",
   "share.success.msg": "%@ ile %%%d paylaşıldı",
   "share.success.title": "Paylaşıldı",

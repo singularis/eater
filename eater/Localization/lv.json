@@ -635,6 +635,7 @@
   "share.login_required.message": "Izveidojiet kontu vai pierakstieties, lai kopīgotu ēdienu ar draugiem.",
   "share.login_required.title": "Nepieciešama pierakstīšanās",
   "share.percentage.custom": "Pielāgot...",
+  "share.percentage.same": "Tāds pats daudzums",
   "share.percentage.title": "Cik daudz apēda tavs draugs?",
   "share.success.msg": "Kopīgots %d%% ar %@",
   "share.success.title": "Kopīgots",

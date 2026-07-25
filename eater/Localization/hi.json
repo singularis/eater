@@ -635,6 +635,7 @@
   "share.login_required.message": "दोस्तों के साथ खाना साझा करने के लिए खाता बनाएं या लॉगिन करें।",
   "share.login_required.title": "लॉगिन आवश्यक है",
   "share.percentage.custom": "कस्टम...",
+  "share.percentage.same": "समान मात्रा",
   "share.percentage.title": "आपके दोस्त ने कितना खाया?",
   "share.success.msg": "%@ के साथ %d%% साझा किया गया",
   "share.success.title": "साझा किया गया",

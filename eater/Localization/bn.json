@@ -635,6 +635,7 @@
   "share.login_required.message": "বন্ধুদের সাথে খাবার শেয়ার করতে অ্যাকাউন্ট তৈরি করুন বা লগইন করুন।",
   "share.login_required.title": "লগইন প্রয়োজন",
   "share.percentage.custom": "কাস্টম...",
+  "share.percentage.same": "একই পরিমাণ",
   "share.percentage.title": "আপনার বন্ধু কতটা খেয়েছে?",
   "share.success.msg": "%@ এর সাথে %d%% শেয়ার করা হয়েছে",
   "share.success.title": "শেয়ার করা হয়েছে",

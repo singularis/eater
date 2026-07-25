@@ -635,6 +635,7 @@
   "share.login_required.message": "Створіть обліковий запис або увійдіть, щоб ділитися їжею з друзями.",
   "share.login_required.title": "Потрібен вхід",
   "share.percentage.custom": "Власний...",
+  "share.percentage.same": "Така ж кількість",
   "share.percentage.title": "Скільки з'їв ваш друг?",
   "share.success.msg": "Поширено %d%% з %@",
   "share.success.title": "Поширено",

@@ -635,6 +635,7 @@
   "share.login_required.message": "创建账户或登录以与朋友分享美食。",
   "share.login_required.title": "需要登录",
   "share.percentage.custom": "自定义...",
+  "share.percentage.same": "相同分量",
   "share.percentage.title": "你的朋友吃了多少？",
   "share.success.msg": "已与 %@ 共享 %d%%",
   "share.success.title": "已共享",

@@ -634,6 +634,7 @@
   "share.login_required.message": "Cruthaigh cuntas nó logáil isteach chun bia a roinnt le cairde.",
   "share.login_required.title": "Logáil isteach ag teastáil",
   "share.percentage.custom": "Saincheaptha...",
+  "share.percentage.same": "An méid céanna",
   "share.percentage.title": "Cé mhéad a d'ith do chara?",
   "share.success.msg": "Roinnte %d%% le %@",
   "share.success.title": "Roinnte",

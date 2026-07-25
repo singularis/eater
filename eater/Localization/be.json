@@ -635,6 +635,7 @@
   "share.login_required.message": "Стварыце ўліковы запіс або ўвайдзіце, каб дзяліцца ежай з сябрамі.",
   "share.login_required.title": "Патрэбны ўваход",
   "share.percentage.custom": "Уласны...",
+  "share.percentage.same": "Такая ж колькасць",
   "share.percentage.title": "Колькі з'еў ваш сябар?",
   "share.success.msg": "Абагулена %d%% з %@",
   "share.success.title": "Абагулена",

@@ -634,6 +634,7 @@
   "share.login_required.message": "Създайте акаунт или влезте, за да споделяте храна с приятели.",
   "share.login_required.title": "Изисква се вход",
   "share.percentage.custom": "Персонализирано...",
+  "share.percentage.same": "Същото количество",
   "share.percentage.title": "Колко изяде вашият приятел?",
   "share.success.msg": "Споделено %d%% с %@",
   "share.success.title": "Споделено",

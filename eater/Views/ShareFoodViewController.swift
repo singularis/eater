@@ -306,6 +306,10 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     }
     alert.addAction(
       UIAlertAction(
+        title: loc("share.percentage.same", "Same amount"), style: .default,
+        handler: { _ in onSelected(100) }))
+    alert.addAction(
+      UIAlertAction(
         title: loc("share.percentage.custom", "Custom..."), style: .default,
         handler: { [weak self] _ in
           self?.promptCustomPercentage(onSelected: onSelected)

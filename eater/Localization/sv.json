@@ -634,6 +634,7 @@
   "share.login_required.message": "Skapa ett konto eller logga in för att dela mat med vänner.",
   "share.login_required.title": "Inloggning krävs",
   "share.percentage.custom": "Anpassad...",
+  "share.percentage.same": "Samma mängd",
   "share.percentage.title": "Hur mycket åt din vän?",
   "share.success.msg": "Delade %d%% med %@",
   "share.success.title": "Delat",

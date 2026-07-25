@@ -635,6 +635,7 @@
   "share.login_required.message": "Opret en konto eller log ind for at dele mad med venner.",
   "share.login_required.title": "Login påkrævet",
   "share.percentage.custom": "Brugerdefineret...",
+  "share.percentage.same": "Samme mængde",
   "share.percentage.title": "Hvor meget spiste din ven?",
   "share.success.msg": "Delt %d%% med %@",
   "share.success.title": "Delt",

@@ -635,6 +635,7 @@
   "share.login_required.message": "Hozz létre fiókot, vagy jelentkezz be, hogy ételt oszthass meg barátaiddal.",
   "share.login_required.title": "Bejelentkezés szükséges",
   "share.percentage.custom": "Egyéni...",
+  "share.percentage.same": "Ugyanannyi",
   "share.percentage.title": "Mennyit evett a barátod?",
   "share.success.msg": "%d%% megosztva vele: %@",
   "share.success.title": "Megosztva",
