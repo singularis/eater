@@ -422,7 +422,7 @@ class GRPCService {
     }
   }
 
-  /// JSON endpoint to rename a food item manually, without re-triggering AI analysis.
+  /// JSON endpoint to rename a food item manually, without re-triggering LLM analysis.
   func renameFood(
     time: Int64,
     userEmail: String,
@@ -477,7 +477,7 @@ class GRPCService {
   }
 
   /// Asks the backend to re-analyze the already-uploaded photo and suggest a
-  /// short list of alternate dish names (for when the AI misidentified the food).
+  /// short list of alternate dish names (for when the LLM misidentified the food).
   func suggestDishNames(
     imageId: String,
     currentName: String,

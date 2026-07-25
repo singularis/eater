@@ -176,7 +176,7 @@
   "disc.accuracy.text": "Ravitsemusarviot perustuvat visuaaliseen analyysiin eivätkä välttämättä ole täysin tarkkoja. Todellinen ravintosisältö voi vaihdella valmistusmenetelmien, annoskokojen ja ainesosavaihtelujen perusteella.",
   "disc.feature.calories": "• Kaloriseuranta: Arviot perustuvat visuaaliseen ruoka-analyysiin",
   "disc.feature.limits": "• Kalorirajat: Oletusarvot tai henkilökohtaiset laskelmat terveystietojen perusteella",
-  "disc.feature.macros": "• Ravitsemusanalyysi: Makroravinteiden erittely AI-kuvantunnistuksella",
+  "disc.feature.macros": "• Ravitsemusanalyysi: Makroravinteiden erittely LLM-kuvantunnistuksella",
   "disc.feature.plans": "• Henkilökohtaiset Suunnitelmat: Valinnaiset BMR-pohjaiset kalorisuositukset käyttäjän terveystiedoilla",
   "disc.feature.recommendations": "• Ruokavaliosuositukset: Yleiset ehdotukset ravitsemussuositusten perusteella",
   "disc.feature.weight": "• Painoseuranta: Käyttäjän syöttämä data henkilökohtaiseen seurantaan",

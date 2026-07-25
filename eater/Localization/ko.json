@@ -176,7 +176,7 @@
   "disc.accuracy.text": "영양 추정치는 시각적 분석을 기반으로 하며 완전히 정확하지 않을 수 있습니다. 실제 영양 함량은 조리 방법, 분량 크기 및 재료 변화에 따라 다를 수 있습니다.",
   "disc.feature.calories": "• 칼로리 추적: 시각적 음식 분석 기반 추정",
   "disc.feature.limits": "• 칼로리 제한: 건강 데이터 기반 기본값 또는 개인화된 계산",
-  "disc.feature.macros": "• 영양 분석: AI 이미지 인식을 사용한 다량 영양소 분석",
+  "disc.feature.macros": "• 영양 분석: LLM 이미지 인식을 사용한 다량 영양소 분석",
   "disc.feature.plans": "• 개인화된 계획: 사용자 건강 데이터를 사용한 선택적 BMR 기반 칼로리 추천",
   "disc.feature.recommendations": "• 식이 추천: 영양 가이드라인 기반 일반 제안",
   "disc.feature.weight": "• 체중 추적: 개인 모니터링을 위한 사용자 입력 데이터",

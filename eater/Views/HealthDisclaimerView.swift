@@ -156,7 +156,7 @@ struct HealthDisclaimerView: View {
               Text(
                 loc(
                   "disc.feature.macros",
-                  "• Nutritional Analysis: Macronutrient breakdown using AI image recognition"))
+                  "• Nutritional Analysis: Macronutrient breakdown using LLM image recognition"))
               Text(
                 loc(
                   "disc.feature.recommendations",

@@ -518,7 +518,7 @@
   "onboarding.notifications.title": "通过温和提醒保持正轨 ⏰",
   "onboarding.personalize": "是的，让我们个性化",
   "onboarding.power_features.title": "强大功能 ⚡️",
-  "onboarding.recognition.desc": "拍摄您的食物照片，AI 将自动识别并记录卡路里。无需手动搜索！",
+  "onboarding.recognition.desc": "拍摄您的食物照片，LLM 将自动识别并记录卡路里。无需手动搜索！",
   "onboarding.recognition.title": "智能食物识别 📸",
   "onboarding.skip": "跳过",
   "onboarding.skip.continue": "继续教程",

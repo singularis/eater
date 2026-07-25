@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Sheet shown from the food card's "⋯" menu ("Try manually") to let the user
-/// correct a misrecognized dish name. Offers AI-suggested alternate names
+/// correct a misrecognized dish name. Offers LLM-suggested alternate names
 /// (re-analyzed from the original photo) in addition to free text entry.
 struct FixFoodNameView: View {
   @Environment(\.colorScheme) private var environmentColorScheme

@@ -1289,7 +1289,7 @@ struct ContentView: View {
 
   func tryAgainProduct(time: Int64, imageId: String) {
     // Repurposed as "Try manually" – user can manually fix dish name,
-    // optionally picking from AI-suggested alternates.
+    // optionally picking from LLM-suggested alternates.
     guard authService.userEmail != nil else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),

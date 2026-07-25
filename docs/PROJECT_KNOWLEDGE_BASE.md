@@ -6,7 +6,7 @@
 
 ## 1. What Is This App?
 
-**Eateria** is a SwiftUI iOS food-tracking app. Users photograph food, and an AI backend analyzes it to estimate calories, macros, and health ratings. The app also tracks weight (via scale photos or manual entry), activities (including chess), alcohol consumption, and provides AI-generated dietary recommendations.
+**Eateria** is a SwiftUI iOS food-tracking app. Users photograph food, and an LLM-powered backend analyzes it to estimate calories, macros, and health ratings. The app also tracks weight (via scale photos or manual entry), activities (including chess), alcohol consumption, and provides LLM-generated dietary recommendations.
 
 - **Bundle ID:** `com.singularis.eater`
 - **Display Name:** Eateria
@@ -149,11 +149,11 @@ All requests include `Authorization: Bearer <JWT>` header.
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/eater_get_today` | Fetch today's food list + calories + weight |
-| POST | `/eater_receive_photo` | Upload food/weight photo for AI analysis |
+| POST | `/eater_receive_photo` | Upload food/weight photo for LLM analysis |
 | POST | `/delete_food` | Delete a food entry by timestamp |
 | POST | `/get_food_custom_date` | Fetch food for a specific date (dd-MM-yyyy) |
-| POST | `/get_recommendation` | Get AI dietary recommendation |
-| POST | `/modify_food_record` | Modify portion, retry AI analysis, add sugar |
+| POST | `/get_recommendation` | Get LLM dietary recommendation |
+| POST | `/modify_food_record` | Modify portion, retry LLM analysis, add sugar |
 | POST | `/manual_weight` | Submit manual weight entry |
 | POST | `/delete_user` | Delete user account |
 | POST | `/feedback` | Submit user feedback |

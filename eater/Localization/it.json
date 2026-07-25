@@ -176,7 +176,7 @@
   "disc.accuracy.text": "Le stime nutrizionali si basano sull'analisi visiva e potrebbero non essere completamente accurate. Il contenuto nutrizionale effettivo può variare in base ai metodi di preparazione, dimensioni delle porzioni e variazioni degli ingredienti.",
   "disc.feature.calories": "• Tracciamento Calorie: Stime basate sull'analisi visiva del cibo",
   "disc.feature.limits": "• Limiti Calorici: Valori predefiniti o calcoli personalizzati basati su dati sanitari",
-  "disc.feature.macros": "• Analisi Nutrizionale: Ripartizione dei macronutrienti usando riconoscimento immagini AI",
+  "disc.feature.macros": "• Analisi Nutrizionale: Ripartizione dei macronutrienti usando riconoscimento immagini LLM",
   "disc.feature.plans": "• Piani Personalizzati: Raccomandazioni caloriche opzionali basate su BMR usando dati sanitari utente",
   "disc.feature.recommendations": "• Raccomandazioni Alimentari: Suggerimenti generali basati su linee guida nutrizionali",
   "disc.feature.weight": "• Tracciamento Peso: Dati inseriti dall'utente per monitoraggio personale",
