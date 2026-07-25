@@ -423,6 +423,8 @@
   "limits.soft": "宽松上限",
   "limits.title": "设置卡路里上限",
   "limits.use_health": "使用基于健康的计算",
+  "list.delete.confirm.message": "确定要删除这条食物记录吗？此操作无法撤销。",
+  "list.delete.confirm.title": "删除食物？",
   "list.empty.subtitle": "从主屏幕添加您的第一餐。",
   "list.empty.title": "还没有餐食",
   "loading.food": "正在加载食物数据...",

@@ -423,6 +423,8 @@
   "limits.soft": "Mehka meja",
   "limits.title": "Nastavi kalorijske meje",
   "limits.use_health": "Uporabi izračun na podlagi zdravja",
+  "list.delete.confirm.message": "Ali ste prepričani, da želite izbrisati ta vnos hrane? Tega dejanja ni mogoče razveljaviti.",
+  "list.delete.confirm.title": "Izbriši hrano?",
   "list.empty.subtitle": "Dodajte svoj prvi obrok z domačega zaslona.",
   "list.empty.title": "Še ni obrokov",
   "loading.food": "Nalaganje podatkov o hrani...",

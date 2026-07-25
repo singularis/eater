@@ -423,6 +423,8 @@
   "limits.soft": "حد مرن",
   "limits.title": "تعيين حدود السعرات الحرارية",
   "limits.use_health": "استخدام حساب قائم على الصحة",
+  "list.delete.confirm.message": "هل أنت متأكد أنك تريد حذف عنصر الطعام هذا؟ لا يمكن التراجع عن هذا الإجراء.",
+  "list.delete.confirm.title": "حذف الطعام؟",
   "list.empty.subtitle": "أضف وجبتك الأولى من الشاشة الرئيسية.",
   "list.empty.title": "لا توجد وجبات بعد",
   "loading.food": "جاري تحميل بيانات الطعام...",

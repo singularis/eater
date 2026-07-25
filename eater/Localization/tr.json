@@ -422,6 +422,8 @@
   "limits.soft": "Yumuşak Limit",
   "limits.title": "Kalori Limitlerini Ayarla",
   "limits.use_health": "Sağlık Bazlı Hesaplama Kullan",
+  "list.delete.confirm.message": "Bu yemek kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "list.delete.confirm.title": "Yemek silinsin mi?",
   "list.empty.subtitle": "Ana ekrandan ilk yemeğinizi ekleyin.",
   "list.empty.title": "Henüz öğün yok",
   "loading.food": "Yemek verileri yükleniyor...",

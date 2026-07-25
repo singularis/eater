@@ -423,6 +423,8 @@
   "limits.soft": "Pehmeä raja",
   "limits.title": "Aseta kalorirajat",
   "limits.use_health": "Käytä terveyspohjaista laskentaa",
+  "list.delete.confirm.message": "Haluatko varmasti poistaa tämän ruokamerkinnän? Tätä toimintoa ei voi kumota.",
+  "list.delete.confirm.title": "Poistetaanko ruoka?",
   "list.empty.subtitle": "Lisää ensimmäinen ateriasi aloitusnäytöltä.",
   "list.empty.title": "Ei vielä aterioita",
   "loading.food": "Ladataan ruokatietoja...",

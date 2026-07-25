@@ -423,6 +423,8 @@
   "limits.soft": "نرم حد",
   "limits.title": "کیلوری حدود مقرر کریں",
   "limits.use_health": "صحت پر مبنی حساب استعمال کریں",
+  "list.delete.confirm.message": "کیا آپ واقعی اس کھانے کی انٹری کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔",
+  "list.delete.confirm.title": "کھانا حذف کریں؟",
   "list.empty.subtitle": "ہوم اسکرین سے اپنا پہلا کھانا شامل کریں۔",
   "list.empty.title": "ابھی تک کوئی کھانا نہیں",
   "loading.food": "کھانے کا ڈیٹا لوڈ ہو رہا ہے...",

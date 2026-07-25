@@ -13,6 +13,7 @@ private struct SwipeToDeleteRow<Content: View>: View {
   private let cameraRevealMax: CGFloat = 90
   private let cameraTriggerThreshold: CGFloat = 70
   @State private var offset: CGFloat = 0
+  @State private var showDeleteConfirmation = false
 
   /// 0...1 — hide red background when not swiping left
   private var deleteRevealProgress: CGFloat {
@@ -29,10 +30,18 @@ private struct SwipeToDeleteRow<Content: View>: View {
     min(1, max(0, offset / cameraRevealMax))
   }
 
-  private func performDelete() {
+  private func requestDelete() {
     guard !isDisabled else { return }
     HapticsService.shared.warning()
+    showDeleteConfirmation = true
+  }
+
+  private func confirmDelete() {
     onDelete()
+    withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
+  }
+
+  private func cancelDelete() {
     withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
   }
 
@@ -50,7 +59,7 @@ private struct SwipeToDeleteRow<Content: View>: View {
       .opacity(Double(isDeleteZoneActive ? 1 : (deleteRevealProgress / 0.25)))
       .contentShape(Rectangle())
       .onTapGesture {
-        performDelete()
+        requestDelete()
       }
       .allowsHitTesting(isDeleteZoneActive)
 
@@ -74,7 +83,7 @@ private struct SwipeToDeleteRow<Content: View>: View {
         .offset(x: offset)
         .overlay(alignment: .trailing) {
           Button {
-            performDelete()
+            requestDelete()
           } label: {
             Image(systemName: "trash")
               .font(.system(size: 18, weight: .medium))
@@ -105,6 +114,21 @@ private struct SwipeToDeleteRow<Content: View>: View {
         )
     }
     .clipped()
+    .alert(
+      loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
+    ) {
+      Button(loc("common.cancel", "Cancel"), role: .cancel) {
+        cancelDelete()
+      }
+      Button(deleteLabel, role: .destructive) {
+        confirmDelete()
+      }
+    } message: {
+      Text(
+        loc(
+          "list.delete.confirm.message",
+          "Are you sure you want to delete this food entry? This action cannot be undone."))
+    }
   }
 }
 

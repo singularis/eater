@@ -422,6 +422,8 @@
   "limits.soft": "Zachte limiet",
   "limits.title": "Calorielimieten instellen",
   "limits.use_health": "Gezondheidsgebaseerde berekening gebruiken",
+  "list.delete.confirm.message": "Weet je zeker dat je dit voedingsitem wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+  "list.delete.confirm.title": "Eten verwijderen?",
   "list.empty.subtitle": "Voeg je eerste maaltijd toe vanaf het startscherm.",
   "list.empty.title": "Nog geen maaltijden",
   "loading.food": "Voedselgegevens laden...",

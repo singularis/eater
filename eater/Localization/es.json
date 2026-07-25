@@ -423,6 +423,8 @@
   "limits.soft": "Límite suave",
   "limits.title": "Establecer límites de calorías",
   "limits.use_health": "Usar cálculo basado en salud",
+  "list.delete.confirm.message": "¿Seguro que quieres eliminar este registro de comida? Esta acción no se puede deshacer.",
+  "list.delete.confirm.title": "¿Eliminar comida?",
   "list.empty.subtitle": "Agrega tu primera comida desde la pantalla de inicio.",
   "list.empty.title": "Aún no hay comidas",
   "loading.food": "Cargando datos de comida...",

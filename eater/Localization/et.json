@@ -422,6 +422,8 @@
   "limits.soft": "Pehme piir",
   "limits.title": "Määra kaloripiirid",
   "limits.use_health": "Kasuta tervisepõhist arvutust",
+  "list.delete.confirm.message": "Kas oled kindel, et soovid selle toidukirje kustutada? Seda toimingut ei saa tagasi võtta.",
+  "list.delete.confirm.title": "Kustuta toit?",
   "list.empty.subtitle": "Lisa oma esimene toit avalehelt.",
   "list.empty.title": "Veel pole toite",
   "loading.food": "Laen toiduandmeid...",

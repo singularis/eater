@@ -423,6 +423,8 @@
   "limits.soft": "Blød grænse",
   "limits.title": "Angiv kaloriegrænser",
   "limits.use_health": "Brug sundhedsbaseret beregning",
+  "list.delete.confirm.message": "Er du sikker på, at du vil slette denne madpost? Denne handling kan ikke fortrydes.",
+  "list.delete.confirm.title": "Slet mad?",
   "list.empty.subtitle": "Tilføj dit første måltid fra startskærmen.",
   "list.empty.title": "Ingen måltider endnu",
   "loading.food": "Indlæser maddata...",

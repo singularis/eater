@@ -423,6 +423,8 @@
   "limits.soft": "Mīkstais ierobežojums",
   "limits.title": "Iestatīt kaloriju ierobežojumus",
   "limits.use_health": "Izmantot uz veselības datiem balstītu aprēķinu",
+  "list.delete.confirm.message": "Vai tiešām vēlaties dzēst šo ēdiena ierakstu? Šo darbību nevar atsaukt.",
+  "list.delete.confirm.title": "Dzēst ēdienu?",
   "list.empty.subtitle": "Pievienojiet savu pirmo ēdienu no sākuma ekrāna.",
   "list.empty.title": "Vēl nav ēdienu",
   "loading.food": "Ielādē ēdiena datus...",

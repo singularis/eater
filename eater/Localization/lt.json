@@ -423,6 +423,8 @@
   "limits.soft": "Lanksti riba",
   "limits.title": "Nustatyti kalorijų ribas",
   "limits.use_health": "Naudoti sveikatos pagrįstą skaičiavimą",
+  "list.delete.confirm.message": "Ar tikrai norite ištrinti šį maisto įrašą? Šio veiksmo anuliuoti negalima.",
+  "list.delete.confirm.title": "Ištrinti maistą?",
   "list.empty.subtitle": "Pridėkite savo pirmą patiekalą iš pradinio ekrano.",
   "list.empty.title": "Dar nėra patiekalų",
   "loading.food": "Kraunami maisto duomenys...",

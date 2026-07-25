@@ -422,6 +422,8 @@
   "limits.soft": "Mjuk gräns",
   "limits.title": "Ange kalorigränser",
   "limits.use_health": "Använd hälso-baserad beräkning",
+  "list.delete.confirm.message": "Är du säker på att du vill ta bort den här matposten? Åtgärden går inte att ångra.",
+  "list.delete.confirm.title": "Ta bort mat?",
   "list.empty.subtitle": "Lägg till din första måltid från hemskärmen.",
   "list.empty.title": "Inga måltider ännu",
   "loading.food": "Laddar matdata...",

@@ -423,6 +423,8 @@
   "limits.soft": "Soft Limit",
   "limits.title": "Set Calorie Limits",
   "limits.use_health": "Use Health-Based Calculation",
+  "list.delete.confirm.message": "Are you sure you want to delete this food entry? This action cannot be undone.",
+  "list.delete.confirm.title": "Delete Food?",
   "list.empty.subtitle": "Add your first meal from the Home screen.",
   "list.empty.title": "No meals yet",
   "loading.food": "Loading food data...",

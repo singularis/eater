@@ -422,6 +422,8 @@
   "limits.soft": "Giới hạn mềm",
   "limits.title": "Đặt giới hạn calo",
   "limits.use_health": "Dùng tính toán dựa trên sức khỏe",
+  "list.delete.confirm.message": "Bạn có chắc chắn muốn xóa mục món ăn này không? Không thể hoàn tác hành động này.",
+  "list.delete.confirm.title": "Xóa món ăn?",
   "list.empty.subtitle": "Thêm bữa ăn đầu tiên của bạn từ màn hình chính.",
   "list.empty.title": "Chưa có bữa ăn nào",
   "loading.food": "Đang tải dữ liệu thức ăn...",

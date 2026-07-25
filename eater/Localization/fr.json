@@ -422,6 +422,8 @@
   "limits.soft": "Limite souple",
   "limits.title": "Définir les limites caloriques",
   "limits.use_health": "Utiliser le calcul basé sur la santé",
+  "list.delete.confirm.message": "Voulez-vous vraiment supprimer cet aliment ? Cette action est irréversible.",
+  "list.delete.confirm.title": "Supprimer l'aliment ?",
   "list.empty.subtitle": "Ajoutez votre premier repas depuis l'écran d'accueil.",
   "list.empty.title": "Aucun repas pour le moment",
   "loading.food": "Chargement des données alimentaires...",

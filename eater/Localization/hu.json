@@ -423,6 +423,8 @@
   "limits.soft": "Puha határ",
   "limits.title": "Kalóriahatárok beállítása",
   "limits.use_health": "Egészség-alapú számítás használata",
+  "list.delete.confirm.message": "Biztosan törlöd ezt az étel bejegyzést? Ez a művelet nem vonható vissza.",
+  "list.delete.confirm.title": "Törlöd az ételt?",
   "list.empty.subtitle": "Adja hozzá első étkezését a főképernyőről.",
   "list.empty.title": "Még nincsenek étkezések",
   "loading.food": "Ételadatok betöltése...",

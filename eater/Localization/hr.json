@@ -422,6 +422,8 @@
   "limits.soft": "Meka granica",
   "limits.title": "Postavi granice kalorija",
   "limits.use_health": "Koristi izračun temeljen na zdravlju",
+  "list.delete.confirm.message": "Jeste li sigurni da želite izbrisati ovaj unos hrane? Ova se radnja ne može poništiti.",
+  "list.delete.confirm.title": "Izbrisati hranu?",
   "list.empty.subtitle": "Dodajte svoj prvi obrok s početnog zaslona.",
   "list.empty.title": "Još nema obroka",
   "loading.food": "Učitavanje podataka o hrani...",

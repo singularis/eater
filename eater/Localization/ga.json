@@ -422,6 +422,8 @@
   "limits.soft": "Teorainn bhog",
   "limits.title": "Socraigh Teorainneacha Calraí",
   "limits.use_health": "Úsáid Ríomh Bunaithe ar Shláinte",
+  "list.delete.confirm.message": "An bhfuil tú cinnte gur mian leat an iontráil bia seo a scriosadh? Ní féidir an gníomh seo a chur ar ceal.",
+  "list.delete.confirm.title": "Scrios an bia?",
   "list.empty.subtitle": "Cuir do chéad bhéile leis ón scáileán baile.",
   "list.empty.title": "Níl aon bhéilí fós",
   "loading.food": "Ag lódáil sonraí bia...",

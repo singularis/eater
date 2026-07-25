@@ -423,6 +423,8 @@
   "limits.soft": "Limită moale",
   "limits.title": "Setează limitele de calorii",
   "limits.use_health": "Folosește calcul bazat pe sănătate",
+  "list.delete.confirm.message": "Sigur doriți să ștergeți această înregistrare de aliment? Această acțiune nu poate fi anulată.",
+  "list.delete.confirm.title": "Ștergeți alimentul?",
   "list.empty.subtitle": "Adaugă prima masă din ecranul de pornire.",
   "list.empty.title": "Încă nu există mese",
   "loading.food": "Se încarcă datele alimentare...",

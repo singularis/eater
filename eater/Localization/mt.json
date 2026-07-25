@@ -423,6 +423,8 @@
   "limits.soft": "Limitu artab",
   "limits.title": "Issettja Limiti tal-Kaloriji",
   "limits.use_health": "Uża Kalkolu bbażat fuq is-Saħħa",
+  "list.delete.confirm.message": "Int żgur li trid tħassar din id-daħla tal-ikel? Din l-azzjoni ma tistax titħassar.",
+  "list.delete.confirm.title": "Ħassar l-ikel?",
   "list.empty.subtitle": "Żid l-ewwel ikla tiegħek mill-iskrin ewlieni.",
   "list.empty.title": "Għadek m'għandekx ikliet",
   "loading.food": "Qed titgħabba d-dejta tal-ikel...",

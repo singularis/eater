@@ -422,6 +422,8 @@
   "limits.soft": "Limite flessibile",
   "limits.title": "Imposta limiti calorici",
   "limits.use_health": "Usa calcolo basato sulla salute",
+  "list.delete.confirm.message": "Vuoi davvero eliminare questo alimento? Questa azione non può essere annullata.",
+  "list.delete.confirm.title": "Eliminare il cibo?",
   "list.empty.subtitle": "Aggiungi il tuo primo pasto dalla schermata iniziale.",
   "list.empty.title": "Nessun pasto ancora",
   "loading.food": "Caricamento dati alimentari...",

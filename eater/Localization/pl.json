@@ -423,6 +423,8 @@
   "limits.soft": "Miękki limit",
   "limits.title": "Ustaw limity kalorii",
   "limits.use_health": "Użyj obliczeń na podstawie danych zdrowotnych",
+  "list.delete.confirm.message": "Czy na pewno chcesz usunąć ten wpis posiłku? Tej czynności nie można cofnąć.",
+  "list.delete.confirm.title": "Usunąć posiłek?",
   "list.empty.subtitle": "Dodaj swój pierwszy posiłek z ekranu głównego.",
   "list.empty.title": "Jeszcze brak posiłków",
   "loading.food": "Ładowanie danych żywieniowych...",

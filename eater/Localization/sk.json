@@ -423,6 +423,8 @@
   "limits.soft": "Mäkký limit",
   "limits.title": "Nastaviť kalorické limity",
   "limits.use_health": "Použiť výpočet podľa zdravia",
+  "list.delete.confirm.message": "Naozaj chcete odstrániť tento záznam o jedle? Túto akciu nie je možné vrátiť späť.",
+  "list.delete.confirm.title": "Odstrániť jedlo?",
   "list.empty.subtitle": "Pridajte svoje prvé jedlo z domovskej obrazovky.",
   "list.empty.title": "Zatiaľ žiadne jedlá",
   "loading.food": "Načítanie údajov o jedle...",

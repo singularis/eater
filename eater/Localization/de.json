@@ -422,6 +422,8 @@
   "limits.soft": "Weiche Grenze",
   "limits.title": "Kaloriengrenzen festlegen",
   "limits.use_health": "Gesundheitsbasierten Rechner verwenden",
+  "list.delete.confirm.message": "Möchtest du diesen Essenseintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "list.delete.confirm.title": "Essen löschen?",
   "list.empty.subtitle": "Fügen Sie Ihre erste Mahlzeit vom Startbildschirm hinzu.",
   "list.empty.title": "Noch keine Mahlzeiten",
   "loading.food": "Lade Lebensmitteldaten...",

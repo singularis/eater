@@ -423,6 +423,8 @@
   "limits.soft": "Měkký limit",
   "limits.title": "Nastavit kalorické limity",
   "limits.use_health": "Použít výpočet dle zdravotních údajů",
+  "list.delete.confirm.message": "Opravdu chcete smazat tento záznam o jídle? Tuto akci nelze vrátit zpět.",
+  "list.delete.confirm.title": "Smazat jídlo?",
   "list.empty.subtitle": "Přidejte své první jídlo z domovské obrazovky.",
   "list.empty.title": "Zatím žádná jídla",
   "loading.food": "Načítání dat o jídle...",
