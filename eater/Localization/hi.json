@@ -457,6 +457,7 @@
   "macro.sug.full": "चीनी",
   "macro.targets.alert.title": "मैक्रो लक्ष्य",
   "manual_food.error": "व्यंजन का नाम अपडेट करने में विफल। कृपया पुन: प्रयास करें।",
+  "manual_food.login_required.message": "खाने के नाम मैन्युअल रूप से ठीक करने या सुझाने के लिए खाता बनाएं या लॉगिन करें।",
   "manual_food.msg": "सही व्यंजन का नाम दर्ज करें। यह आपके लॉग में वर्तमान नाम को बदल देगा।",
   "manual_food.success.msg": "व्यंजन का नाम '%@' में अपडेट कर दिया गया है।",
   "manual_food.success.title": "नाम अपडेट किया गया",

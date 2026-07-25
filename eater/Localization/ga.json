@@ -456,6 +456,7 @@
   "macro.sug.full": "Siúcra",
   "macro.targets.alert.title": "Spriocanna macrachothaithigh",
   "manual_food.error": "Theip ar nuashonrú ainm na mias. Bain triail as arís le do thoil.",
+  "manual_food.login_required.message": "Cruthaigh cuntas nó logáil isteach chun ainmneacha bia a cheartú nó a mholadh de láimh.",
   "manual_food.msg": "Cuir isteach an t-ainm ceart don mhias. Cuirfear seo in ionad an ainm atá i do loga.",
   "manual_food.success.msg": "Nuashonraíodh ainm na mias go '%@'.",
   "manual_food.success.title": "Ainm nuashonraithe",

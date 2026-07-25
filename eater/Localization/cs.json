@@ -457,6 +457,7 @@
   "macro.sug.full": "Cukr",
   "macro.targets.alert.title": "Cíle makroživin",
   "manual_food.error": "Nepodařilo se aktualizovat název pokrmu. Zkuste to prosím znovu.",
+  "manual_food.login_required.message": "Vytvořte si účet nebo se přihlaste, abyste mohli ručně opravit nebo navrhnout názvy jídel.",
   "manual_food.msg": "Zadejte správný název pokrmu. Tím se nahradí aktuální název ve vašem deníku.",
   "manual_food.success.msg": "Název pokrmu byl aktualizován na '%@'.",
   "manual_food.success.title": "Název aktualizován",

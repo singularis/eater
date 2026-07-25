@@ -457,6 +457,7 @@
   "macro.sug.full": "Cukier",
   "macro.targets.alert.title": "Cele makroskładników",
   "manual_food.error": "Nie udało się zaktualizować nazwy dania. Spróbuj ponownie.",
+  "manual_food.login_required.message": "Załóż konto lub zaloguj się, aby ręcznie poprawić lub zasugerować nazwy potraw.",
   "manual_food.msg": "Wprowadź prawidłową nazwę dania. Zastąpi to obecną nazwę w Twoim dzienniku.",
   "manual_food.success.msg": "Nazwę dania zaktualizowano na '%@'.",
   "manual_food.success.title": "Zaktualizowano nazwę",

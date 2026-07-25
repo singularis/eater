@@ -456,6 +456,7 @@
   "macro.sug.full": "Suhkur",
   "macro.targets.alert.title": "Makrotoitainete eesmärgid",
   "manual_food.error": "Roa nime uuendamine ebaõnnestus. Palun proovi uuesti.",
+  "manual_food.login_required.message": "Toidunimede käsitsi parandamiseks või soovitamiseks loo konto või logi sisse.",
   "manual_food.msg": "Sisesta õige roa nimi. See asendab praeguse nime sinu logis.",
   "manual_food.success.msg": "Roa nimeks on nüüd '%@'.",
   "manual_food.success.title": "Nimi uuendatud",

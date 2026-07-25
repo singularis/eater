@@ -457,6 +457,7 @@
   "macro.sug.full": "Zahăr",
   "macro.targets.alert.title": "Obiective macronutrienți",
   "manual_food.error": "Eșec la actualizarea numelui felului de mâncare. Vă rugăm să încercați din nou.",
+  "manual_food.login_required.message": "Creați un cont sau autentificați-vă pentru a corecta sau sugera manual numele alimentelor.",
   "manual_food.msg": "Introduceți numele corect al felului de mâncare. Acesta va înlocui numele actual din jurnal.",
   "manual_food.success.msg": "Numele felului de mâncare a fost actualizat la '%@'.",
   "manual_food.success.title": "Nume actualizat",

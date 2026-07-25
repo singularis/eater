@@ -457,6 +457,7 @@
   "macro.sug.full": "Sokeri",
   "macro.targets.alert.title": "Makrotavoitteet",
   "manual_food.error": "Ruoan nimen päivitys epäonnistui. Yritä uudelleen.",
+  "manual_food.login_required.message": "Luo tili tai kirjaudu sisään korjataksesi tai ehdottaaksesi ruokien nimiä manuaalisesti.",
   "manual_food.msg": "Syötä oikea ruoan nimi. Tämä korvaa nykyisen nimen lokissasi.",
   "manual_food.success.msg": "Ruoan nimi päivitettiin muotoon '%@'.",
   "manual_food.success.title": "Nimi päivitetty",

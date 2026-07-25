@@ -456,6 +456,7 @@
   "macro.sug.full": "Zucchero",
   "macro.targets.alert.title": "Obiettivi macro",
   "manual_food.error": "Impossibile aggiornare il nome del piatto. Per favore riprova.",
+  "manual_food.login_required.message": "Crea un account o accedi per correggere o suggerire manualmente i nomi degli alimenti.",
   "manual_food.msg": "Inserisci il nome corretto del piatto. Questo sostituirà il nome attuale nel tuo registro.",
   "manual_food.success.msg": "Il nome del piatto è stato aggiornato a '%@'.",
   "manual_food.success.title": "Nome aggiornato",

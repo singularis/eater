@@ -457,6 +457,7 @@
   "macro.sug.full": "Cukrus",
   "macro.targets.alert.title": "Makroelementų tikslai",
   "manual_food.error": "Nepavyko atnaujinti patiekalo pavadinimo. Bandykite dar kartą.",
+  "manual_food.login_required.message": "Sukurkite paskyrą arba prisijunkite, kad galėtumėte rankiniu būdu ištaisyti ar pasiūlyti maisto pavadinimus.",
   "manual_food.msg": "Įveskite teisingą patiekalo pavadinimą. Tai pakeis dabartinį pavadinimą jūsų žurnale.",
   "manual_food.success.msg": "Patiekalo pavadinimas atnaujintas į '%@'.",
   "manual_food.success.title": "Pavadinimas atnaujintas",

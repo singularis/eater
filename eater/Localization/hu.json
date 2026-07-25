@@ -457,6 +457,7 @@
   "macro.sug.full": "Cukor",
   "macro.targets.alert.title": "Makrotápanyag-célok",
   "manual_food.error": "Nem sikerült frissíteni az étel nevét. Kérjük, próbálja újra.",
+  "manual_food.login_required.message": "Hozz létre fiókot, vagy jelentkezz be az ételnevek kézi javításához vagy javasolásához.",
   "manual_food.msg": "Írja be a helyes étel nevét. Ez lecseréli az aktuális nevet a naplójában.",
   "manual_food.success.msg": "Az étel neve '%@' névre lett frissítve.",
   "manual_food.success.title": "Név frissítve",

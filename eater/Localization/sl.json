@@ -457,6 +457,7 @@
   "macro.sug.full": "Sladkor",
   "macro.targets.alert.title": "Cilji makrohranil",
   "manual_food.error": "Imena jedi ni bilo mogoče posodobiti. Prosimo, poskusite znova.",
+  "manual_food.login_required.message": "Ustvarite račun ali se prijavite, če želite ročno popraviti ali predlagati imena hrane.",
   "manual_food.msg": "Vnesite pravilno ime jedi. To bo nadomestilo trenutno ime v vašem dnevniku.",
   "manual_food.success.msg": "Ime jedi je bilo posodobljeno na '%@'.",
   "manual_food.success.title": "Ime posodobljeno",

@@ -456,6 +456,7 @@
   "macro.sug.full": "Açúcar",
   "macro.targets.alert.title": "Metas de macros",
   "manual_food.error": "Falha ao atualizar o nome do prato. Por favor, tente novamente.",
+  "manual_food.login_required.message": "Crie uma conta ou faça login para corrigir ou sugerir manualmente nomes de alimentos.",
   "manual_food.msg": "Insira o nome correto do prato. Isso substituirá o nome atual no seu registro.",
   "manual_food.success.msg": "O nome do prato foi atualizado para '%@'.",
   "manual_food.success.title": "Nome atualizado",

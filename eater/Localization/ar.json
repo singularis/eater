@@ -457,6 +457,7 @@
   "macro.sug.full": "السكر",
   "macro.targets.alert.title": "أهداف المغذيات الكبرى",
   "manual_food.error": "فشل في تحديث اسم الطبق. يرجى المحاولة مرة أخرى.",
+  "manual_food.login_required.message": "أنشئ حسابًا أو سجّل الدخول لإصلاح أو اقتراح أسماء الأطعمة يدويًا.",
   "manual_food.msg": "أدخل اسم الطبق الصحيح. سيؤدي هذا إلى استبدال الاسم الحالي في سجلك.",
   "manual_food.success.msg": "تم تحديث اسم الطبق إلى '%@'.",
   "manual_food.success.title": "تم تحديث الاسم",

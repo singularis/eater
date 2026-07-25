@@ -456,6 +456,7 @@
   "macro.sug.full": "Sucre",
   "macro.targets.alert.title": "Objectifs de macronutriments",
   "manual_food.error": "Échec de la mise à jour du nom du plat. Veuillez réessayer.",
+  "manual_food.login_required.message": "Créez un compte ou connectez-vous pour corriger ou suggérer manuellement des noms d'aliments.",
   "manual_food.msg": "Entrez le nom correct du plat. Cela remplacera le nom actuel dans votre journal.",
   "manual_food.success.msg": "Le nom du plat a été mis à jour en '%@'.",
   "manual_food.success.title": "Nom mis à jour",

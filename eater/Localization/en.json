@@ -457,6 +457,7 @@
   "macro.sug.full": "Sugar",
   "macro.targets.alert.title": "Macro goals",
   "manual_food.error": "Failed to update dish name. Please try again.",
+  "manual_food.login_required.message": "Create an account or log in to manually fix or suggest food names.",
   "manual_food.msg": "Enter the correct dish name. This will replace the current name in your log.",
   "manual_food.success.msg": "Dish name was updated to '%@'.",
   "manual_food.success.title": "Name updated",

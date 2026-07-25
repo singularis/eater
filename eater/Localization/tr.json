@@ -456,6 +456,7 @@
   "macro.sug.full": "Şeker",
   "macro.targets.alert.title": "Makro hedefleri",
   "manual_food.error": "Yemek adı güncellenemedi. Lütfen tekrar deneyin.",
+  "manual_food.login_required.message": "Yemek adlarını manuel olarak düzeltmek veya önermek için hesap oluştur veya giriş yap.",
   "manual_food.msg": "Doğru yemek adını girin. Bu, günlüğünüzdeki mevcut adın yerini alacaktır.",
   "manual_food.success.msg": "Yemek adı '%@' olarak güncellendi.",
   "manual_food.success.title": "Ad Güncellendi",

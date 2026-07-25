@@ -457,6 +457,7 @@
   "macro.sug.full": "糖質",
   "macro.targets.alert.title": "栄養素目標",
   "manual_food.error": "料理名の更新に失敗しました。もう一度お試しください。",
+  "manual_food.login_required.message": "食品名を手動で修正または提案するには、アカウントを作成するかログインしてください。",
   "manual_food.msg": "正しい料理名を入力してください。これにより、ログ内の現在の名前が置き換えられます。",
   "manual_food.success.msg": "料理名が「%@」に更新されました。",
   "manual_food.success.title": "名前が更新されました",

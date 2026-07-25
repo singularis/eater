@@ -456,6 +456,7 @@
   "macro.sug.full": "Šećer",
   "macro.targets.alert.title": "Ciljevi makronutrijenata",
   "manual_food.error": "Ažuriranje naziva jela nije uspjelo. Molimo pokušajte ponovno.",
+  "manual_food.login_required.message": "Izradite račun ili se prijavite kako biste ručno ispravili ili predložili nazive hrane.",
   "manual_food.msg": "Unesite točan naziv jela. To će zamijeniti trenutni naziv u vašem dnevniku.",
   "manual_food.success.msg": "Naziv jela ažuriran je u '%@'.",
   "manual_food.success.title": "Naziv ažuriran",

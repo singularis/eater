@@ -456,6 +456,7 @@
   "macro.sug.full": "Socker",
   "macro.targets.alert.title": "Makromål",
   "manual_food.error": "Det gick inte att uppdatera rättens namn. Vänligen försök igen.",
+  "manual_food.login_required.message": "Skapa ett konto eller logga in för att manuellt korrigera eller föreslå matnamn.",
   "manual_food.msg": "Ange det korrekta namnet på rätten. Detta kommer att ersätta det nuvarande namnet i din logg.",
   "manual_food.success.msg": "Rättens namn uppdaterades till '%@'.",
   "manual_food.success.title": "Namn uppdaterat",

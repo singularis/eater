@@ -456,6 +456,7 @@
   "macro.sug.full": "Zucker",
   "macro.targets.alert.title": "Makroziele",
   "manual_food.error": "Fehler beim Aktualisieren des Gerichtsnamens. Bitte versuchen Sie es erneut.",
+  "manual_food.login_required.message": "Erstelle ein Konto oder melde dich an, um Essensnamen manuell zu korrigieren oder vorzuschlagen.",
   "manual_food.msg": "Geben Sie den richtigen Namen des Gerichts ein. Dadurch wird der aktuelle Name in Ihrem Protokoll ersetzt.",
   "manual_food.success.msg": "Der Name des Gerichts wurde auf '%@' aktualisiert.",
   "manual_food.success.title": "Name aktualisiert",

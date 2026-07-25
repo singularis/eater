@@ -457,6 +457,7 @@
   "macro.sug.full": "糖",
   "macro.targets.alert.title": "宏量营养素目标",
   "manual_food.error": "无法更新菜肴名称。请重试。",
+  "manual_food.login_required.message": "创建账户或登录以手动修正或建议食物名称。",
   "manual_food.msg": "输入正确的菜肴名称。这将替换您记录中的当前名称。",
   "manual_food.success.msg": "菜肴名称已更新为“%@”。",
   "manual_food.success.title": "名称已更新",

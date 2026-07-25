@@ -456,6 +456,7 @@
   "macro.sug.full": "Đường",
   "macro.targets.alert.title": "Mục tiêu macro",
   "manual_food.error": "Không thể cập nhật tên món ăn. Vui lòng thử lại.",
+  "manual_food.login_required.message": "Tạo tài khoản hoặc đăng nhập để tự sửa hoặc đề xuất tên món ăn theo cách thủ công.",
   "manual_food.msg": "Nhập đúng tên món ăn. Thao tác này sẽ thay thế tên hiện tại trong nhật ký của bạn.",
   "manual_food.success.msg": "Tên món ăn đã được cập nhật thành '%@'.",
   "manual_food.success.title": "Đã cập nhật tên",

@@ -457,6 +457,7 @@
   "macro.sug.full": "Sukker",
   "macro.targets.alert.title": "Makromål",
   "manual_food.error": "Kunne ikke opdatere retnavnet. Prøv venligst igen.",
+  "manual_food.login_required.message": "Opret en konto eller log ind for at rette eller foreslå madnavne manuelt.",
   "manual_food.msg": "Indtast det korrekte retnavn. Dette vil erstatte det nuværende navn i din log.",
   "manual_food.success.msg": "Retnavn blev opdateret til '%@'.",
   "manual_food.success.title": "Navn opdateret",

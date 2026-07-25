@@ -457,6 +457,7 @@
   "macro.sug.full": "Cukurs",
   "macro.targets.alert.title": "Makroelementu mērķi",
   "manual_food.error": "Neizdevās atjaunināt ēdiena nosaukumu. Lūdzu, mēģiniet vēlreiz.",
+  "manual_food.login_required.message": "Izveidojiet kontu vai pierakstieties, lai manuāli labotu vai ieteiktu ēdienu nosaukumus.",
   "manual_food.msg": "Ievadiet pareizo ēdiena nosaukumu. Tas aizstās pašreizējo nosaukumu jūsu žurnālā.",
   "manual_food.success.msg": "Ēdiena nosaukums tika atjaunināts uz '%@'.",
   "manual_food.success.title": "Nosaukums atjaunināts",

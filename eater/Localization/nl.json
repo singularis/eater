@@ -456,6 +456,7 @@
   "macro.sug.full": "Suiker",
   "macro.targets.alert.title": "Macrodoelen",
   "manual_food.error": "Het bijwerken van de naam van het gerecht is mislukt. Probeer het opnieuw.",
+  "manual_food.login_required.message": "Maak een account aan of log in om voedselnamen handmatig te corrigeren of voor te stellen.",
   "manual_food.msg": "Voer de juiste naam van het gerecht in. Dit vervangt de huidige naam in uw logboek.",
   "manual_food.success.msg": "De naam van het gerecht is bijgewerkt naar '%@'.",
   "manual_food.success.title": "Naam bijgewerkt",
