@@ -114,7 +114,7 @@ struct LoginView: View {
       LoginFeatureRow(
         icon: "camera.viewfinder",
         tint: AppTheme.accent,
-        text: loc("login.feature.scan", "AI recognizes your meal from a single photo")
+        text: loc("login.feature.scan", "Eateria recognizes your meal from a single photo")
       )
       LoginFeatureRow(
         icon: "chart.line.uptrend.xyaxis",

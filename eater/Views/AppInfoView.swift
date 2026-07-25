@@ -24,7 +24,7 @@ struct AppInfoView: View {
             section(title: loc("info.section.how", "How it works")) {
               VStack(alignment: .leading, spacing: 14) {
                 step(1, loc("info.how.step1", "Take a photo of your meal or pick one from your library."))
-                step(2, loc("info.how.step2", "AI identifies the dish and estimates calories, protein, fat and carbs."))
+                step(2, loc("info.how.step2", "Eateria identifies the dish and estimates calories, protein, fat and carbs."))
                 step(3, loc("info.how.step3", "Review your day, adjust portions and watch your progress."))
               }
             }
