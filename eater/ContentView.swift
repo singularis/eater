@@ -37,6 +37,8 @@ struct ContentView: View {
   // Alcohol states
   @State private var showAlcoholCalendar = false
   @State private var alcoholIconColor: Color = .green
+  // Anonymous ("Let Me Try") scan reminder
+  @State private var showAnonymousLoginPrompt = false
   @State private var lastAlcoholEventDate: Date? = nil
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   @State private var showMainAppTutorial = false
@@ -48,12 +50,11 @@ struct ContentView: View {
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
   #endif
   
-  // Activities icon color (green if any activity today, orange if not)
+  // Sport icon color: green when today has sport calories, otherwise warning/orange
   private var sportIconColor: Color {
     let today = getCurrentUTCDateString()
     let hasCalories = todaySportCaloriesDate == today && todaySportCalories > 0
-    let hasActivity = todayActivityDate == today
-    return (hasCalories || hasActivity) ? .green : .orange
+    return hasCalories ? .green : AppTheme.warning
   }
   // New loading states
   @State private var isLoadingData = false
@@ -232,6 +233,20 @@ struct ContentView: View {
             "Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice."
           ))
       }
+      .alert(
+        loc("login.scan_prompt_title", "Unlock All Features"), isPresented: $showAnonymousLoginPrompt
+      ) {
+        Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
+        Button(loc("login.prompt.confirm", "Login Now")) {
+          authService.signOut()
+        }
+      } message: {
+        Text(
+          loc(
+            "login.scan_prompt_message",
+            "Please login to Google if you are ready or want to recover past food."
+          ))
+      }
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
           .environmentObject(authService)
@@ -315,32 +330,34 @@ struct ContentView: View {
     .id(languageService.currentCode)
   }
 
+  /// 3-zone bar matching Android TopBarView:
+  /// [Profile]—8—[Alcohol]  ……flex……  [Date]  ……flex……  [Sport]—8—[Health]
   private var topBarView: some View {
-    ZStack {
+    HStack(spacing: 0) {
+      HStack(spacing: 8) {
+        profileButton
+        alcoholButton
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+
       dateDisplayView
 
-      HStack {
-        HStack(spacing: 24) {
-          profileButton
-          alcoholButton
+      HStack(spacing: 8) {
+        #if DEBUG
+        if useDevEnvironment {
+          Text("DEV")
+            .font(.system(size: 10, weight: .heavy))
+            .foregroundColor(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.red)
+            .cornerRadius(4)
         }
-        Spacer()
-        HStack(spacing: 24) {
-          #if DEBUG
-          if useDevEnvironment {
-            Text("DEV")
-              .font(.system(size: 10, weight: .heavy))
-              .foregroundColor(.white)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 2)
-              .background(Color.red)
-              .cornerRadius(4)
-          }
-          #endif
-          healthInfoButton
-          sportButton
-        }
+        #endif
+        sportButton
+        healthInfoButton
       }
+      .frame(maxWidth: .infinity, alignment: .trailing)
     }
   }
 
@@ -403,7 +420,7 @@ struct ContentView: View {
           .shadow(color: alcoholIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
         Image(systemName: themeService.icon(for: "wineglass"))
-          .font(.system(size: 18, weight: .semibold))
+          .font(.system(size: 20, weight: .semibold))
           .foregroundColor(alcoholIconColor)
       }
       .frame(width: 44, height: 44)
@@ -484,17 +501,6 @@ struct ContentView: View {
       ZStack {
         Circle()
           .fill(AppTheme.surface)
-          .overlay(
-            Circle()
-              .stroke(
-                LinearGradient(
-                  gradient: Gradient(colors: [(averageHealthScore?.color ?? Color.blue).opacity(0.9), (averageHealthScore?.color ?? Color.blue).opacity(0.3)]),
-                  startPoint: .topLeading,
-                  endPoint: .bottomTrailing
-                ),
-                lineWidth: 2
-              )
-          )
           .shadow(color: (averageHealthScore?.color ?? Color.blue).opacity(0.4), radius: 6, x: 0, y: 3)
 
         if let avg = averageHealthScore {
@@ -545,14 +551,14 @@ struct ContentView: View {
           .shadow(color: sportIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
         Image(systemName: themeService.icon(for: "figure.run"))
-          .font(.system(size: 18, weight: .semibold))
+          .font(.system(size: 20, weight: .semibold))
           .foregroundColor(sportIconColor)
       }
       .frame(width: 44, height: 44)
       .contentShape(Circle())
     }
     .buttonStyle(PressScaleButtonStyle())
-    .id("sport-\(todayActivityDate)-\(todaySportCalories)-\(uiRefreshTrigger)")
+    .id("sport-\(todaySportCalories)-\(todaySportCaloriesDate)-\(uiRefreshTrigger)")
     .sheet(isPresented: $showActivitiesView) {
       ActivitiesView(dateISO: currentActivitiesDateISO())
     }
@@ -827,6 +833,9 @@ struct ContentView: View {
         // Photo processing started
         HapticsService.shared.mediumImpact()
         isLoadingFoodPhoto = true
+        if authService.recordAnonymousFoodScanIfNeeded() {
+          showAnonymousLoginPrompt = true
+        }
       },
       onReturnToToday: {
         returnToToday()
@@ -969,6 +978,7 @@ struct ContentView: View {
             self.recalculateCalorieLimitsFromHealthData()
           }
           self.refreshMacrosForCurrentView()
+          self.fetchAlcoholStatus()
         }
       }
       return
@@ -1020,6 +1030,7 @@ struct ContentView: View {
           self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
+        self.fetchAlcoholStatus()
       }
     }
   }
@@ -1048,6 +1059,7 @@ struct ContentView: View {
           self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
+        self.fetchAlcoholStatus()
       }
     }
   }
@@ -1993,12 +2005,12 @@ struct ContentView: View {
 
   private func colorForLastAlcoholDate(_ last: Date) -> Color {
     let days = Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 999
-    if days == 0 {
-      return .red      // Today - red warning
-    } else if days == 1 {
-      return .yellow   // Yesterday - yellow caution
+    if days <= 7 {
+      return .red
+    } else if days <= 30 {
+      return .yellow
     } else {
-      return .green    // 2+ days ago - green (good recovery)
+      return .green
     }
   }
 
@@ -2047,6 +2059,8 @@ struct ContentView: View {
 
         // Fetch fresh data for the new day (this will use loading indicator since cache was cleared)
         fetchDataWithLoading()
+      } else {
+        fetchAlcoholStatus()
       }
 
       // Reschedule notifications for the new local day
