@@ -117,7 +117,7 @@ struct ProductRowView: View {
             }
         }
 
-        // Food details - clickable for portion modification
+        // Food details - view only; use the "⋯" button for actions
         VStack(alignment: .leading, spacing: 4) {
           Text(Localization.shared.translateFoodName(product.name))
             .font(.headline)
@@ -126,6 +126,9 @@ struct ProductRowView: View {
           Text(detailsText)
             .font(.subheadline)
             .foregroundColor(AppTheme.textSecondary)
+            .onTapGesture {
+              showHealthInfo()
+            }
 
           Text(ingredientsText)
             .font(.caption)
@@ -140,96 +143,132 @@ struct ProductRowView: View {
               .lineLimit(1)
           }
         }
-        .onTapGesture {
-          HapticsService.shared.lightImpact()
-          AlertHelper.showPortionSelectionAlert(
-            foodName: product.name,
-            originalWeight: product.weight,
-            time: product.time,
-            imageId: product.imageId,
-            isDrink: product.isDrink,
-            isFruitOrVegetable: product.isFruitOrVegetable,
-            onPortionSelected: { percentage, grams in
-              HapticsService.shared.success()
-              onModify(product.time, product.name, percentage, grams)
-            },
-            onTryAgain: {
-              HapticsService.shared.select()
-              onTryAgain(product.time, product.imageId)
-            },
-            onAddSugar: product.isDrink
-              ? {
-                HapticsService.shared.success()
-                onAddSugar(product.time, product.name)
-              }
-              : nil,
-            onAddDrinkExtra: product.isDrink ? { key in
-              HapticsService.shared.success()
-              onAddDrinkExtra?(product.time, product.name, key)
-            } : nil,
-            onAddFoodExtra: product.isDrink ? nil : { key in
-              HapticsService.shared.success()
-              onAddFoodExtra?(product.time, product.name, key)
-            },
-            onShareSuccess: onShareSuccess)
-        }
-        
+
         Spacer()
       }
-      .padding(.trailing, (product.healthRating >= 0 && deletingProductTime != product.time) ? 45 : 0)
+      .padding(.trailing, deletingProductTime != product.time ? 68 : 0)
 
-      // Separate layer for Smiley or ProgressView
+      // Separate layer: Share + "⋯" actions, health ring, or a loading spinner
       if deletingProductTime == product.time {
         ProgressView()
           .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.accent))
           .scaleEffect(0.8)
           .padding(.trailing, 8)
-      } else if product.healthRating >= 0 {
-        HealthRatingRing(
-          rating: product.effectiveHealthRating,
-          color: getHealthRatingColor(rating: product.effectiveHealthRating)
-        )
-          .frame(width: 44, height: 44)
-          .onTapGesture {
-            HapticsService.shared.select()
-
-            // Check cache first
-            if let cached = ProductStorageService.shared.getHealthLevel(time: product.time) {
-              AlertHelper.showHealthLevelInfo(
-                title: cached.title,
-                description: cached.description,
-                healthSummary: cached.healthSummary
-              )
-              return
-            }
-
-            // Fetch if not cached
-            GRPCService().getFoodHealthLevel(time: product.time, foodName: product.name) { response in
-              DispatchQueue.main.async {
-                if let response = response {
-                  // Cache the result
-                  ProductStorageService.shared.saveHealthLevel(
-                    time: product.time,
-                    title: response.title,
-                    description: response.description_p,
-                    healthSummary: response.healthSummary
-                  )
-                  
-                  AlertHelper.showHealthLevelInfo(
-                    title: response.title,
-                    description: response.description_p,
-                    healthSummary: response.healthSummary
-                  )
-                }
-              }
-            }
+      } else {
+        VStack(alignment: .trailing, spacing: 6) {
+          HStack(spacing: 8) {
+            shareIconButton
+            moreOptionsIconButton
           }
+          if product.healthRating >= 0 {
+            HealthRatingRing(
+              rating: product.effectiveHealthRating,
+              color: getHealthRatingColor(rating: product.effectiveHealthRating)
+            )
+              .frame(width: 44, height: 44)
+              .onTapGesture {
+                showHealthInfo()
+              }
+          }
+        }
       }
     }
     .padding(.vertical, 8)
     .opacity(deletingProductTime == product.time ? 0.6 : 1.0)
     .onAppear {
       fetchRemoteImageIfNeeded()
+    }
+  }
+
+  private var shareIconButton: some View {
+    Button(action: {
+      HapticsService.shared.lightImpact()
+      AlertHelper.showShareFriends(
+        foodName: product.name, time: product.time, imageId: product.imageId,
+        onShareSuccess: onShareSuccess)
+    }) {
+      Image(systemName: "square.and.arrow.up")
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(AppTheme.success)
+        .frame(width: 32, height: 32)
+        .background(AppTheme.surface)
+        .clipShape(Circle())
+        .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
+    }
+    .buttonStyle(.plain)
+  }
+
+  private var moreOptionsIconButton: some View {
+    Button(action: {
+      HapticsService.shared.lightImpact()
+      AlertHelper.showPortionSelectionAlert(
+        foodName: product.name,
+        originalWeight: product.weight,
+        isDrink: product.isDrink,
+        isFruitOrVegetable: product.isFruitOrVegetable,
+        onPortionSelected: { percentage, grams in
+          HapticsService.shared.success()
+          onModify(product.time, product.name, percentage, grams)
+        },
+        onTryAgain: {
+          HapticsService.shared.select()
+          onTryAgain(product.time, product.imageId)
+        },
+        onAddSugar: product.isDrink
+          ? {
+            HapticsService.shared.success()
+            onAddSugar(product.time, product.name)
+          }
+          : nil,
+        onAddDrinkExtra: product.isDrink ? { key in
+          HapticsService.shared.success()
+          onAddDrinkExtra?(product.time, product.name, key)
+        } : nil,
+        onAddFoodExtra: product.isDrink ? nil : { key in
+          HapticsService.shared.success()
+          onAddFoodExtra?(product.time, product.name, key)
+        }
+      )
+    }) {
+      Image(systemName: "ellipsis.circle.fill")
+        .font(.system(size: 22))
+        .foregroundColor(AppTheme.textSecondary)
+        .frame(width: 32, height: 32)
+    }
+    .buttonStyle(.plain)
+  }
+
+  /// Shows health-rating info for this product (cached if available, otherwise fetched).
+  /// Shared by the health ring tap and the calorie-line tap.
+  private func showHealthInfo() {
+    HapticsService.shared.select()
+
+    if let cached = ProductStorageService.shared.getHealthLevel(time: product.time) {
+      AlertHelper.showHealthLevelInfo(
+        title: cached.title,
+        description: cached.description,
+        healthSummary: cached.healthSummary
+      )
+      return
+    }
+
+    GRPCService().getFoodHealthLevel(time: product.time, foodName: product.name) { response in
+      DispatchQueue.main.async {
+        if let response = response {
+          ProductStorageService.shared.saveHealthLevel(
+            time: product.time,
+            title: response.title,
+            description: response.description_p,
+            healthSummary: response.healthSummary
+          )
+
+          AlertHelper.showHealthLevelInfo(
+            title: response.title,
+            description: response.description_p,
+            healthSummary: response.healthSummary
+          )
+        }
+      }
     }
   }
 

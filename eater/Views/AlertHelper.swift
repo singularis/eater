@@ -367,16 +367,13 @@ class AlertHelper {
   static func showPortionSelectionAlert(
     foodName: String,
     originalWeight: Int,
-    time: Int64,
-    imageId: String = "",
     isDrink: Bool,
     isFruitOrVegetable: Bool = false,
     onPortionSelected: @escaping (Int32, Double?) -> Void,
     onTryAgain: (() -> Void)? = nil,
     onAddSugar: (() -> Void)? = nil,
     onAddDrinkExtra: ((String) -> Void)? = nil,
-    onAddFoodExtra: ((String) -> Void)? = nil,
-    onShareSuccess: (() -> Void)? = nil
+    onAddFoodExtra: ((String) -> Void)? = nil
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let window = windowScene.windows.first,
@@ -429,16 +426,6 @@ class AlertHelper {
           onPortionSelected(portion.percentage, nil)
         })
     }
-
-    // Share food with friend action (visually highlighted)
-    let shareTitle = loc("portion.share", "Share food with friend")
-    let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
-      presentShareFriendsController(
-        foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
-    }
-    // Make action title green (private API key path, commonly works in UIKit alerts)
-    shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
-    alert.addAction(shareAction)
 
     // Additives extras: not for fruit/vegetable; tap "Additives" to open submenu
     if !isFruitOrVegetable {
