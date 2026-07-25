@@ -1,16 +1,20 @@
 import SwiftUI
 
-// Custom swipe-to-delete row so the gesture wins over TabView's paging swipe.
+// Custom swipe-to-delete (left) / swipe-to-camera (right) row so the gesture
+// wins over TabView's paging swipe.
 private struct SwipeToDeleteRow<Content: View>: View {
   let onDelete: () -> Void
   let isDisabled: Bool
   let deleteLabel: String
+  var onSwipeRight: (() -> Void)? = nil
   @ViewBuilder let content: () -> Content
 
   private let deleteWidth: CGFloat = 100
+  private let cameraRevealMax: CGFloat = 90
+  private let cameraTriggerThreshold: CGFloat = 70
   @State private var offset: CGFloat = 0
 
-  /// 0...1 — hide red background when not swiping
+  /// 0...1 — hide red background when not swiping left
   private var deleteRevealProgress: CGFloat {
     min(1, max(0, -offset / deleteWidth))
   }
@@ -18,6 +22,11 @@ private struct SwipeToDeleteRow<Content: View>: View {
   /// Red button is visible and tappable only after sufficient swipe
   private var isDeleteZoneActive: Bool {
     deleteRevealProgress > 0.25
+  }
+
+  /// 0...1 — hide green camera background when not swiping right
+  private var cameraRevealProgress: CGFloat {
+    min(1, max(0, offset / cameraRevealMax))
   }
 
   private func performDelete() {
@@ -45,6 +54,20 @@ private struct SwipeToDeleteRow<Content: View>: View {
       }
       .allowsHitTesting(isDeleteZoneActive)
 
+      // Green zone appears only on swipe right, revealing a camera hint
+      if onSwipeRight != nil {
+        HStack {
+          Image(systemName: "camera.fill")
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(.white)
+            .frame(width: cameraRevealMax)
+          Spacer()
+        }
+        .background(AppTheme.success)
+        .opacity(Double(cameraRevealProgress))
+        .allowsHitTesting(false)
+      }
+
       content()
         .background(AppTheme.backgroundGradient)
         .padding(.trailing, 44)
@@ -67,9 +90,16 @@ private struct SwipeToDeleteRow<Content: View>: View {
           DragGesture(minimumDistance: 24)
             .onChanged { value in
               let tx = value.translation.width
-              offset = min(0, max(-deleteWidth, tx))
+              if tx >= 0 {
+                offset = onSwipeRight != nil ? min(cameraRevealMax, tx) : 0
+              } else {
+                offset = max(-deleteWidth, tx)
+              }
             }
-            .onEnded { _ in
+            .onEnded { value in
+              if value.translation.width >= cameraTriggerThreshold {
+                onSwipeRight?()
+              }
               withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { offset = 0 }
             }
         )
@@ -90,6 +120,7 @@ struct ProductListView: View {
   let onPhotoTap: (UIImage?, String) -> Void
   let deletingProductTime: Int64?
   let onShareSuccess: () -> Void
+  var onSwipeRight: (() -> Void)? = nil
 
   var sortedProducts: [Product] {
     products.sorted { $0.time > $1.time }
@@ -127,7 +158,8 @@ struct ProductListView: View {
             SwipeToDeleteRow(
               onDelete: { onDelete(product.time) },
               isDisabled: deletingProductTime == product.time,
-              deleteLabel: loc("common.remove", "Remove")
+              deleteLabel: loc("common.remove", "Remove"),
+              onSwipeRight: onSwipeRight
             ) {
               ProductRowView(
                 product: product,

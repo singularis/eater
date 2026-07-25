@@ -285,7 +285,7 @@ final class AuthenticationService: NSObject, ObservableObject {
     // Delay presentation explicitly to allow SwiftUI interactions (like Button press animations) to conclude
     DispatchQueue.main.async {
       guard let topVC = UIApplication.topMostViewController else {
-        debugLog("🔴 [AuthService] Could not find topMostViewController to present GIDSignIn")
+        self.debugLog("🔴 [AuthService] Could not find topMostViewController to present GIDSignIn")
         return
       }
 
