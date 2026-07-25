@@ -304,10 +304,12 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
       alert.addAction(
         UIAlertAction(title: "\(v)%", style: .default, handler: { _ in onSelected(v) }))
     }
-    alert.addAction(
-      UIAlertAction(
-        title: loc("share.percentage.same", "Same amount"), style: .default,
-        handler: { _ in onSelected(100) }))
+    let sameAmountAction = UIAlertAction(
+      title: loc("share.percentage.same", "Same amount"), style: .default,
+      handler: { _ in onSelected(100) })
+    // Green to make the "same amount" option stand out from the plain percentages
+    sameAmountAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
+    alert.addAction(sameAmountAction)
     alert.addAction(
       UIAlertAction(
         title: loc("share.percentage.custom", "Custom..."), style: .default,
