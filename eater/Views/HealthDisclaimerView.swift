@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct HealthDisclaimerView: View {
+  /// Today's (or currently viewed date's) average health score, matching the ring
+  /// shown in the top bar. Nil when no rated food has been logged yet.
+  var todayHealthScore: (score: Int, color: Color)? = nil
+
   @Environment(\.dismiss) private var dismiss
 
   private var appLocale: Locale { Locale(identifier: LanguageService.shared.currentCode) }
@@ -10,6 +14,16 @@ struct HealthDisclaimerView: View {
     df.dateStyle = .medium
     df.timeStyle = .none
     return loc("disc.updated", "Last Updated:") + " " + df.string(from: Date())
+  }
+
+  private func scoreBandLabel(_ score: Int) -> String {
+    switch score {
+    case 0..<40: return loc("health.score.band.poor", "Needs Improvement")
+    case 40..<60: return loc("health.score.band.low", "Fair")
+    case 60..<80: return loc("health.score.band.fair", "Good")
+    case 80..<95: return loc("health.score.band.good", "Very Good")
+    default: return loc("health.score.band.great", "Excellent")
+    }
   }
 
   var body: some View {
@@ -23,6 +37,56 @@ struct HealthDisclaimerView: View {
             .fontWeight(.bold)
             .foregroundColor(AppTheme.textPrimary)
             .padding(.bottom, 10)
+
+          Group {
+            Text(loc("health.score.section.title", "Your Health Score"))
+              .font(.headline)
+              .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
+
+            HStack(spacing: 16) {
+              if let today = todayHealthScore {
+                ZStack {
+                  Circle()
+                    .stroke(today.color.opacity(0.2), lineWidth: 5)
+                  Circle()
+                    .trim(from: 0, to: CGFloat(today.score) / 100.0)
+                    .stroke(today.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                  Text("\(today.score)")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(today.color)
+                }
+                .frame(width: 56, height: 56)
+
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(loc("health.score.value.label", "Today's Score"))
+                    .font(.caption)
+                    .foregroundColor(AppTheme.textSecondary)
+                  Text(scoreBandLabel(today.score))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(today.color)
+                }
+              } else {
+                Image(systemName: "heart.text.square")
+                  .font(.system(size: 32))
+                  .foregroundColor(AppTheme.textSecondary.opacity(0.6))
+                Text(loc("health.score.none", "No rated food logged yet today."))
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textSecondary)
+              }
+            }
+
+            Text(
+              loc(
+                "health.score.explanation",
+                "This is the average health rating of everything you've logged today. Each food item gets a 0-100 score from our LLM's nutritional analysis \u{2014} based on ingredients, processing level and macro balance \u{2014} as soon as you scan it. This number is the average across all rated items for the day and updates automatically as you add or remove food. Tap any food's ring on its card to see that item's individual score and recommendation."
+              )
+            )
+            .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
+          }
 
           Group {
             Text(loc("disc.section.notice", "Important Notice"))

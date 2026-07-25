@@ -272,7 +272,7 @@ struct ContentView: View {
         }
       }
       .sheet(isPresented: $showHealthDisclaimer) {
-        HealthDisclaimerView()
+        HealthDisclaimerView(todayHealthScore: averageHealthScore)
       }
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
