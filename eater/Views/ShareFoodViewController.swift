@@ -209,7 +209,9 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     cell.textLabel?.text = displayName
     
     var details = [String]()
-    if shares > 0 { details.append("Shared \(shares)x") }
+    if shares > 0 {
+      details.append(String(format: loc("friends.shared_count", "Shared %dx"), shares))
+    }
     if !friend.nickname.isEmpty { details.append(friend.email) }
     
     cell.detailTextLabel?.text = details.joined(separator: " • ")
@@ -253,15 +255,18 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
             let trimmed = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
             
             let nameUsed = (trimmed?.isEmpty ?? true) ? toEmail : trimmed!
-            let message = "Shared \(percentage)% with \(nameUsed)"
+            let message = String(
+              format: loc("share.success.msg", "Shared %d%% with %@"), percentage, nameUsed)
             
             let callback = self.onShareSuccess
             self.dismiss(animated: true) {
               callback?()
-              AlertHelper.showAlert(title: "Shared", message: message)
+              AlertHelper.showAlert(title: loc("share.success.title", "Shared"), message: message)
             }
           } else {
-            AlertHelper.showAlert(title: "Failed", message: "Could not share with \(toEmail)")
+            AlertHelper.showAlert(
+              title: loc("share.fail.title", "Failed"),
+              message: String(format: loc("share.fail.msg", "Could not share with %@"), toEmail))
           }
         }
       }
@@ -287,7 +292,8 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
 
   private func promptSharePercentage(onSelected: @escaping (Int32) -> Void) {
     let alert = UIAlertController(
-      title: "How much did your friend eat?", message: nil, preferredStyle: .actionSheet)
+      title: loc("share.percentage.title", "How much did your friend eat?"), message: nil,
+      preferredStyle: .actionSheet)
     let options: [Int32] = [25, 50, 75]
     for v in options {
       alert.addAction(
@@ -295,26 +301,28 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     }
     alert.addAction(
       UIAlertAction(
-        title: "Custom...", style: .default,
+        title: loc("share.percentage.custom", "Custom..."), style: .default,
         handler: { [weak self] _ in
           self?.promptCustomPercentage(onSelected: onSelected)
         }))
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
     present(alert, animated: true)
   }
 
   private func promptCustomPercentage(onSelected: @escaping (Int32) -> Void) {
     let alert = UIAlertController(
-      title: "Custom percentage", message: "Enter a value between 1 and 300", preferredStyle: .alert
+      title: loc("share.custom.title", "Custom percentage"),
+      message: loc("share.custom.message", "Enter a value between 1 and 300"),
+      preferredStyle: .alert
     )
     alert.addTextField { tf in
-      tf.placeholder = "e.g. 40"
+      tf.placeholder = loc("share.custom.placeholder", "e.g. 40")
       tf.keyboardType = .numberPad
     }
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
     alert.addAction(
       UIAlertAction(
-        title: "OK", style: .default,
+        title: loc("common.ok", "OK"), style: .default,
         handler: { _ in
           if let text = alert.textFields?.first?.text, let value = Int(text), value > 0,
             value <= 300
