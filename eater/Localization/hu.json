@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Törlöd az ételt?",
   "list.empty.subtitle": "Adja hozzá első étkezését a főképernyőről.",
   "list.empty.title": "Még nincsenek étkezések",
+  "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tipp: Húzz jobbra egy ételen, hogy gyorsan készíts egy újabb fotót",
   "loading.food": "Ételadatok betöltése...",
   "loading.photo": "Étel fotó elemzése...",

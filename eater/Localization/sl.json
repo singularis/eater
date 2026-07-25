@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Izbriši hrano?",
   "list.empty.subtitle": "Dodajte svoj prvi obrok z domačega zaslona.",
   "list.empty.title": "Še ni obrokov",
+  "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Nasvet: Povlecite obrok v desno, da hitro posnamete še eno fotografijo",
   "loading.food": "Nalaganje podatkov o hrani...",
   "loading.photo": "Analiza fotografije hrane...",

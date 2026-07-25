@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Supprimer l'aliment ?",
   "list.empty.subtitle": "Ajoutez votre premier repas depuis l'écran d'accueil.",
   "list.empty.title": "Aucun repas pour le moment",
+  "list.swipe_camera.action": "Appareil",
   "list.swipe_camera.hint": "Astuce : Glissez un repas vers la droite pour prendre rapidement une autre photo",
   "loading.food": "Chargement des données alimentaires...",
   "loading.photo": "Analyse de la photo de nourriture...",

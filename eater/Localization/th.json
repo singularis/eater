@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "ลบอาหารหรือไม่?",
   "list.empty.subtitle": "เพิ่มมื้ออาหารแรกของคุณจากหน้าจอหลัก",
   "list.empty.title": "ยังไม่มีมื้ออาหาร",
+  "list.swipe_camera.action": "กล้อง",
   "list.swipe_camera.hint": "เคล็ดลับ: ปัดมื้ออาหารไปทางขวาเพื่อถ่ายภาพเพิ่มได้อย่างรวดเร็ว",
   "loading.food": "กำลังโหลดข้อมูลอาหาร...",
   "loading.photo": "กำลังวิเคราะห์รูปอาหาร...",

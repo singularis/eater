@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Изтриване на храна?",
   "list.empty.subtitle": "Добавете първото си ястие от началния екран.",
   "list.empty.title": "Все още няма ястия",
+  "list.swipe_camera.action": "Камера",
   "list.swipe_camera.hint": "Съвет: плъзнете храна надясно, за да направите бързо още една снимка",
   "loading.food": "Зареждат се данни за храната...",
   "loading.photo": "Анализира се снимката на храната...",

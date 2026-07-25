@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Ta bort mat?",
   "list.empty.subtitle": "Lägg till din första måltid från hemskärmen.",
   "list.empty.title": "Inga måltider ännu",
+  "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tips: Svep en måltid åt höger för att snabbt ta ännu ett foto",
   "loading.food": "Laddar matdata...",
   "loading.photo": "Analyserar matfoto...",

@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Delete Food?",
   "list.empty.subtitle": "Add your first meal from the Home screen.",
   "list.empty.title": "No meals yet",
+  "list.swipe_camera.action": "Camera",
   "list.swipe_camera.hint": "Tip: Swipe a meal right to quickly snap another photo",
   "loading.food": "Loading food data...",
   "loading.photo": "Analyzing food photo...",

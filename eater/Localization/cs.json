@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Smazat jídlo?",
   "list.empty.subtitle": "Přidejte své první jídlo z domovské obrazovky.",
   "list.empty.title": "Zatím žádná jídla",
+  "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tip: Přejetím jídla doprava rychle vyfotíte další snímek",
   "loading.food": "Načítání dat o jídle...",
   "loading.photo": "Analýza fotografie jídla...",

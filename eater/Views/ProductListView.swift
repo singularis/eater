@@ -1,102 +1,17 @@
 import SwiftUI
-import UIKit
 
-/// Weak holder for the ancestor `.page`-style TabView's own paging UIScrollView,
-/// discovered once per row via `PagingScrollViewFinder`.
-private final class PagingScrollViewRef {
-  weak var scrollView: UIScrollView?
-}
-
-/// Invisible, non-hit-testable helper that walks up the view hierarchy to find
-/// the ancestor paging scroll view. It never participates in touch delivery
-/// (`isUserInteractionEnabled = false`), so it can't ever intercept taps meant
-/// for the row's own buttons — it only exists to hand back a reference.
-private struct PagingScrollViewFinder: UIViewRepresentable {
-  let ref: PagingScrollViewRef
-
-  func makeUIView(context: Context) -> FinderView {
-    let view = FinderView()
-    view.isUserInteractionEnabled = false
-    view.backgroundColor = .clear
-    view.ref = ref
-    return view
-  }
-
-  func updateUIView(_ uiView: FinderView, context: Context) {}
-
-  final class FinderView: UIView {
-    weak var ref: PagingScrollViewRef?
-
-    override func didMoveToWindow() {
-      super.didMoveToWindow()
-      guard ref?.scrollView == nil else { return }
-      var current: UIView? = superview
-      while let view = current {
-        if let scrollView = view as? UIScrollView, scrollView.isPagingEnabled {
-          ref?.scrollView = scrollView
-          return
-        }
-        current = view.superview
-      }
-    }
-  }
-}
-
-// Custom swipe-to-delete (left) / swipe-to-camera (right) row so the gesture
-// wins over TabView's paging swipe.
-private struct SwipeToDeleteRow<Content: View>: View {
+// Uses the system's native swipe actions (leading = camera, trailing = remove)
+// rather than a custom DragGesture. A custom horizontal drag here always loses
+// to the main screen's paged TabView, which owns horizontal drags for switching
+// to Statistics, and it also competes with the list's pull-to-refresh.
+private struct FoodListRow<Content: View>: View {
   let onDelete: () -> Void
   let isDisabled: Bool
   let deleteLabel: String
   var onSwipeRight: (() -> Void)? = nil
-  /// Toggled once by the parent list to nudge this row and reveal the swipe-camera
-  /// affordance for first-time discovery, without actually opening the camera.
-  var playSwipeHintPulse: Bool = false
   @ViewBuilder let content: () -> Content
 
-  private let deleteWidth: CGFloat = 100
-  private let cameraRevealMax: CGFloat = 90
-  private let cameraTriggerThreshold: CGFloat = 70
-  @State private var offset: CGFloat = 0
   @State private var showDeleteConfirmation = false
-  @State private var pagingScrollViewRef = PagingScrollViewRef()
-
-  /// The parent TabView(.page) claims horizontal drags for itself very early —
-  /// often before our own DragGesture (minimumDistance: 24) even starts
-  /// recognizing — which is why swiping a row used to do nothing. This
-  /// zero-threshold gesture runs alongside it purely to disable the ancestor's
-  /// paging gesture the instant a horizontal drag begins, so our real swipe
-  /// gesture below gets an uncontested shot at the touch.
-  private func releasePagingGesture(for translation: CGSize) {
-    guard abs(translation.width) > abs(translation.height), abs(translation.width) > 4 else { return }
-    pagingScrollViewRef.scrollView?.panGestureRecognizer.isEnabled = false
-  }
-
-  private func restorePagingGesture() {
-    pagingScrollViewRef.scrollView?.panGestureRecognizer.isEnabled = true
-  }
-
-  private func animateSwipeHintPulse() {
-    withAnimation(.easeOut(duration: 0.35)) { offset = cameraRevealMax }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-      withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { offset = 0 }
-    }
-  }
-
-  /// 0...1 — hide red background when not swiping left
-  private var deleteRevealProgress: CGFloat {
-    min(1, max(0, -offset / deleteWidth))
-  }
-
-  /// Red button is visible and tappable only after sufficient swipe
-  private var isDeleteZoneActive: Bool {
-    deleteRevealProgress > 0.25
-  }
-
-  /// 0...1 — hide green camera background when not swiping right
-  private var cameraRevealProgress: CGFloat {
-    min(1, max(0, offset / cameraRevealMax))
-  }
 
   private func requestDelete() {
     guard !isDisabled else { return }
@@ -104,119 +19,53 @@ private struct SwipeToDeleteRow<Content: View>: View {
     showDeleteConfirmation = true
   }
 
-  private func confirmDelete() {
-    onDelete()
-    withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
-  }
-
-  private func cancelDelete() {
-    withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
-  }
-
   var body: some View {
-    ZStack(alignment: .trailing) {
-      // Red zone appears only on swipe left; delete by tapping "Remove"
-      HStack {
-        Spacer()
-        Label(deleteLabel, systemImage: "trash")
-          .font(.subheadline.weight(.semibold))
-          .foregroundColor(.white)
-          .frame(width: deleteWidth)
-      }
-      .background(Color.red)
-      .opacity(Double(isDeleteZoneActive ? 1 : (deleteRevealProgress / 0.25)))
-      .contentShape(Rectangle())
-      .onTapGesture {
-        requestDelete()
-      }
-      .allowsHitTesting(isDeleteZoneActive)
-
-      // Green zone appears only on swipe right, revealing a camera hint
-      if onSwipeRight != nil {
-        HStack {
-          Image(systemName: "camera.fill")
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(.white)
-            .frame(width: cameraRevealMax)
-          Spacer()
+    content()
+      .background(AppTheme.backgroundGradient)
+      .padding(.trailing, 44)
+      .overlay(alignment: .trailing) {
+        Button {
+          requestDelete()
+        } label: {
+          Image(systemName: "trash")
+            .font(.system(size: 18, weight: .medium))
+            .foregroundColor(.red)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
         }
-        .background(AppTheme.success)
-        .opacity(Double(cameraRevealProgress))
-        .allowsHitTesting(false)
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.5 : 1)
       }
-
-      content()
-        .background(AppTheme.backgroundGradient)
-        .padding(.trailing, 44)
-        .offset(x: offset)
-        .overlay(alignment: .trailing) {
-          Button {
-            requestDelete()
-          } label: {
-            Image(systemName: "trash")
-              .font(.system(size: 18, weight: .medium))
-              .foregroundColor(.red)
-              .frame(width: 44, height: 44)
-              .contentShape(Rectangle())
+      .swipeActions(edge: .leading, allowsFullSwipe: true) {
+        if let onSwipeRight {
+          Button(action: onSwipeRight) {
+            Label(loc("list.swipe_camera.action", "Camera"), systemImage: "camera.fill")
           }
-          .buttonStyle(.plain)
-          .disabled(isDisabled)
-          .opacity(isDisabled ? 0.5 : 1)
+          .tint(AppTheme.success)
         }
-        .simultaneousGesture(
-          DragGesture(minimumDistance: 0)
-            .onChanged { value in
-              releasePagingGesture(for: value.translation)
-            }
-            .onEnded { _ in
-              restorePagingGesture()
-            }
-        )
-        .highPriorityGesture(
-          DragGesture(minimumDistance: 24)
-            .onChanged { value in
-              let tx = value.translation.width
-              if tx >= 0 {
-                offset = onSwipeRight != nil ? min(cameraRevealMax, tx) : 0
-              } else {
-                offset = max(-deleteWidth, tx)
-              }
-            }
-            .onEnded { value in
-              if value.translation.width >= cameraTriggerThreshold {
-                onSwipeRight?()
-              }
-              withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { offset = 0 }
-            }
-        )
-    }
-    .background(PagingScrollViewFinder(ref: pagingScrollViewRef))
-    .clipped()
-    .onChange(of: playSwipeHintPulse) { _, newValue in
-      if newValue {
-        animateSwipeHintPulse()
       }
-    }
-    .onDisappear {
-      // Safety net: never leave the page-swipe gesture disabled if a row
-      // disappears mid-drag (e.g. the item was deleted or scrolled away).
-      restorePagingGesture()
-    }
-    .alert(
-      loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
-    ) {
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {
-        cancelDelete()
+      .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+        Button(role: .destructive) {
+          requestDelete()
+        } label: {
+          Label(deleteLabel, systemImage: "trash")
+        }
+        .disabled(isDisabled)
       }
-      Button(deleteLabel, role: .destructive) {
-        confirmDelete()
+      .alert(
+        loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
+      ) {
+        Button(loc("common.cancel", "Cancel"), role: .cancel) {}
+        Button(deleteLabel, role: .destructive) {
+          onDelete()
+        }
+      } message: {
+        Text(
+          loc(
+            "list.delete.confirm.message",
+            "Are you sure you want to delete this food entry? This action cannot be undone."))
       }
-    } message: {
-      Text(
-        loc(
-          "list.delete.confirm.message",
-          "Are you sure you want to delete this food entry? This action cannot be undone."))
-    }
   }
 }
 
@@ -236,7 +85,6 @@ struct ProductListView: View {
 
   private static let swipeCameraHintKey = "hasSeenSwipeCameraHint"
   @State private var showSwipeCameraHintBanner = false
-  @State private var swipeHintPulseTrigger = false
 
   var sortedProducts: [Product] {
     products.sorted { $0.time > $1.time }
@@ -259,7 +107,6 @@ struct ProductListView: View {
       withAnimation(.easeIn(duration: 0.3)) {
         showSwipeCameraHintBanner = true
       }
-      swipeHintPulseTrigger = true
       DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
         dismissSwipeCameraHint()
       }
@@ -296,12 +143,11 @@ struct ProductListView: View {
         ZStack(alignment: .top) {
           List {
             ForEach(sortedProducts) { product in
-              SwipeToDeleteRow(
+              FoodListRow(
                 onDelete: { onDelete(product.time) },
                 isDisabled: deletingProductTime == product.time,
                 deleteLabel: loc("common.remove", "Remove"),
-                onSwipeRight: onSwipeRight,
-                playSwipeHintPulse: product.time == sortedProducts.first?.time && swipeHintPulseTrigger
+                onSwipeRight: onSwipeRight
               ) {
                 ProductRowView(
                   product: product,

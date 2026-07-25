@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "Usunąć posiłek?",
   "list.empty.subtitle": "Dodaj swój pierwszy posiłek z ekranu głównego.",
   "list.empty.title": "Jeszcze brak posiłków",
+  "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Wskazówka: Przesuń posiłek w prawo, aby szybko zrobić kolejne zdjęcie",
   "loading.food": "Ładowanie danych żywieniowych...",
   "loading.photo": "Analizowanie zdjęcia jedzenia...",

@@ -436,6 +436,7 @@
   "list.delete.confirm.title": "¿Eliminar comida?",
   "list.empty.subtitle": "Agrega tu primera comida desde la pantalla de inicio.",
   "list.empty.title": "Aún no hay comidas",
+  "list.swipe_camera.action": "Cámara",
   "list.swipe_camera.hint": "Consejo: Desliza una comida hacia la derecha para tomar rápidamente otra foto",
   "loading.food": "Cargando datos de comida...",
   "loading.photo": "Analizando foto de comida...",

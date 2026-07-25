@@ -435,6 +435,7 @@
   "list.delete.confirm.title": "Yemek silinsin mi?",
   "list.empty.subtitle": "Ana ekrandan ilk yemeğinizi ekleyin.",
   "list.empty.title": "Henüz öğün yok",
+  "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "İpucu: Hızlıca başka bir fotoğraf çekmek için bir öğünü sağa kaydırın",
   "loading.food": "Yemek verileri yükleniyor...",
   "loading.photo": "Yemek fotoğrafı analiz ediliyor...",
