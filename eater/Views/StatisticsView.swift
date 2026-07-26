@@ -121,6 +121,17 @@ struct StatisticsView: View {
       }
     }
     .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
+    // Swipe right to return to Home (mirrors Home swipe-left → Statistics)
+    .simultaneousGesture(
+      DragGesture(minimumDistance: 40)
+        .onEnded { value in
+          let dx = value.translation.width
+          let dy = value.translation.height
+          guard abs(dx) > abs(dy), dx > 70 else { return }
+          HapticsService.shared.select()
+          isPresented = false
+        }
+    )
   }
 
   private var periodSelectionView: some View {

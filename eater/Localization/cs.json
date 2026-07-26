@@ -438,6 +438,8 @@
   "list.empty.title": "Zatím žádná jídla",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tip: Přejetím jídla doprava rychle vyfotíte další snímek",
+  "list.swipe_options.action": "Možnosti",
+  "list.swipe_options.hint": "Tip: Přejetím jídla doprava otevřete možnosti",
   "loading.food": "Načítání dat o jídle...",
   "loading.photo": "Analýza fotografie jídla...",
   "loading.scale": "Čtení váhy...",

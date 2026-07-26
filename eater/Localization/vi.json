@@ -437,6 +437,8 @@
   "list.empty.title": "Chưa có bữa ăn nào",
   "list.swipe_camera.action": "Máy ảnh",
   "list.swipe_camera.hint": "Mẹo: Vuốt một món ăn sang phải để nhanh chóng chụp thêm ảnh khác",
+  "list.swipe_options.action": "Tùy chọn",
+  "list.swipe_options.hint": "Mẹo: Vuốt món ăn sang phải để mở tùy chọn",
   "loading.food": "Đang tải dữ liệu thức ăn...",
   "loading.photo": "Đang phân tích ảnh thức ăn...",
   "loading.scale": "Đang đọc cân...",

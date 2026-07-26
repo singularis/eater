@@ -437,6 +437,8 @@
   "list.empty.title": "Nessun pasto ancora",
   "list.swipe_camera.action": "Fotocamera",
   "list.swipe_camera.hint": "Suggerimento: scorri un pasto verso destra per scattare rapidamente un'altra foto",
+  "list.swipe_options.action": "Opzioni",
+  "list.swipe_options.hint": "Suggerimento: scorri un pasto a destra per aprire le opzioni",
   "loading.food": "Caricamento dati alimentari...",
   "loading.photo": "Analisi foto del cibo...",
   "loading.scale": "Lettura bilancia...",

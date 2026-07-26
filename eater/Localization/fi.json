@@ -438,6 +438,8 @@
   "list.empty.title": "Ei vielä aterioita",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Vinkki: Pyyhkäise ateriaa oikealle ottaaksesi nopeasti toisen kuvan",
+  "list.swipe_options.action": "Asetukset",
+  "list.swipe_options.hint": "Vinkki: Pyyhkäise ateriaa oikealle avataksesi asetukset",
   "loading.food": "Ladataan ruokatietoja...",
   "loading.photo": "Analysoidaan ruokakuvaa...",
   "loading.scale": "Luetaan vaakaa...",

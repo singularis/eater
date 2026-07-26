@@ -438,6 +438,8 @@
   "list.empty.title": "まだ食事がありません",
   "list.swipe_camera.action": "カメラ",
   "list.swipe_camera.hint": "ヒント：食事を右にスワイプすると、すばやく別の写真を撮影できます",
+  "list.swipe_options.action": "オプション",
+  "list.swipe_options.hint": "ヒント：食事を右にスワイプするとオプションが開きます",
   "loading.food": "食品データを読み込み中...",
   "loading.photo": "食べ物の写真を分析中...",
   "loading.scale": "体重計を読み取り中...",

@@ -437,6 +437,8 @@
   "list.empty.title": "Inga måltider ännu",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tips: Svep en måltid åt höger för att snabbt ta ännu ett foto",
+  "list.swipe_options.action": "Alternativ",
+  "list.swipe_options.hint": "Tips: Svep en måltid åt höger för att öppna alternativ",
   "loading.food": "Laddar matdata...",
   "loading.photo": "Analyserar matfoto...",
   "loading.scale": "Läser våg...",

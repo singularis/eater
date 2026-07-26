@@ -438,6 +438,8 @@
   "list.empty.title": "Aún no hay comidas",
   "list.swipe_camera.action": "Cámara",
   "list.swipe_camera.hint": "Consejo: Desliza una comida hacia la derecha para tomar rápidamente otra foto",
+  "list.swipe_options.action": "Opciones",
+  "list.swipe_options.hint": "Consejo: Desliza una comida a la derecha para abrir opciones",
   "loading.food": "Cargando datos de comida...",
   "loading.photo": "Analizando foto de comida...",
   "loading.scale": "Leyendo báscula de peso...",

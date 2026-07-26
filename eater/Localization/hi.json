@@ -438,6 +438,8 @@
   "list.empty.title": "अभी तक कोई भोजन नहीं",
   "list.swipe_camera.action": "कैमरा",
   "list.swipe_camera.hint": "सुझाव: जल्दी से एक और फोटो लेने के लिए किसी भोजन को दाईं ओर स्वाइप करें",
+  "list.swipe_options.action": "विकल्प",
+  "list.swipe_options.hint": "सुझाव: विकल्प खोलने के लिए भोजन को दाईं ओर स्वाइप करें",
   "loading.food": "खाने का डेटा लोड हो रहा है...",
   "loading.photo": "खाने की तस्वीर का विश्लेषण हो रहा है...",
   "loading.scale": "पैमाना पढ़ा जा रहा है...",

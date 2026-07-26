@@ -437,6 +437,8 @@
   "list.empty.title": "Henüz öğün yok",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "İpucu: Hızlıca başka bir fotoğraf çekmek için bir öğünü sağa kaydırın",
+  "list.swipe_options.action": "Seçenekler",
+  "list.swipe_options.hint": "İpucu: Seçenekleri açmak için bir öğünü sağa kaydırın",
   "loading.food": "Yemek verileri yükleniyor...",
   "loading.photo": "Yemek fotoğrafı analiz ediliyor...",
   "loading.scale": "Tartı okunuyor...",

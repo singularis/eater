@@ -438,6 +438,8 @@
   "list.empty.title": "Dar nėra patiekalų",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Patarimas: perbraukite maistą į dešinę, kad greitai nufotografuotumėte dar kartą",
+  "list.swipe_options.action": "Parinktys",
+  "list.swipe_options.hint": "Patarimas: perbraukite maistą į dešinę, kad atidarytumėte parinktis",
   "loading.food": "Kraunami maisto duomenys...",
   "loading.photo": "Analizuojama maisto nuotrauka...",
   "loading.scale": "Skaitomos svarstyklės...",

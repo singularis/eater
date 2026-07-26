@@ -438,6 +438,8 @@
   "list.empty.title": "Għadek m'għandekx ikliet",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Parir: Iskorri ikla lejn il-lemin biex tieħu malajr ritratt ieħor",
+  "list.swipe_options.action": "Għażliet",
+  "list.swipe_options.hint": "Parir: Iskorri ikla lejn il-lemin biex tiftaħ l-għażliet",
   "loading.food": "Qed titgħabba d-dejta tal-ikel...",
   "loading.photo": "Qed jiġi analizzat ir-ritratt tal-ikel...",
   "loading.scale": "Qed jinqara l-miżien...",

@@ -438,6 +438,8 @@
   "list.empty.title": "Ingen måltider endnu",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tip: Stryg et måltid til højre for hurtigt at tage endnu et billede",
+  "list.swipe_options.action": "Valgmuligheder",
+  "list.swipe_options.hint": "Tip: Stryg et måltid til højre for at åbne indstillinger",
   "loading.food": "Indlæser maddata...",
   "loading.photo": "Analyserer madfoto...",
   "loading.scale": "Læser vægt...",

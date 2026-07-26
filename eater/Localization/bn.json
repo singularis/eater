@@ -438,6 +438,8 @@
   "list.empty.title": "এখনো কোনো খাবার নেই",
   "list.swipe_camera.action": "ক্যামেরা",
   "list.swipe_camera.hint": "টিপ: দ্রুত আরেকটি ছবি তুলতে খাবারের উপর ডানদিকে সোয়াইপ করুন",
+  "list.swipe_options.action": "বিকল্প",
+  "list.swipe_options.hint": "টিপ: বিকল্প খুলতে খাবার ডানদিকে সোয়াইপ করুন",
   "loading.food": "খাবারের ডেটা লোড হচ্ছে...",
   "loading.photo": "খাবারের ছবি বিশ্লেষণ করা হচ্ছে...",
   "loading.scale": "স্কেল পড়া হচ্ছে...",

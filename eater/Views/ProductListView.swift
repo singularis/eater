@@ -1,17 +1,56 @@
 import SwiftUI
 
-// Uses the system's native swipe actions (leading = camera, trailing = remove)
-// rather than a custom DragGesture. A custom horizontal drag here always loses
-// to the main screen's paged TabView, which owns horizontal drags for switching
-// to Statistics, and it also competes with the list's pull-to-refresh.
+/// Food rows and the Home screen's swipe-for-camera both react to horizontal
+/// drags. A row handling one claims it here so the camera swipe stays out of
+/// the way; only free space (empty list area, chrome) opens the camera.
+final class FoodSwipeArbiter {
+  static let shared = FoodSwipeArbiter()
+  private(set) var rowSwipeActive = false
+  private var release: DispatchWorkItem?
+
+  func beginRowSwipe() {
+    release?.cancel()
+    rowSwipeActive = true
+  }
+
+  func endRowSwipe() {
+    release?.cancel()
+    let work = DispatchWorkItem { [weak self] in self?.rowSwipeActive = false }
+    release = work
+    // Both gestures end on the same touch-up with no guaranteed ordering,
+    // so the claim outlives the row's own gesture by a moment.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+  }
+}
+
+// Custom swipe on food rows:
+//   right → same options menu as the ⋯ button
+//   left  → delete (with confirmation)
+// Action chips are compact (not full-bleed strips) so they don't cover the card.
 private struct FoodListRow<Content: View>: View {
   let onDelete: () -> Void
   let isDisabled: Bool
   let deleteLabel: String
-  var onSwipeRight: (() -> Void)? = nil
+  var onSwipeOptions: (() -> Void)? = nil
   @ViewBuilder let content: () -> Content
 
+  private let actionSize: CGFloat = 64
+  private let revealWidth: CGFloat = 80
+  private let triggerThreshold: CGFloat = 56
+  @State private var offset: CGFloat = 0
   @State private var showDeleteConfirmation = false
+
+  private var deleteRevealProgress: CGFloat {
+    min(1, max(0, -offset / revealWidth))
+  }
+
+  private var isDeleteZoneActive: Bool {
+    deleteRevealProgress > 0.25
+  }
+
+  private var optionsRevealProgress: CGFloat {
+    min(1, max(0, offset / revealWidth))
+  }
 
   private func requestDelete() {
     guard !isDisabled else { return }
@@ -19,53 +58,136 @@ private struct FoodListRow<Content: View>: View {
     showDeleteConfirmation = true
   }
 
+  private func confirmDelete() {
+    onDelete()
+    withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
+  }
+
+  private func cancelDelete() {
+    withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
+  }
+
+  private var deleteActionChip: some View {
+    Button {
+      requestDelete()
+    } label: {
+      VStack(spacing: 4) {
+        Image(systemName: "trash.fill")
+          .font(.system(size: 18, weight: .semibold))
+        Text(deleteLabel)
+          .font(.system(size: 10, weight: .semibold))
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+      }
+      .foregroundColor(.white)
+      .frame(width: actionSize, height: actionSize)
+      .background(Color.red)
+      .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .opacity(Double(isDeleteZoneActive ? 1 : (deleteRevealProgress / 0.25)))
+    .scaleEffect(0.85 + 0.15 * deleteRevealProgress)
+    .allowsHitTesting(isDeleteZoneActive)
+  }
+
+  private var optionsActionChip: some View {
+    Button {
+      HapticsService.shared.lightImpact()
+      onSwipeOptions?()
+      withAnimation(.easeOut(duration: 0.15)) { offset = 0 }
+    } label: {
+      VStack(spacing: 4) {
+        Image(systemName: "ellipsis.circle.fill")
+          .font(.system(size: 20, weight: .semibold))
+        Text(loc("list.swipe_options.action", "Options"))
+          .font(.system(size: 10, weight: .semibold))
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+      }
+      .foregroundColor(.white)
+      .frame(width: actionSize, height: actionSize)
+      .background(AppTheme.accent)
+      .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .opacity(Double(optionsRevealProgress))
+    .scaleEffect(0.85 + 0.15 * optionsRevealProgress)
+    .allowsHitTesting(optionsRevealProgress > 0.5)
+  }
+
   var body: some View {
-    content()
-      .background(AppTheme.backgroundGradient)
-      .padding(.trailing, 44)
-      .overlay(alignment: .trailing) {
-        Button {
-          requestDelete()
-        } label: {
-          Image(systemName: "trash")
-            .font(.system(size: 18, weight: .medium))
-            .foregroundColor(.red)
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
+    ZStack {
+      // Compact chips only — no full-height colored bands behind the card
+      HStack {
+        if onSwipeOptions != nil {
+          optionsActionChip
+            .padding(.leading, 8)
         }
-        .buttonStyle(.plain)
-        .disabled(isDisabled)
-        .opacity(isDisabled ? 0.5 : 1)
+        Spacer(minLength: 0)
+        deleteActionChip
+          .padding(.trailing, 8)
       }
-      .swipeActions(edge: .leading, allowsFullSwipe: true) {
-        if let onSwipeRight {
-          Button(action: onSwipeRight) {
-            Label(loc("list.swipe_camera.action", "Camera"), systemImage: "camera.fill")
+
+      content()
+        .background(AppTheme.backgroundGradient)
+        .padding(.trailing, 44)
+        .offset(x: offset)
+        .overlay(alignment: .trailing) {
+          Button {
+            requestDelete()
+          } label: {
+            Image(systemName: "trash")
+              .font(.system(size: 18, weight: .medium))
+              .foregroundColor(.red)
+              .frame(width: 44, height: 44)
+              .contentShape(Rectangle())
           }
-          .tint(AppTheme.success)
+          .buttonStyle(.plain)
+          .disabled(isDisabled)
+          .opacity(isDisabled ? 0.5 : 1)
         }
+        // minimumDistance keeps vertical list scroll / pull-to-refresh intact
+        .gesture(
+          DragGesture(minimumDistance: 24)
+            .onChanged { value in
+              let tx = value.translation.width
+              let ty = value.translation.height
+              guard abs(tx) > abs(ty) else { return }
+              FoodSwipeArbiter.shared.beginRowSwipe()
+              if tx >= 0 {
+                offset = onSwipeOptions != nil ? min(revealWidth, tx) : 0
+              } else {
+                offset = max(-revealWidth, tx)
+              }
+            }
+            .onEnded { value in
+              let tx = value.translation.width
+              let ty = value.translation.height
+              if abs(tx) > abs(ty), tx >= triggerThreshold {
+                HapticsService.shared.lightImpact()
+                onSwipeOptions?()
+              }
+              FoodSwipeArbiter.shared.endRowSwipe()
+              withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { offset = 0 }
+            }
+        )
+    }
+    .clipped()
+    .alert(
+      loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
+    ) {
+      Button(loc("common.cancel", "Cancel"), role: .cancel) {
+        cancelDelete()
       }
-      .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-        Button(role: .destructive) {
-          requestDelete()
-        } label: {
-          Label(deleteLabel, systemImage: "trash")
-        }
-        .disabled(isDisabled)
+      Button(deleteLabel, role: .destructive) {
+        confirmDelete()
       }
-      .alert(
-        loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
-      ) {
-        Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-        Button(deleteLabel, role: .destructive) {
-          onDelete()
-        }
-      } message: {
-        Text(
-          loc(
-            "list.delete.confirm.message",
-            "Are you sure you want to delete this food entry? This action cannot be undone."))
-      }
+    } message: {
+      Text(
+        loc(
+          "list.delete.confirm.message",
+          "Are you sure you want to delete this food entry? This action cannot be undone."))
+    }
   }
 }
 
@@ -81,36 +203,70 @@ struct ProductListView: View {
   let onPhotoTap: (UIImage?, String) -> Void
   let deletingProductTime: Int64?
   let onShareSuccess: () -> Void
-  var onSwipeRight: (() -> Void)? = nil
 
-  private static let swipeCameraHintKey = "hasSeenSwipeCameraHint"
-  @State private var showSwipeCameraHintBanner = false
+  private static let swipeOptionsHintKey = "hasSeenSwipeOptionsHint"
+  @State private var showSwipeOptionsHintBanner = false
 
   var sortedProducts: [Product] {
     products.sorted { $0.time > $1.time }
   }
 
-  private var shouldOfferSwipeCameraHint: Bool {
-    onSwipeRight != nil && !KeychainHelper.shared.getBool(Self.swipeCameraHintKey)
+  private var shouldOfferSwipeOptionsHint: Bool {
+    !KeychainHelper.shared.getBool(Self.swipeOptionsHintKey)
   }
 
-  private func dismissSwipeCameraHint() {
-    KeychainHelper.shared.setBool(true, for: Self.swipeCameraHintKey)
+  private func dismissSwipeOptionsHint() {
+    KeychainHelper.shared.setBool(true, for: Self.swipeOptionsHintKey)
     withAnimation(.easeOut(duration: 0.25)) {
-      showSwipeCameraHintBanner = false
+      showSwipeOptionsHintBanner = false
     }
   }
 
-  private func maybeShowSwipeCameraHint() {
-    guard shouldOfferSwipeCameraHint else { return }
+  private func maybeShowSwipeOptionsHint() {
+    guard shouldOfferSwipeOptionsHint else { return }
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
       withAnimation(.easeIn(duration: 0.3)) {
-        showSwipeCameraHintBanner = true
+        showSwipeOptionsHintBanner = true
       }
       DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-        dismissSwipeCameraHint()
+        dismissSwipeOptionsHint()
       }
     }
+  }
+
+  private func openOptions(for product: Product) {
+    AlertHelper.showPortionSelectionAlert(
+      foodName: product.name,
+      originalWeight: product.weight,
+      isDrink: product.isDrink,
+      isFruitOrVegetable: product.isFruitOrVegetable,
+      onPortionSelected: { percentage, grams in
+        HapticsService.shared.success()
+        onModify(product.time, product.name, percentage, grams)
+      },
+      onTryAgain: {
+        HapticsService.shared.select()
+        onTryAgain(product.time, product.imageId)
+      },
+      onAddSugar: product.isDrink
+        ? {
+          HapticsService.shared.success()
+          onAddSugar(product.time, product.name)
+        }
+        : nil,
+      onAddDrinkExtra: product.isDrink
+        ? { key in
+          HapticsService.shared.success()
+          onAddDrinkExtra?(product.time, product.name, key)
+        }
+        : nil,
+      onAddFoodExtra: product.isDrink
+        ? nil
+        : { key in
+          HapticsService.shared.success()
+          onAddFoodExtra?(product.time, product.name, key)
+        }
+    )
   }
 
   var body: some View {
@@ -121,12 +277,12 @@ struct ProductListView: View {
             Image(systemName: "photo.on.rectangle.angled")
               .font(.system(size: 64))
               .foregroundColor(AppTheme.textSecondary.opacity(0.5))
-            
+
             Text(loc("list.empty.title", "No meals yet"))
               .font(.title2)
               .fontWeight(.semibold)
               .foregroundColor(AppTheme.textPrimary)
-            
+
             Text(loc("list.empty.subtitle", "Add your first meal from the Home screen."))
               .font(.subheadline)
               .foregroundColor(AppTheme.textSecondary)
@@ -147,7 +303,7 @@ struct ProductListView: View {
                 onDelete: { onDelete(product.time) },
                 isDisabled: deletingProductTime == product.time,
                 deleteLabel: loc("common.remove", "Remove"),
-                onSwipeRight: onSwipeRight
+                onSwipeOptions: { openOptions(for: product) }
               ) {
                 ProductRowView(
                   product: product,
@@ -172,13 +328,15 @@ struct ProductListView: View {
           .refreshable {
             onRefresh()
           }
-          .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.2), value: products)
+          .animation(
+            AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.2),
+            value: products)
           .onAppear {
-            maybeShowSwipeCameraHint()
+            maybeShowSwipeOptionsHint()
           }
 
-          if showSwipeCameraHintBanner {
-            SwipeCameraHintBanner(onDismiss: dismissSwipeCameraHint)
+          if showSwipeOptionsHintBanner {
+            SwipeOptionsHintBanner(onDismiss: dismissSwipeOptionsHint)
               .padding(.horizontal, 16)
               .padding(.top, 8)
               .transition(.move(edge: .top).combined(with: .opacity))
@@ -190,17 +348,17 @@ struct ProductListView: View {
   }
 }
 
-/// One-time, dismissible hint that teaches the swipe-right-for-camera gesture.
-private struct SwipeCameraHintBanner: View {
+/// One-time hint for swipe-right → options on a food card.
+private struct SwipeOptionsHintBanner: View {
   let onDismiss: () -> Void
 
   var body: some View {
     HStack(spacing: 10) {
-      Image(systemName: "camera.fill")
+      Image(systemName: "ellipsis.circle.fill")
         .font(.system(size: 16, weight: .semibold))
-        .foregroundColor(AppTheme.success)
+        .foregroundColor(AppTheme.accent)
 
-      Text(loc("list.swipe_camera.hint", "Tip: Swipe a meal right to quickly snap another photo"))
+      Text(loc("list.swipe_options.hint", "Tip: Swipe a meal right to open options"))
         .font(.footnote.weight(.medium))
         .foregroundColor(AppTheme.textPrimary)
         .fixedSize(horizontal: false, vertical: true)

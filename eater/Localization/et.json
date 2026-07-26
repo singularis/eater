@@ -437,6 +437,8 @@
   "list.empty.title": "Veel pole toite",
   "list.swipe_camera.action": "Kaamera",
   "list.swipe_camera.hint": "Vihje: pühi toit paremale, et kiiresti veel üks foto teha",
+  "list.swipe_options.action": "Valikud",
+  "list.swipe_options.hint": "Vihje: pühi toit paremale, et avada valikud",
   "loading.food": "Laen toiduandmeid...",
   "loading.photo": "Analüüsin toidufotot...",
   "loading.scale": "Loen kaalu...",

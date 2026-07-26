@@ -437,6 +437,8 @@
   "list.empty.title": "Nog geen maaltijden",
   "list.swipe_camera.action": "Camera",
   "list.swipe_camera.hint": "Tip: Veeg een maaltijd naar rechts om snel nog een foto te maken",
+  "list.swipe_options.action": "Opties",
+  "list.swipe_options.hint": "Tip: Veeg een maaltijd naar rechts om opties te openen",
   "loading.food": "Voedselgegevens laden...",
   "loading.photo": "Voedselfoto analyseren...",
   "loading.scale": "Weegschaal aflezen...",

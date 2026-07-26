@@ -437,6 +437,8 @@
   "list.empty.title": "Još nema obroka",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Savjet: Prijeđite prstom po obroku udesno da biste brzo snimili još jednu fotografiju",
+  "list.swipe_options.action": "Opcije",
+  "list.swipe_options.hint": "Savjet: Prijeđite prstom po obroku udesno za otvaranje opcija",
   "loading.food": "Učitavanje podataka o hrani...",
   "loading.photo": "Analiza fotografije hrane...",
   "loading.scale": "Čitanje vage...",

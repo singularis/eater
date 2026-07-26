@@ -438,6 +438,8 @@
   "list.empty.title": "Še ni obrokov",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Nasvet: Povlecite obrok v desno, da hitro posnamete še eno fotografijo",
+  "list.swipe_options.action": "Možnosti",
+  "list.swipe_options.hint": "Nasvet: Povlecite obrok v desno, da odprete možnosti",
   "loading.food": "Nalaganje podatkov o hrani...",
   "loading.photo": "Analiza fotografije hrane...",
   "loading.scale": "Branje tehtnice...",

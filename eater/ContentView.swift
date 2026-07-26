@@ -126,58 +126,73 @@ struct ContentView: View {
     return df
   }
 
+  /// Home screen horizontal swipe (no TabView pager — it was eating gestures):
+  ///   left  → Statistics
+  ///   right → Camera
+  /// Food-row swipes claim the arbiter so card options/delete still win on cards.
+  private var homeSwipeGesture: some Gesture {
+    DragGesture(minimumDistance: 40)
+      .onEnded { value in
+        let dx = value.translation.width
+        let dy = value.translation.height
+        guard abs(dx) > abs(dy), abs(dx) > 70 else { return }
+        guard !FoodSwipeArbiter.shared.rowSwipeActive else { return }
+        HapticsService.shared.select()
+        if dx < 0 {
+          withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 0 }
+        } else {
+          swipeCameraTrigger.toggle()
+        }
+      }
+  }
+
+  private var statisticsBinding: Binding<Bool> {
+    Binding(
+      get: { selectedPage == 0 },
+      set: { if !$0 { withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 1 } } }
+    )
+  }
+
   var body: some View {
     ZStack {
       AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
-      TabView(selection: $selectedPage) {
-        // Statistics Screen
-        StatisticsView(isPresented: Binding(
-          get: { selectedPage == 0 },
-          set: { if !$0 { withAnimation { selectedPage = 1 } } }
-        ), targetChartType: .macros)
-        .tag(0)
-
-        // Main App Screen
-        VStack(spacing: 2) {
-          topBarView
-          statsButtonsView
-            .frame(height: 60)
-          // Macros line (only in Full mode and when we have data)
-          if dataDisplayMode == "full" && hasMacrosData {
-            macrosLineView
-          }
-
-          ProductListView(
-            products: products,
-            onRefresh: refreshAction,
-            onDelete: deleteProductWithLoading,
-            onModify: modifyProductPortion,
-            onTryAgain: tryAgainProduct,
-            onAddSugar: addSugarToProduct,
-            onAddDrinkExtra: addExtraToProduct,
-            onAddFoodExtra: addExtraToProduct,
-            onPhotoTap: showFullScreenPhoto,
-            deletingProductTime: deletingProductTime,
-            onShareSuccess: {
-              StatisticsService.shared.clearExpiredCache()
-              ProductStorageService.shared.clearCache()
-              self.returnToToday()
-            },
-            onSwipeRight: {
-              HapticsService.shared.select()
-              swipeCameraTrigger.toggle()
-            }
-          )
-          .padding(.top, 0)
-          
-          cameraButtonView
-            .padding(.top, 10)
+      // Main App Screen — not inside a page TabView, so horizontal swipes
+      // are ours (Statistics / Camera) instead of a competing pager.
+      VStack(spacing: 2) {
+        topBarView
+        statsButtonsView
+          .frame(height: 60)
+        // Macros line (only in Full mode and when we have data)
+        if dataDisplayMode == "full" && hasMacrosData {
+          macrosLineView
         }
-        .tag(1)
+
+        ProductListView(
+          products: products,
+          onRefresh: refreshAction,
+          onDelete: deleteProductWithLoading,
+          onModify: modifyProductPortion,
+          onTryAgain: tryAgainProduct,
+          onAddSugar: addSugarToProduct,
+          onAddDrinkExtra: addExtraToProduct,
+          onAddFoodExtra: addExtraToProduct,
+          onPhotoTap: showFullScreenPhoto,
+          deletingProductTime: deletingProductTime,
+          onShareSuccess: {
+            StatisticsService.shared.clearExpiredCache()
+            ProductStorageService.shared.clearCache()
+            self.returnToToday()
+          }
+        )
+        .padding(.top, 0)
+
+        cameraButtonView
+          .padding(.top, 10)
       }
-      .tabViewStyle(.page(indexDisplayMode: .never))
+      .contentShape(Rectangle())
+      .simultaneousGesture(homeSwipeGesture)
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
@@ -203,7 +218,7 @@ struct ContentView: View {
         }
 
         fetchAlcoholStatus()
-      }  
+      }
       .onDisappear {
         stopDailyRefreshTimer()
       }
@@ -291,7 +306,6 @@ struct ContentView: View {
           }
         )
       }
-      // StatisticsView is now part of the TabView, so we remove the sheet
       .sheet(isPresented: $showCalendarPicker) {
         CalendarDatePickerView(
           selectedDate: $selectedDate,
@@ -330,11 +344,16 @@ struct ContentView: View {
           .opacity(showOnboarding ? 1 : 0)
       )
 
+      if selectedPage == 0 {
+        StatisticsView(isPresented: statisticsBinding, targetChartType: .macros)
+          .transition(.move(edge: .leading))
+          .zIndex(1)
+      }
+
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
         isVisible: isLoadingFoodPhoto, message: loc("loading.photo", "Analyzing food photo..."))
     }
-
     .fullScreenCover(isPresented: $showMainAppTutorial) {
         MainAppTutorialView(isPresented: $showMainAppTutorial)
             .environmentObject(languageService)

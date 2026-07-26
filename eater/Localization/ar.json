@@ -438,6 +438,8 @@
   "list.empty.title": "لا توجد وجبات بعد",
   "list.swipe_camera.action": "الكاميرا",
   "list.swipe_camera.hint": "نصيحة: اسحب أي وجبة لليمين لالتقاط صورة أخرى بسرعة",
+  "list.swipe_options.action": "خيارات",
+  "list.swipe_options.hint": "نصيحة: اسحب وجبة لليمين لفتح الخيارات",
   "loading.food": "جاري تحميل بيانات الطعام...",
   "loading.photo": "جاري تحليل صورة الطعام...",
   "loading.scale": "جاري قراءة الميزان...",

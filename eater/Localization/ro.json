@@ -438,6 +438,8 @@
   "list.empty.title": "Încă nu există mese",
   "list.swipe_camera.action": "Cameră",
   "list.swipe_camera.hint": "Sfat: Glisează o masă spre dreapta pentru a face rapid o altă fotografie",
+  "list.swipe_options.action": "Opțiuni",
+  "list.swipe_options.hint": "Sfat: Glisează o masă spre dreapta pentru a deschide opțiunile",
   "loading.food": "Se încarcă datele alimentare...",
   "loading.photo": "Se analizează fotografia mâncării...",
   "loading.scale": "Se citește cântarul...",

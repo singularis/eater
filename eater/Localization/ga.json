@@ -437,6 +437,8 @@
   "list.empty.title": "Níl aon bhéilí fós",
   "list.swipe_camera.action": "Ceamara",
   "list.swipe_camera.hint": "Leid: Sciorr bia go dtí an taobh dheis chun grianghraf eile a thógáil go tapa",
+  "list.swipe_options.action": "Roghanna",
+  "list.swipe_options.hint": "Leid: Sciorr bia ar dheis chun roghanna a oscailt",
   "loading.food": "Ag lódáil sonraí bia...",
   "loading.photo": "Ag anailísiú grianghraf bia...",
   "loading.scale": "Ag léamh scála...",

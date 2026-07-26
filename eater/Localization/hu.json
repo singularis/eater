@@ -438,6 +438,8 @@
   "list.empty.title": "Még nincsenek étkezések",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tipp: Húzz jobbra egy ételen, hogy gyorsan készíts egy újabb fotót",
+  "list.swipe_options.action": "Beállítások",
+  "list.swipe_options.hint": "Tipp: Húzz jobbra egy ételen a beállítások megnyitásához",
   "loading.food": "Ételadatok betöltése...",
   "loading.photo": "Étel fotó elemzése...",
   "loading.scale": "Mérleg leolvasása...",

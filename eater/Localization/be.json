@@ -438,6 +438,8 @@
   "list.empty.title": "Пакуль няма страў",
   "list.swipe_camera.action": "Камера",
   "list.swipe_camera.hint": "Падказка: правядзіце направа па стравы, каб хутка зрабіць яшчэ адно фота",
+  "list.swipe_options.action": "Опцыі",
+  "list.swipe_options.hint": "Падказка: правядзіце направа па стравы, каб адкрыць опцыі",
   "loading.food": "Загрузка даных аб ежы...",
   "loading.photo": "Аналіз фатаграфіі ежы...",
   "loading.scale": "Чытанне вагоў...",

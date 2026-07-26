@@ -438,6 +438,8 @@
   "list.empty.title": "Все още няма ястия",
   "list.swipe_camera.action": "Камера",
   "list.swipe_camera.hint": "Съвет: плъзнете храна надясно, за да направите бързо още една снимка",
+  "list.swipe_options.action": "Опции",
+  "list.swipe_options.hint": "Съвет: плъзнете храна надясно, за да отворите опциите",
   "loading.food": "Зареждат се данни за храната...",
   "loading.photo": "Анализира се снимката на храната...",
   "loading.scale": "Чете се кантарът...",

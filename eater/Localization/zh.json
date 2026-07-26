@@ -438,6 +438,8 @@
   "list.empty.title": "还没有餐食",
   "list.swipe_camera.action": "相机",
   "list.swipe_camera.hint": "提示：向右滑动某餐可快速再拍一张照片",
+  "list.swipe_options.action": "选项",
+  "list.swipe_options.hint": "提示：向右滑动某餐可打开选项",
   "loading.food": "正在加载食物数据...",
   "loading.photo": "正在分析食物照片...",
   "loading.scale": "正在读取体重秤...",

@@ -438,6 +438,8 @@
   "list.empty.title": "Vēl nav ēdienu",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Padoms: pavelciet ēdienu pa labi, lai ātri uzņemtu vēl vienu fotoattēlu",
+  "list.swipe_options.action": "Opcijas",
+  "list.swipe_options.hint": "Padoms: pavelciet ēdienu pa labi, lai atvērtu opcijas",
   "loading.food": "Ielādē ēdiena datus...",
   "loading.photo": "Analizē ēdiena fotogrāfiju...",
   "loading.scale": "Lasa svarus...",

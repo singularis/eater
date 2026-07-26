@@ -438,6 +438,8 @@
   "list.empty.title": "Поки немає страв",
   "list.swipe_camera.action": "Камера",
   "list.swipe_camera.hint": "Порада: проведіть по страві праворуч, щоб швидко зробити ще одне фото",
+  "list.swipe_options.action": "Параметри",
+  "list.swipe_options.hint": "Порада: проведіть по страві праворуч, щоб відкрити параметри",
   "loading.food": "Завантаження даних про їжу...",
   "loading.photo": "Аналіз фотографії їжі...",
   "loading.scale": "Зчитування ваги...",

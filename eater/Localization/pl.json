@@ -438,6 +438,8 @@
   "list.empty.title": "Jeszcze brak posiłków",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Wskazówka: Przesuń posiłek w prawo, aby szybko zrobić kolejne zdjęcie",
+  "list.swipe_options.action": "Opcje",
+  "list.swipe_options.hint": "Wskazówka: Przesuń posiłek w prawo, aby otworzyć opcje",
   "loading.food": "Ładowanie danych żywieniowych...",
   "loading.photo": "Analizowanie zdjęcia jedzenia...",
   "loading.scale": "Odczytywanie wagi...",

@@ -438,6 +438,8 @@
   "list.empty.title": "아직 식사가 없습니다",
   "list.swipe_camera.action": "카메라",
   "list.swipe_camera.hint": "팁: 음식을 오른쪽으로 스와이프하면 빠르게 다른 사진을 찍을 수 있어요",
+  "list.swipe_options.action": "옵션",
+  "list.swipe_options.hint": "팁: 음식을 오른쪽으로 스와이프하면 옵션이 열립니다",
   "loading.food": "음식 데이터 로딩 중...",
   "loading.photo": "음식 사진 분석 중...",
   "loading.scale": "체중계 읽는 중...",

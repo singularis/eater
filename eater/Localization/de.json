@@ -437,6 +437,8 @@
   "list.empty.title": "Noch keine Mahlzeiten",
   "list.swipe_camera.action": "Kamera",
   "list.swipe_camera.hint": "Tipp: Wische eine Mahlzeit nach rechts, um schnell ein weiteres Foto zu machen",
+  "list.swipe_options.action": "Optionen",
+  "list.swipe_options.hint": "Tipp: Wische eine Mahlzeit nach rechts, um Optionen zu öffnen",
   "loading.food": "Lade Lebensmitteldaten...",
   "loading.photo": "Analysiere Essensfoto...",
   "loading.scale": "Lese Waage ab...",
