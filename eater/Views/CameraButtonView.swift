@@ -22,9 +22,6 @@ struct CameraButtonView: View {
   var onPhotoStarted: (() -> Void)?
   var onReturnToToday: (() -> Void)?
   var onRequestTutorial: ((String) -> Void)?
-  /// Toggled externally (e.g. swipe-right on the food list) to trigger the same
-  /// camera flow as tapping "Take Food Photo", including backdating checks.
-  var externalCameraTrigger: Binding<Bool> = .constant(false)
 
   init(
     isLoadingFoodPhoto: Bool,
@@ -34,8 +31,7 @@ struct CameraButtonView: View {
     onPhotoFailure: (() -> Void)?,
     onPhotoStarted: (() -> Void)?,
     onReturnToToday: (() -> Void)? = nil,
-    onRequestTutorial: ((String) -> Void)? = nil,
-    externalCameraTrigger: Binding<Bool> = .constant(false)
+    onRequestTutorial: ((String) -> Void)? = nil
   ) {
     self.isLoadingFoodPhoto = isLoadingFoodPhoto
     self.selectedDate = selectedDate
@@ -45,7 +41,6 @@ struct CameraButtonView: View {
     self.onPhotoStarted = onPhotoStarted
     self.onReturnToToday = onReturnToToday
     self.onRequestTutorial = onRequestTutorial
-    self.externalCameraTrigger = externalCameraTrigger
   }
 
   var body: some View {
@@ -193,9 +188,6 @@ struct CameraButtonView: View {
       }
     } message: {
       Text(backdatingStatusEmoji + " " + backdatingMessage + "\n\n" + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
-    }
-    .onChange(of: externalCameraTrigger.wrappedValue) { _, _ in
-      checkBackdating(sourceType: .camera)
     }
   }
 

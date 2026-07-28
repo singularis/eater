@@ -124,12 +124,7 @@ enum AppTheme {
 }
 
 struct PrimaryButtonStyle: ButtonStyle {
-  // Reading the environment scheme forces re-evaluation when the system
-  // appearance flips, so AppTheme colors are resolved against fresh traits.
-  @Environment(\.colorScheme) private var environmentColorScheme
-
   func makeBody(configuration: Configuration) -> some View {
-    _ = environmentColorScheme
     let shadow = AppTheme.cardShadow
     return configuration.label
       .padding()
@@ -167,10 +162,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 }
 
 struct GreenToPurpleButtonStyle: ButtonStyle {
-  @Environment(\.colorScheme) private var environmentColorScheme
-
   func makeBody(configuration: Configuration) -> some View {
-    _ = environmentColorScheme
     let shadow = AppTheme.cardShadow
     return configuration.label
       .padding()
@@ -205,10 +197,7 @@ struct GreenToPurpleButtonStyle: ButtonStyle {
 }
 
 struct GreenButtonStyle: ButtonStyle {
-  @Environment(\.colorScheme) private var environmentColorScheme
-
   func makeBody(configuration: Configuration) -> some View {
-    _ = environmentColorScheme
     let shadow = AppTheme.cardShadow
     return configuration.label
       .padding()
@@ -267,10 +256,7 @@ struct PressScaleButtonStyle: ButtonStyle {
 struct CardModifier: ViewModifier {
   let paddingValue: CGFloat
 
-  @Environment(\.colorScheme) private var environmentColorScheme
-
   func body(content: Content) -> some View {
-    _ = environmentColorScheme
     let shadow = AppTheme.cardShadow
     return content
       .padding(paddingValue)
@@ -328,11 +314,8 @@ extension View {
 
 // Secondary (neutral) button style
 struct SecondaryButtonStyle: ButtonStyle {
-  @Environment(\.colorScheme) private var environmentColorScheme
-
   func makeBody(configuration: Configuration) -> some View {
-    _ = environmentColorScheme
-    return configuration.label
+    configuration.label
       .padding()
       .frame(maxWidth: .infinity)
       .background(
@@ -362,10 +345,7 @@ struct SecondaryButtonStyle: ButtonStyle {
 
 // Destructive (danger) button style
 struct DestructiveButtonStyle: ButtonStyle {
-  @Environment(\.colorScheme) private var environmentColorScheme
-
   func makeBody(configuration: Configuration) -> some View {
-    _ = environmentColorScheme
     let gradient = LinearGradient(
       gradient: Gradient(colors: [AppTheme.danger.opacity(0.9), AppTheme.danger.opacity(0.7)]),
       startPoint: .topLeading,

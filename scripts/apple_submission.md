@@ -10,7 +10,7 @@
 - تحسينات الأداء: تفاعلات أكثر سلاسة ومؤشرات تحميل أسرع.
 
 ### Promotion Text
-تتبع طعامك بصورة واحدة! يساعدك Eateria على حساب السعرات الحرارية وإدارة الوزن ومشاركة العادات الصحية مع الأصدقاء باستخدام تقنية LLM المتقدمة.
+تتبع طعامك بصورة واحدة! يساعدك Eateria على حساب السعرات الحرارية وإدارة الوزن ومشاركة العادات الصحية مع الأصدقاء باستخدام تقنية AI المتقدمة.
 
 ---
 
@@ -38,7 +38,7 @@
 - Подобрения в производителността: по-плавни взаимодействия и по-бързи индикатори за зареждане.
 
 ### Promotion Text
-Проследявайте храната си с една снимка! Eateria ви помага да броя калории, да управлявате теглото си и да споделяте здравословни навици с приятели чрез LLM.
+Проследявайте храната си с една снимка! Eateria ви помага да броя калории, да управлявате теглото си и да споделяте здравословни навици с приятели чрез AI.
 
 ---
 
@@ -52,7 +52,7 @@
 - কর্মক্ষমতা উন্নত: মসৃণ ইন্টারঅ্যাকশন এবং দ্রুত লোডিং সূচক।
 
 ### Promotion Text
-একটি ছবির মাধ্যমে আপনার খাবার ট্র্যাক করুন! Eateria আপনাকে ক্যালোরি গণনা করতে, ওজন পরিচালনা করতে এবং LLM ব্যবহার করে বন্ধুদের সাথে স্বাস্থ্যকর অভ্যাস শেয়ার করতে সহায়তা করে।
+একটি ছবির মাধ্যমে আপনার খাবার ট্র্যাক করুন! Eateria আপনাকে ক্যালোরি গণনা করতে, ওজন পরিচালনা করতে এবং AI ব্যবহার করে বন্ধুদের সাথে স্বাস্থ্যকর অভ্যাস শেয়ার করতে সহায়তা করে।
 
 ---
 
@@ -66,7 +66,7 @@
 - Zlepšení výkonu: Plynulejší interakce a rychlejší indikátory načítání.
 
 ### Promotion Text
-Sledujte své jídlo jedinou fotografií! Eateria vám pomůže počítat kalorie, spravovat váhu a sdílet zdravé návyky s přáteli pomocí pokročilé LLM.
+Sledujte své jídlo jedinou fotografií! Eateria vám pomůže počítat kalorie, spravovat váhu a sdílet zdravé návyky s přáteli pomocí pokročilé AI.
 
 ---
 
@@ -80,7 +80,7 @@ Sledujte své jídlo jedinou fotografií! Eateria vám pomůže počítat kalori
 - Præstationsforbedringer: Jævnere interaktioner og hurtigere indlæsningsindikatorer.
 
 ### Promotion Text
-Spor din mad med et enkelt foto! Eateria hjælper dig med at tælle kalorier, styre vægten og dele sunde vaner med venner ved hjælp af LLM.
+Spor din mad med et enkelt foto! Eateria hjælper dig med at tælle kalorier, styre vægten og dele sunde vaner med venner ved hjælp af AI.
 
 ---
 
@@ -122,7 +122,7 @@ Verfolgen Sie Ihr Essen mit einem einzigen Foto! Eateria hilft Ihnen, Kalorien z
 - Performance Improvements: Smoother interactions and faster loading indicators.
 
 ### Promotion Text
-Track your food with a single photo! Eateria helps you count calories, manage weight, and share healthy habits with friends using advanced LLM recognition.
+Track your food with a single photo! Eateria helps you count calories, manage weight, and share healthy habits with friends using advanced AI recognition.
 
 ---
 
@@ -150,7 +150,7 @@ Track your food with a single photo! Eateria helps you count calories, manage we
 - Jõudluse parandused: sujuvam suhtlus ja kiiremad laadimisindikaatorid.
 
 ### Promotion Text
-Jälgige oma toitu ühe fotoga! Eateria aitab teil lugeda kaloreid, hallata kaalu ja jagada tervislikke harjumusi sõpradega, kasutades LLM-d.
+Jälgige oma toitu ühe fotoga! Eateria aitab teil lugeda kaloreid, hallata kaalu ja jagada tervislikke harjumusi sõpradega, kasutades AI-d.
 
 ---
 
@@ -220,7 +220,7 @@ Rianaigh do chuid bia le grianghraf amháin! Cabhraíonn Eateria leat calraí a 
 - Poboljšanja performansi: glađe interakcije i brži indikatori učitavanja.
 
 ### Promotion Text
-Pratite svoju hranu jednom fotografijom! Eateria vam pomaže brojati kalorije, upravljati težinom i dijeliti zdrave navike s prijateljima pomoću LLM-ja.
+Pratite svoju hranu jednom fotografijom! Eateria vam pomaže brojati kalorije, upravljati težinom i dijeliti zdrave navike s prijateljima pomoću AI-ja.
 
 ---
 
@@ -276,7 +276,7 @@ Monitora il tuo cibo con una sola foto! Eateria ti aiuta a contare le calorie, g
 - 성능 개선: 더 부드러운 상호작용과 빠른 로딩 표시기.
 
 ### Promotion Text
-사진 한 장으로 식단을 기록하세요! Eateria는 고급 LLM 인식을 통해 칼로리 계산, 체중 관리, 건강한 습관 공유를 돕습니다.
+사진 한 장으로 식단을 기록하세요! Eateria는 고급 AI 인식을 통해 칼로리 계산, 체중 관리, 건강한 습관 공유를 돕습니다.
 
 ---
 
@@ -332,7 +332,7 @@ Segwi l-ikel tiegħek b'ritratt wieħed! Eateria jgħinek tgħodd il-kaloriji, t
 - Prestatieverbeteringen: soepelere interacties en snellere laadindicatoren.
 
 ### Promotion Text
-Volg je eten met een enkele foto! Eateria helpt je calorieën te tellen, gewicht te beheersen en gezonde gewoonten te delen met LLM.
+Volg je eten met een enkele foto! Eateria helpt je calorieën te tellen, gewicht te beheersen en gezonde gewoonten te delen met AI.
 
 ---
 
@@ -346,7 +346,7 @@ Volg je eten met een enkele foto! Eateria helpt je calorieën te tellen, gewicht
 - Ulepszenia wydajności: płynniejsze interakcje i szybsze wskaźniki ładowania.
 
 ### Promotion Text
-Śledź swoje jedzenie za pomocą jednego zdjęcia! Eateria pomaga liczyć kalorie, zarządzać wagą i dzielić się zdrowymi nawykami ze znajomymi dzięki LLM.
+Śledź swoje jedzenie za pomocą jednego zdjęcia! Eateria pomaga liczyć kalorie, zarządzać wagą i dzielić się zdrowymi nawykami ze znajomymi dzięki AI.
 
 ---
 
@@ -388,7 +388,7 @@ Urmăriți-vă mâncarea cu o singură fotografie! Eateria vă ajută să număr
 - Zlepšenia výkonu: Plynulejšie interakcie a rýchlejšie indikátory načítania.
 
 ### Promotion Text
-Sledujte svoje jedlo jedinou fotografiou! Eateria vám pomôže počítať kalórie, spravovať váhu a zdieľať zdravé návyky s priateľmi pomocou LLM.
+Sledujte svoje jedlo jedinou fotografiou! Eateria vám pomôže počítať kalórie, spravovať váhu a zdieľať zdravé návyky s priateľmi pomocou AI.
 
 ---
 
@@ -416,7 +416,7 @@ Spremljajte svojo hrano z eno samo fotografijo! Eateria vam pomaga šteti kalori
 - Prestandaförbättringar: Smidigare interaktioner och snabbare laddningsindikatorer.
 
 ### Promotion Text
-Spåra din mat med ett enda foto! Eateria hjälper dig att räkna kalorier, hantera vikt och dela hälsosamma vanor med vänner med LLM.
+Spåra din mat med ett enda foto! Eateria hjälper dig att räkna kalorier, hantera vikt och dela hälsosamma vanor med vänner med AI.
 
 ---
 
@@ -430,7 +430,7 @@ Spåra din mat med ett enda foto! Eateria hjälper dig att räkna kalorier, hant
 - การปรับปรุงประสิทธิภาพ: การโต้ตอบที่ราบรื่นยิ่งขึ้นและตัวบ่งชี้การโหลดที่เร็วขึ้น
 
 ### Promotion Text
-ติดตามอาหารของคุณด้วยรูปถ่ายเพียงรูปเดียว! Eateria ช่วยคุณนับแคลอรี่ จัดการน้ำหนัก และแชร์นิสัยที่ดีต่อสุขภาพด้วย LLM
+ติดตามอาหารของคุณด้วยรูปถ่ายเพียงรูปเดียว! Eateria ช่วยคุณนับแคลอรี่ จัดการน้ำหนัก และแชร์นิสัยที่ดีต่อสุขภาพด้วย AI
 
 ---
 
@@ -486,7 +486,7 @@ Yemeğinizi tek bir fotoğrafla takip edin! Eateria, gelişmiş yapay zeka tanı
 - Cải thiện hiệu suất: Tương tác mượt mà hơn và chỉ báo tải nhanh hơn.
 
 ### Promotion Text
-Theo dõi món ăn của bạn chỉ với một bức ảnh! Eateria giúp bạn tính calo, quản lý cân nặng và chia sẻ thói quen lành mạnh với bạn bè bằng công nghệ LLM.
+Theo dõi món ăn của bạn chỉ với một bức ảnh! Eateria giúp bạn tính calo, quản lý cân nặng và chia sẻ thói quen lành mạnh với bạn bè bằng công nghệ AI.
 
 ---
 
@@ -500,7 +500,7 @@ Theo dõi món ăn của bạn chỉ với một bức ảnh! Eateria giúp bạ
 - 性能改进：更流畅的交互和更快的加载指示器。
 
 ### Promotion Text
-只需一张照片即可追踪您的饮食！Eateria 利用先进的 LLM 识别功能帮助您计算卡路里、管理体重并与朋友分享健康习惯。
+只需一张照片即可追踪您的饮食！Eateria 利用先进的 AI 识别功能帮助您计算卡路里、管理体重并与朋友分享健康习惯。
 
 ---
 

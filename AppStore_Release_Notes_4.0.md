@@ -316,6 +316,19 @@ Urmărește mâncarea și greutatea cu AI. Acum înregistrează activități pre
 
 ---
 
+## Russian
+**Promotional Text**
+Отслеживайте еду и вес с помощью ИИ. Теперь фиксируйте активность такую как шахматы загружайте несколько фото сразу и изучайте новую статистику.
+
+**What's New**
+- Отслеживание новой активности включая шахматы и алкоголь
+- Поддержка загрузки нескольких фото сразу
+- Новые режимы просмотра статистики
+- Добавление и изменение прошлых занятий
+- Улучшенные руководства
+
+---
+
 ## Slovak
 **Promotional Text**
 Sledujte jedlo a váhu s AI. Teraz môžete zaznamenávať aktivity ako šach nahrať viac fotiek naraz a skúmať nové štatistiky.

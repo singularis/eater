@@ -104,38 +104,6 @@ struct UserProfileView: View {
             .padding(.vertical, 16)
             .cardContainer(padding: 16)
 
-            // Actions Section
-            sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
-
-            VStack(spacing: 10) {
-              actionButton(
-                icon: "chart.line.uptrend.xyaxis",
-                title: loc("profile.viewstats", "View Statistics"),
-                accessibilityHint: loc("a11y.open_stats", "Opens your statistics dashboard")
-              ) {
-                HapticsService.shared.select()
-                showStatistics = true
-              }
-
-              actionButton(
-                icon: "message.fill",
-                title: loc("profile.sharefeedback", "Share Feedback"),
-                accessibilityHint: loc("a11y.open_feedback", "Send feedback to the team")
-              ) {
-                HapticsService.shared.select()
-                showFeedback = true
-              }
-
-              actionButton(
-                icon: "person.crop.circle.badge.plus",
-                title: loc("profile.addfriends", "Add Friends"),
-                accessibilityHint: loc("a11y.open_addfriends", "Search and add friends")
-              ) {
-                HapticsService.shared.select()
-                showAddFriends = true
-              }
-            }
-
             // Watch me first! Section
             Button(action: {
               HapticsService.shared.select()
@@ -356,6 +324,38 @@ struct UserProfileView: View {
                 .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
               }
               .cardContainer(padding: 14)
+            }
+
+            // Actions Section
+            sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
+            
+            VStack(spacing: 10) {
+              actionButton(
+                icon: "chart.line.uptrend.xyaxis",
+                title: loc("profile.viewstats", "View Statistics"),
+                accessibilityHint: loc("a11y.open_stats", "Opens your statistics dashboard")
+              ) {
+                HapticsService.shared.select()
+                showStatistics = true
+              }
+              
+              actionButton(
+                icon: "message.fill",
+                title: loc("profile.sharefeedback", "Share Feedback"),
+                accessibilityHint: loc("a11y.open_feedback", "Send feedback to the team")
+              ) {
+                HapticsService.shared.select()
+                showFeedback = true
+              }
+              
+              actionButton(
+                icon: "person.crop.circle.badge.plus",
+                title: loc("profile.addfriends", "Add Friends"),
+                accessibilityHint: loc("a11y.open_addfriends", "Search and add friends")
+              ) {
+                HapticsService.shared.select()
+                showAddFriends = true
+              }
             }
 
             // Preferences Section
