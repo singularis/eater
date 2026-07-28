@@ -154,7 +154,7 @@ final class FriendsSearchWebSocket: NSObject {
           let nickname = dict["nickname"] as? String
           return UserSearchResult(email: email, nickname: nickname)
         }
-        onResults?(userResults)
+        onResults?(AnonymousUserIdentity.excludingAnonymous(userResults))
       } else {
         onResults?([])
       }

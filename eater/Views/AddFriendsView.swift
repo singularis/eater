@@ -205,6 +205,15 @@ struct AddFriendsView: View {
   }
 
   private func select(user: UserSearchResult) {
+    if AnonymousUserIdentity.isAnonymous(email: user.email, nickname: user.nickname) {
+      AlertHelper.showAlert(
+        title: loc("friends.add.fail.title", "Failed"),
+        message: loc(
+          "friends.add.anonymous.blocked",
+          "Trial accounts cannot be added as friends."))
+      return
+    }
+
     isAddingFriend = true
     GRPCService().addFriend(email: user.email) { success in
       DispatchQueue.main.async {

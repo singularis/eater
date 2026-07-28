@@ -150,8 +150,14 @@ struct ActivitiesView: View {
         if chessPlayerName.isEmpty {
           if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
             chessPlayerName = nickname
-          } else if let email = UserDefaults.standard.string(forKey: "user_email") {
+          } else if UserDefaults.standard.bool(forKey: "is_anonymous") {
+            chessPlayerName = AnonymousUserIdentity.trialUsageLabel
+          } else if let email = UserDefaults.standard.string(forKey: "user_email"),
+            !AnonymousUserIdentity.isAnonymousEmail(email)
+          {
             chessPlayerName = email.components(separatedBy: "@").first ?? email
+          } else {
+            chessPlayerName = AnonymousUserIdentity.trialUsageLabel
           }
         }
         // Migration: Clean up old score system (ONE TIME ONLY)

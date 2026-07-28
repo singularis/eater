@@ -42,63 +42,79 @@ struct UserProfileView: View {
             
             VStack(spacing: 12) {
               ProfileImageView(
-                profilePictureURL: authService.userProfilePictureURL,
+                profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
                 size: 70,
-                fallbackIconColor: AppTheme.textPrimary,
-                userName: authService.userName,
-                userEmail: authService.userEmail
+                fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
+                userName: authService.isAnonymous ? nil : authService.userName,
+                userEmail: authService.isAnonymous ? nil : authService.userEmail
               )
 
-              Button(action: {
-                HapticsService.shared.select()
-                showNicknameSettings = true
-              }) {
+              if authService.isAnonymous {
                 VStack(spacing: 6) {
-                  if !userNickname.isEmpty {
-                    HStack(spacing: 8) {
-                      Text(userNickname)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.textPrimary)
-                      Image(systemName: "pencil.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppTheme.accent)
-                    }
-                    if let userName = authService.userName, !userName.isEmpty {
-                      Text(userName)
-                        .font(.subheadline)
-                        .foregroundColor(AppTheme.textSecondary)
-                    }
-                  } else if let userName = authService.userName, !userName.isEmpty {
-                    HStack(spacing: 8) {
-                      Text(userName)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.textPrimary)
-                      Image(systemName: "pencil.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppTheme.accent)
-                    }
-                  } else {
-                    HStack(spacing: 8) {
-                      Text(loc("profile.set_nickname", "Set Nickname"))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.accent)
-                      Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppTheme.accent)
-                    }
-                  }
-                  Text(authService.userEmail ?? "No email")
+                  Text(AnonymousUserIdentity.trialUsageLabel)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(AppTheme.trialUsage)
+                  Text(loc("profile.trial_usage.hint", "Sign in to save your progress"))
                     .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
+              } else {
+                Button(action: {
+                  HapticsService.shared.select()
+                  showNicknameSettings = true
+                }) {
+                  VStack(spacing: 6) {
+                    if !userNickname.isEmpty {
+                      HStack(spacing: 8) {
+                        Text(userNickname)
+                          .font(.title2)
+                          .fontWeight(.bold)
+                          .foregroundColor(AppTheme.textPrimary)
+                        Image(systemName: "pencil.circle.fill")
+                          .font(.system(size: 20))
+                          .foregroundColor(AppTheme.accent)
+                      }
+                      if let userName = authService.userName,
+                        !userName.isEmpty,
+                        !AnonymousUserIdentity.isAnonymousDisplayName(userName)
+                      {
+                        Text(userName)
+                          .font(.subheadline)
+                          .foregroundColor(AppTheme.textSecondary)
+                      }
+                    } else if let userName = authService.userName, !userName.isEmpty {
+                      HStack(spacing: 8) {
+                        Text(userName)
+                          .font(.title2)
+                          .fontWeight(.bold)
+                          .foregroundColor(AppTheme.textPrimary)
+                        Image(systemName: "pencil.circle.fill")
+                          .font(.system(size: 20))
+                          .foregroundColor(AppTheme.accent)
+                      }
+                    } else {
+                      HStack(spacing: 8) {
+                        Text(loc("profile.set_nickname", "Set Nickname"))
+                          .font(.title2)
+                          .fontWeight(.bold)
+                          .foregroundColor(AppTheme.accent)
+                        Image(systemName: "plus.circle.fill")
+                          .font(.system(size: 20))
+                          .foregroundColor(AppTheme.accent)
+                      }
+                    }
+                    Text(authService.userEmail ?? "No email")
+                      .font(.caption)
+                      .foregroundColor(AppTheme.textSecondary)
+                  }
+                  .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
+                .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
               }
-              .buttonStyle(PlainButtonStyle())
-              .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
-              .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)

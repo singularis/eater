@@ -786,6 +786,12 @@ class GRPCService {
   }
 
   func addFriend(email: String, completion: @escaping (Bool) -> Void) {
+    // Guest accounts have no nickname and must never be added as friends.
+    if AnonymousUserIdentity.isAnonymousEmail(email) {
+      completion(false)
+      return
+    }
+
     var addFriendRequest = Eater_AddFriendRequest()
     addFriendRequest.email = email
 
@@ -839,8 +845,10 @@ class GRPCService {
       if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data {
         do {
           let resp = try Eater_GetFriendsResponse(serializedBytes: data)
-          let allFriends = resp.friends.map { (email: $0.email, nickname: $0.nickname) }
-          let total = Int(resp.count)
+          let allFriends = AnonymousUserIdentity.excludingAnonymous(
+            resp.friends.map { (email: $0.email, nickname: $0.nickname) }
+          )
+          let total = allFriends.count
           let start = max(0, min(offset, allFriends.count))
           let end = max(start, min(start + max(0, limit), allFriends.count))
           let slice = Array(allFriends[start..<end])
@@ -858,6 +866,11 @@ class GRPCService {
     time: Int64, fromEmail: String, toEmail: String, percentage: Int32,
     completion: @escaping (Bool, String?) -> Void
   ) {
+    if AnonymousUserIdentity.isAnonymousEmail(toEmail) {
+      completion(false, nil)
+      return
+    }
+
     var req = Eater_ShareFoodRequest()
     req.time = time
     req.fromEmail = fromEmail
