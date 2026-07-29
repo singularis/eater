@@ -26,11 +26,6 @@ final class CalorieLimitsStorageService {
     var softLimit: Int
     var hardLimit: Int
     var hasManualCalorieLimits: Bool
-    /// Custom macro goals in grams. When nil, the app derives a target from
-    /// softLimit using the default 20% protein / 30% fat / 50% carbs split.
-    var customProteinGoal: Double? = nil
-    var customFatGoal: Double? = nil
-    var customCarbsGoal: Double? = nil
   }
 
   func load() -> Limits? {

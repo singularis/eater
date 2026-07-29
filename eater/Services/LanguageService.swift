@@ -14,21 +14,19 @@ final class LanguageService: ObservableObject {
   private init() {
     // Load stored or detect device preferred language
     if let stored = defaults.string(forKey: languageKey), !stored.isEmpty {
-      let resolved = LanguageService.supportedCode(stored)
-      currentCode = resolved
+      currentCode = stored
       // Prefer native name for consistent display across app restarts
-      let native = LanguageService.nativeNameStatic(for: resolved)
+      let native = LanguageService.nativeNameStatic(for: stored)
       currentDisplayName = native
-      defaults.set(resolved, forKey: languageKey)
       defaults.set(native, forKey: displayNameKey)
       defaults.synchronize()
     } else if let deviceCode = Locale.preferredLanguages.first.flatMap({
       Locale(identifier: $0).language.languageCode?.identifier
     }) {
-      let resolved = LanguageService.supportedCode(deviceCode)
-      currentCode = resolved
-      currentDisplayName = LanguageService.nativeNameStatic(for: resolved)
-      defaults.set(resolved, forKey: languageKey)
+      let normalized = LanguageService.normalize(code: deviceCode)
+      currentCode = normalized
+      currentDisplayName = LanguageService.nativeNameStatic(for: normalized)
+      defaults.set(normalized, forKey: languageKey)
       defaults.set(currentDisplayName, forKey: displayNameKey)
       defaults.synchronize()
     } else {
@@ -39,16 +37,9 @@ final class LanguageService: ObservableObject {
 
   // MARK: - Available Languages
 
-  /// Bundle contents cannot change at runtime, so discovery only needs to run once.
-  private static let bundledCodes: [String] = discoverBundledCodes()
-
   /// Discover available language codes by scanning bundled files in `Localization/*.json`.
   /// Falls back to `languages.txt` if folder-based discovery fails.
   func availableLanguageCodes() -> [String] {
-    return LanguageService.bundledCodes
-  }
-
-  private static func discoverBundledCodes() -> [String] {
     // Scan the bundled Localization directory for json files like "en.json"
     if let dirURL = Bundle.main.url(forResource: "Localization", withExtension: nil) {
       do {
@@ -68,20 +59,9 @@ final class LanguageService: ObservableObject {
       }
     }
     // Fallback: infer from languages.txt display names → codes
-    let names = loadAvailableLanguageNames()
+    let names = loadAvailableLanguages()
     let codes = names.map { code(for: $0) }
     return Array(Set(codes)).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-  }
-
-  /// Normalizes `code` and falls back to English when the app ships no translations for it,
-  /// so an unsupported device or backend locale can never become the active language.
-  static func supportedCode(_ code: String) -> String {
-    let norm = normalize(code: code)
-    let supported = bundledCodes
-    // If discovery failed outright, honour the requested code rather than
-    // forcing every user onto English.
-    guard !supported.isEmpty else { return norm }
-    return supported.contains(norm) ? norm : "en"
   }
 
   /// Return tuples of (code, native name, flag emoji) for presenting to users.
@@ -123,7 +103,7 @@ final class LanguageService: ObservableObject {
     code: String, displayName: String? = nil, syncWithBackend: Bool = true,
     completion: ((Bool) -> Void)? = nil
   ) {
-    let normalized = LanguageService.supportedCode(code)
+    let normalized = LanguageService.normalize(code: code)
     DispatchQueue.main.async {
       self.objectWillChange.send()
       self.currentCode = normalized
@@ -160,10 +140,6 @@ final class LanguageService: ObservableObject {
 
   // Load list from bundled languages.txt
   func loadAvailableLanguages() -> [String] {
-    return LanguageService.loadAvailableLanguageNames()
-  }
-
-  static func loadAvailableLanguageNames() -> [String] {
     guard let url = Bundle.main.url(forResource: "languages", withExtension: "txt"),
       let raw = try? String(contentsOf: url, encoding: .utf8)
     else {
@@ -178,7 +154,7 @@ final class LanguageService: ObservableObject {
   }
 
   // Map display name to best-guess code
-  static func code(for displayName: String) -> String {
+  func code(for displayName: String) -> String {
     // Attempt using Locale to infer code from English names
     let preferred = Locale(identifier: "en")
     for code in Locale.availableIdentifiers.compactMap({
@@ -252,7 +228,7 @@ final class LanguageService: ObservableObject {
     let lang = LanguageService.normalize(code: code)
     let representativeCountry: [String: String] = [
       "en": "GB", "es": "ES", "fr": "FR", "de": "DE", "it": "IT", "pt": "PT",
-      "uk": "UA", "zh": "CN", "ja": "JP", "ar": "SA", "hi": "IN",
+      "ru": "RU", "uk": "UA", "zh": "CN", "ja": "JP", "ar": "SA", "hi": "IN",
       "bn": "BD", "nl": "NL", "sv": "SE", "fi": "FI", "da": "DK", "no": "NO",
       "tr": "TR", "el": "GR", "pl": "PL", "cs": "CZ", "sk": "SK", "sl": "SI",
       "hr": "HR", "hu": "HU", "lv": "LV", "lt": "LT", "et": "EE", "ro": "RO",
