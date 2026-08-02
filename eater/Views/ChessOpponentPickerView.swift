@@ -120,6 +120,11 @@ struct ChessOpponentPickerView: View {
       if playerName.isEmpty {
         if let nickname = UserDefaults.standard.string(forKey: "nickname"), !nickname.isEmpty {
           playerName = nickname
+        } else if UserDefaults.standard.bool(forKey: "is_anonymous")
+          || AnonymousUserIdentity.isAnonymousEmail(
+            UserDefaults.standard.string(forKey: "user_email"))
+        {
+          playerName = AnonymousUserIdentity.trialUsageLabel
         } else if let email = UserDefaults.standard.string(forKey: "user_email") {
           playerName = email
         }

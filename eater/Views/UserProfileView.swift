@@ -27,7 +27,9 @@ struct UserProfileView: View {
   #endif
   @EnvironmentObject var languageService: LanguageService
   @State private var showLanguagePicker = false
-  @StateObject private var themeService = ThemeService.shared
+  @ObservedObject private var themeService = ThemeService.shared
+  /// Defer heavy mascot artwork so menu buttons appear immediately.
+  @State private var loadMascotArtwork = false
 
   var body: some View {
     NavigationView {
@@ -36,73 +38,106 @@ struct UserProfileView: View {
           .edgesIgnoringSafeArea(.all)
 
         ScrollView {
-          VStack(spacing: 20) {
+          LazyVStack(spacing: 20) {
             // Profile Section
             sectionHeader(icon: "person.circle.fill", title: loc("profile.header", "Profile"), color: AppTheme.accent)
             
             VStack(spacing: 12) {
               ProfileImageView(
-                profilePictureURL: authService.userProfilePictureURL,
+                profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
                 size: 70,
-                fallbackIconColor: AppTheme.textPrimary,
-                userName: authService.userName,
-                userEmail: authService.userEmail
+                fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
+                userName: authService.isAnonymous ? nil : authService.userName,
+                userEmail: authService.isAnonymous ? nil : authService.userEmail
               )
 
-              Button(action: {
-                HapticsService.shared.select()
-                showNicknameSettings = true
-              }) {
+              if authService.isAnonymous {
                 VStack(spacing: 6) {
-                  if !userNickname.isEmpty {
-                    HStack(spacing: 8) {
-                      Text(userNickname)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.textPrimary)
-                      Image(systemName: "pencil.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppTheme.accent)
-                    }
-                    if let userName = authService.userName, !userName.isEmpty {
-                      Text(userName)
-                        .font(.subheadline)
-                        .foregroundColor(AppTheme.textSecondary)
-                    }
-                  } else if let userName = authService.userName, !userName.isEmpty {
-                    HStack(spacing: 8) {
-                      Text(userName)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.textPrimary)
-                      Image(systemName: "pencil.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppTheme.accent)
-                    }
-                  } else {
-                    HStack(spacing: 8) {
-                      Text(loc("profile.set_nickname", "Set Nickname"))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.accent)
-                      Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppTheme.accent)
-                    }
-                  }
-                  Text(authService.userEmail ?? "No email")
+                  Text(AnonymousUserIdentity.defaultDisplayName)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(AppTheme.trialUsage)
+                  Text(loc("profile.trial_usage.hint", "Sign in to save your progress"))
                     .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
+              } else {
+                Button(action: {
+                  HapticsService.shared.select()
+                  showNicknameSettings = true
+                }) {
+                  VStack(spacing: 6) {
+                    let displayName = AnonymousUserIdentity.menuDisplayName(
+                      nickname: userNickname.isEmpty ? nil : userNickname,
+                      userName: authService.userName
+                    )
+                    let hasRealNickname = AnonymousUserIdentity.hasUsableNickname(
+                      userNickname.isEmpty ? nil : userNickname
+                    )
+                    let hasRealName = AnonymousUserIdentity.isUsablePersonName(authService.userName)
+
+                    if hasRealNickname || hasRealName {
+                      HStack(spacing: 8) {
+                        Text(displayName)
+                          .font(.title2)
+                          .fontWeight(.bold)
+                          .foregroundColor(AppTheme.textPrimary)
+                        Image(systemName: "pencil.circle.fill")
+                          .font(.system(size: 20))
+                          .foregroundColor(AppTheme.accent)
+                      }
+                      if hasRealNickname,
+                        let userName = authService.userName,
+                        AnonymousUserIdentity.isUsablePersonName(userName),
+                        userName.caseInsensitiveCompare(displayName) != .orderedSame
+                      {
+                        Text(userName)
+                          .font(.subheadline)
+                          .foregroundColor(AppTheme.textSecondary)
+                      }
+                    } else {
+                      HStack(spacing: 8) {
+                        Text(displayName)
+                          .font(.title2)
+                          .fontWeight(.bold)
+                          .foregroundColor(AppTheme.textPrimary)
+                        Image(systemName: "pencil.circle.fill")
+                          .font(.system(size: 20))
+                          .foregroundColor(AppTheme.accent)
+                      }
+                      Text(loc("profile.set_nickname", "Set Nickname"))
+                        .font(.caption)
+                        .foregroundColor(AppTheme.accent)
+                    }
+
+                    if let email = AnonymousUserIdentity.menuEmailSubtitle(email: authService.userEmail)
+                    {
+                      Text(email)
+                        .font(.caption)
+                        .foregroundColor(AppTheme.textSecondary)
+                    }
+                  }
+                  .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
+                .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
               }
-              .buttonStyle(PlainButtonStyle())
-              .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
-              .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .cardContainer(padding: 16)
+
+            // Statistics at top of menu (before Watch me first)
+            actionButton(
+              icon: "chart.line.uptrend.xyaxis",
+              title: loc("profile.viewstats", "View Statistics"),
+              accessibilityHint: loc("a11y.open_stats", "Opens your statistics dashboard")
+            ) {
+              HapticsService.shared.select()
+              showStatistics = true
+            }
 
             // Watch me first! Section
             Button(action: {
@@ -110,13 +145,17 @@ struct UserProfileView: View {
               showOnboarding = true
             }) {
               HStack(spacing: 12) {
-                // Cat image
-                if let catImage = AppMascot.cat.happyImage() {
+                if loadMascotArtwork, let catImage = AppMascot.cat.happyImage() {
                   Image(catImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 44, height: 44)
                     .clipShape(Circle())
+                } else {
+                  Image(systemName: "pawprint.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.white.opacity(0.9))
+                    .frame(width: 44, height: 44)
                 }
 
                 HStack {
@@ -127,13 +166,17 @@ struct UserProfileView: View {
                 .font(.subheadline)
                 .foregroundColor(.white)
 
-                // Dog image
-                if let dogImage = AppMascot.dog.happyImage() {
+                if loadMascotArtwork, let dogImage = AppMascot.dog.happyImage() {
                   Image(dogImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 44, height: 44)
                     .clipShape(Circle())
+                } else {
+                  Image(systemName: "pawprint.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.white.opacity(0.9))
+                    .frame(width: 44, height: 44)
                 }
               }
               .frame(maxWidth: .infinity)
@@ -145,8 +188,8 @@ struct UserProfileView: View {
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
             
             VStack(spacing: 14) {
-              // Preview of current mascot (5 states for clarity)
-              if themeService.currentMascot != .none {
+              // Preview of current mascot (deferred until menu is interactive)
+              if loadMascotArtwork, themeService.currentMascot != .none {
                 let previews = themeService.getUniquePreviewImageNames(count: 5)
                 ScrollView(.horizontal, showsIndicators: false) {
                   HStack(spacing: 12) {
@@ -331,15 +374,6 @@ struct UserProfileView: View {
             
             VStack(spacing: 10) {
               actionButton(
-                icon: "chart.line.uptrend.xyaxis",
-                title: loc("profile.viewstats", "View Statistics"),
-                accessibilityHint: loc("a11y.open_stats", "Opens your statistics dashboard")
-              ) {
-                HapticsService.shared.select()
-                showStatistics = true
-              }
-              
-              actionButton(
                 icon: "message.fill",
                 title: loc("profile.sharefeedback", "Share Feedback"),
                 accessibilityHint: loc("a11y.open_feedback", "Send feedback to the team")
@@ -367,9 +401,6 @@ struct UserProfileView: View {
                 label: loc("profile.language", "Language"),
                 action: {
                   HapticsService.shared.select()
-                  print(
-                    "[UserProfileView] Language button tapped code=\(languageService.currentCode) name=\(languageService.currentDisplayName)"
-                  )
                   showLanguagePicker = true
                 }
               ) {
@@ -383,10 +414,6 @@ struct UserProfileView: View {
                     .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                 }
-              }
-              .sheet(isPresented: $showLanguagePicker) {
-                LanguageSelectionSheet(isPresented: $showLanguagePicker)
-                  .environmentObject(languageService)
               }
               
               Divider().padding(.horizontal, 8)
@@ -629,6 +656,10 @@ struct UserProfileView: View {
       .sheet(isPresented: $showNicknameSettings) {
         NicknameSettingsView()
       }
+      .sheet(isPresented: $showLanguagePicker) {
+        LanguageSelectionSheet(isPresented: $showLanguagePicker)
+          .environmentObject(languageService)
+      }
       .onChange(of: showHealthSettings) { _, newValue in
         if !newValue {  // Sheet was dismissed
           loadHealthData()
@@ -636,6 +667,10 @@ struct UserProfileView: View {
       }
       .onAppear {
         loadHealthData()
+        // Let buttons paint first, then load mascot bitmaps.
+        DispatchQueue.main.async {
+          loadMascotArtwork = true
+        }
       }
       // Avoid remounting the entire view while sheets are transitioning
       // Removing id(languageService.currentCode) prevents presentation conflicts
@@ -808,20 +843,16 @@ struct MascotButton: View {
             Image(systemName: "star.fill")
               .font(.system(size: 32))
               .foregroundColor(isSelected ? .white : AppTheme.textSecondary)
+          } else if let imageName = mascot.happyImage() {
+            Image(imageName)
+              .resizable()
+              .aspectRatio(contentMode: .fit)
+              .frame(width: 50, height: 50)
+              .clipShape(Circle())
           } else {
-            // Show actual mascot image if available
-            if let imageName = mascot.happyImage() {
-              Image(imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 50)
-                .clipShape(Circle())
-            } else {
-              // Fallback: paw instead of emoji
-              Image(systemName: "pawprint.circle.fill")
-                .font(.system(size: 32))
-                .foregroundColor(isSelected ? .white : AppTheme.textSecondary)
-            }
+            Image(systemName: "pawprint.circle.fill")
+              .font(.system(size: 32))
+              .foregroundColor(isSelected ? .white : AppTheme.textSecondary)
           }
         }
         .frame(height: 70)
