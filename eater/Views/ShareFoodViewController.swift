@@ -8,8 +8,7 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   private var tableView: UITableView!
   private var headerImageView: UIImageView?
   private var friends: [(email: String, nickname: String)] = []
-  private var visibleCount: Int = 0
-  private let pageSize = 5
+  private var totalCount: Int = 0
   private var isLoading: Bool = false
   private var sharesCountByEmail: [String: Int] = ShareFoodViewController.loadSharesCount()
   var onShareSuccess: (() -> Void)?
@@ -38,7 +37,7 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
 
     setupTableView()
     setupHeader()
-    fetchFriends()
+    fetchFriends(reset: true)
     loadImage()
   }
 
@@ -140,21 +139,19 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     present(host, animated: true)
   }
 
-  // The backend returns the complete friends list in a single response (no server-side
-  // paging), so we fetch everyone once, sort the full list by share count, and then reveal
-  // it in pages locally. Sorting only the currently-fetched page (as before) meant the
-  // initial preview could miss the most-shared friends entirely if they weren't among the
-  // first few returned by the backend, making the preview look unsorted.
-  private func fetchFriends() {
+  private func fetchFriends(reset: Bool) {
     guard !isLoading else { return }
     isLoading = true
-    GRPCService().getFriends(offset: 0, limit: Int.max / 2) { [weak self] fetchedFriends, _ in
+    let offset = reset ? 0 : friends.count
+    let limit = 5
+    GRPCService().getFriends(offset: offset, limit: limit) { [weak self] fetchedFriends, total in
       DispatchQueue.main.async {
         guard let self = self else { return }
         self.isLoading = false
-        self.friends = fetchedFriends
+        if reset { self.friends.removeAll() }
+        self.totalCount = total
+        self.friends.append(contentsOf: fetchedFriends)
         self.sortFriends()
-        self.visibleCount = min(self.pageSize, self.friends.count)
         self.tableView.reloadData()
         self.addLoadMoreIfNeeded()
       }
@@ -175,7 +172,7 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   }
 
   private func addLoadMoreIfNeeded() {
-    if visibleCount < friends.count {
+    if friends.count < totalCount {
       let footer = UIButton(type: .system)
       var config = UIButton.Configuration.filled()
       config.title = loc("friends.more", "More friends")
@@ -195,15 +192,13 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   }
 
   @objc private func loadMoreTapped() {
-    visibleCount = min(visibleCount + pageSize, friends.count)
-    tableView.reloadData()
-    addLoadMoreIfNeeded()
+    fetchFriends(reset: false)
   }
 
   // MARK: - UITableView DataSource
 
   func numberOfSections(in _: UITableView) -> Int { 1 }
-  func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int { visibleCount }
+  func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int { friends.count }
   func tableView(_: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
     let friend = friends[indexPath.row]
@@ -214,9 +209,7 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     cell.textLabel?.text = displayName
     
     var details = [String]()
-    if shares > 0 {
-      details.append(String(format: loc("friends.shared_count", "Shared %dx"), shares))
-    }
+    if shares > 0 { details.append("Shared \(shares)x") }
     if !friend.nickname.isEmpty { details.append(friend.email) }
     
     cell.detailTextLabel?.text = details.joined(separator: " • ")
@@ -260,18 +253,15 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
             let trimmed = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
             
             let nameUsed = (trimmed?.isEmpty ?? true) ? toEmail : trimmed!
-            let message = String(
-              format: loc("share.success.msg", "Shared %d%% with %@"), percentage, nameUsed)
+            let message = "Shared \(percentage)% with \(nameUsed)"
             
             let callback = self.onShareSuccess
             self.dismiss(animated: true) {
               callback?()
-              AlertHelper.showAlert(title: loc("share.success.title", "Shared"), message: message)
+              AlertHelper.showAlert(title: "Shared", message: message)
             }
           } else {
-            AlertHelper.showAlert(
-              title: loc("share.fail.title", "Failed"),
-              message: String(format: loc("share.fail.msg", "Could not share with %@"), toEmail))
+            AlertHelper.showAlert(title: "Failed", message: "Could not share with \(toEmail)")
           }
         }
       }
@@ -297,43 +287,34 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
 
   private func promptSharePercentage(onSelected: @escaping (Int32) -> Void) {
     let alert = UIAlertController(
-      title: loc("share.percentage.title", "How much did your friend eat?"), message: nil,
-      preferredStyle: .actionSheet)
+      title: "How much did your friend eat?", message: nil, preferredStyle: .actionSheet)
     let options: [Int32] = [25, 50, 75]
     for v in options {
       alert.addAction(
         UIAlertAction(title: "\(v)%", style: .default, handler: { _ in onSelected(v) }))
     }
-    let sameAmountAction = UIAlertAction(
-      title: loc("share.percentage.same", "Same amount"), style: .default,
-      handler: { _ in onSelected(100) })
-    // Green to make the "same amount" option stand out from the plain percentages
-    sameAmountAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
-    alert.addAction(sameAmountAction)
     alert.addAction(
       UIAlertAction(
-        title: loc("share.percentage.custom", "Custom..."), style: .default,
+        title: "Custom...", style: .default,
         handler: { [weak self] _ in
           self?.promptCustomPercentage(onSelected: onSelected)
         }))
-    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
     present(alert, animated: true)
   }
 
   private func promptCustomPercentage(onSelected: @escaping (Int32) -> Void) {
     let alert = UIAlertController(
-      title: loc("share.custom.title", "Custom percentage"),
-      message: loc("share.custom.message", "Enter a value between 1 and 300"),
-      preferredStyle: .alert
+      title: "Custom percentage", message: "Enter a value between 1 and 300", preferredStyle: .alert
     )
     alert.addTextField { tf in
-      tf.placeholder = loc("share.custom.placeholder", "e.g. 40")
+      tf.placeholder = "e.g. 40"
       tf.keyboardType = .numberPad
     }
-    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
     alert.addAction(
       UIAlertAction(
-        title: loc("common.ok", "OK"), style: .default,
+        title: "OK", style: .default,
         handler: { _ in
           if let text = alert.textFields?.first?.text, let value = Int(text), value > 0,
             value <= 300

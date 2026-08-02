@@ -6,13 +6,6 @@ struct FullScreenPhotoData: Identifiable {
   let foodName: String
 }
 
-struct FixFoodNameData: Identifiable {
-  let id = UUID()
-  let time: Int64
-  let imageId: String
-  let currentName: String
-}
-
 struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
@@ -39,15 +32,11 @@ struct ContentView: View {
   @State private var currentViewingDate = ""
   @State private var currentViewingDateString = ""  // Original format dd-MM-yyyy
   @State private var showRecommendation = false
-  @State private var fixFoodNameData: FixFoodNameData? = nil
-  @State private var swipeCameraTrigger = false
   @State private var recommendationText = ""
   @State private var showStatistics = false
   // Alcohol states
   @State private var showAlcoholCalendar = false
   @State private var alcoholIconColor: Color = .green
-  // Anonymous ("Let Me Try") scan reminder
-  @State private var showAnonymousLoginPrompt = false
   @State private var lastAlcoholEventDate: Date? = nil
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   @State private var showMainAppTutorial = false
@@ -59,11 +48,12 @@ struct ContentView: View {
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
   #endif
   
-  // Sport icon color: green when today has sport calories, otherwise warning/orange
+  // Activities icon color (green if any activity today, orange if not)
   private var sportIconColor: Color {
     let today = getCurrentUTCDateString()
     let hasCalories = todaySportCaloriesDate == today && todaySportCalories > 0
-    return hasCalories ? .green : AppTheme.warning
+    let hasActivity = todayActivityDate == today
+    return (hasCalories || hasActivity) ? .green : .orange
   }
   // New loading states
   @State private var isLoadingData = false
@@ -126,73 +116,54 @@ struct ContentView: View {
     return df
   }
 
-  /// Home screen horizontal swipe (no TabView pager — it was eating gestures):
-  ///   left  → Statistics
-  ///   right → Camera
-  /// Food-row swipes claim the arbiter so card options/delete still win on cards.
-  private var homeSwipeGesture: some Gesture {
-    DragGesture(minimumDistance: 40)
-      .onEnded { value in
-        let dx = value.translation.width
-        let dy = value.translation.height
-        guard abs(dx) > abs(dy), abs(dx) > 70 else { return }
-        guard !FoodSwipeArbiter.shared.rowSwipeActive else { return }
-        HapticsService.shared.select()
-        if dx < 0 {
-          withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 0 }
-        } else {
-          swipeCameraTrigger.toggle()
-        }
-      }
-  }
-
-  private var statisticsBinding: Binding<Bool> {
-    Binding(
-      get: { selectedPage == 0 },
-      set: { if !$0 { withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 1 } } }
-    )
-  }
-
   var body: some View {
     ZStack {
       AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
-      // Main App Screen — not inside a page TabView, so horizontal swipes
-      // are ours (Statistics / Camera) instead of a competing pager.
-      VStack(spacing: 2) {
-        topBarView
-        statsButtonsView
-          .frame(height: 60)
-        // Macros line (only in Full mode and when we have data)
-        if dataDisplayMode == "full" && hasMacrosData {
-          macrosLineView
-        }
+      TabView(selection: $selectedPage) {
+        // Statistics Screen
+        StatisticsView(isPresented: Binding(
+          get: { selectedPage == 0 },
+          set: { if !$0 { withAnimation { selectedPage = 1 } } }
+        ), targetChartType: .macros)
+        .tag(0)
 
-        ProductListView(
-          products: products,
-          onRefresh: refreshAction,
-          onDelete: deleteProductWithLoading,
-          onModify: modifyProductPortion,
-          onTryAgain: tryAgainProduct,
-          onAddSugar: addSugarToProduct,
-          onAddDrinkExtra: addExtraToProduct,
-          onAddFoodExtra: addExtraToProduct,
-          onPhotoTap: showFullScreenPhoto,
-          deletingProductTime: deletingProductTime,
-          onShareSuccess: {
-            StatisticsService.shared.clearExpiredCache()
-            ProductStorageService.shared.clearCache()
-            self.returnToToday()
+        // Main App Screen
+        VStack(spacing: 2) {
+          topBarView
+          statsButtonsView
+            .frame(height: 60)
+          // Macros line (only in Full mode and when we have data)
+          if dataDisplayMode == "full" && hasMacrosData {
+            macrosLineView
           }
-        )
-        .padding(.top, 0)
 
-        cameraButtonView
-          .padding(.top, 10)
+          ProductListView(
+            products: products,
+            onRefresh: refreshAction,
+            onDelete: deleteProductWithLoading,
+            onModify: modifyProductPortion,
+            onTryAgain: tryAgainProduct,
+            onAddSugar: addSugarToProduct,
+            onAddDrinkExtra: addExtraToProduct,
+            onAddFoodExtra: addExtraToProduct,
+            onPhotoTap: showFullScreenPhoto,
+            deletingProductTime: deletingProductTime,
+            onShareSuccess: {
+              StatisticsService.shared.clearExpiredCache()
+              ProductStorageService.shared.clearCache()
+              self.returnToToday()
+            }
+          )
+          .padding(.top, 0)
+          
+          cameraButtonView
+            .padding(.top, 10)
+        }
+        .tag(1)
       }
-      .contentShape(Rectangle())
-      .simultaneousGesture(homeSwipeGesture)
+      .tabViewStyle(.page(indexDisplayMode: .never))
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
@@ -218,7 +189,7 @@ struct ContentView: View {
         }
 
         fetchAlcoholStatus()
-      }
+      }  
       .onDisappear {
         stopDailyRefreshTimer()
       }
@@ -261,20 +232,6 @@ struct ContentView: View {
             "Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice."
           ))
       }
-      .alert(
-        loc("login.scan_prompt_title", "Unlock All Features"), isPresented: $showAnonymousLoginPrompt
-      ) {
-        Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
-        Button(loc("login.prompt.confirm", "Login Now")) {
-          authService.signOut()
-        }
-      } message: {
-        Text(
-          loc(
-            "login.scan_prompt_message",
-            "Please login to Google if you are ready or want to recover past food."
-          ))
-      }
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
           .environmentObject(authService)
@@ -287,25 +244,12 @@ struct ContentView: View {
         }
       }
       .sheet(isPresented: $showHealthDisclaimer) {
-        HealthDisclaimerView(todayHealthScore: averageHealthScore)
+        HealthDisclaimerView()
       }
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
       }
-      .sheet(item: $fixFoodNameData) { data in
-        FixFoodNameView(
-          currentName: data.currentName,
-          imageId: data.imageId,
-          languageCode: languageService.currentCode,
-          onSave: { newName in
-            fixFoodNameData = nil
-            submitManualFoodName(time: data.time, imageId: data.imageId, newName: newName)
-          },
-          onCancel: {
-            fixFoodNameData = nil
-          }
-        )
-      }
+      // StatisticsView is now part of the TabView, so we remove the sheet
       .sheet(isPresented: $showCalendarPicker) {
         CalendarDatePickerView(
           selectedDate: $selectedDate,
@@ -344,16 +288,11 @@ struct ContentView: View {
           .opacity(showOnboarding ? 1 : 0)
       )
 
-      if selectedPage == 0 {
-        StatisticsView(isPresented: statisticsBinding, targetChartType: .macros)
-          .transition(.move(edge: .leading))
-          .zIndex(1)
-      }
-
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
         isVisible: isLoadingFoodPhoto, message: loc("loading.photo", "Analyzing food photo..."))
     }
+
     .fullScreenCover(isPresented: $showMainAppTutorial) {
         MainAppTutorialView(isPresented: $showMainAppTutorial)
             .environmentObject(languageService)
@@ -376,34 +315,32 @@ struct ContentView: View {
     .id(languageService.currentCode)
   }
 
-  /// 3-zone bar matching Android TopBarView:
-  /// [Profile]—8—[Alcohol]  ……flex……  [Date]  ……flex……  [Sport]—8—[Health]
   private var topBarView: some View {
-    HStack(spacing: 0) {
-      HStack(spacing: 8) {
-        profileButton
-        alcoholButton
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-
+    ZStack {
       dateDisplayView
 
-      HStack(spacing: 8) {
-        #if DEBUG
-        if useDevEnvironment {
-          Text("DEV")
-            .font(.system(size: 10, weight: .heavy))
-            .foregroundColor(.white)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Color.red)
-            .cornerRadius(4)
+      HStack {
+        HStack(spacing: 24) {
+          profileButton
+          alcoholButton
         }
-        #endif
-        sportButton
-        healthInfoButton
+        Spacer()
+        HStack(spacing: 24) {
+          #if DEBUG
+          if useDevEnvironment {
+            Text("DEV")
+              .font(.system(size: 10, weight: .heavy))
+              .foregroundColor(.white)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.red)
+              .cornerRadius(4)
+          }
+          #endif
+          healthInfoButton
+          sportButton
+        }
       }
-      .frame(maxWidth: .infinity, alignment: .trailing)
     }
   }
 
@@ -466,7 +403,7 @@ struct ContentView: View {
           .shadow(color: alcoholIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
         Image(systemName: themeService.icon(for: "wineglass"))
-          .font(.system(size: 20, weight: .semibold))
+          .font(.system(size: 18, weight: .semibold))
           .foregroundColor(alcoholIconColor)
       }
       .frame(width: 44, height: 44)
@@ -547,6 +484,17 @@ struct ContentView: View {
       ZStack {
         Circle()
           .fill(AppTheme.surface)
+          .overlay(
+            Circle()
+              .stroke(
+                LinearGradient(
+                  gradient: Gradient(colors: [(averageHealthScore?.color ?? Color.blue).opacity(0.9), (averageHealthScore?.color ?? Color.blue).opacity(0.3)]),
+                  startPoint: .topLeading,
+                  endPoint: .bottomTrailing
+                ),
+                lineWidth: 2
+              )
+          )
           .shadow(color: (averageHealthScore?.color ?? Color.blue).opacity(0.4), radius: 6, x: 0, y: 3)
 
         if let avg = averageHealthScore {
@@ -597,14 +545,14 @@ struct ContentView: View {
           .shadow(color: sportIconColor.opacity(0.4), radius: 6, x: 0, y: 3)
 
         Image(systemName: themeService.icon(for: "figure.run"))
-          .font(.system(size: 20, weight: .semibold))
+          .font(.system(size: 18, weight: .semibold))
           .foregroundColor(sportIconColor)
       }
       .frame(width: 44, height: 44)
       .contentShape(Circle())
     }
     .buttonStyle(PressScaleButtonStyle())
-    .id("sport-\(todaySportCalories)-\(todaySportCaloriesDate)-\(uiRefreshTrigger)")
+    .id("sport-\(todayActivityDate)-\(todaySportCalories)-\(uiRefreshTrigger)")
     .sheet(isPresented: $showActivitiesView) {
       ActivitiesView(dateISO: currentActivitiesDateISO())
     }
@@ -735,53 +683,14 @@ struct ContentView: View {
     }
   }
 
-  /// Daily macro targets (g). Uses the user's custom goals when set, otherwise
-  /// derives from the calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
+  /// Daily macro targets (g) from calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
   private func macroTargetsFromDailyKcal(_ kcal: Int) -> (protein: Double, fat: Double, carbs: Double, sugarMax: Double) {
-    let defaultTargets: (protein: Double, fat: Double, carbs: Double, sugarMax: Double)
-    if kcal > 0 {
-      let k = Double(kcal)
-      defaultTargets = ((k * 0.20) / 4.0, (k * 0.30) / 9.0, (k * 0.50) / 4.0, 40.0)
-    } else {
-      defaultTargets = (80, 53, 200, 40)
-    }
-
-    guard let saved = CalorieLimitsStorageService.shared.load() else { return defaultTargets }
-    return (
-      saved.customProteinGoal ?? defaultTargets.protein,
-      saved.customFatGoal ?? defaultTargets.fat,
-      saved.customCarbsGoal ?? defaultTargets.carbs,
-      defaultTargets.sugarMax
-    )
-  }
-
-  /// True if the user has customized any macro goal away from the default split.
-  private var hasCustomMacroGoals: Bool {
-    guard let saved = CalorieLimitsStorageService.shared.load() else { return false }
-    return saved.customProteinGoal != nil || saved.customFatGoal != nil
-      || saved.customCarbsGoal != nil
-  }
-
-  private func saveMacroGoals(protein: Double, fat: Double, carbs: Double) {
-    var limits =
-      CalorieLimitsStorageService.shared.load()
-      ?? .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false)
-    limits.customProteinGoal = protein
-    limits.customFatGoal = fat
-    limits.customCarbsGoal = carbs
-    CalorieLimitsStorageService.shared.save(limits)
-
-    GRPCService().updateMacroGoals(
-      proteinTargetGrams: protein, fatTargetGrams: fat, carbsTargetGrams: carbs
-    ) { _ in }
-  }
-
-  private func resetMacroGoalsToRecommended() {
-    guard var limits = CalorieLimitsStorageService.shared.load() else { return }
-    limits.customProteinGoal = nil
-    limits.customFatGoal = nil
-    limits.customCarbsGoal = nil
-    CalorieLimitsStorageService.shared.save(limits)
+    guard kcal > 0 else { return (80, 53, 200, 40) }
+    let k = Double(kcal)
+    let protein = (k * 0.20) / 4.0
+    let fat = (k * 0.30) / 9.0
+    let carbs = (k * 0.50) / 4.0
+    return (protein, fat, carbs, 40.0)
   }
 
   private var macrosLineView: some View {
@@ -851,21 +760,41 @@ struct ContentView: View {
   }
 
   private func macroTargetsSheetContent(softLimit: Int) -> some View {
-    MacroGoalsEditView(
-      initialTargets: macroTargetsFromDailyKcal(softLimit),
-      hasCustomGoals: hasCustomMacroGoals,
-      onSave: { protein, fat, carbs in
-        saveMacroGoals(protein: protein, fat: fat, carbs: carbs)
-        showMacroTargets = false
-      },
-      onResetToRecommended: {
-        resetMacroGoalsToRecommended()
-        showMacroTargets = false
-      },
-      onCancel: {
+    let targets = macroTargetsFromDailyKcal(softLimit)
+    func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
+    let grams = loc("units.g", "g")
+    let proLabel = loc("macro.pro", "PRO")
+    let fatLabel = loc("macro.fat", "FAT")
+    let carLabel = loc("macro.car", "CAR")
+    let sugLabel = loc("macro.sug", "SUG")
+    let macroGreenPurple = Color(red: 0.22, green: 0.55, blue: 0.6)
+    return VStack(spacing: 0) {
+      Spacer(minLength: 0)
+      Text(loc("macro.targets.alert.title", "Macro goals"))
+        .font(.subheadline.weight(.semibold))
+        .scaleEffect(1.25)
+        .foregroundColor(macroGreenPurple)
+      VStack(alignment: .center, spacing: 4) {
+        Text(proLabel + " " + fmt(targets.protein) + grams)
+        Text(fatLabel + " " + fmt(targets.fat) + grams)
+        Text(carLabel + " " + fmt(targets.carbs) + grams)
+        Text(sugLabel + " 40–50" + grams)
+      }
+      .font(.subheadline)
+      .foregroundColor(macroGreenPurple)
+      .padding(.top, 8)
+      Button(loc("common.ok", "OK")) {
         showMacroTargets = false
       }
-    )
+      .buttonStyle(PrimaryButtonStyle())
+      .padding(.top, 12)
+      Spacer(minLength: 0)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.horizontal, 24)
+    .padding(.vertical, 16)
+    .presentationDetents([.height(240)])
+    .presentationDragIndicator(.visible)
   }
 
   private var cameraButtonView: some View {
@@ -898,9 +827,6 @@ struct ContentView: View {
         // Photo processing started
         HapticsService.shared.mediumImpact()
         isLoadingFoodPhoto = true
-        if authService.recordAnonymousFoodScanIfNeeded() {
-          showAnonymousLoginPrompt = true
-        }
       },
       onReturnToToday: {
         returnToToday()
@@ -909,8 +835,7 @@ struct ContentView: View {
           if let step = MainAppTutorialView.steps.first(where: { $0.key == key }) {
               activeTutorialStep = step
           }
-      },
-      externalCameraTrigger: $swipeCameraTrigger
+      }
     )
     .buttonStyle(PrimaryButtonStyle())
   }
@@ -1044,7 +969,6 @@ struct ContentView: View {
             self.recalculateCalorieLimitsFromHealthData()
           }
           self.refreshMacrosForCurrentView()
-          self.fetchAlcoholStatus()
         }
       }
       return
@@ -1096,7 +1020,6 @@ struct ContentView: View {
           self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
-        self.fetchAlcoholStatus()
       }
     }
   }
@@ -1125,7 +1048,6 @@ struct ContentView: View {
           self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
-        self.fetchAlcoholStatus()
       }
     }
   }
@@ -1307,9 +1229,8 @@ struct ContentView: View {
   }
 
   func tryAgainProduct(time: Int64, imageId: String) {
-    // Repurposed as "Try manually" – user can manually fix dish name,
-    // optionally picking from LLM-suggested alternates.
-    guard authService.userEmail != nil else {
+    // Repurposed as "Try manually" – user can manually fix dish name.
+    guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
         message: loc(
@@ -1322,52 +1243,51 @@ struct ContentView: View {
       return
     }
 
-    fixFoodNameData = FixFoodNameData(time: time, imageId: imageId, currentName: product.name)
-  }
-
-  private func submitManualFoodName(time: Int64, imageId: String, newName: String) {
-    guard let userEmail = authService.userEmail else {
-      AlertHelper.showAlert(
-        title: loc("common.error", "Error"),
-        message: loc(
-          "portion.modify.need_login", "Unable to update. Please sign in again."))
-      return
-    }
-
-    self.deletingProductTime = time
-    // Re-analyze the existing photo using the user-provided dish name,
-    // so calories/grams/health rating update (not just the title).
-    GRPCService().modifyFoodRecord(
-      time: time,
-      userEmail: userEmail,
-      percentage: 100,
-      isTryManually: true,
-      imageId: imageId,
-      manualFoodName: newName
-    ) { success in
-      DispatchQueue.main.async {
-        self.deletingProductTime = nil
-        if success {
-          // Clear caches and refresh so updated nutrition/health comes from backend
-          StatisticsService.shared.clearExpiredCache()
-          ProductStorageService.shared.clearCache()
-          AlertHelper.showAlert(
-            title: loc("manual_food.success.title", "Updated"),
-            message: String(
-              format: loc(
-                "manual_food.success.msg", "Updated '%@'."), newName),
-            haptic: .success
-          ) {
-            self.returnToToday()
+    AlertHelper.showTextInputAlert(
+      title: loc("manual_food.title", "Fix food name"),
+      message: loc(
+        "manual_food.msg",
+        "Enter the correct dish name. This will replace the current name in your log."
+      ),
+      placeholder: product.name,
+      initialText: product.name,
+      confirmTitle: loc("common.save", "Save")
+    ) { newName in
+      self.deletingProductTime = time
+      // Re-analyze the existing photo using the user-provided dish name,
+      // so calories/grams/health rating update (not just the title).
+      GRPCService().modifyFoodRecord(
+        time: time,
+        userEmail: userEmail,
+        percentage: 100,
+        isTryManually: true,
+        imageId: imageId,
+        manualFoodName: newName
+      ) { success in
+        DispatchQueue.main.async {
+          self.deletingProductTime = nil
+          if success {
+            // Clear caches and refresh so updated nutrition/health comes from backend
+            StatisticsService.shared.clearExpiredCache()
+            ProductStorageService.shared.clearCache()
+            AlertHelper.showAlert(
+              title: loc("manual_food.success.title", "Updated"),
+              message: String(
+                format: loc(
+                  "manual_food.success.msg", "Updated '%@'."), newName),
+              haptic: .success
+            ) {
+              self.returnToToday()
+            }
+          } else {
+            HapticsService.shared.error()
+            AlertHelper.showAlert(
+              title: loc("common.error", "Error"),
+              message: loc(
+                "manual_food.error",
+                "Failed to update. Please try again.")
+            )
           }
-        } else {
-          HapticsService.shared.error()
-          AlertHelper.showAlert(
-            title: loc("common.error", "Error"),
-            message: loc(
-              "manual_food.error",
-              "Failed to update. Please try again.")
-          )
         }
       }
     }
@@ -2073,12 +1993,12 @@ struct ContentView: View {
 
   private func colorForLastAlcoholDate(_ last: Date) -> Color {
     let days = Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 999
-    if days <= 7 {
-      return .red
-    } else if days <= 30 {
-      return .yellow
+    if days == 0 {
+      return .red      // Today - red warning
+    } else if days == 1 {
+      return .yellow   // Yesterday - yellow caution
     } else {
-      return .green
+      return .green    // 2+ days ago - green (good recovery)
     }
   }
 
@@ -2127,8 +2047,6 @@ struct ContentView: View {
 
         // Fetch fresh data for the new day (this will use loading indicator since cache was cleared)
         fetchDataWithLoading()
-      } else {
-        fetchAlcoholStatus()
       }
 
       // Reschedule notifications for the new local day
