@@ -798,7 +798,7 @@ class GRPCService {
       if let response = response as? HTTPURLResponse, response.statusCode == 200, let data = data {
         do {
           let resp = try Eater_GetFriendsResponse(serializedBytes: data)
-          let allFriends = AnonymousUserIdentity.excludingAnonymous(
+          let allFriends = AnonymousUserIdentity.addFriendVisible(
             resp.friends.map { (email: $0.email, nickname: $0.nickname) }
           )
           let total = allFriends.count

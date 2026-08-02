@@ -154,7 +154,8 @@ final class FriendsSearchWebSocket: NSObject {
           let nickname = dict["nickname"] as? String
           return UserSearchResult(email: email, nickname: nickname)
         }
-        onResults?(AnonymousUserIdentity.excludingAnonymous(userResults))
+        // Nickname required; drop anonymous + private-relay noise for a clear Add Friend list.
+        onResults?(AnonymousUserIdentity.addFriendVisible(userResults))
       } else {
         onResults?([])
       }
