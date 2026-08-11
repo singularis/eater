@@ -13,6 +13,13 @@ struct TokenRequest: Codable {
   let email: String
   let name: String?
   let profilePictureURL: String?
+  /// Set when upgrading a guest session to a real account, so the backend can merge guest data.
+  var previousAnonymousUUID: String? = nil
+
+  enum CodingKeys: String, CodingKey {
+    case provider, idToken, email, name, profilePictureURL
+    case previousAnonymousUUID = "previous_anonymous_uuid"
+  }
 }
 
 struct TokenResponse: Codable {
@@ -81,6 +88,14 @@ final class AuthenticationService: NSObject, ObservableObject {
   @Published var userName: String?
   @Published var userProfilePictureURL: String?
   @Published var isLoading = false
+  /// True when the current session is a guest ("Let Me Try") session, not backed by Google/Apple.
+  @Published var isAnonymous = false
+  /// Set when an auth attempt fails so the login screen can show an alert.
+  @Published var lastAuthError: String?
+
+  private static let isAnonymousKey = "is_anonymous"
+  private static let anonymousUUIDKey = "anonymous_uuid"
+  private static let anonymousScanCountKey = "anonymous_scan_count"
   
   private var currentAuthorizationController: ASAuthorizationController?
 
@@ -149,6 +164,8 @@ final class AuthenticationService: NSObject, ObservableObject {
     let storedProfileURL = UserDefaults.standard.string(forKey: "profile_picture_url")
     let storedToken = KeychainHelper.shared.read("auth_token")
 
+    isAnonymous = UserDefaults.standard.bool(forKey: Self.isAnonymousKey)
+
     if let email = storedEmail {
       isAuthenticated = true
       userEmail = email
@@ -163,38 +180,89 @@ final class AuthenticationService: NSObject, ObservableObject {
 
   // MARK: - Network Layer
 
-  private func requestToken(with tokenRequest: TokenRequest) async throws -> TokenResponse {
-    guard let url = URL(string: "\(AppEnvironment.baseURL)/eater_auth") else {
-      throw URLError(.badURL)
+  private func debugLog(_ message: String) {
+    #if DEBUG
+      print(message)
+    #endif
+  }
+
+  private func requestToken(
+    with tokenRequest: TokenRequest, endpoint: String = "eater_auth"
+  ) async throws -> TokenResponse {
+    // Prefer the active environment. In DEBUG that is often `/dev`, but
+    // anonymous_auth is currently only deployed on production (prod 200, /dev 404).
+    var urlsToTry = ["\(AppEnvironment.baseURL)/\(endpoint)"]
+    if endpoint == "anonymous_auth", AppEnvironment.useDevEnvironment {
+      let prodURL = "https://chater.singularis.work/\(endpoint)"
+      if !urlsToTry.contains(prodURL) {
+        urlsToTry.append(prodURL)
+      }
     }
 
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.timeoutInterval = 30.0
-    request.httpBody = try JSONEncoder().encode(tokenRequest)
+    let body = try JSONEncoder().encode(tokenRequest)
+    var lastError: Error = URLError(.badServerResponse)
 
-    do {
-      let (data, response) = try await URLSession.shared.data(for: request)
-
-      guard let httpResponse = response as? HTTPURLResponse else {
-        throw URLError(.badServerResponse)
+    for (index, urlString) in urlsToTry.enumerated() {
+      guard let url = URL(string: urlString) else {
+        lastError = URLError(.badURL)
+        continue
       }
 
-      if httpResponse.statusCode == 200 {
-        return try JSONDecoder().decode(TokenResponse.self, from: data)
-      } else {
+      var request = URLRequest(url: url)
+      request.httpMethod = "POST"
+      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      request.timeoutInterval = 30.0
+      request.httpBody = body
+
+      debugLog("🔵 [AuthService] POST \(urlString)")
+
+      do {
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+          throw URLError(.badServerResponse)
+        }
+
+        debugLog("🔵 [AuthService] \(urlString) → HTTP \(httpResponse.statusCode)")
+
+        if httpResponse.statusCode == 200 {
+          do {
+            return try JSONDecoder().decode(TokenResponse.self, from: data)
+          } catch {
+            let preview = String(data: data, encoding: .utf8) ?? "<non-utf8 \(data.count) bytes>"
+            debugLog("🔴 [AuthService] Token decode failed: \(error). Body: \(preview)")
+            throw error
+          }
+        }
+
+        // If /dev returned 404, try production next (when available).
+        if httpResponse.statusCode == 404, index + 1 < urlsToTry.count {
+          debugLog("🟠 [AuthService] \(urlString) not found — falling back to next URL")
+          lastError = URLError(.resourceUnavailable)
+          continue
+        }
+
         if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
           throw NSError(
             domain: "AuthError", code: httpResponse.statusCode,
             userInfo: [NSLocalizedDescriptionKey: errorResponse.message ?? errorResponse.error])
         } else {
+          let preview = String(data: data.prefix(200), encoding: .utf8) ?? ""
+          debugLog("🔴 [AuthService] Auth failed HTTP \(httpResponse.statusCode): \(preview)")
           throw URLError(.badServerResponse)
         }
+      } catch {
+        lastError = error
+        // Network errors: if another URL remains, try it; otherwise rethrow.
+        if index + 1 < urlsToTry.count {
+          debugLog("🟠 [AuthService] \(urlString) error (\(error.localizedDescription)) — trying fallback")
+          continue
+        }
+        throw error
       }
-    } catch {
-      throw error
     }
+
+    throw lastError
   }
 
   // MARK: - Authentication Methods
@@ -217,7 +285,7 @@ final class AuthenticationService: NSObject, ObservableObject {
     // Delay presentation explicitly to allow SwiftUI interactions (like Button press animations) to conclude
     DispatchQueue.main.async {
       guard let topVC = UIApplication.topMostViewController else {
-        print("🔴 [AuthService] Could not find topMostViewController to present GIDSignIn")
+        self.debugLog("🔴 [AuthService] Could not find topMostViewController to present GIDSignIn")
         return
       }
 
@@ -273,20 +341,90 @@ final class AuthenticationService: NSObject, ObservableObject {
     provider: String, idToken: String, email: String, name: String?, profilePictureURL: String?
   ) async {
     do {
+      // If upgrading from a guest session, let the backend merge the guest's data.
+      let wasAnonymous = isAnonymous
+      let previousUUID = wasAnonymous
+        ? UserDefaults.standard.string(forKey: Self.anonymousUUIDKey) : nil
+
       let tokenRequest = TokenRequest(
         provider: provider,
         idToken: idToken,
         email: email,
         name: name,
-        profilePictureURL: profilePictureURL
+        profilePictureURL: profilePictureURL,
+        previousAnonymousUUID: previousUUID
       )
 
       let tokenResponse = try await requestToken(with: tokenRequest)
       updateAuthenticationState(with: tokenResponse)
 
+      if wasAnonymous {
+        clearAnonymousState()
+      }
+
     } catch {
+      debugLog("🔴 [AuthService] Auth failed (\(provider)): \(error.localizedDescription)")
       isLoading = false
+      lastAuthError = error.localizedDescription
     }
+  }
+
+  // MARK: - Anonymous ("Let Me Try") Authentication
+
+  func signInAnonymously() {
+    isLoading = true
+    lastAuthError = nil
+    let uuid = UUID().uuidString
+    let email = "anon_\(uuid)@anonymous.local"
+
+    debugLog("🔵 [AuthService] signInAnonymously uuid=\(uuid) envDev=\(AppEnvironment.useDevEnvironment) base=\(AppEnvironment.baseURL)")
+
+    Task {
+      do {
+        let tokenRequest = TokenRequest(
+          provider: "anonymous",
+          idToken: uuid,
+          email: email,
+          name: "Guest",
+          profilePictureURL: nil
+        )
+        let tokenResponse = try await requestToken(with: tokenRequest, endpoint: "anonymous_auth")
+
+        UserDefaults.standard.set(true, forKey: Self.isAnonymousKey)
+        UserDefaults.standard.set(uuid, forKey: Self.anonymousUUIDKey)
+        UserDefaults.standard.synchronize()
+        isAnonymous = true
+
+        debugLog("🟢 [AuthService] Anonymous auth success email=\(tokenResponse.userEmail)")
+        updateAuthenticationState(with: tokenResponse)
+      } catch {
+        debugLog("🔴 [AuthService] Anonymous auth failed: \(error.localizedDescription)")
+        isLoading = false
+        lastAuthError = error.localizedDescription
+      }
+    }
+  }
+
+  private func clearAnonymousState() {
+    UserDefaults.standard.set(false, forKey: Self.isAnonymousKey)
+    UserDefaults.standard.removeObject(forKey: Self.anonymousUUIDKey)
+    UserDefaults.standard.removeObject(forKey: Self.anonymousScanCountKey)
+    UserDefaults.standard.synchronize()
+    isAnonymous = false
+  }
+
+  /// Increments the guest scan counter and reports whether the login reminder should be shown.
+  /// No-op (and always `false`) for authenticated, non-guest users.
+  /// Prompts at scan 5, then every 3 scans after that (5, 8, 11, 14, ...).
+  @discardableResult
+  func recordAnonymousFoodScanIfNeeded() -> Bool {
+    guard isAnonymous else { return false }
+    let defaults = UserDefaults.standard
+    let count = defaults.integer(forKey: Self.anonymousScanCountKey) + 1
+    defaults.set(count, forKey: Self.anonymousScanCountKey)
+    if count == 5 { return true }
+    if count > 5 && (count - 5) % 3 == 0 { return true }
+    return false
   }
 
   private func simulatePreviewAuth() {
@@ -310,12 +448,14 @@ final class AuthenticationService: NSObject, ObservableObject {
     userEmail = nil
     userName = nil
     userProfilePictureURL = nil
+    isAnonymous = false
   }
 
   func clearAllUserData() {
     let keys = [
       "user_email", "user_name", "profile_picture_url", "token_created_timestamp",
       "softLimit", "hardLimit", "hasSeenOnboarding",
+      Self.isAnonymousKey, Self.anonymousUUIDKey, Self.anonymousScanCountKey,
     ]
     keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
     UserDefaults.standard.synchronize()
@@ -331,6 +471,7 @@ final class AuthenticationService: NSObject, ObservableObject {
     userEmail = nil
     userName = nil
     userProfilePictureURL = nil
+    isAnonymous = false
   }
 
   // MARK: - Public Methods
@@ -365,13 +506,12 @@ final class AuthenticationService: NSObject, ObservableObject {
   }
 
   func getGreeting() -> String {
-    if let name = userName, !name.isEmpty {
-      return "Hello \(name)"
-    } else if let email = userEmail {
-      let firstName = email.components(separatedBy: "@")[0].capitalized
-      return "Hello \(firstName)"
-    }
-    return "Hello"
+    let name = AnonymousUserIdentity.menuDisplayName(
+      nickname: UserDefaults.standard.string(forKey: "user_nickname")
+        ?? UserDefaults.standard.string(forKey: "nickname"),
+      userName: userName
+    )
+    return "Hello \(name)"
   }
 
   private func validateStoredToken(_ token: String) {

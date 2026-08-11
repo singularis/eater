@@ -366,11 +366,11 @@ struct ContentView: View {
           .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
 
         ProfileImageView(
-          profilePictureURL: authService.userProfilePictureURL,
+          profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
           size: 30,
-          fallbackIconColor: AppTheme.textPrimary,
-          userName: authService.userName,
-          userEmail: authService.userEmail
+          fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
+          userName: authService.isAnonymous ? nil : authService.userName,
+          userEmail: authService.isAnonymous ? nil : authService.userEmail
         )
         .clipShape(Circle())
       }
@@ -592,7 +592,7 @@ struct ContentView: View {
       loc("weight.record.title", "Record Weight"), isPresented: $showWeightActionSheet,
       titleVisibility: .visible
     ) {
-      Button(loc("weight.take_photo", "Take Photo")) {
+      Button(loc("weight.take_photo", "Take scale photo")) {
         HapticsService.shared.select()
         showCamera = true
       }

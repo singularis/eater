@@ -42,23 +42,15 @@ struct AddFriendsView: View {
                     .foregroundColor(AppTheme.accent)
                   
                   VStack(alignment: .leading, spacing: 2) {
-                    // Display nickname if available, otherwise email
-                    if let nickname = user.nickname, !nickname.isEmpty {
-                      Text(nickname)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(AppTheme.textPrimary)
-                      
-                      // Show email as secondary info if not Apple hidden email
-                      if !isAppleHiddenEmail(user.email) {
-                        Text(user.email)
-                          .font(.system(size: 13))
-                          .foregroundColor(AppTheme.textSecondary)
-                      }
-                    } else {
-                      // No nickname, show email as primary
+                    // Search results are nickname-only (anonymous / private-relay noise filtered out).
+                    Text(user.nickname ?? user.email)
+                      .font(.system(size: 16, weight: .semibold))
+                      .foregroundColor(AppTheme.textPrimary)
+
+                    if !isAppleHiddenEmail(user.email) {
                       Text(user.email)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(AppTheme.textPrimary)
+                        .font(.system(size: 13))
+                        .foregroundColor(AppTheme.textSecondary)
                     }
                   }
                   
@@ -205,14 +197,26 @@ struct AddFriendsView: View {
   }
 
   private func select(user: UserSearchResult) {
+    guard AnonymousUserIdentity.isAddFriendVisible(email: user.email, nickname: user.nickname)
+    else {
+      AlertHelper.showAlert(
+        title: loc("friends.add.fail.title", "Failed"),
+        message: loc(
+          "friends.add.anonymous.blocked",
+          "Trial accounts cannot be added as friends."))
+      return
+    }
+
     isAddingFriend = true
     GRPCService().addFriend(email: user.email) { success in
       DispatchQueue.main.async {
         isAddingFriend = false
-        
-        // Display name for feedback: nickname if available, otherwise email
-        let displayName = (user.nickname != nil && !user.nickname!.isEmpty) ? user.nickname! : user.email
-        
+
+        let displayName =
+          AnonymousUserIdentity.hasUsableNickname(user.nickname)
+          ? user.nickname!.trimmingCharacters(in: .whitespacesAndNewlines)
+          : user.email
+
         if success {
           AlertHelper.showAlert(
             title: loc("friends.add.success.title", "You have a new friend!"),

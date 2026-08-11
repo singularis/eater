@@ -37,6 +37,13 @@ enum AppTheme {
       ? Color(red: 0.4, green: 0.4, blue: 0.4)
       : Color(red: 0.7, green: 0.7, blue: 0.7)
   }
+
+  /// Soft label color for guest / trial sessions (comfortable, non-alarming).
+  static var trialUsage: Color {
+    colorScheme() == .light
+      ? Color(red: 0.42, green: 0.55, blue: 0.62)
+      : Color(red: 0.62, green: 0.72, blue: 0.78)
+  }
   static var divider: Color {
     colorScheme() == .light 
       ? Color.black.opacity(0.12) 
