@@ -537,7 +537,7 @@
   "profile.default_display_name": "Health Eater",
   "profile.delete": "Delete Account",
   "profile.dev_environment": "Server Environment",
-  "profile.edit_nickname": "Edit Nickname",
+  "profile.edit_nickname": "Edit Profile",
   "profile.email": "Email",
   "profile.friend": "Choose Your Friend",
   "profile.friend.desc": "Get custom icons, sounds, and motivational messages!",
@@ -700,5 +700,17 @@
   "weight.record_failed.msg": "Failed to record your weight. Please try again.",
   "weight.recorded.msg": "Your weight has been successfully recorded.",
   "weight.recorded.title": "Weight Recorded",
-  "weight.take_photo": "Take scale photo"
+  "weight.take_photo": "Take scale photo",
+  "profile.edit_title": "Edit Profile",
+  "profile.edit_description": "Add a photo and your name if you want. Nickname is still used for friends.",
+  "profile.first_name": "First name (optional)",
+  "profile.first_name_placeholder": "First name",
+  "profile.last_name": "Last name (optional)",
+  "profile.last_name_placeholder": "Last name",
+  "profile.photo_hint": "Tap the camera to upload a photo",
+  "profile.photo_error": "Could not upload profile photo",
+  "profile.save": "Save Profile",
+  "profile.save_success": "Your profile has been updated.",
+  "profile.save_error": "Failed to update profile. Please try again.",
+  "profile.app_version": "Version"
 }

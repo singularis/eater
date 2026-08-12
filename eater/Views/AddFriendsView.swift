@@ -42,7 +42,6 @@ struct AddFriendsView: View {
                     .foregroundColor(AppTheme.accent)
                   
                   VStack(alignment: .leading, spacing: 2) {
-                    // Search results are nickname-only (anonymous / private-relay noise filtered out).
                     Text(user.nickname ?? user.email)
                       .font(.system(size: 16, weight: .semibold))
                       .foregroundColor(AppTheme.textPrimary)

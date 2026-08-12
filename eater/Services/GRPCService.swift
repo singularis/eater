@@ -55,12 +55,8 @@ class GRPCService {
             KeychainHelper.shared.save(newToken, for: "auth_token")
           }
           
-          // Trigger logout if access is forbidden/unauthorized
-          if httpResponse.statusCode == 403 || httpResponse.statusCode == 401 {
-            DispatchQueue.main.async {
-              NotificationCenter.default.post(name: NSNotification.Name("ForceLogout"), object: nil)
-            }
-          }
+          // Do not ForceLogout on 401. On DEV a single failed eater_get_today
+          // was wiping nickname / name / photo from UserDefaults.
         }
         completion(data, response, error)
       }
@@ -96,7 +92,11 @@ class GRPCService {
             weight: Int(dish.totalAvgWeight),
             ingredients: dish.ingredients,
             healthRating: Int(dish.healthRating),
-            imageId: dish.imageID
+            imageId: dish.imageID,
+            proteins: dish.contains.proteins,
+            fats: dish.contains.fats,
+            carbohydrates: dish.contains.carbohydrates,
+            sugar: dish.contains.sugar
           )
         }
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
@@ -513,7 +513,11 @@ class GRPCService {
               weight: Int(dish.totalAvgWeight),
               ingredients: dish.ingredients,
               healthRating: Int(dish.healthRating),
-              imageId: dish.imageID
+              imageId: dish.imageID,
+              proteins: dish.contains.proteins,
+              fats: dish.contains.fats,
+              carbohydrates: dish.contains.carbohydrates,
+              sugar: dish.contains.sugar
             )
           }
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
@@ -1049,6 +1053,164 @@ class GRPCService {
         errorMsg = (json["detail"] as? String) ?? (json["error"] as? String)
       }
       completion(false, errorMsg ?? "Server returned status code \(httpResponse.statusCode)")
+    }
+  }
+
+  // MARK: - Profile (name + photo)
+
+  struct UserProfilePayload {
+    let nickname: String?
+    let firstName: String?
+    let lastName: String?
+    let profilePictureId: String?
+  }
+
+  func fetchProfile(completion: @escaping (UserProfilePayload?) -> Void) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/profile_get") else {
+      completion(nil)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    if let token = KeychainHelper.shared.read("auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      guard error == nil,
+        let httpResponse = response as? HTTPURLResponse,
+        httpResponse.statusCode == 200,
+        let data = data,
+        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      else {
+        completion(nil)
+        return
+      }
+      completion(
+        UserProfilePayload(
+          nickname: json["nickname"] as? String,
+          firstName: json["first_name"] as? String,
+          lastName: json["last_name"] as? String,
+          profilePictureId: json["profile_picture_id"] as? String
+        )
+      )
+    }
+  }
+
+  func updateProfile(
+    firstName: String,
+    lastName: String,
+    profilePictureId: String? = nil,
+    completion: @escaping (Bool, String?) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/profile_update") else {
+      completion(false, "Invalid URL")
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    if let token = KeychainHelper.shared.read("auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    var body: [String: Any] = [
+      "first_name": firstName,
+      "last_name": lastName,
+    ]
+    if let profilePictureId, !profilePictureId.isEmpty {
+      body["profile_picture_id"] = profilePictureId
+    }
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false, "Failed to encode request")
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if let error = error {
+        completion(false, error.localizedDescription)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse else {
+        completion(false, "Invalid response")
+        return
+      }
+      if httpResponse.statusCode == 200 {
+        completion(true, nil)
+        return
+      }
+      var errorMsg: String?
+      if let data = data, !data.isEmpty,
+        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      {
+        errorMsg = (json["detail"] as? String) ?? (json["error"] as? String)
+      }
+      completion(false, errorMsg ?? "Server returned status code \(httpResponse.statusCode)")
+    }
+  }
+
+  func uploadProfilePhoto(
+    image: UIImage,
+    completion: @escaping (Bool, String?, String?) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/profile_photo") else {
+      completion(false, nil, "Invalid URL")
+      return
+    }
+    // Bake EXIF/camera orientation into pixels. iPhone portrait shots are
+    // stored sideways; jpegData() alone can leave them rotated after server resize.
+    guard let jpeg = image.normalizedUp().jpegData(compressionQuality: 0.85) else {
+      completion(false, nil, "Could not encode photo")
+      return
+    }
+
+    let boundary = "Boundary-\(UUID().uuidString)"
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue(
+      "multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+    if let token = KeychainHelper.shared.read("auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    var body = Data()
+    body.append("--\(boundary)\r\n".data(using: .utf8)!)
+    body.append(
+      "Content-Disposition: form-data; name=\"photo\"; filename=\"profile.jpg\"\r\n"
+        .data(using: .utf8)!)
+    body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+    body.append(jpeg)
+    body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+    request.httpBody = body
+
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      if let error = error {
+        completion(false, nil, error.localizedDescription)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse else {
+        completion(false, nil, "Invalid response")
+        return
+      }
+      var json: [String: Any]?
+      if let data = data, !data.isEmpty {
+        json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      }
+      let pictureId = json?["profile_picture_id"] as? String
+      if httpResponse.statusCode == 200 || (pictureId != nil && !(pictureId ?? "").isEmpty) {
+        completion(true, pictureId, nil)
+        return
+      }
+      let errorMsg =
+        (json?["detail"] as? String)
+        ?? (json?["error"] as? String)
+        ?? (json?["message"] as? String)
+      completion(
+        false, nil, errorMsg ?? "Server returned status code \(httpResponse.statusCode)")
     }
   }
 

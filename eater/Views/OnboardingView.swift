@@ -20,12 +20,8 @@ struct OnboardingView: View {
   
   @SceneStorage("onboardingCurrentStep") private var currentStep = 0
   @State private var showingSkipConfirmation = false
-  @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
-  @AppStorage("health_onboarding_shown") private var healthOnboardingShown: Bool = false
-  @AppStorage("social_onboarding_shown") private var socialOnboardingShown: Bool = false
   @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(
     forKey: "notificationsEnabled")
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "simplified"
   @EnvironmentObject var languageService: LanguageService
   @StateObject private var themeService = ThemeService.shared
   @State private var selectedLanguageDisplay: String = ""
@@ -1663,9 +1659,9 @@ struct OnboardingView: View {
   private func saveNickname(completion: @escaping (Bool) -> Void) {
     let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     
+    // Nickname is optional — skip save if the user left it blank
     guard !trimmed.isEmpty else {
-      nicknameError = loc("nickname.empty_error", "Nickname cannot be empty")
-      completion(false)
+      completion(true)
       return
     }
     
@@ -1791,16 +1787,17 @@ struct OnboardingView: View {
 
   private func completeOnboarding() {
     print("Completing onboarding for mode: \(mode)")
+    let email = UserDefaults.standard.string(forKey: "user_email")
     switch mode {
     case .initial:
-        hasSeenOnboarding = true
+        AppSettingsService.shared.markInitialOnboardingSeen(for: email)
         if selectedLanguageCode.isEmpty {
             LanguageService.shared.setLanguage(code: "en", syncWithBackend: true) { _ in }
         }
     case .health:
-        healthOnboardingShown = true
+        AppSettingsService.shared.markHealthOnboardingSeen(for: email)
     case .social:
-         socialOnboardingShown = true
+        AppSettingsService.shared.markSocialOnboardingSeen(for: email)
     }
     
     currentStep = 0

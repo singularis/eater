@@ -17,9 +17,13 @@ struct UserProfileView: View {
   @State private var showStatistics = false
   @State private var showFeedback = false
   @State private var showAddFriends = false
+  @State private var showMyFriends = false
   @State private var showNicknameSettings = false
   @AppStorage("user_nickname") private var userNickname: String = ""
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "full"  // "simplified" or "full"
+  @AppStorage("user_first_name") private var userFirstName: String = ""
+  @AppStorage("user_last_name") private var userLastName: String = ""
+  @AppStorage("user_profile_picture_id") private var userProfilePictureId: String = ""
+  @ObservedObject private var profilePhotoStore = ProfilePhotoStore.shared
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -43,13 +47,37 @@ struct UserProfileView: View {
             sectionHeader(icon: "person.circle.fill", title: loc("profile.header", "Profile"), color: AppTheme.accent)
             
             VStack(spacing: 12) {
-              ProfileImageView(
-                profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
-                size: 70,
-                fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
-                userName: authService.isAnonymous ? nil : authService.userName,
-                userEmail: authService.isAnonymous ? nil : authService.userEmail
-              )
+              ZStack(alignment: .bottomTrailing) {
+                if let customPhoto = profilePhotoStore.image {
+                  Image(uiImage: customPhoto)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 70, height: 70)
+                    .clipShape(Circle())
+                } else {
+                  ProfileImageView(
+                    profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
+                    size: 70,
+                    fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
+                    userName: authService.isAnonymous
+                      ? nil
+                      : profilePersonName ?? authService.userName,
+                    userEmail: authService.isAnonymous ? nil : authService.userEmail
+                  )
+                }
+
+                if !authService.isAnonymous {
+                  Image(systemName: "pencil.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(AppTheme.accent)
+                    .background(Circle().fill(AppTheme.surface).padding(-2))
+                    .offset(x: 4, y: 4)
+                    .onTapGesture {
+                      HapticsService.shared.select()
+                      showNicknameSettings = true
+                    }
+                }
+              }
 
               if authService.isAnonymous {
                 VStack(spacing: 6) {
@@ -70,12 +98,14 @@ struct UserProfileView: View {
                   VStack(spacing: 6) {
                     let displayName = AnonymousUserIdentity.menuDisplayName(
                       nickname: userNickname.isEmpty ? nil : userNickname,
-                      userName: authService.userName
+                      userName: profilePersonName ?? authService.userName
                     )
                     let hasRealNickname = AnonymousUserIdentity.hasUsableNickname(
                       userNickname.isEmpty ? nil : userNickname
                     )
-                    let hasRealName = AnonymousUserIdentity.isUsablePersonName(authService.userName)
+                    let hasRealName = AnonymousUserIdentity.isUsablePersonName(
+                      profilePersonName ?? authService.userName
+                    )
 
                     if hasRealNickname || hasRealName {
                       HStack(spacing: 8) {
@@ -88,11 +118,11 @@ struct UserProfileView: View {
                           .foregroundColor(AppTheme.accent)
                       }
                       if hasRealNickname,
-                        let userName = authService.userName,
-                        AnonymousUserIdentity.isUsablePersonName(userName),
-                        userName.caseInsensitiveCompare(displayName) != .orderedSame
+                        let personName = profilePersonName ?? authService.userName,
+                        AnonymousUserIdentity.isUsablePersonName(personName),
+                        personName.caseInsensitiveCompare(displayName) != .orderedSame
                       {
-                        Text(userName)
+                        Text(personName)
                           .font(.subheadline)
                           .foregroundColor(AppTheme.textSecondary)
                       }
@@ -383,6 +413,15 @@ struct UserProfileView: View {
               }
               
               actionButton(
+                icon: "person.2.fill",
+                title: loc("profile.myfriends", "My friends"),
+                accessibilityHint: loc("a11y.open_myfriends", "See your friends list")
+              ) {
+                HapticsService.shared.select()
+                showMyFriends = true
+              }
+
+              actionButton(
                 icon: "person.crop.circle.badge.plus",
                 title: loc("profile.addfriends", "Add Friends"),
                 accessibilityHint: loc("a11y.open_addfriends", "Search and add friends")
@@ -432,35 +471,6 @@ struct UserProfileView: View {
                   Text(loc("appearance.system", "System")).tag(AppSettingsService.AppearanceMode.system.rawValue)
                   Text(loc("appearance.light", "Light")).tag(AppSettingsService.AppearanceMode.light.rawValue)
                   Text(loc("appearance.dark", "Dark")).tag(AppSettingsService.AppearanceMode.dark.rawValue)
-                }
-                .pickerStyle(.segmented)
-              }
-              .padding(.horizontal, 8)
-              
-              Divider().padding(.horizontal, 8)
-              
-              // Reduce Motion
-              Toggle(isOn: Binding<Bool>(
-                get: { AppSettingsService.shared.reduceMotion },
-                set: { AppSettingsService.shared.reduceMotion = $0 }
-              )) {
-                Text(loc("profile.reduce_motion", "Reduce Motion"))
-                  .font(.subheadline)
-              }
-              .padding(.horizontal, 8)
-              
-              Divider().padding(.horizontal, 8)
-              
-              // Data Mode
-              VStack(alignment: .leading, spacing: 8) {
-                Text(loc("profile.datamode", "Data Mode"))
-                  .font(.caption)
-                  .fontWeight(.medium)
-                  .foregroundColor(AppTheme.textSecondary)
-                
-                Picker("Data Mode", selection: $dataDisplayMode) {
-                  Text(loc("common.simplified", "Simplified")).tag("simplified")
-                  Text(loc("common.full", "Full")).tag("full")
                 }
                 .pickerStyle(.segmented)
               }
@@ -569,6 +579,12 @@ struct UserProfileView: View {
             sectionHeader(icon: "person.badge.key.fill", title: loc("profile.account", "Account"), color: Color.orange)
             
             VStack(spacing: 10) {
+              Text(appVersionLabel)
+                .font(.caption)
+                .foregroundColor(AppTheme.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 2)
+
               Button(action: {
                 HapticsService.shared.warning()
                 logout()
@@ -653,8 +669,12 @@ struct UserProfileView: View {
       .sheet(isPresented: $showAddFriends) {
         AddFriendsView(isPresented: $showAddFriends)
       }
+      .sheet(isPresented: $showMyFriends) {
+        MyFriendsView(isPresented: $showMyFriends)
+      }
       .sheet(isPresented: $showNicknameSettings) {
         NicknameSettingsView()
+          .environmentObject(authService)
       }
       .sheet(isPresented: $showLanguagePicker) {
         LanguageSelectionSheet(isPresented: $showLanguagePicker)
@@ -665,8 +685,14 @@ struct UserProfileView: View {
           loadHealthData()
         }
       }
+      .onChange(of: showNicknameSettings) { _, newValue in
+        if !newValue {
+          refreshProfileFromServer()
+        }
+      }
       .onAppear {
         loadHealthData()
+        refreshProfileFromServer()
         // Let buttons paint first, then load mascot bitmaps.
         DispatchQueue.main.async {
           loadMascotArtwork = true
@@ -675,6 +701,69 @@ struct UserProfileView: View {
       // Avoid remounting the entire view while sheets are transitioning
       // Removing id(languageService.currentCode) prevents presentation conflicts
     }
+  }
+
+  private var profilePersonName: String? {
+    let parts = [userFirstName, userLastName]
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+    let joined = parts.joined(separator: " ")
+    return joined.isEmpty ? nil : joined
+  }
+
+  private func refreshProfileFromServer() {
+    guard !authService.isAnonymous else { return }
+    GRPCService().fetchProfile { profile in
+      DispatchQueue.main.async {
+        guard let profile else {
+          loadCustomProfilePhotoIfNeeded()
+          return
+        }
+        if let nick = profile.nickname, !nick.isEmpty {
+          userNickname = nick
+        }
+        if let first = profile.firstName, !first.isEmpty {
+          userFirstName = first
+        }
+        if let last = profile.lastName, !last.isEmpty {
+          userLastName = last
+        }
+        if let pictureId = profile.profilePictureId, !pictureId.isEmpty {
+          userProfilePictureId = pictureId
+        }
+        if let personName = profilePersonName, !personName.isEmpty {
+          authService.userName = personName
+          UserDefaults.standard.set(personName, forKey: "user_name")
+        }
+        loadCustomProfilePhotoIfNeeded()
+      }
+    }
+  }
+
+  private func loadCustomProfilePhotoIfNeeded() {
+    if profilePhotoStore.image == nil,
+      let disk = ImageStorageService.shared.loadCachedImage(forImageId: userProfilePictureId)
+    {
+      ProfilePhotoStore.shared.setLocal(disk)
+    }
+    guard !userProfilePictureId.isEmpty else { return }
+    FoodPhotoService.shared.fetchPhoto(imageId: userProfilePictureId) { image in
+      guard let image else { return }
+      DispatchQueue.main.async {
+        ProfilePhotoStore.shared.setFromServer(image, imageId: userProfilePictureId)
+      }
+    }
+  }
+
+  private var appVersionLabel: String {
+    let version =
+      Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+    let number = build.isEmpty ? version : "\(version) (\(build))"
+    if useDevEnvironment {
+      return loc("profile.app_version", "Version") + " \(number) beta"
+    }
+    return loc("profile.app_version", "Version") + " \(number)"
   }
 
   private func logout() {

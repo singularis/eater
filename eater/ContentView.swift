@@ -11,6 +11,7 @@ struct ContentView: View {
   @EnvironmentObject var languageService: LanguageService
   @Environment(\.scenePhase) var scenePhase
   @StateObject private var themeService = ThemeService.shared
+  @ObservedObject private var profilePhotoStore = ProfilePhotoStore.shared
   @State private var products: [Product] = []
   @State private var caloriesLeft: Int = 0
   @State private var personWeight: Float = 0
@@ -38,10 +39,8 @@ struct ContentView: View {
   @State private var showAlcoholCalendar = false
   @State private var alcoholIconColor: Color = .green
   @State private var lastAlcoholEventDate: Date? = nil
-  @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   @State private var showMainAppTutorial = false
   @State private var activeTutorialStep: MainAppTutorialView.TutorialStep? = nil
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "full"
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -134,8 +133,7 @@ struct ContentView: View {
           topBarView
           statsButtonsView
             .frame(height: 60)
-          // Macros line (only in Full mode and when we have data)
-          if dataDisplayMode == "full" && hasMacrosData {
+          if hasMacrosData {
             macrosLineView
           }
 
@@ -176,14 +174,14 @@ struct ContentView: View {
         setupDailyRefreshTimer()
         setupActivityCaloriesObserver()
 
-        // Check which onboarding to show
-        if !hasSeenOnboarding {
+        // Tutorial once per account (survives logout / reinstall of session)
+        if !AppSettingsService.shared.hasCompletedInitialOnboarding(for: authService.userEmail) {
           onboardingMode = .initial
           showOnboarding = true
-        } else if AppSettingsService.shared.shouldShowHealthOnboarding {
+        } else if AppSettingsService.shared.shouldShowHealthOnboarding(for: authService.userEmail) {
             onboardingMode = .health
             showOnboarding = true
-        } else if AppSettingsService.shared.shouldShowSocialOnboarding {
+        } else if AppSettingsService.shared.shouldShowSocialOnboarding(for: authService.userEmail) {
             onboardingMode = .social
             showOnboarding = true
         }
@@ -366,6 +364,7 @@ struct ContentView: View {
           .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
 
         ProfileImageView(
+          localImage: authService.isAnonymous ? nil : profilePhotoStore.image,
           profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
           size: 30,
           fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
@@ -720,10 +719,10 @@ struct ContentView: View {
     // - Carbs: < 80% target = yellow, >= 80% = green
     let carColor: Color =
       carbs >= carbLower ? AppTheme.success : AppTheme.warning
-    // - Sugar: < 40g = yellow, 40–50g = green, > 50g = red
+    // - Sugar: < 40g = green, 40–49.9g = orange, >= 50g = red
     let sugColor: Color =
-      sugar < sugarLower ? AppTheme.warning
-      : (sugar <= sugarUpper ? AppTheme.success : AppTheme.danger)
+      sugar >= sugarUpper ? AppTheme.danger
+      : (sugar >= sugarLower ? AppTheme.warning : AppTheme.success)
 
     return Button(action: {
       HapticsService.shared.select()
@@ -778,7 +777,7 @@ struct ContentView: View {
         Text(proLabel + " " + fmt(targets.protein) + grams)
         Text(fatLabel + " " + fmt(targets.fat) + grams)
         Text(carLabel + " " + fmt(targets.carbs) + grams)
-        Text(sugLabel + " 40–50" + grams)
+        Text(sugLabel + " < 40" + grams)
       }
       .font(.subheadline)
       .foregroundColor(macroGreenPurple)
@@ -807,10 +806,10 @@ struct ContentView: View {
         AppSettingsService.shared.foodScannedCount += 1
         
         // Trigger subsequent onboarding phases if needed
-        if AppSettingsService.shared.shouldShowHealthOnboarding {
+        if AppSettingsService.shared.shouldShowHealthOnboarding(for: authService.userEmail) {
             onboardingMode = .health
             showOnboarding = true
-        } else if AppSettingsService.shared.shouldShowSocialOnboarding {
+        } else if AppSettingsService.shared.shouldShowSocialOnboarding(for: authService.userEmail) {
             onboardingMode = .social
             showOnboarding = true
         }
@@ -955,6 +954,7 @@ struct ContentView: View {
         (fetchedProducts, calories, weight) in
         DispatchQueue.main.async {
           let previousWeight = self.personWeight
+          FoodExtrasStore.shared.clearSugar(for: fetchedProducts.map(\.time))
           self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
           self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
@@ -979,6 +979,7 @@ struct ContentView: View {
     ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) { (fetchedProducts, calories, weight) in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
+        FoodExtrasStore.shared.clearSugar(for: fetchedProducts.map(\.time))
         self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
         FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
         self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
@@ -989,35 +990,31 @@ struct ContentView: View {
         self.isLoadingData = false
         self.isFetchingData = false
 
-        // Check for weight photo motivation message
         if self.pendingWeightPhotoCheck && weight > 0 {
           self.pendingWeightPhotoCheck = false
-          
-          // Check if user lost weight and show motivational message
-          if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
-            // User lost weight! Show motivational message
-            let motivation = WeightMotivationService.shared.getMotivationalMessage(
-              weightLossGrams: weightLossGrams,
-              languageCode: self.languageService.currentCode
-            )
-            AlertHelper.showAlert(
-              title: motivation.title,
-              message: motivation.message,
-              haptic: .success)
-          } else {
-            // No weight loss detected, show standard message
-            AlertHelper.showAlert(
-              title: loc("weight.recorded.title", "Weight Recorded"),
-              message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
-              haptic: .success)
+
+          if !self.checkWeightGoalReached(newWeight: weight) {
+            if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
+              let motivation = WeightMotivationService.shared.getMotivationalMessage(
+                weightLossGrams: weightLossGrams,
+                languageCode: self.languageService.currentCode
+              )
+              AlertHelper.showAlert(
+                title: motivation.title,
+                message: motivation.message,
+                haptic: .success)
+            } else {
+              AlertHelper.showAlert(
+                title: loc("weight.recorded.title", "Weight Recorded"),
+                message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
+                haptic: .success)
+            }
           }
         }
 
-        // Recalculate calories if weight changed and user has health data
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
           self.recalculateCalorieLimitsFromHealthData()
-          self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
       }
@@ -1033,6 +1030,7 @@ struct ContentView: View {
     ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight in
       DispatchQueue.main.async {
         let previousWeight = self.personWeight
+        FoodExtrasStore.shared.clearSugar(for: fetchedProducts.map(\.time))
         self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
         self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
         self.personWeight = weight
@@ -1041,39 +1039,47 @@ struct ContentView: View {
         }
         self.isFetchingData = false
 
-        // Recalculate calories if weight changed and user has health data
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
           self.recalculateCalorieLimitsFromHealthData()
-          self.checkWeightGoalMilestones(previousWeight: previousWeight, newWeight: weight)
         }
         self.refreshMacrosForCurrentView()
       }
     }
   }
 
-  private func checkWeightGoalMilestones(previousWeight: Float, newWeight: Float) {
+  @discardableResult
+  private func checkWeightGoalReached(newWeight: Float) -> Bool {
     let userDefaults = UserDefaults.standard
     let target = userDefaults.double(forKey: "userTargetWeight")
     let mode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
-    guard target > 0 else { return }
-    guard userDefaults.bool(forKey: "hasUserHealthData") else { return }
+    guard target > 0 else { return false }
+    guard userDefaults.bool(forKey: "hasUserHealthData") else { return false }
+    guard mode == "lose" || mode == "gain" else { return false }
 
-    // Avoid spamming: at most once per UTC day
-    let today = getCurrentUTCDateString()
-    let lastShown = userDefaults.string(forKey: "goalMilestoneLastShownDate") ?? ""
-    if lastShown == today { return }
+    let w = Double(newWeight)
+    guard w >= 20 else { return false }
 
     let tol = 0.2
-    let w = Double(newWeight)
-    let prev = Double(previousWeight)
+    guard abs(w - target) <= tol else { return false }
+
+    let celebratedTarget = userDefaults.double(forKey: "goalCelebratedTargetKg")
+    if celebratedTarget > 0, abs(celebratedTarget - target) < 0.05 { return false }
+
+    let today = getCurrentUTCDateString()
 
     func offerMaintenance() {
       userDefaults.set("maintain", forKey: "userGoalMode")
       userDefaults.set(0, forKey: "userGoalMonths")
-      userDefaults.set(w, forKey: "userTargetWeight")
-      self.recalculateCalorieLimitsFromHealthData()
       userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+      self.recalculateCalorieLimitsFromHealthData()
+      let calories = userDefaults.integer(forKey: "userRecommendedCalories")
+      GRPCService().updateGoal(
+        targetWeight: target,
+        goalMode: "maintain",
+        goalMonths: 0,
+        recommendedCalories: calories
+      ) { _ in }
       AlertHelper.showAlert(
         title: loc("goal.maintain.enabled.title", "Maintenance enabled"),
         message: loc("goal.maintain.enabled.msg", "Great! We'll help you maintain your weight with ongoing tracking."),
@@ -1081,55 +1087,17 @@ struct ContentView: View {
       )
     }
 
-    if mode == "lose" {
-      // Only show "You did it!" when we actually crossed the goal (was above, now at or below)
-      if prev > target + tol, w <= target + tol {
-        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
-        AlertHelper.showCelebration(
-          title: loc("goal.reached.title", "You did it!"),
-          message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
-          primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
-          primaryAction: offerMaintenance,
-          secondaryTitle: loc("common.close", "Close"),
-          secondaryAction: nil
-        )
-      } else if w > prev + 0.2 {
-        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
-        AlertHelper.showAlert(
-          title: loc("goal.motivation.title", "Keep going"),
-          message: loc(
-            "goal.motivation.msg",
-            "Small ups and downs are normal. You're still on your path — keep tracking and we'll adjust your plan."
-          ),
-          haptic: .select
-        )
-      }
-    } else if mode == "gain" {
-      // Only show when we actually crossed the goal (was below, now at or above)
-      if prev < target - tol, w >= target - tol {
-        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
-        AlertHelper.showCelebration(
-          title: loc("goal.reached.title", "You did it!"),
-          message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
-          primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
-          primaryAction: offerMaintenance,
-          secondaryTitle: loc("common.close", "Close"),
-          secondaryAction: nil
-        )
-      } else if w < prev - 0.2 {
-        userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
-        AlertHelper.showAlert(
-          title: loc("goal.motivation.title", "Keep going"),
-          message: loc(
-            "goal.motivation.msg",
-            "Small ups and downs are normal. You're still on your path — keep tracking and we'll adjust your plan."
-          ),
-          haptic: .select
-        )
-      }
-    } else {
-      // maintain / activityOnly: no milestone popups for now
-    }
+    userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
+    userDefaults.set(target, forKey: "goalCelebratedTargetKg")
+    AlertHelper.showCelebration(
+      title: loc("goal.reached.title", "You did it!"),
+      message: loc("goal.reached.msg", "Congratulations — you reached your target weight!"),
+      primaryTitle: loc("goal.maintain.cta", "Switch to maintenance"),
+      primaryAction: offerMaintenance,
+      secondaryTitle: loc("common.close", "Close"),
+      secondaryAction: nil
+    )
+    return true
   }
 
   func deleteProduct(time: Int64) {
@@ -1229,7 +1197,6 @@ struct ContentView: View {
   }
 
   func tryAgainProduct(time: Int64, imageId: String) {
-    // Repurposed as "Try manually" – user can manually fix dish name.
     guard let userEmail = authService.userEmail else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
@@ -1238,7 +1205,6 @@ struct ContentView: View {
       return
     }
 
-    // Find current product to prefill the text field with existing name
     guard let product = products.first(where: { $0.time == time }) else {
       return
     }
@@ -1247,15 +1213,13 @@ struct ContentView: View {
       title: loc("manual_food.title", "Fix food name"),
       message: loc(
         "manual_food.msg",
-        "Enter the correct dish name. This will replace the current name in your log."
+        "Enter the correct dish name. Weight (grams) stays the same — use Custom grams to change it."
       ),
       placeholder: product.name,
       initialText: product.name,
       confirmTitle: loc("common.save", "Save")
     ) { newName in
       self.deletingProductTime = time
-      // Re-analyze the existing photo using the user-provided dish name,
-      // so calories/grams/health rating update (not just the title).
       GRPCService().modifyFoodRecord(
         time: time,
         userEmail: userEmail,
@@ -1267,7 +1231,6 @@ struct ContentView: View {
         DispatchQueue.main.async {
           self.deletingProductTime = nil
           if success {
-            // Clear caches and refresh so updated nutrition/health comes from backend
             StatisticsService.shared.clearExpiredCache()
             ProductStorageService.shared.clearCache()
             AlertHelper.showAlert(
@@ -1355,7 +1318,11 @@ struct ContentView: View {
         healthRating: item.healthRating,
         imageId: item.imageId,
         addedSugarTsp: item.addedSugarTsp,
-        extras: updatedExtras
+        extras: updatedExtras,
+        proteins: item.proteins,
+        fats: item.fats,
+        carbohydrates: item.carbohydrates,
+        sugar: item.sugar
       )
     }
 
@@ -1383,6 +1350,7 @@ struct ContentView: View {
       DispatchQueue.main.async {
         self.deletingProductTime = nil
         if success {
+          FoodExtrasStore.shared.scaleSugar(time: time, percentage: Int(percentage))
           // Clear both caches since food was modified
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
@@ -1545,28 +1513,24 @@ struct ContentView: View {
           StatisticsService.shared.clearExpiredCache()
           ProductStorageService.shared.clearCache()
 
-          // Check if user lost weight and show motivational message
-          if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
-            // User lost weight! Show motivational message
-            let motivation = WeightMotivationService.shared.getMotivationalMessage(
-              weightLossGrams: weightLossGrams,
-              languageCode: self.languageService.currentCode
-            )
-            
-            // Always return to today after manual weight entry
-            self.returnToToday()
-            AlertHelper.showAlert(
-              title: motivation.title,
-              message: motivation.message,
-              haptic: .success)
-          } else {
-            // No weight loss detected, show standard message
-            // Always return to today after manual weight entry
-            self.returnToToday()
-            AlertHelper.showAlert(
-              title: loc("weight.recorded.title", "Weight Recorded"),
-              message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
-              haptic: .success)
+          self.returnToToday()
+
+          if !self.checkWeightGoalReached(newWeight: weight) {
+            if let weightLossGrams = WeightMotivationService.shared.checkAndUpdateForMotivation(newWeight: weight) {
+              let motivation = WeightMotivationService.shared.getMotivationalMessage(
+                weightLossGrams: weightLossGrams,
+                languageCode: self.languageService.currentCode
+              )
+              AlertHelper.showAlert(
+                title: motivation.title,
+                message: motivation.message,
+                haptic: .success)
+            } else {
+              AlertHelper.showAlert(
+                title: loc("weight.recorded.title", "Weight Recorded"),
+                message: loc("weight.recorded.msg", "Your weight has been successfully recorded."),
+                haptic: .success)
+            }
           }
         } else {
           AlertHelper.showAlert(

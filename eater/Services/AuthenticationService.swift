@@ -153,9 +153,13 @@ final class AuthenticationService: NSObject, ObservableObject {
     // Update UI state
     isAuthenticated = true
     userEmail = response.userEmail
-    userName = response.userName
     userProfilePictureURL = response.profilePictureURL
     isLoading = false
+
+    // Re-apply disk profile for this email (survives logout / 401 / app kill).
+    ProfileLocalStore.shared.restore(email: response.userEmail)
+    let customName = UserDefaults.standard.string(forKey: "user_name")
+    userName = (customName?.isEmpty == false) ? customName : response.userName
   }
 
   private func restoreAuthenticationState() {
@@ -167,9 +171,11 @@ final class AuthenticationService: NSObject, ObservableObject {
     isAnonymous = UserDefaults.standard.bool(forKey: Self.isAnonymousKey)
 
     if let email = storedEmail {
+      ProfileLocalStore.shared.restore(email: email)
       isAuthenticated = true
       userEmail = email
-      userName = storedName
+      let restoredName = UserDefaults.standard.string(forKey: "user_name")
+      userName = restoredName ?? storedName
       userProfilePictureURL = storedProfileURL
 
       if let token = storedToken {
@@ -441,8 +447,11 @@ final class AuthenticationService: NSObject, ObservableObject {
   }
 
   func signOut() {
+    if let email = userEmail ?? UserDefaults.standard.string(forKey: "user_email") {
+      ProfileLocalStore.shared.persistFromUserDefaults(email: email)
+    }
     GIDSignIn.sharedInstance.signOut()
-    clearAllUserData()
+    clearAllUserData(wipeProfileFiles: false)
 
     isAuthenticated = false
     userEmail = nil
@@ -451,21 +460,27 @@ final class AuthenticationService: NSObject, ObservableObject {
     isAnonymous = false
   }
 
-  func clearAllUserData() {
+  func clearAllUserData(wipeProfileFiles: Bool = false) {
+    let email = userEmail ?? UserDefaults.standard.string(forKey: "user_email")
+    if wipeProfileFiles, let email {
+      ProfileLocalStore.shared.wipe(email: email)
+    }
     let keys = [
       "user_email", "user_name", "profile_picture_url", "token_created_timestamp",
-      "softLimit", "hardLimit", "hasSeenOnboarding",
+      "softLimit", "hardLimit",
+      "user_nickname", "user_first_name", "user_last_name", "user_profile_picture_id",
       Self.isAnonymousKey, Self.anonymousUUIDKey, Self.anonymousScanCountKey,
     ]
     keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
     UserDefaults.standard.synchronize()
+    ProfilePhotoStore.shared.clear()
     // Clear token from Keychain
     KeychainHelper.shared.save("", for: "auth_token")
   }
 
   func deleteAccountAndClearData() {
     GIDSignIn.sharedInstance.signOut()
-    clearAllUserData()
+    clearAllUserData(wipeProfileFiles: true)
 
     isAuthenticated = false
     userEmail = nil

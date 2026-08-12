@@ -15,6 +15,7 @@ message Dish {
   int32 total_avg_weight = 5;
   int32 health_rating = 6;
   string image_id = 7;  // MinIO object path for the food photo
+  Contains contains = 8;  // proteins / fats / carbohydrates / sugar for this dish
 }
 
 message TotalForDay {

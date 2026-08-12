@@ -14,6 +14,8 @@ struct ProductRowView: View {
   @State private var remoteImage: UIImage? = nil
   @State private var isLoadingImage: Bool = false
 
+  private static let macrosLilac = Color(red: 0.72, green: 0.66, blue: 0.88)
+
   /// Returns the best available image: local first, then remote fetched
   private var displayImage: UIImage? {
     // First try local image
@@ -32,6 +34,26 @@ struct ProductRowView: View {
     product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")
   }
 
+  private var hasDishMacros: Bool {
+    (product.proteins + product.fats + product.carbohydrates + product.sugar) > 0
+  }
+
+  private var dishMacrosText: String {
+    let grams = loc("units.gram_suffix", "g")
+    func fmt(_ v: Double) -> String {
+      v.rounded() == v ? String(Int(v)) : String(format: "%.1f", v)
+    }
+    let line1 = [
+      "\(loc("macro.pro", "PRO")) \(fmt(product.proteins))\(grams)",
+      "\(loc("macro.fat", "FAT")) \(fmt(product.fats))\(grams)",
+    ].joined(separator: " · ")
+    let line2 = [
+      "\(loc("macro.car", "CAR")) \(fmt(product.carbohydrates))\(grams)",
+      "\(loc("macro.sug", "SUG")) \(fmt(product.sugar))\(grams)",
+    ].joined(separator: " · ")
+    return "\(line1)\n\(line2)"
+  }
+
   private var extrasIconsText: String {
     var parts: [String] = []
     if product.extras["lemon_5g"] != nil { parts.append("🍋") }
@@ -46,7 +68,11 @@ struct ProductRowView: View {
 
   /// True if we have any extras to show (including added sugar)
   private var hasExtras: Bool {
-    !extrasIconsText.isEmpty || product.addedSugarTsp > 0
+    !extrasIconsText.isEmpty || product.addedSugarTsp > 0 || hasAddedSugarIngredient
+  }
+
+  private var hasAddedSugarIngredient: Bool {
+    product.ingredients.contains { $0.caseInsensitiveCompare("Sugar") == .orderedSame }
   }
 
   @ViewBuilder
@@ -55,7 +81,7 @@ struct ProductRowView: View {
       if !extrasIconsText.isEmpty {
         Text(extrasIconsText)
       }
-      if product.addedSugarTsp > 0 {
+      if product.addedSugarTsp > 0 || hasAddedSugarIngredient {
         Image(systemName: "cube.fill")
           .font(.system(size: 12))
           .foregroundColor(AppTheme.textSecondary)
@@ -131,6 +157,15 @@ struct ProductRowView: View {
             .font(.caption)
             .foregroundColor(AppTheme.textSecondary)
             .lineLimit(2)
+
+          if hasDishMacros {
+            Text(dishMacrosText)
+              .font(.caption.weight(.medium))
+              .foregroundColor(Self.macrosLilac)
+              .lineLimit(2)
+              .fixedSize(horizontal: false, vertical: true)
+              .minimumScaleFactor(0.9)
+          }
 
           // Extras icons (refined sugar = cube, others = emoji)
           if hasExtras {

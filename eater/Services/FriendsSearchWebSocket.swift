@@ -19,6 +19,8 @@ final class FriendsSearchWebSocket: NSObject {
   private var isListening = false
   private var isAuthSent = false
   private var isAuthenticated = false
+  private var pendingSearch: (query: String, limit: Int)?
+  private var lastFailureMessage: String?
 
   private let tokenProvider: () -> String?
 
@@ -36,7 +38,8 @@ final class FriendsSearchWebSocket: NSObject {
   }
 
   func connect() {
-    disconnect()
+    teardown(notifyDisconnected: false)
+    lastFailureMessage = nil
     onStateChange?(.connecting)
     let config = URLSessionConfiguration.default
     config.timeoutIntervalForRequest = 30
@@ -55,37 +58,62 @@ final class FriendsSearchWebSocket: NSObject {
     guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
     connectIfNeeded()
     sendAuthIfNeeded()
-    let payload: [String: Any] = [
-      "type": "search",
-      "query": query,
-      "limit": limit,
-    ]
-    send(json: payload)
+    guard isAuthenticated else {
+      pendingSearch = (query, limit)
+      return
+    }
+    sendSearch(query: query, limit: limit)
   }
 
   func disconnect() {
+    teardown(notifyDisconnected: true)
+  }
+
+  private func teardown(notifyDisconnected: Bool) {
     isListening = false
     isAuthSent = false
     isAuthenticated = false
+    pendingSearch = nil
     if let task = webSocketTask {
       task.cancel(with: .goingAway, reason: nil)
     }
     webSocketTask = nil
     session?.invalidateAndCancel()
     session = nil
-    onStateChange?(.disconnected)
+    if notifyDisconnected {
+      if let lastFailureMessage, !lastFailureMessage.isEmpty {
+        onStateChange?(.failed(lastFailureMessage))
+      } else {
+        onStateChange?(.disconnected)
+      }
+    }
+  }
+
+  private func fail(_ message: String) {
+    lastFailureMessage = message
+    onStateChange?(.failed(message))
+    teardown(notifyDisconnected: false)
   }
 
   private func sendAuthIfNeeded() {
     guard !isAuthSent else { return }
     isAuthSent = true
     guard let token = tokenProvider() else {
-      onStateChange?(.failed("Missing auth token"))
+      fail("Missing auth token")
       return
     }
     let payload: [String: Any] = [
       "type": "auth",
       "token": token,
+    ]
+    send(json: payload)
+  }
+
+  private func sendSearch(query: String, limit: Int) {
+    let payload: [String: Any] = [
+      "type": "search",
+      "query": query,
+      "limit": limit,
     ]
     send(json: payload)
   }
@@ -97,12 +125,12 @@ final class FriendsSearchWebSocket: NSObject {
       if let text = String(data: data, encoding: .utf8) {
         task.send(.string(text)) { [weak self] error in
           if let error = error {
-            self?.onStateChange?(.failed(error.localizedDescription))
+            self?.fail(error.localizedDescription)
           }
         }
       }
     } catch {
-      onStateChange?(.failed("Failed to encode JSON"))
+      fail("Failed to encode JSON")
     }
   }
 
@@ -113,8 +141,7 @@ final class FriendsSearchWebSocket: NSObject {
       guard let self = self else { return }
       switch result {
       case let .failure(error):
-        self.onStateChange?(.failed(error.localizedDescription))
-        self.disconnect()
+        self.fail(error.localizedDescription)
       case let .success(message):
         self.handle(message: message)
         if self.isListening {
@@ -135,14 +162,28 @@ final class FriendsSearchWebSocket: NSObject {
       data = nil
     }
     guard let data = data else { return }
-    guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let type = obj["type"] as? String
-    else { return }
+    guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+
+    if let error = obj["error"] as? String {
+      fail(error)
+      return
+    }
+
+    guard let type = obj["type"] as? String else { return }
+
+    if type == "error" {
+      fail((obj["message"] as? String) ?? "Search failed")
+      return
+    }
 
     if type == "connection" {
       if let status = obj["status"] as? String, status == "connected" {
         isAuthenticated = true
         onStateChange?(.authenticated)
+        if let pending = pendingSearch {
+          pendingSearch = nil
+          sendSearch(query: pending.query, limit: pending.limit)
+        }
       }
       return
     }
@@ -154,7 +195,6 @@ final class FriendsSearchWebSocket: NSObject {
           let nickname = dict["nickname"] as? String
           return UserSearchResult(email: email, nickname: nickname)
         }
-        // Nickname required; drop anonymous + private-relay noise for a clear Add Friend list.
         onResults?(AnonymousUserIdentity.addFriendVisible(userResults))
       } else {
         onResults?([])

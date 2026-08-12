@@ -3,18 +3,21 @@ import UIKit
 
 class ImageStorageService {
   static let shared = ImageStorageService()
-  private init() {}
 
-  private var documentsDirectory: URL {
-    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-  }
+  private let documentsDirectory: URL
+  private let imagesDirectory: URL
+  private let cachedImagesDirectory: URL
 
-  private var imagesDirectory: URL {
-    let url = documentsDirectory.appendingPathComponent("FoodImages")
-    if !FileManager.default.fileExists(atPath: url.path) {
-      try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+  private init() {
+    let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    documentsDirectory = docs
+    imagesDirectory = docs.appendingPathComponent("FoodImages")
+    cachedImagesDirectory = docs.appendingPathComponent("CachedFoodImages")
+    for url in [imagesDirectory, cachedImagesDirectory] {
+      if !FileManager.default.fileExists(atPath: url.path) {
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+      }
     }
-    return url
   }
 
   func saveImage(_ image: UIImage, forTime time: Int64) -> Bool {
@@ -158,14 +161,6 @@ class ImageStorageService {
   }
 
   // MARK: - Cached Remote Images (from backend)
-
-  private var cachedImagesDirectory: URL {
-    let url = documentsDirectory.appendingPathComponent("CachedFoodImages")
-    if !FileManager.default.fileExists(atPath: url.path) {
-      try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-    }
-    return url
-  }
 
   /// Convert an imageId to a safe filename
   private func cacheFilename(forImageId imageId: String) -> String {
