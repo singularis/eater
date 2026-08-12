@@ -750,11 +750,16 @@ struct HealthSettingsView: View {
     userDefaults.set(ageValue, forKey: "userAge")
     userDefaults.set(isMale, forKey: "userIsMale")
     userDefaults.set(activityLevel, forKey: "userActivityLevel")
+    let previousTarget = userDefaults.double(forKey: "userTargetWeight")
+    let previousMode = userDefaults.string(forKey: "userGoalMode") ?? ""
     userDefaults.set(targetStored, forKey: "userTargetWeight")
     userDefaults.set(goalMode.rawValue, forKey: "userGoalMode")
     userDefaults.set((goalMode == .lose || goalMode == .gain) ? selectedMonths : 0, forKey: "userGoalMonths")
     userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
     userDefaults.set(true, forKey: "hasUserHealthData")
+    if abs(previousTarget - targetStored) > 0.05 || previousMode != goalMode.rawValue {
+      userDefaults.removeObject(forKey: "goalCelebratedTargetKg")
+    }
 
     // Always apply health-based limits when user saves in Health (new plan = new target)
     let softLimit = recommendedCalories

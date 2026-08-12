@@ -52,8 +52,11 @@ class FoodPhotoService {
       return
     }
 
-    // URL encode the image_id
-    guard let encodedImageId = imageId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+    // Encode / and @ so ingress does not treat image_id as extra path segments
+    // (profile ids look like email/profile/uuid.jpg).
+    var imageIdAllowed = CharacterSet.urlQueryAllowed
+    imageIdAllowed.remove(charactersIn: "/@+&?=#")
+    guard let encodedImageId = imageId.addingPercentEncoding(withAllowedCharacters: imageIdAllowed) else {
       removeInFlightRequest(imageId)
       completion(nil)
       return

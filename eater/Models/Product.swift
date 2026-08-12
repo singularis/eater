@@ -12,6 +12,10 @@ struct Product: Identifiable, Codable, Equatable {
   let imageId: String  // Backend MinIO object path for the food photo
   let addedSugarTsp: Float  // Tracking added sugar in teaspoons
   let extras: [String: Int]  // Local-only extras (lemon/wasabi/etc) per dish
+  let proteins: Double
+  let fats: Double
+  let carbohydrates: Double
+  let sugar: Double
 
   // Custom initializer for creating products
   init(
@@ -23,7 +27,11 @@ struct Product: Identifiable, Codable, Equatable {
     healthRating: Int = -1,
     imageId: String = "",
     addedSugarTsp: Float = 0,
-    extras: [String: Int] = [:]
+    extras: [String: Int] = [:],
+    proteins: Double = 0,
+    fats: Double = 0,
+    carbohydrates: Double = 0,
+    sugar: Double = 0
   ) {
     self.time = time
     self.name = name
@@ -34,6 +42,10 @@ struct Product: Identifiable, Codable, Equatable {
     self.imageId = imageId
     self.addedSugarTsp = addedSugarTsp
     self.extras = extras
+    self.proteins = proteins
+    self.fats = fats
+    self.carbohydrates = carbohydrates
+    self.sugar = sugar
   }
 
   var image: UIImage? {
@@ -118,11 +130,13 @@ struct Product: Identifiable, Codable, Equatable {
 
   // Computed property for total calories including added sugar + extras
   var totalCalories: Int {
-    calories + sugarCalories + extrasCalories
+    // Sugar from FoodExtrasStore is already folded into `calories` by apply().
+    // Keep sugarCalories at 0 contribution here to avoid double-counting after backend persist.
+    calories + extrasCalories
   }
 
   var totalWeight: Int {
-    weight + sugarGrams + extrasGrams
+    weight + extrasGrams
   }
 
   /// Heuristic classification: treat certain items as drinks (for extras like sugar/lemon).
@@ -175,5 +189,6 @@ struct Product: Identifiable, Codable, Equatable {
   // Codable implementation
   private enum CodingKeys: String, CodingKey {
     case time, name, calories, weight, ingredients, healthRating, imageId, addedSugarTsp, extras
+    case proteins, fats, carbohydrates, sugar
   }
 }

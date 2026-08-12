@@ -16,10 +16,13 @@ struct UserProfileView: View {
   @State private var userRecommendedCalories: Int = 0
   @State private var showStatistics = false
   @State private var showFeedback = false
-  @State private var showAddFriends = false
+  @State private var showMyFriends = false
   @State private var showNicknameSettings = false
   @AppStorage("user_nickname") private var userNickname: String = ""
-  @AppStorage("dataDisplayMode") private var dataDisplayMode: String = "full"  // "simplified" or "full"
+  @AppStorage("user_first_name") private var userFirstName: String = ""
+  @AppStorage("user_last_name") private var userLastName: String = ""
+  @AppStorage("user_profile_picture_id") private var userProfilePictureId: String = ""
+  @ObservedObject private var profilePhotoStore = ProfilePhotoStore.shared
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -39,95 +42,7 @@ struct UserProfileView: View {
 
         ScrollView {
           LazyVStack(spacing: 20) {
-            // Profile Section
-            sectionHeader(icon: "person.circle.fill", title: loc("profile.header", "Profile"), color: AppTheme.accent)
-            
-            VStack(spacing: 12) {
-              ProfileImageView(
-                profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
-                size: 70,
-                fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
-                userName: authService.isAnonymous ? nil : authService.userName,
-                userEmail: authService.isAnonymous ? nil : authService.userEmail
-              )
-
-              if authService.isAnonymous {
-                VStack(spacing: 6) {
-                  Text(AnonymousUserIdentity.defaultDisplayName)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppTheme.trialUsage)
-                  Text(loc("profile.trial_usage.hint", "Sign in to save your progress"))
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
-                }
-                .frame(maxWidth: .infinity)
-              } else {
-                Button(action: {
-                  HapticsService.shared.select()
-                  showNicknameSettings = true
-                }) {
-                  VStack(spacing: 6) {
-                    let displayName = AnonymousUserIdentity.menuDisplayName(
-                      nickname: userNickname.isEmpty ? nil : userNickname,
-                      userName: authService.userName
-                    )
-                    let hasRealNickname = AnonymousUserIdentity.hasUsableNickname(
-                      userNickname.isEmpty ? nil : userNickname
-                    )
-                    let hasRealName = AnonymousUserIdentity.isUsablePersonName(authService.userName)
-
-                    if hasRealNickname || hasRealName {
-                      HStack(spacing: 8) {
-                        Text(displayName)
-                          .font(.title2)
-                          .fontWeight(.bold)
-                          .foregroundColor(AppTheme.textPrimary)
-                        Image(systemName: "pencil.circle.fill")
-                          .font(.system(size: 20))
-                          .foregroundColor(AppTheme.accent)
-                      }
-                      if hasRealNickname,
-                        let userName = authService.userName,
-                        AnonymousUserIdentity.isUsablePersonName(userName),
-                        userName.caseInsensitiveCompare(displayName) != .orderedSame
-                      {
-                        Text(userName)
-                          .font(.subheadline)
-                          .foregroundColor(AppTheme.textSecondary)
-                      }
-                    } else {
-                      HStack(spacing: 8) {
-                        Text(displayName)
-                          .font(.title2)
-                          .fontWeight(.bold)
-                          .foregroundColor(AppTheme.textPrimary)
-                        Image(systemName: "pencil.circle.fill")
-                          .font(.system(size: 20))
-                          .foregroundColor(AppTheme.accent)
-                      }
-                      Text(loc("profile.set_nickname", "Set Nickname"))
-                        .font(.caption)
-                        .foregroundColor(AppTheme.accent)
-                    }
-
-                    if let email = AnonymousUserIdentity.menuEmailSubtitle(email: authService.userEmail)
-                    {
-                      Text(email)
-                        .font(.caption)
-                        .foregroundColor(AppTheme.textSecondary)
-                    }
-                  }
-                  .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel(userNickname.isEmpty ? loc("profile.set_nickname", "Set Nickname") : loc("profile.edit_nickname", "Edit Nickname"))
-                .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
-              }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .cardContainer(padding: 16)
+            profileHeader
 
             // Statistics at top of menu (before Watch me first)
             actionButton(
@@ -383,12 +298,12 @@ struct UserProfileView: View {
               }
               
               actionButton(
-                icon: "person.crop.circle.badge.plus",
-                title: loc("profile.addfriends", "Add Friends"),
-                accessibilityHint: loc("a11y.open_addfriends", "Search and add friends")
+                icon: "person.2.fill",
+                title: loc("profile.myfriends", "My friends"),
+                accessibilityHint: loc("a11y.open_myfriends", "See your friends list")
               ) {
                 HapticsService.shared.select()
-                showAddFriends = true
+                showMyFriends = true
               }
             }
 
@@ -432,35 +347,6 @@ struct UserProfileView: View {
                   Text(loc("appearance.system", "System")).tag(AppSettingsService.AppearanceMode.system.rawValue)
                   Text(loc("appearance.light", "Light")).tag(AppSettingsService.AppearanceMode.light.rawValue)
                   Text(loc("appearance.dark", "Dark")).tag(AppSettingsService.AppearanceMode.dark.rawValue)
-                }
-                .pickerStyle(.segmented)
-              }
-              .padding(.horizontal, 8)
-              
-              Divider().padding(.horizontal, 8)
-              
-              // Reduce Motion
-              Toggle(isOn: Binding<Bool>(
-                get: { AppSettingsService.shared.reduceMotion },
-                set: { AppSettingsService.shared.reduceMotion = $0 }
-              )) {
-                Text(loc("profile.reduce_motion", "Reduce Motion"))
-                  .font(.subheadline)
-              }
-              .padding(.horizontal, 8)
-              
-              Divider().padding(.horizontal, 8)
-              
-              // Data Mode
-              VStack(alignment: .leading, spacing: 8) {
-                Text(loc("profile.datamode", "Data Mode"))
-                  .font(.caption)
-                  .fontWeight(.medium)
-                  .foregroundColor(AppTheme.textSecondary)
-                
-                Picker("Data Mode", selection: $dataDisplayMode) {
-                  Text(loc("common.simplified", "Simplified")).tag("simplified")
-                  Text(loc("common.full", "Full")).tag("full")
                 }
                 .pickerStyle(.segmented)
               }
@@ -569,6 +455,12 @@ struct UserProfileView: View {
             sectionHeader(icon: "person.badge.key.fill", title: loc("profile.account", "Account"), color: Color.orange)
             
             VStack(spacing: 10) {
+              Text(appVersionLabel)
+                .font(.caption)
+                .foregroundColor(AppTheme.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 2)
+
               Button(action: {
                 HapticsService.shared.warning()
                 logout()
@@ -650,11 +542,12 @@ struct UserProfileView: View {
       .sheet(isPresented: $showFeedback) {
         FeedbackView(isPresented: $showFeedback)
       }
-      .sheet(isPresented: $showAddFriends) {
-        AddFriendsView(isPresented: $showAddFriends)
+      .sheet(isPresented: $showMyFriends) {
+        MyFriendsView(isPresented: $showMyFriends)
       }
       .sheet(isPresented: $showNicknameSettings) {
         NicknameSettingsView()
+          .environmentObject(authService)
       }
       .sheet(isPresented: $showLanguagePicker) {
         LanguageSelectionSheet(isPresented: $showLanguagePicker)
@@ -665,8 +558,14 @@ struct UserProfileView: View {
           loadHealthData()
         }
       }
+      .onChange(of: showNicknameSettings) { _, newValue in
+        if !newValue {
+          refreshProfileFromServer()
+        }
+      }
       .onAppear {
         loadHealthData()
+        refreshProfileFromServer()
         // Let buttons paint first, then load mascot bitmaps.
         DispatchQueue.main.async {
           loadMascotArtwork = true
@@ -675,6 +574,190 @@ struct UserProfileView: View {
       // Avoid remounting the entire view while sheets are transitioning
       // Removing id(languageService.currentCode) prevents presentation conflicts
     }
+  }
+
+  private static let greetingLilac = Color(red: 0.72, green: 0.66, blue: 0.88)
+  private static let nicknameApricot = LinearGradient(
+    colors: [
+      Color(red: 1.00, green: 0.84, blue: 0.70),
+      Color(red: 1.00, green: 0.70, blue: 0.52),
+    ],
+    startPoint: .leading,
+    endPoint: .trailing
+  )
+
+  private var greetingFirstName: String {
+    let first = userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+    if !first.isEmpty { return first }
+    if let person = profilePersonName?.split(separator: " ").first, !person.isEmpty {
+      return String(person)
+    }
+    if AnonymousUserIdentity.hasUsableNickname(userNickname) {
+      return userNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let name = authService.userName?.split(separator: " ").first, !name.isEmpty {
+      return String(name)
+    }
+    return AnonymousUserIdentity.defaultDisplayName
+  }
+
+  private var profileHeader: some View {
+    VStack(alignment: .center, spacing: 8) {
+      HStack(alignment: .center, spacing: 12) {
+        profileAvatar(size: 48)
+        Text(loc("profile.header", "Profile"))
+          .font(.title3)
+          .fontWeight(.bold)
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+      }
+
+      if authService.isAnonymous {
+        Text(String(format: loc("profile.hi", "Hi, %@!"), greetingFirstName))
+          .font(.title3)
+          .fontWeight(.semibold)
+          .foregroundColor(Self.greetingLilac)
+        Text(loc("profile.trial_usage.hint", "Sign in to save your progress"))
+          .font(.caption2)
+          .foregroundColor(AppTheme.textSecondary)
+      } else {
+        Button(action: {
+          HapticsService.shared.select()
+          showNicknameSettings = true
+        }) {
+          VStack(alignment: .center, spacing: 4) {
+            HStack(spacing: 6) {
+              Text(String(format: loc("profile.hi", "Hi, %@!"), greetingFirstName))
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(Self.greetingLilac)
+              Image(systemName: "pencil.circle.fill")
+                .font(.system(size: 18))
+                .foregroundColor(AppTheme.accent)
+            }
+
+            if AnonymousUserIdentity.hasUsableNickname(userNickname) {
+              Text(userNickname.trimmingCharacters(in: .whitespacesAndNewlines))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Self.nicknameApricot)
+            }
+
+            if let email = AnonymousUserIdentity.menuEmailSubtitle(email: authService.userEmail) {
+              Text(email)
+                .font(.caption2)
+                .foregroundColor(AppTheme.textSecondary)
+            }
+          }
+          .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(
+          userNickname.isEmpty
+            ? loc("profile.set_nickname", "Set Nickname")
+            : loc("profile.edit_nickname", "Edit Profile")
+        )
+        .accessibilityHint(loc("a11y.set_nickname", "Set a nickname for sharing with friends"))
+      }
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.horizontal, 4)
+    .padding(.top, 4)
+    .padding(.bottom, 4)
+  }
+
+  private func profileAvatar(size: CGFloat) -> some View {
+    ZStack(alignment: .bottomTrailing) {
+      if let customPhoto = profilePhotoStore.image {
+        Image(uiImage: customPhoto)
+          .resizable()
+          .aspectRatio(contentMode: .fill)
+          .frame(width: size, height: size)
+          .clipShape(Circle())
+      } else {
+        ProfileImageView(
+          profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
+          size: size,
+          fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
+          userName: authService.isAnonymous ? nil : profilePersonName ?? authService.userName,
+          userEmail: authService.isAnonymous ? nil : authService.userEmail
+        )
+      }
+
+      if !authService.isAnonymous {
+        Image(systemName: "pencil.circle.fill")
+          .font(.system(size: 16))
+          .foregroundColor(AppTheme.accent)
+          .background(Circle().fill(AppTheme.surface).padding(-1))
+          .offset(x: 2, y: 2)
+          .onTapGesture {
+            HapticsService.shared.select()
+            showNicknameSettings = true
+          }
+      }
+    }
+  }
+
+  private var profilePersonName: String? {
+    let parts = [userFirstName, userLastName]
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+    let joined = parts.joined(separator: " ")
+    return joined.isEmpty ? nil : joined
+  }
+
+  private func refreshProfileFromServer() {
+    guard !authService.isAnonymous else { return }
+    GRPCService().fetchProfile { profile in
+      DispatchQueue.main.async {
+        guard let profile else {
+          loadCustomProfilePhotoIfNeeded()
+          return
+        }
+        if let nick = profile.nickname, !nick.isEmpty {
+          userNickname = nick
+        }
+        if let first = profile.firstName, !first.isEmpty {
+          userFirstName = first
+        }
+        if let last = profile.lastName, !last.isEmpty {
+          userLastName = last
+        }
+        if let pictureId = profile.profilePictureId, !pictureId.isEmpty {
+          userProfilePictureId = pictureId
+        }
+        if let personName = profilePersonName, !personName.isEmpty {
+          authService.userName = personName
+          UserDefaults.standard.set(personName, forKey: "user_name")
+        }
+        loadCustomProfilePhotoIfNeeded()
+      }
+    }
+  }
+
+  private func loadCustomProfilePhotoIfNeeded() {
+    if profilePhotoStore.image == nil,
+      let disk = ImageStorageService.shared.loadCachedImage(forImageId: userProfilePictureId)
+    {
+      ProfilePhotoStore.shared.setLocal(disk)
+    }
+    guard !userProfilePictureId.isEmpty else { return }
+    FoodPhotoService.shared.fetchPhoto(imageId: userProfilePictureId) { image in
+      guard let image else { return }
+      DispatchQueue.main.async {
+        ProfilePhotoStore.shared.setFromServer(image, imageId: userProfilePictureId)
+      }
+    }
+  }
+
+  private var appVersionLabel: String {
+    let version =
+      Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+    let number = build.isEmpty ? version : "\(version) (\(build))"
+    if useDevEnvironment {
+      return loc("profile.app_version", "Version") + " \(number) beta"
+    }
+    return loc("profile.app_version", "Version") + " \(number)"
   }
 
   private func logout() {

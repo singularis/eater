@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProfileImageView: View {
+  let localImage: UIImage?
   let profilePictureURL: String?
   let size: CGFloat
   let fallbackIconColor: Color
@@ -8,9 +9,11 @@ struct ProfileImageView: View {
   let userEmail: String?
 
   init(
+    localImage: UIImage? = nil,
     profilePictureURL: String?, size: CGFloat = 80, fallbackIconColor: Color = AppTheme.textPrimary,
     userName: String? = nil, userEmail: String? = nil
   ) {
+    self.localImage = localImage
     self.profilePictureURL = profilePictureURL
     self.size = size
     self.fallbackIconColor = fallbackIconColor
@@ -19,7 +22,13 @@ struct ProfileImageView: View {
   }
 
   var body: some View {
-    if let urlString = profilePictureURL, let url = URL(string: urlString) {
+    if let localImage {
+      Image(uiImage: localImage)
+        .resizable()
+        .aspectRatio(contentMode: .fill)
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+    } else if let urlString = profilePictureURL, let url = URL(string: urlString) {
       AsyncImage(url: url) { image in
         image
           .resizable()

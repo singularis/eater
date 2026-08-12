@@ -19,7 +19,10 @@ struct AppNameApp: App {
             .environmentObject(appSettings)
             .id(LanguageService.shared.currentCode)
             .onAppear {
-              NotificationService.shared.initializeOnLaunch() 
+              NotificationService.shared.initializeOnLaunch()
+              if let email = authService.userEmail {
+                ProfileLocalStore.shared.restore(email: email)
+              }
             }
         } else {
           LoginView()
@@ -35,6 +38,7 @@ struct AppNameApp: App {
         }
       }
       .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ForceLogout"))) { _ in
+        // Keep disk profile; only drop the session.
         authService.signOut()
       }
     }

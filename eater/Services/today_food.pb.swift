@@ -58,9 +58,21 @@ struct Dish: Sendable {
   /// MinIO object path for the food photo
   var imageID: String = String()
 
+  /// proteins / fats / carbohydrates / sugar for this dish
+  var contains: Contains {
+    get {_contains ?? Contains()}
+    set {_contains = newValue}
+  }
+  /// Returns true if `contains` has been explicitly set.
+  var hasContains: Bool {self._contains != nil}
+  /// Clears the value of `contains`. Subsequent reads from it will return its default value.
+  mutating func clearContains() {self._contains = nil}
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
+
+  fileprivate var _contains: Contains? = nil
 }
 
 struct TotalForDay: Sendable {
@@ -162,7 +174,7 @@ extension Contains: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationB
 
 extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = "Dish"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}time\0\u{3}dish_name\0\u{3}estimated_avg_calories\0\u{1}ingredients\0\u{3}total_avg_weight\0\u{3}health_rating\0\u{3}image_id\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}time\0\u{3}dish_name\0\u{3}estimated_avg_calories\0\u{1}ingredients\0\u{3}total_avg_weight\0\u{3}health_rating\0\u{3}image_id\0\u{1}contains\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -177,6 +189,7 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
       case 5: try { try decoder.decodeSingularInt32Field(value: &self.totalAvgWeight) }()
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.healthRating) }()
       case 7: try { try decoder.decodeSingularStringField(value: &self.imageID) }()
+      case 8: try { try decoder.decodeSingularMessageField(value: &self._contains) }()
       default: break
       }
     }
@@ -204,6 +217,9 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
     if !self.imageID.isEmpty {
       try visitor.visitSingularStringField(value: self.imageID, fieldNumber: 7)
     }
+    try { if let v = self._contains {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -215,6 +231,7 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
     if lhs.totalAvgWeight != rhs.totalAvgWeight {return false}
     if lhs.healthRating != rhs.healthRating {return false}
     if lhs.imageID != rhs.imageID {return false}
+    if lhs._contains != rhs._contains {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

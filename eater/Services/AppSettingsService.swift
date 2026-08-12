@@ -37,14 +37,61 @@ final class AppSettingsService: ObservableObject {
     didSet { objectWillChange.send() }
   }
 
-  var shouldShowHealthOnboarding: Bool {
-      // Show after 2 scans if not already shown
-      return foodScannedCount >= 2 && !healthOnboardingShown
+  /// Per-account flag so the same person does not see the tutorial again after logout.
+  private func accountKey(_ base: String, email: String?) -> String {
+    let id = (email ?? UserDefaults.standard.string(forKey: "user_email") ?? "unknown")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased()
+    return "\(base).\(id)"
   }
-  
+
+  private func accountFlag(_ base: String, email: String?) -> Bool {
+    let defaults = UserDefaults.standard
+    if defaults.bool(forKey: accountKey(base, email: email)) {
+      return true
+    }
+    // One-time migrate old device-wide flag so existing users are not shown again
+    if defaults.bool(forKey: base) {
+      defaults.set(true, forKey: accountKey(base, email: email))
+      return true
+    }
+    return false
+  }
+
+  func hasCompletedInitialOnboarding(for email: String?) -> Bool {
+    accountFlag("hasSeenOnboarding", email: email)
+  }
+
+  func markInitialOnboardingSeen(for email: String?) {
+    UserDefaults.standard.set(true, forKey: accountKey("hasSeenOnboarding", email: email))
+    UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
+    objectWillChange.send()
+  }
+
+  func shouldShowHealthOnboarding(for email: String? = nil) -> Bool {
+    foodScannedCount >= 2 && !accountFlag("health_onboarding_shown", email: email)
+  }
+
+  func shouldShowSocialOnboarding(for email: String? = nil) -> Bool {
+    foodScannedCount >= 5 && !accountFlag("social_onboarding_shown", email: email)
+  }
+
+  func markHealthOnboardingSeen(for email: String?) {
+    UserDefaults.standard.set(true, forKey: accountKey("health_onboarding_shown", email: email))
+    healthOnboardingShown = true
+  }
+
+  func markSocialOnboardingSeen(for email: String?) {
+    UserDefaults.standard.set(true, forKey: accountKey("social_onboarding_shown", email: email))
+    socialOnboardingShown = true
+  }
+
+  var shouldShowHealthOnboarding: Bool {
+    shouldShowHealthOnboarding(for: nil)
+  }
+
   var shouldShowSocialOnboarding: Bool {
-      // Show after 5 scans if not already shown
-      return foodScannedCount >= 5 && !socialOnboardingShown
+    shouldShowSocialOnboarding(for: nil)
   }
 
   @AppStorage("progressive_onboarding_level") var progressiveOnboardingLevel: Int = 0 {

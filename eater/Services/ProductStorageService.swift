@@ -249,6 +249,15 @@ private struct ProductData: Codable {
   let imageId: String
   let addedSugarTsp: Float
   let extras: [String: Int]
+  let proteins: Double
+  let fats: Double
+  let carbohydrates: Double
+  let sugar: Double
+
+  enum CodingKeys: String, CodingKey {
+    case time, name, calories, weight, ingredients, healthRating, imageId, addedSugarTsp, extras
+    case proteins, fats, carbohydrates, sugar
+  }
 
   init(from product: Product) {
     time = product.time
@@ -260,6 +269,27 @@ private struct ProductData: Codable {
     imageId = product.imageId
     addedSugarTsp = product.addedSugarTsp
     extras = product.extras
+    proteins = product.proteins
+    fats = product.fats
+    carbohydrates = product.carbohydrates
+    sugar = product.sugar
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    time = try c.decode(Int64.self, forKey: .time)
+    name = try c.decode(String.self, forKey: .name)
+    calories = try c.decode(Int.self, forKey: .calories)
+    weight = try c.decode(Int.self, forKey: .weight)
+    ingredients = try c.decode([String].self, forKey: .ingredients)
+    healthRating = try c.decodeIfPresent(Int.self, forKey: .healthRating) ?? -1
+    imageId = try c.decodeIfPresent(String.self, forKey: .imageId) ?? ""
+    addedSugarTsp = try c.decodeIfPresent(Float.self, forKey: .addedSugarTsp) ?? 0
+    extras = try c.decodeIfPresent([String: Int].self, forKey: .extras) ?? [:]
+    proteins = try c.decodeIfPresent(Double.self, forKey: .proteins) ?? 0
+    fats = try c.decodeIfPresent(Double.self, forKey: .fats) ?? 0
+    carbohydrates = try c.decodeIfPresent(Double.self, forKey: .carbohydrates) ?? 0
+    sugar = try c.decodeIfPresent(Double.self, forKey: .sugar) ?? 0
   }
 
   func toProduct() -> Product {
@@ -272,7 +302,11 @@ private struct ProductData: Codable {
       healthRating: healthRating,
       imageId: imageId,
       addedSugarTsp: addedSugarTsp,
-      extras: extras
+      extras: extras,
+      proteins: proteins,
+      fats: fats,
+      carbohydrates: carbohydrates,
+      sugar: sugar
     )
   }
 }
