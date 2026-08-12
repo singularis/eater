@@ -587,18 +587,33 @@ struct UserProfileView: View {
   )
 
   private var greetingFirstName: String {
+    // Prefer a short first name when the user actually provided one; never show
+    // anon_* / Guest / private-relay fragments (KAN-57: Health Eater fallback).
+    if authService.isAnonymous {
+      return AnonymousUserIdentity.defaultDisplayName
+    }
+
     let first = userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
-    if !first.isEmpty { return first }
-    if let person = profilePersonName?.split(separator: " ").first, !person.isEmpty {
-      return String(person)
+    if AnonymousUserIdentity.isUsablePersonName(first) {
+      return first
     }
-    if AnonymousUserIdentity.hasUsableNickname(userNickname) {
-      return userNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if let person = profilePersonName?.split(separator: " ").map(String.init).first,
+      AnonymousUserIdentity.isUsablePersonName(person)
+    {
+      return person
     }
-    if let name = authService.userName?.split(separator: " ").first, !name.isEmpty {
-      return String(name)
+
+    let display = AnonymousUserIdentity.menuDisplayName(
+      nickname: userNickname.isEmpty ? nil : userNickname,
+      userName: authService.userName
+    )
+    if let short = display.split(separator: " ").map(String.init).first,
+      AnonymousUserIdentity.isUsablePersonName(short)
+    {
+      return short
     }
-    return AnonymousUserIdentity.defaultDisplayName
+    return display
   }
 
   private var profileHeader: some View {
