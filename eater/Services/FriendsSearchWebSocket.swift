@@ -98,9 +98,12 @@ final class FriendsSearchWebSocket: NSObject {
   private func sendAuthIfNeeded() {
     guard !isAuthSent else { return }
     isAuthSent = true
-    guard let token = tokenProvider() else {
+    guard var token = tokenProvider(), !token.isEmpty else {
       fail("Missing auth token")
       return
+    }
+    if token.lowercased().hasPrefix("bearer ") {
+      token = String(token.dropFirst(7)).trimmingCharacters(in: .whitespaces)
     }
     let payload: [String: Any] = [
       "type": "auth",

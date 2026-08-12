@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ProductRowView: View {
   let product: Product
@@ -28,10 +29,6 @@ struct ProductRowView: View {
 
   private var detailsText: String {
     "\(product.totalCalories) \(loc("units.kcal", "kcal")) • \(product.totalWeight)\(loc("units.gram_suffix", "g"))"
-  }
-
-  private var ingredientsText: String {
-    product.ingredients.map { Localization.shared.translateFoodName($0) }.joined(separator: ", ")
   }
 
   private var hasDishMacros: Bool {
@@ -153,10 +150,7 @@ struct ProductRowView: View {
             .font(.subheadline)
             .foregroundColor(AppTheme.textSecondary)
 
-          Text(ingredientsText)
-            .font(.caption)
-            .foregroundColor(AppTheme.textSecondary)
-            .lineLimit(2)
+          FittingIngredientsText(names: product.ingredients.map { Localization.shared.translateFoodName($0) })
 
           if hasDishMacros {
             Text(dishMacrosText)
@@ -393,4 +387,56 @@ struct HealthRatingRing: View {
         }
         .frame(width: circleSize, height: circleSize)
     }
+}
+
+private struct FittingIngredientsText: View {
+  let names: [String]
+  private let maxLines = 2
+  @State private var fitted: String = ""
+
+  var body: some View {
+    Text(fitted)
+      .font(.caption)
+      .foregroundColor(AppTheme.textSecondary)
+      .lineLimit(maxLines)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(
+        GeometryReader { geo in
+          Color.clear
+            .onAppear { update(width: geo.size.width) }
+            .onChange(of: geo.size.width) { _, w in update(width: w) }
+        }
+      )
+      .onChange(of: names) { _, _ in fitted = "" }
+      .accessibilityLabel(names.joined(separator: ", "))
+  }
+
+  private func update(width: CGFloat) {
+    let next = Self.fit(names: names, width: width, maxLines: maxLines)
+    if next != fitted { fitted = next }
+  }
+
+  private static func fit(names: [String], width: CGFloat, maxLines: Int) -> String {
+    guard width > 1, !names.isEmpty else { return "" }
+    let font = UIFont.preferredFont(forTextStyle: .caption1)
+    let maxHeight = font.lineHeight * CGFloat(maxLines) + 1
+    var kept: [String] = []
+    for name in names {
+      let candidate = kept.isEmpty ? name : kept.joined(separator: ", ") + ", " + name
+      let bounds = (candidate as NSString).boundingRect(
+        with: CGSize(width: width, height: .greatestFiniteMagnitude),
+        options: [.usesLineFragmentOrigin, .usesFontLeading],
+        attributes: [.font: font],
+        context: nil
+      )
+      if bounds.height <= maxHeight {
+        kept.append(name)
+      } else if kept.isEmpty {
+        return name
+      } else {
+        break
+      }
+    }
+    return kept.joined(separator: ", ")
+  }
 }

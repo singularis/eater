@@ -152,10 +152,12 @@ struct AddFriendsView: View {
       case let .failed(message):
         isConnected = false
         isAuthenticated = false
+        isSearching = false
         statusText = message
       case .disconnected:
         isConnected = false
         isAuthenticated = false
+        isSearching = false
         statusText = suggestions.isEmpty ? loc("search.disconnected", "Disconnected") : statusText
       }
     }
@@ -166,6 +168,7 @@ struct AddFriendsView: View {
         statusText = loc("search.no_results", "No results found")
       }
     }
+    socket.connectIfNeeded()
   }
 
   private func teardownSocket() {
