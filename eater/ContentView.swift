@@ -705,13 +705,48 @@ struct ContentView: View {
   }
 
   /// Daily macro targets (g) from calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
+  /// Custom goals from settings override the default split when present.
   private func macroTargetsFromDailyKcal(_ kcal: Int) -> (protein: Double, fat: Double, carbs: Double, sugarMax: Double) {
-    guard kcal > 0 else { return (80, 53, 200, 40) }
-    let k = Double(kcal)
-    let protein = (k * 0.20) / 4.0
-    let fat = (k * 0.30) / 9.0
-    let carbs = (k * 0.50) / 4.0
-    return (protein, fat, carbs, 40.0)
+    let defaultTargets: (protein: Double, fat: Double, carbs: Double, sugarMax: Double) = {
+      guard kcal > 0 else { return (80, 53, 200, 40) }
+      let k = Double(kcal)
+      return ((k * 0.20) / 4.0, (k * 0.30) / 9.0, (k * 0.50) / 4.0, 40.0)
+    }()
+    guard let saved = CalorieLimitsStorageService.shared.load() else { return defaultTargets }
+    return (
+      saved.customProteinGoal ?? defaultTargets.protein,
+      saved.customFatGoal ?? defaultTargets.fat,
+      saved.customCarbsGoal ?? defaultTargets.carbs,
+      defaultTargets.sugarMax
+    )
+  }
+
+  private var hasCustomMacroGoals: Bool {
+    guard let saved = CalorieLimitsStorageService.shared.load() else { return false }
+    return saved.customProteinGoal != nil || saved.customFatGoal != nil
+      || saved.customCarbsGoal != nil
+  }
+
+  private func saveMacroGoals(protein: Double, fat: Double, carbs: Double) {
+    var limits =
+      CalorieLimitsStorageService.shared.load()
+      ?? .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false)
+    limits.customProteinGoal = protein
+    limits.customFatGoal = fat
+    limits.customCarbsGoal = carbs
+    CalorieLimitsStorageService.shared.save(limits)
+
+    GRPCService().updateMacroGoals(
+      proteinTargetGrams: protein, fatTargetGrams: fat, carbsTargetGrams: carbs
+    ) { _ in }
+  }
+
+  private func resetMacroGoalsToRecommended() {
+    guard var limits = CalorieLimitsStorageService.shared.load() else { return }
+    limits.customProteinGoal = nil
+    limits.customFatGoal = nil
+    limits.customCarbsGoal = nil
+    CalorieLimitsStorageService.shared.save(limits)
   }
 
   private var macrosLineView: some View {
@@ -776,46 +811,22 @@ struct ContentView: View {
     }
     .buttonStyle(PlainButtonStyle())
     .sheet(isPresented: $showMacroTargets) {
-      macroTargetsSheetContent(softLimit: softLimit)
+      MacroGoalsEditView(
+        initialTargets: macroTargetsFromDailyKcal(softLimit),
+        hasCustomGoals: hasCustomMacroGoals,
+        onSave: { protein, fat, carbs in
+          saveMacroGoals(protein: protein, fat: fat, carbs: carbs)
+          showMacroTargets = false
+        },
+        onResetToRecommended: {
+          resetMacroGoalsToRecommended()
+          showMacroTargets = false
+        },
+        onCancel: {
+          showMacroTargets = false
+        }
+      )
     }
-  }
-
-  private func macroTargetsSheetContent(softLimit: Int) -> some View {
-    let targets = macroTargetsFromDailyKcal(softLimit)
-    func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
-    let grams = loc("units.g", "g")
-    let proLabel = loc("macro.pro", "PRO")
-    let fatLabel = loc("macro.fat", "FAT")
-    let carLabel = loc("macro.car", "CAR")
-    let sugLabel = loc("macro.sug", "SUG")
-    let macroGreenPurple = Color(red: 0.22, green: 0.55, blue: 0.6)
-    return VStack(spacing: 0) {
-      Spacer(minLength: 0)
-      Text(loc("macro.targets.alert.title", "Macro goals"))
-        .font(.subheadline.weight(.semibold))
-        .scaleEffect(1.25)
-        .foregroundColor(macroGreenPurple)
-      VStack(alignment: .center, spacing: 4) {
-        Text(proLabel + " " + fmt(targets.protein) + grams)
-        Text(fatLabel + " " + fmt(targets.fat) + grams)
-        Text(carLabel + " " + fmt(targets.carbs) + grams)
-        Text(sugLabel + " < 40" + grams)
-      }
-      .font(.subheadline)
-      .foregroundColor(macroGreenPurple)
-      .padding(.top, 8)
-      Button(loc("common.ok", "OK")) {
-        showMacroTargets = false
-      }
-      .buttonStyle(PrimaryButtonStyle())
-      .padding(.top, 12)
-      Spacer(minLength: 0)
-    }
-    .frame(maxWidth: .infinity)
-    .padding(.horizontal, 24)
-    .padding(.vertical, 16)
-    .presentationDetents([.height(240)])
-    .presentationDragIndicator(.visible)
   }
 
   private var cameraButtonView: some View {

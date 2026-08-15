@@ -1,0 +1,523 @@
+{
+  "how_features_disappeared": {
+    "commit": "8301ba5",
+    "message": "Restore App Store release 4.2 on main.",
+    "last_good_tree": "fed427f",
+    "last_good_message": "Implement custom swipe gestures for food rows and enhance navigation.",
+    "explanation": "8301ba5 reset the working tree to App Store 4.2. Post-4.2 UI then lived only in history. Merging restored main into KAN-57 (3809062) copied the wipe into KAN-57. Later PRs 9-10 only put back friend filter + compact header/ingredients."
+  },
+  "deleted_by_8301ba5": [
+    "eater.xcodeproj/xcshareddata/xcodecloud/manifest.json",
+    "eater/Services/DEVELOPER.md",
+    "eater/Views/AppInfoView.swift",
+    "eater/Views/FixFoodNameView.swift",
+    "eater/Views/MacroGoalsEditView.swift"
+  ],
+  "modified_by_8301ba5_swift": [
+    "eater/ContentView.swift",
+    "eater/DesignSystem.swift",
+    "eater/Services/AppEnvironment.swift",
+    "eater/Services/AuthenticationService.swift",
+    "eater/Services/CalorieLimitsStorageService.swift",
+    "eater/Services/GRPCService.swift",
+    "eater/Services/LanguageService.swift",
+    "eater/Views/AlertHelper.swift",
+    "eater/Views/CameraButtonView.swift",
+    "eater/Views/HealthDisclaimerView.swift",
+    "eater/Views/LoginView.swift",
+    "eater/Views/OnboardingView.swift",
+    "eater/Views/ProductListView.swift",
+    "eater/Views/ProductRowView.swift",
+    "eater/Views/ShareFoodViewController.swift",
+    "eater/Views/StatisticsView.swift",
+    "eater/Views/UserProfileView.swift"
+  ],
+  "all_8301ba5": [
+    {
+      "status": "M",
+      "path": "AppStore_Release_Notes_4.0.md"
+    },
+    {
+      "status": "M",
+      "path": "docs/PROJECT_KNOWLEDGE_BASE.md"
+    },
+    {
+      "status": "M",
+      "path": "eater.xcodeproj/project.pbxproj"
+    },
+    {
+      "status": "D",
+      "path": "eater.xcodeproj/xcshareddata/xcodecloud/manifest.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Assets.xcassets/stats_star_ornate.imageset/Contents.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/ContentView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/DesignSystem.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/ar.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/be.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/bg.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/bn.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/cs.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/da.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/de.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/el.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/en.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/es.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/et.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/fi.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/fr.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/ga.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/hi.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/hr.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/hu.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/it.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/ja.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/ko.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/lt.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/lv.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/mt.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/nl.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/pl.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/pt.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/ar.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/be.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/bg.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/bn.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/cs.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/da.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/de.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/el.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/es.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/et.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/fi.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/fr.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/ga.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/hi.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/hr.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/hu.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/it.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/ja.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/ko.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/lt.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/lv.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/mt.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/nl.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/pl.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/pt.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/ro.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/sk.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/sl.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/sv.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/th.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/tr.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/uk.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/ur.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/vi.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/quotes/zh.txt"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/ro.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/sk.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/sl.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/sv.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/th.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/tr.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/uk.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/ur.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/vi.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Localization/zh.json"
+    },
+    {
+      "status": "M",
+      "path": "eater/Services/AppEnvironment.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Services/AuthenticationService.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Services/CalorieLimitsStorageService.swift"
+    },
+    {
+      "status": "D",
+      "path": "eater/Services/DEVELOPER.md"
+    },
+    {
+      "status": "M",
+      "path": "eater/Services/GRPCService.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Services/LanguageService.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/AlertHelper.swift"
+    },
+    {
+      "status": "D",
+      "path": "eater/Views/AppInfoView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/CameraButtonView.swift"
+    },
+    {
+      "status": "D",
+      "path": "eater/Views/FixFoodNameView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/HealthDisclaimerView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/LoginView.swift"
+    },
+    {
+      "status": "D",
+      "path": "eater/Views/MacroGoalsEditView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/OnboardingView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/ProductListView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/ProductRowView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/ShareFoodViewController.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/StatisticsView.swift"
+    },
+    {
+      "status": "M",
+      "path": "eater/Views/UserProfileView.swift"
+    },
+    {
+      "status": "M",
+      "path": "scripts/apple_submission.md"
+    }
+  ],
+  "pr7_files": [
+    "eater/ContentView.swift",
+    "eater/Localization/ar.json",
+    "eater/Localization/be.json",
+    "eater/Localization/bg.json",
+    "eater/Localization/bn.json",
+    "eater/Localization/cs.json",
+    "eater/Localization/da.json",
+    "eater/Localization/de.json",
+    "eater/Localization/el.json",
+    "eater/Localization/en.json",
+    "eater/Localization/es.json",
+    "eater/Localization/et.json",
+    "eater/Localization/fi.json",
+    "eater/Localization/fr.json",
+    "eater/Localization/ga.json",
+    "eater/Localization/hi.json",
+    "eater/Localization/hr.json",
+    "eater/Localization/hu.json",
+    "eater/Localization/it.json",
+    "eater/Localization/ja.json",
+    "eater/Localization/ko.json",
+    "eater/Localization/lt.json",
+    "eater/Localization/lv.json",
+    "eater/Localization/mt.json",
+    "eater/Localization/nl.json",
+    "eater/Localization/pl.json",
+    "eater/Localization/pt.json",
+    "eater/Localization/ro.json",
+    "eater/Localization/sk.json",
+    "eater/Localization/sl.json",
+    "eater/Localization/sv.json",
+    "eater/Localization/th.json",
+    "eater/Localization/tr.json",
+    "eater/Localization/uk.json",
+    "eater/Localization/ur.json",
+    "eater/Localization/vi.json",
+    "eater/Localization/zh.json",
+    "eater/Services/AuthenticationService.swift",
+    "eater/Services/CalorieLimitsStorageService.swift",
+    "eater/Services/GRPCService.swift",
+    "eater/Views/AlertHelper.swift",
+    "eater/Views/CameraButtonView.swift",
+    "eater/Views/FixFoodNameView.swift",
+    "eater/Views/MacroGoalsEditView.swift",
+    "eater/Views/ProductListView.swift",
+    "eater/Views/ProductRowView.swift"
+  ],
+  "guest_try_4_3_files": [
+    "AppStore_Release_Notes_4.0.md",
+    "eater.xcodeproj/project.pbxproj",
+    "eater/ContentView.swift",
+    "eater/DesignSystem.swift",
+    "eater/Localization/ar.json",
+    "eater/Localization/be.json",
+    "eater/Localization/bg.json",
+    "eater/Localization/bn.json",
+    "eater/Localization/cs.json",
+    "eater/Localization/da.json",
+    "eater/Localization/de.json",
+    "eater/Localization/el.json",
+    "eater/Localization/en.json",
+    "eater/Localization/es.json",
+    "eater/Localization/et.json",
+    "eater/Localization/fi.json",
+    "eater/Localization/fr.json",
+    "eater/Localization/ga.json",
+    "eater/Localization/hi.json",
+    "eater/Localization/hr.json",
+    "eater/Localization/hu.json",
+    "eater/Localization/it.json",
+    "eater/Localization/ja.json",
+    "eater/Localization/ko.json",
+    "eater/Localization/lt.json",
+    "eater/Localization/lv.json",
+    "eater/Localization/mt.json",
+    "eater/Localization/nl.json",
+    "eater/Localization/pl.json",
+    "eater/Localization/pt.json",
+    "eater/Localization/ro.json",
+    "eater/Localization/sk.json",
+    "eater/Localization/sl.json",
+    "eater/Localization/sv.json",
+    "eater/Localization/th.json",
+    "eater/Localization/tr.json",
+    "eater/Localization/uk.json",
+    "eater/Localization/ur.json",
+    "eater/Localization/vi.json",
+    "eater/Localization/zh.json",
+    "eater/Services/AuthenticationService.swift",
+    "eater/Services/LanguageService.swift",
+    "eater/Views/AppInfoView.swift",
+    "eater/Views/LoginView.swift"
+  ]
+}

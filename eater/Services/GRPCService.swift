@@ -1311,6 +1311,52 @@ class GRPCService {
     }
   }
 
+  func updateMacroGoals(
+    proteinTargetGrams: Double,
+    fatTargetGrams: Double,
+    carbsTargetGrams: Double,
+    completion: @escaping (Bool) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/goal_update") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    if let token = KeychainHelper.shared.read("auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let body: [String: Any] = [
+      "protein_target_g": proteinTargetGrams,
+      "fat_target_g": fatTargetGrams,
+      "carbs_target_g": carbsTargetGrams,
+    ]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200
+      else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
   // MARK: - Activity Log
 
   func logActivity(

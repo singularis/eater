@@ -142,7 +142,7 @@ struct ProductRowView: View {
             }
         }
 
-        // Food details - clickable for portion modification
+        // Food details — tap still opens options; ⋯ is the visible control
         VStack(alignment: .leading, spacing: 4) {
           Text(Localization.shared.translateFoodName(product.name))
             .font(.headline)
@@ -172,37 +172,7 @@ struct ProductRowView: View {
           }
         }
         .onTapGesture {
-          HapticsService.shared.lightImpact()
-          AlertHelper.showPortionSelectionAlert(
-            foodName: product.name,
-            originalWeight: product.weight,
-            time: product.time,
-            imageId: product.imageId,
-            isDrink: product.isDrink,
-            isFruitOrVegetable: product.isFruitOrVegetable,
-            onPortionSelected: { percentage, grams in
-              HapticsService.shared.success()
-              onModify(product.time, product.name, percentage, grams)
-            },
-            onTryAgain: {
-              HapticsService.shared.select()
-              onTryAgain(product.time, product.imageId)
-            },
-            onAddSugar: product.isDrink
-              ? {
-                HapticsService.shared.success()
-                onAddSugar(product.time, product.name)
-              }
-              : nil,
-            onAddDrinkExtra: product.isDrink ? { key in
-              HapticsService.shared.success()
-              onAddDrinkExtra?(product.time, product.name, key)
-            } : nil,
-            onAddFoodExtra: product.isDrink ? nil : { key in
-              HapticsService.shared.success()
-              onAddFoodExtra?(product.time, product.name, key)
-            },
-            onShareSuccess: onShareSuccess)
+          openPortionMenu()
         }
         
         Spacer()
@@ -217,7 +187,10 @@ struct ProductRowView: View {
           .padding(.trailing, 8)
       } else {
         VStack(alignment: .trailing, spacing: 6) {
-          shareIconButton
+          HStack(spacing: 8) {
+            shareIconButton
+            moreOptionsIconButton
+          }
           if product.healthRating >= 0 {
             HealthRatingRing(
               rating: product.effectiveHealthRating,
@@ -299,6 +272,56 @@ struct ProductRowView: View {
           "share.login_required.message",
           "Create an account or log in to share food with friends."))
     }
+  }
+
+  private var moreOptionsIconButton: some View {
+    Button(action: {
+      openPortionMenu()
+    }) {
+      Image(systemName: "ellipsis.circle.fill")
+        .font(.system(size: 22))
+        .foregroundColor(AppTheme.textSecondary)
+        .frame(width: 32, height: 32)
+    }
+    .buttonStyle(.plain)
+  }
+
+  private func openPortionMenu() {
+    HapticsService.shared.lightImpact()
+    AlertHelper.showPortionSelectionAlert(
+      foodName: product.name,
+      originalWeight: product.weight,
+      time: product.time,
+      imageId: product.imageId,
+      isDrink: product.isDrink,
+      isFruitOrVegetable: product.isFruitOrVegetable,
+      onPortionSelected: { percentage, grams in
+        HapticsService.shared.success()
+        onModify(product.time, product.name, percentage, grams)
+      },
+      onTryAgain: {
+        HapticsService.shared.select()
+        onTryAgain(product.time, product.imageId)
+      },
+      onAddSugar: product.isDrink
+        ? {
+          HapticsService.shared.success()
+          onAddSugar(product.time, product.name)
+        }
+        : nil,
+      onAddDrinkExtra: product.isDrink
+        ? { key in
+          HapticsService.shared.success()
+          onAddDrinkExtra?(product.time, product.name, key)
+        }
+        : nil,
+      onAddFoodExtra: product.isDrink
+        ? nil
+        : { key in
+          HapticsService.shared.success()
+          onAddFoodExtra?(product.time, product.name, key)
+        },
+      onShareSuccess: onShareSuccess)
   }
 
   /// Fetches the image from the backend if needed

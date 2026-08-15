@@ -1,0 +1,162 @@
+{
+  "last_good_tree": "fed427f",
+  "wipe_commit": "8301ba5",
+  "current_branch": "kan-57-restorer",
+  "counts": {
+    "present": 11,
+    "missing": 1,
+    "total": 12
+  },
+  "missing_ids": [
+    "swipe_home_to_camera"
+  ],
+  "present_ids": [
+    "share_icon",
+    "three_dots_menu",
+    "manual_food_suggestions",
+    "anonymous_login_screen",
+    "filter_anon_and_apple_id_friends",
+    "guest_share_and_try_manual_login_gate",
+    "editable_macro_goals",
+    "swipe_row_options_and_delete_confirm",
+    "full_ingredient_names",
+    "compact_profile_header",
+    "dish_macros_on_card"
+  ],
+  "features": [
+    {
+      "id": "share_icon",
+      "pr": 7,
+      "what": "Green share icon on each food card",
+      "files": [
+        "eater/Views/ProductRowView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "three_dots_menu",
+      "pr": 7,
+      "what": "Ellipsis (3 dots) button on food card opens portion / try manually / additives",
+      "files": [
+        "eater/Views/ProductRowView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "manual_food_suggestions",
+      "pr": 7,
+      "what": "Try manually opens FixFoodNameView with LLM suggested names",
+      "files": [
+        "eater/Views/FixFoodNameView.swift",
+        "eater/ContentView.swift",
+        "eater/Services/GRPCService.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "anonymous_login_screen",
+      "pr": "e6e80fc / 7 follow-up",
+      "what": "Let Me Try guest login screen with features + What is Eateria",
+      "files": [
+        "eater/Views/LoginView.swift",
+        "eater/Views/AppInfoView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "filter_anon_and_apple_id_friends",
+      "pr": 9,
+      "what": "Hide anonymous + Apple Hide My Email from add-friend / share lists unless nickname exists",
+      "files": [
+        "eater/Services/AnonymousUserIdentity.swift",
+        "eater/Views/AddFriendsView.swift",
+        "eater/Services/GRPCService.swift",
+        "eater/Views/ShareFoodViewController.swift"
+      ],
+      "status": "present",
+      "note": "Already on main after PR9. Not lost. Keep.",
+      "keep_from_later_main": true
+    },
+    {
+      "id": "guest_share_and_try_manual_login_gate",
+      "pr": "1939ef8 / ee15e47",
+      "what": "Anonymous users must log in before share or try-manually",
+      "files": [
+        "eater/Views/AlertHelper.swift",
+        "eater/Views/ProductRowView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "editable_macro_goals",
+      "pr": 7,
+      "what": "Tap macros line to edit protein/fat/carbs goals",
+      "files": [
+        "eater/Views/MacroGoalsEditView.swift",
+        "eater/ContentView.swift",
+        "eater/Services/CalorieLimitsStorageService.swift",
+        "eater/Services/GRPCService.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "swipe_row_options_and_delete_confirm",
+      "pr": 7,
+      "what": "Swipe right on a meal for Options, swipe left to delete with confirmation",
+      "files": [
+        "eater/Views/ProductListView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "full_ingredient_names",
+      "pr": 10,
+      "what": "FittingIngredientsText so ingredient names are not truncated",
+      "files": [
+        "eater/Views/ProductRowView.swift"
+      ],
+      "status": "present",
+      "keep_from_later_main": true
+    },
+    {
+      "id": "compact_profile_header",
+      "pr": 10,
+      "what": "Compact profile header from KAN-53",
+      "files": [
+        "eater/Views/UserProfileView.swift"
+      ],
+      "status": "present",
+      "keep_from_later_main": true
+    },
+    {
+      "id": "swipe_home_to_camera",
+      "pr": 7,
+      "what": "Swipe right on Home empty/chrome opens camera; swipe left opens Statistics (replaced TabView pager)",
+      "files": [
+        "eater/ContentView.swift",
+        "eater/Views/CameraButtonView.swift",
+        "eater/Views/ProductListView.swift"
+      ],
+      "status": "missing",
+      "note": "Still missing. Current main uses TabView pager. Restoring this means replacing the pager so gestures are not eaten. Do not restore blindly.",
+      "conflicts_with_later_main": "ContentView TabView(.page) from current main"
+    },
+    {
+      "id": "dish_macros_on_card",
+      "pr": 7,
+      "what": "PRO/FAT/CAR/SUG lines on the food card",
+      "files": [
+        "eater/Views/ProductRowView.swift"
+      ],
+      "status": "present"
+    }
+  ],
+  "later_main_do_not_revert": [
+    "KAN-53 compact profile header",
+    "KAN-53 FittingIngredientsText",
+    "KAN-57 AnonymousUserIdentity friend filter",
+    "KAN-53 celebrate goal only on logged weight",
+    "ContentView TabView pager (unless we explicitly re-do home swipe)",
+    "MyFriendsView / ProfileLocalStore / ProfilePhotoStore"
+  ]
+}
