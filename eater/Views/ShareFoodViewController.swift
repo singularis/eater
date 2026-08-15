@@ -210,7 +210,11 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     
     var details = [String]()
     if shares > 0 { details.append("Shared \(shares)x") }
-    if !friend.nickname.isEmpty { details.append(friend.email) }
+    if !friend.nickname.isEmpty,
+      !AnonymousUserIdentity.isPrivateRelayEmail(friend.email)
+    {
+      details.append(friend.email)
+    }
     
     cell.detailTextLabel?.text = details.joined(separator: " • ")
     cell.accessoryType = .disclosureIndicator

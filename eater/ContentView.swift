@@ -6,6 +6,13 @@ struct FullScreenPhotoData: Identifiable {
   let foodName: String
 }
 
+struct FixFoodNameData: Identifiable {
+  let id = UUID()
+  let time: Int64
+  let imageId: String
+  let currentName: String
+}
+
 struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
@@ -77,6 +84,7 @@ struct ContentView: View {
 
   // Full-screen photo states
   @State private var fullScreenPhotoData: FullScreenPhotoData? = nil
+  @State private var fixFoodNameData: FixFoodNameData? = nil
 
   // Weight input states
   @State private var showWeightActionSheet = false
@@ -246,6 +254,20 @@ struct ContentView: View {
       }
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
+      }
+      .sheet(item: $fixFoodNameData) { data in
+        FixFoodNameView(
+          currentName: data.currentName,
+          imageId: data.imageId,
+          languageCode: languageService.currentCode,
+          onSave: { newName in
+            fixFoodNameData = nil
+            submitManualFoodName(time: data.time, imageId: data.imageId, newName: newName)
+          },
+          onCancel: {
+            fixFoodNameData = nil
+          }
+        )
       }
       // StatisticsView is now part of the TabView, so we remove the sheet
       .sheet(isPresented: $showCalendarPicker) {
@@ -1197,7 +1219,8 @@ struct ContentView: View {
   }
 
   func tryAgainProduct(time: Int64, imageId: String) {
-    guard let userEmail = authService.userEmail else {
+    // "Try manually" – user can fix the dish name, optionally from LLM suggestions.
+    guard authService.userEmail != nil else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
         message: loc(
@@ -1209,48 +1232,49 @@ struct ContentView: View {
       return
     }
 
-    AlertHelper.showTextInputAlert(
-      title: loc("manual_food.title", "Fix food name"),
-      message: loc(
-        "manual_food.msg",
-        "Enter the correct dish name. Weight (grams) stays the same — use Custom grams to change it."
-      ),
-      placeholder: product.name,
-      initialText: product.name,
-      confirmTitle: loc("common.save", "Save")
-    ) { newName in
-      self.deletingProductTime = time
-      GRPCService().modifyFoodRecord(
-        time: time,
-        userEmail: userEmail,
-        percentage: 100,
-        isTryManually: true,
-        imageId: imageId,
-        manualFoodName: newName
-      ) { success in
-        DispatchQueue.main.async {
-          self.deletingProductTime = nil
-          if success {
-            StatisticsService.shared.clearExpiredCache()
-            ProductStorageService.shared.clearCache()
-            AlertHelper.showAlert(
-              title: loc("manual_food.success.title", "Updated"),
-              message: String(
-                format: loc(
-                  "manual_food.success.msg", "Updated '%@'."), newName),
-              haptic: .success
-            ) {
-              self.returnToToday()
-            }
-          } else {
-            HapticsService.shared.error()
-            AlertHelper.showAlert(
-              title: loc("common.error", "Error"),
-              message: loc(
-                "manual_food.error",
-                "Failed to update. Please try again.")
-            )
+    fixFoodNameData = FixFoodNameData(time: time, imageId: imageId, currentName: product.name)
+  }
+
+  private func submitManualFoodName(time: Int64, imageId: String, newName: String) {
+    guard let userEmail = authService.userEmail else {
+      AlertHelper.showAlert(
+        title: loc("common.error", "Error"),
+        message: loc(
+          "portion.modify.need_login", "Unable to update. Please sign in again."))
+      return
+    }
+
+    self.deletingProductTime = time
+    GRPCService().modifyFoodRecord(
+      time: time,
+      userEmail: userEmail,
+      percentage: 100,
+      isTryManually: true,
+      imageId: imageId,
+      manualFoodName: newName
+    ) { success in
+      DispatchQueue.main.async {
+        self.deletingProductTime = nil
+        if success {
+          StatisticsService.shared.clearExpiredCache()
+          ProductStorageService.shared.clearCache()
+          AlertHelper.showAlert(
+            title: loc("manual_food.success.title", "Updated"),
+            message: String(
+              format: loc(
+                "manual_food.success.msg", "Updated '%@'."), newName),
+            haptic: .success
+          ) {
+            self.returnToToday()
           }
+        } else {
+          HapticsService.shared.error()
+          AlertHelper.showAlert(
+            title: loc("common.error", "Error"),
+            message: loc(
+              "manual_food.error",
+              "Failed to update. Please try again.")
+          )
         }
       }
     }

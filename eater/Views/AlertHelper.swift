@@ -266,6 +266,22 @@ class AlertHelper {
     rootViewController.present(nav, animated: true)
   }
 
+  private static func presentLoginRequiredAlert(on rootViewController: UIViewController, message: String) {
+    let loginAlert = UIAlertController(
+      title: loc("share.login_required.title", "Login Required"),
+      message: message,
+      preferredStyle: .alert
+    )
+    loginAlert.addAction(UIAlertAction(title: loc("common.not_yet", "Not Yet"), style: .cancel))
+    loginAlert.addAction(
+      UIAlertAction(title: loc("login.prompt.confirm", "Login Now"), style: .default) { _ in
+        NotificationCenter.default.post(name: NSNotification.Name("ForceLogout"), object: nil)
+      })
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      rootViewController.present(loginAlert, animated: true)
+    }
+  }
+
   // Public helper to show the "Share food with friend" sheet directly
   static func showShareFriends(
     foodName: String, time: Int64, imageId: String = "", onShareSuccess: (() -> Void)? = nil
@@ -431,13 +447,23 @@ class AlertHelper {
     }
 
     // Share food with friend action (visually highlighted)
+    let isAnonymousUser = UserDefaults.standard.bool(forKey: "is_anonymous")
     let shareTitle = loc("portion.share", "Share food with friend")
     let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
-      presentShareFriendsController(
-        foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
+      if isAnonymousUser {
+        presentLoginRequiredAlert(
+          on: rootViewController,
+          message: loc(
+            "share.login_required.message",
+            "Create an account or log in to share food with friends."))
+      } else {
+        presentShareFriendsController(
+          foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
+      }
     }
     // Make action title green (private API key path, commonly works in UIKit alerts)
-    shareAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
+    shareAction.setValue(
+      isAnonymousUser ? UIColor.systemGray : UIColor.systemGreen, forKey: "titleTextColor")
     alert.addAction(shareAction)
 
     // Additives extras: not for fruit/vegetable; tap "Additives" to open submenu
@@ -504,14 +530,22 @@ class AlertHelper {
       alert.addAction(additionalAction)
     }
 
-    // Try manually – visible button between Share and Custom
+    // Try manually – visible button between Share and Custom.
+    // Guest accounts have nowhere to save a name fix, so gray the button and ask to log in.
     let tryManualTitle = loc("common.try_manual", "Try manually")
     let tryManualAction = UIAlertAction(title: tryManualTitle, style: .default) { _ in
-      // Callback to allow user to manually fix dish name
-      onTryAgain?()
+      if isAnonymousUser {
+        presentLoginRequiredAlert(
+          on: rootViewController,
+          message: loc(
+            "manual_food.login_required.message",
+            "Create an account or log in to manually fix or suggest food names."))
+      } else {
+        onTryAgain?()
+      }
     }
-    // Orange for "Try manually"
-    tryManualAction.setValue(UIColor.systemOrange, forKey: "titleTextColor")
+    tryManualAction.setValue(
+      isAnonymousUser ? UIColor.systemGray : UIColor.systemOrange, forKey: "titleTextColor")
     alert.addAction(tryManualAction)
 
     // Add custom option (purple)

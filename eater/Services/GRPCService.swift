@@ -422,6 +422,53 @@ class GRPCService {
     }
   }
 
+  /// Asks the backend to re-analyze the already-uploaded photo and suggest a
+  /// short list of alternate dish names (for when the LLM misidentified the food).
+  func suggestDishNames(
+    imageId: String,
+    currentName: String,
+    languageCode: String,
+    completion: @escaping ([String]) -> Void
+  ) {
+    guard !imageId.isEmpty else {
+      completion([])
+      return
+    }
+
+    let payload: [String: Any] = [
+      "image_id": imageId,
+      "current_name": currentName,
+      "language_code": languageCode,
+    ]
+
+    guard let body = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+      completion([])
+      return
+    }
+
+    guard var request = createRequest(
+      endpoint: "suggest_dish_names", httpMethod: "POST", body: body)
+    else {
+      completion([])
+      return
+    }
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    sendRequest(request: request, retriesLeft: 0) { data, response, error in
+      guard error == nil,
+        let response = response as? HTTPURLResponse,
+        response.statusCode >= 200, response.statusCode < 300,
+        let data = data,
+        let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+        let suggestions = json["suggestions"] as? [String]
+      else {
+        completion([])
+        return
+      }
+      completion(suggestions)
+    }
+  }
+
   /// JSON endpoint to rename a food item manually, without re-triggering AI analysis.
   func renameFood(
     time: Int64,
