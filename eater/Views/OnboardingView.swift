@@ -1924,7 +1924,7 @@ struct OnboardingView: View {
     case "addfood":
       return loc(
         "onboarding.recognition.desc",
-        "Simply take a photo of your food and our AI will automatically identify it and log the calories. No more manual searching!"
+        "Simply take a photo of your food and our LLM will automatically identify it and log the calories. No more manual searching!"
       )
     case "tracking":
       return loc(
@@ -1982,7 +1982,7 @@ struct OnboardingView: View {
     case "team":
         return loc("onboarding.team.desc", "We'd love to grow with you.")
     case "features":
-        return loc("onboarding.features.desc", "Everything you need to stay healthy, powered by AI.")
+        return loc("onboarding.features.desc", "Everything you need to stay healthy, powered by LLM technology.")
     case "language":
         return loc("onboarding.language.desc", "Pick your preferred language.")
     case "nickname":

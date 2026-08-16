@@ -3,13 +3,11 @@
   "wipe_commit": "8301ba5",
   "current_branch": "kan-57-restorer",
   "counts": {
-    "present": 12,
-    "missing": 1,
-    "total": 13
+    "present": 17,
+    "missing": 0,
+    "total": 17
   },
-  "missing_ids": [
-    "swipe_home_to_camera"
-  ],
+  "missing_ids": [],
   "present_ids": [
     "share_same_amount",
     "share_icon",
@@ -22,7 +20,12 @@
     "swipe_row_options_and_delete_confirm",
     "full_ingredient_names",
     "compact_profile_header",
-    "dish_macros_on_card"
+    "swipe_home_to_camera",
+    "dish_macros_on_card",
+    "health_score_disclaimer",
+    "llm_wording",
+    "guest_scan_conversion_prompt",
+    "stats_swipe_back_home"
   ],
   "features": [
     {
@@ -141,15 +144,13 @@
     {
       "id": "swipe_home_to_camera",
       "pr": 7,
-      "what": "Swipe right on Home empty/chrome opens camera; swipe left opens Statistics (replaced TabView pager)",
+      "what": "Swipe right on Home chrome opens camera; swipe left opens Statistics (no TabView pager)",
       "files": [
         "eater/ContentView.swift",
         "eater/Views/CameraButtonView.swift",
         "eater/Views/ProductListView.swift"
       ],
-      "status": "missing",
-      "note": "Still missing. Current main uses TabView pager. Restoring this means replacing the pager so gestures are not eaten. Do not restore blindly.",
-      "conflicts_with_later_main": "ContentView TabView(.page) from current main"
+      "status": "present"
     },
     {
       "id": "dish_macros_on_card",
@@ -157,6 +158,45 @@
       "what": "PRO/FAT/CAR/SUG lines on the food card",
       "files": [
         "eater/Views/ProductRowView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "health_score_disclaimer",
+      "pr": "4adc5c3",
+      "what": "Health disclaimer shows today's average health score with band labels",
+      "files": [
+        "eater/Views/HealthDisclaimerView.swift",
+        "eater/ContentView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "llm_wording",
+      "pr": "0b63035 / 120eb44",
+      "what": "Use LLM / Eateria instead of generic AI in user-facing copy",
+      "files": [
+        "eater/Localization/en.json",
+        "eater/Views/OnboardingView.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "guest_scan_conversion_prompt",
+      "pr": "e6e80fc",
+      "what": "After 5 guest scans (then every 3), prompt to log in",
+      "files": [
+        "eater/ContentView.swift",
+        "eater/Services/AuthenticationService.swift"
+      ],
+      "status": "present"
+    },
+    {
+      "id": "stats_swipe_back_home",
+      "pr": 7,
+      "what": "Swipe right on Statistics returns to Home",
+      "files": [
+        "eater/Views/StatisticsView.swift"
       ],
       "status": "present"
     }

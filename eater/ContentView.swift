@@ -68,6 +68,8 @@ struct ContentView: View {
   @State private var deletingProductTime: Int64? = nil
   @State private var isFetchingData = false  // Flag to prevent multiple simultaneous data fetches
   @State private var selectedPage = 1 // 0 = Statistics, 1 = Home
+  @State private var swipeCameraTrigger = false
+  @State private var showAnonymousLoginPrompt = false
 
   // Tutorial pending action
   enum PendingTutorialAction {
@@ -123,53 +125,72 @@ struct ContentView: View {
     return df
   }
 
+  /// Home screen horizontal swipe (no TabView pager — it was eating gestures):
+  ///   left  → Statistics
+  ///   right → Camera
+  /// Food-row swipes claim the arbiter so card options/delete still win on cards.
+  private var homeSwipeGesture: some Gesture {
+    DragGesture(minimumDistance: 40)
+      .onEnded { value in
+        let dx = value.translation.width
+        let dy = value.translation.height
+        guard abs(dx) > abs(dy), abs(dx) > 70 else { return }
+        guard !FoodSwipeArbiter.shared.rowSwipeActive else { return }
+        HapticsService.shared.select()
+        if dx < 0 {
+          withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 0 }
+        } else {
+          swipeCameraTrigger.toggle()
+        }
+      }
+  }
+
+  private var statisticsBinding: Binding<Bool> {
+    Binding(
+      get: { selectedPage == 0 },
+      set: { if !$0 { withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 1 } } }
+    )
+  }
+
   var body: some View {
     ZStack {
       AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
-      TabView(selection: $selectedPage) {
-        // Statistics Screen
-        StatisticsView(isPresented: Binding(
-          get: { selectedPage == 0 },
-          set: { if !$0 { withAnimation { selectedPage = 1 } } }
-        ), targetChartType: .macros)
-        .tag(0)
-
-        // Main App Screen
-        VStack(spacing: 2) {
-          topBarView
-          statsButtonsView
-            .frame(height: 60)
-          if hasMacrosData {
-            macrosLineView
-          }
-
-          ProductListView(
-            products: products,
-            onRefresh: refreshAction,
-            onDelete: deleteProductWithLoading,
-            onModify: modifyProductPortion,
-            onTryAgain: tryAgainProduct,
-            onAddSugar: addSugarToProduct,
-            onAddDrinkExtra: addExtraToProduct,
-            onAddFoodExtra: addExtraToProduct,
-            onPhotoTap: showFullScreenPhoto,
-            deletingProductTime: deletingProductTime,
-            onShareSuccess: {
-              StatisticsService.shared.clearExpiredCache()
-              ProductStorageService.shared.clearCache()
-              self.returnToToday()
-            }
-          )
-          .padding(.top, 0)
-          
-          cameraButtonView
-            .padding(.top, 10)
+      // Main screen is not inside a page TabView, so horizontal swipes
+      // are ours (Statistics / Camera) instead of a competing pager.
+      VStack(spacing: 2) {
+        topBarView
+        statsButtonsView
+          .frame(height: 60)
+        if hasMacrosData {
+          macrosLineView
         }
-        .tag(1)
+
+        ProductListView(
+          products: products,
+          onRefresh: refreshAction,
+          onDelete: deleteProductWithLoading,
+          onModify: modifyProductPortion,
+          onTryAgain: tryAgainProduct,
+          onAddSugar: addSugarToProduct,
+          onAddDrinkExtra: addExtraToProduct,
+          onAddFoodExtra: addExtraToProduct,
+          onPhotoTap: showFullScreenPhoto,
+          deletingProductTime: deletingProductTime,
+          onShareSuccess: {
+            StatisticsService.shared.clearExpiredCache()
+            ProductStorageService.shared.clearCache()
+            self.returnToToday()
+          }
+        )
+        .padding(.top, 0)
+
+        cameraButtonView
+          .padding(.top, 10)
       }
-      .tabViewStyle(.page(indexDisplayMode: .never))
+      .contentShape(Rectangle())
+      .simultaneousGesture(homeSwipeGesture)
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
@@ -238,6 +259,20 @@ struct ContentView: View {
             "Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice."
           ))
       }
+      .alert(
+        loc("login.scan_prompt_title", "Unlock All Features"), isPresented: $showAnonymousLoginPrompt
+      ) {
+        Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
+        Button(loc("login.prompt.confirm", "Login Now")) {
+          authService.signOut()
+        }
+      } message: {
+        Text(
+          loc(
+            "login.scan_prompt_message",
+            "Please login to Google if you are ready or want to recover past food."
+          ))
+      }
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
           .environmentObject(authService)
@@ -250,7 +285,7 @@ struct ContentView: View {
         }
       }
       .sheet(isPresented: $showHealthDisclaimer) {
-        HealthDisclaimerView()
+        HealthDisclaimerView(todayHealthScore: averageHealthScore)
       }
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
@@ -269,7 +304,7 @@ struct ContentView: View {
           }
         )
       }
-      // StatisticsView is now part of the TabView, so we remove the sheet
+      // Statistics overlays Home when the user swipes left
       .sheet(isPresented: $showCalendarPicker) {
         CalendarDatePickerView(
           selectedDate: $selectedDate,
@@ -307,6 +342,12 @@ struct ContentView: View {
           .environmentObject(languageService)
           .opacity(showOnboarding ? 1 : 0)
       )
+
+      if selectedPage == 0 {
+        StatisticsView(isPresented: statisticsBinding, targetChartType: .macros)
+          .transition(.move(edge: .leading))
+          .zIndex(1)
+      }
 
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
@@ -856,9 +897,11 @@ struct ContentView: View {
         isLoadingFoodPhoto = false
       },
       onPhotoStarted: {
-        // Photo processing started
         HapticsService.shared.mediumImpact()
         isLoadingFoodPhoto = true
+        if authService.recordAnonymousFoodScanIfNeeded() {
+          showAnonymousLoginPrompt = true
+        }
       },
       onReturnToToday: {
         returnToToday()
@@ -867,7 +910,8 @@ struct ContentView: View {
           if let step = MainAppTutorialView.steps.first(where: { $0.key == key }) {
               activeTutorialStep = step
           }
-      }
+      },
+      externalCameraTrigger: $swipeCameraTrigger
     )
     .buttonStyle(PrimaryButtonStyle())
   }
