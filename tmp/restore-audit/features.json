@@ -3,14 +3,15 @@
   "wipe_commit": "8301ba5",
   "current_branch": "kan-57-restorer",
   "counts": {
-    "present": 11,
+    "present": 12,
     "missing": 1,
-    "total": 12
+    "total": 13
   },
   "missing_ids": [
     "swipe_home_to_camera"
   ],
   "present_ids": [
+    "share_same_amount",
     "share_icon",
     "three_dots_menu",
     "manual_food_suggestions",
@@ -24,6 +25,15 @@
     "dish_macros_on_card"
   ],
   "features": [
+    {
+      "id": "share_same_amount",
+      "pr": "ef56138 / f47f9f5",
+      "what": "Green 'Same amount' (100%) button in share-food percentage picker",
+      "files": [
+        "eater/Views/ShareFoodViewController.swift"
+      ],
+      "status": "present"
+    },
     {
       "id": "share_icon",
       "pr": 7,
