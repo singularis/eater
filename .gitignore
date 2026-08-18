@@ -23,3 +23,9 @@ eater/config.plist.test
 eater/config.plist.production
 eater/config.plist.local
 COMMIT_MSG.txt
+
+# Local scratch / restore-audit dumps
+tmp/
+
+# Xcode Cloud workflow dump; not needed in this repo
+eater.xcodeproj/xcshareddata/xcodecloud/manifest.json
