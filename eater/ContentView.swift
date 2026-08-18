@@ -6,6 +6,13 @@ struct FullScreenPhotoData: Identifiable {
   let foodName: String
 }
 
+struct FixFoodNameData: Identifiable {
+  let id = UUID()
+  let time: Int64
+  let imageId: String
+  let currentName: String
+}
+
 struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
@@ -61,6 +68,8 @@ struct ContentView: View {
   @State private var deletingProductTime: Int64? = nil
   @State private var isFetchingData = false  // Flag to prevent multiple simultaneous data fetches
   @State private var selectedPage = 1 // 0 = Statistics, 1 = Home
+  @State private var swipeCameraTrigger = false
+  @State private var showAnonymousLoginPrompt = false
 
   // Tutorial pending action
   enum PendingTutorialAction {
@@ -77,6 +86,7 @@ struct ContentView: View {
 
   // Full-screen photo states
   @State private var fullScreenPhotoData: FullScreenPhotoData? = nil
+  @State private var fixFoodNameData: FixFoodNameData? = nil
 
   // Weight input states
   @State private var showWeightActionSheet = false
@@ -115,53 +125,72 @@ struct ContentView: View {
     return df
   }
 
+  /// Home screen horizontal swipe (no TabView pager — it was eating gestures):
+  ///   left  → Statistics
+  ///   right → Camera
+  /// Food-row swipes claim the arbiter so card options/delete still win on cards.
+  private var homeSwipeGesture: some Gesture {
+    DragGesture(minimumDistance: 40)
+      .onEnded { value in
+        let dx = value.translation.width
+        let dy = value.translation.height
+        guard abs(dx) > abs(dy), abs(dx) > 70 else { return }
+        guard !FoodSwipeArbiter.shared.rowSwipeActive else { return }
+        HapticsService.shared.select()
+        if dx < 0 {
+          withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 0 }
+        } else {
+          swipeCameraTrigger.toggle()
+        }
+      }
+  }
+
+  private var statisticsBinding: Binding<Bool> {
+    Binding(
+      get: { selectedPage == 0 },
+      set: { if !$0 { withAnimation(.easeInOut(duration: 0.25)) { selectedPage = 1 } } }
+    )
+  }
+
   var body: some View {
     ZStack {
       AppTheme.backgroundGradient
         .edgesIgnoringSafeArea(.all)
 
-      TabView(selection: $selectedPage) {
-        // Statistics Screen
-        StatisticsView(isPresented: Binding(
-          get: { selectedPage == 0 },
-          set: { if !$0 { withAnimation { selectedPage = 1 } } }
-        ), targetChartType: .macros)
-        .tag(0)
-
-        // Main App Screen
-        VStack(spacing: 2) {
-          topBarView
-          statsButtonsView
-            .frame(height: 60)
-          if hasMacrosData {
-            macrosLineView
-          }
-
-          ProductListView(
-            products: products,
-            onRefresh: refreshAction,
-            onDelete: deleteProductWithLoading,
-            onModify: modifyProductPortion,
-            onTryAgain: tryAgainProduct,
-            onAddSugar: addSugarToProduct,
-            onAddDrinkExtra: addExtraToProduct,
-            onAddFoodExtra: addExtraToProduct,
-            onPhotoTap: showFullScreenPhoto,
-            deletingProductTime: deletingProductTime,
-            onShareSuccess: {
-              StatisticsService.shared.clearExpiredCache()
-              ProductStorageService.shared.clearCache()
-              self.returnToToday()
-            }
-          )
-          .padding(.top, 0)
-          
-          cameraButtonView
-            .padding(.top, 10)
+      // Main screen is not inside a page TabView, so horizontal swipes
+      // are ours (Statistics / Camera) instead of a competing pager.
+      VStack(spacing: 2) {
+        topBarView
+        statsButtonsView
+          .frame(height: 60)
+        if hasMacrosData {
+          macrosLineView
         }
-        .tag(1)
+
+        ProductListView(
+          products: products,
+          onRefresh: refreshAction,
+          onDelete: deleteProductWithLoading,
+          onModify: modifyProductPortion,
+          onTryAgain: tryAgainProduct,
+          onAddSugar: addSugarToProduct,
+          onAddDrinkExtra: addExtraToProduct,
+          onAddFoodExtra: addExtraToProduct,
+          onPhotoTap: showFullScreenPhoto,
+          deletingProductTime: deletingProductTime,
+          onShareSuccess: {
+            StatisticsService.shared.clearExpiredCache()
+            ProductStorageService.shared.clearCache()
+            self.returnToToday()
+          }
+        )
+        .padding(.top, 0)
+
+        cameraButtonView
+          .padding(.top, 10)
       }
-      .tabViewStyle(.page(indexDisplayMode: .never))
+      .contentShape(Rectangle())
+      .simultaneousGesture(homeSwipeGesture)
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
@@ -230,6 +259,20 @@ struct ContentView: View {
             "Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice."
           ))
       }
+      .alert(
+        loc("login.scan_prompt_title", "Unlock All Features"), isPresented: $showAnonymousLoginPrompt
+      ) {
+        Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
+        Button(loc("login.prompt.confirm", "Login Now")) {
+          authService.signOut()
+        }
+      } message: {
+        Text(
+          loc(
+            "login.scan_prompt_message",
+            "Please login to Google if you are ready or want to recover past food."
+          ))
+      }
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
           .environmentObject(authService)
@@ -242,12 +285,26 @@ struct ContentView: View {
         }
       }
       .sheet(isPresented: $showHealthDisclaimer) {
-        HealthDisclaimerView()
+        HealthDisclaimerView(todayHealthScore: averageHealthScore)
       }
       .sheet(isPresented: $showRecommendation) {
         RecommendationView(recommendationText: recommendationText)
       }
-      // StatisticsView is now part of the TabView, so we remove the sheet
+      .sheet(item: $fixFoodNameData) { data in
+        FixFoodNameView(
+          currentName: data.currentName,
+          imageId: data.imageId,
+          languageCode: languageService.currentCode,
+          onSave: { newName in
+            fixFoodNameData = nil
+            submitManualFoodName(time: data.time, imageId: data.imageId, newName: newName)
+          },
+          onCancel: {
+            fixFoodNameData = nil
+          }
+        )
+      }
+      // Statistics overlays Home when the user swipes left
       .sheet(isPresented: $showCalendarPicker) {
         CalendarDatePickerView(
           selectedDate: $selectedDate,
@@ -285,6 +342,12 @@ struct ContentView: View {
           .environmentObject(languageService)
           .opacity(showOnboarding ? 1 : 0)
       )
+
+      if selectedPage == 0 {
+        StatisticsView(isPresented: statisticsBinding, targetChartType: .macros)
+          .transition(.move(edge: .leading))
+          .zIndex(1)
+      }
 
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
@@ -683,13 +746,48 @@ struct ContentView: View {
   }
 
   /// Daily macro targets (g) from calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
+  /// Custom goals from settings override the default split when present.
   private func macroTargetsFromDailyKcal(_ kcal: Int) -> (protein: Double, fat: Double, carbs: Double, sugarMax: Double) {
-    guard kcal > 0 else { return (80, 53, 200, 40) }
-    let k = Double(kcal)
-    let protein = (k * 0.20) / 4.0
-    let fat = (k * 0.30) / 9.0
-    let carbs = (k * 0.50) / 4.0
-    return (protein, fat, carbs, 40.0)
+    let defaultTargets: (protein: Double, fat: Double, carbs: Double, sugarMax: Double) = {
+      guard kcal > 0 else { return (80, 53, 200, 40) }
+      let k = Double(kcal)
+      return ((k * 0.20) / 4.0, (k * 0.30) / 9.0, (k * 0.50) / 4.0, 40.0)
+    }()
+    guard let saved = CalorieLimitsStorageService.shared.load() else { return defaultTargets }
+    return (
+      saved.customProteinGoal ?? defaultTargets.protein,
+      saved.customFatGoal ?? defaultTargets.fat,
+      saved.customCarbsGoal ?? defaultTargets.carbs,
+      defaultTargets.sugarMax
+    )
+  }
+
+  private var hasCustomMacroGoals: Bool {
+    guard let saved = CalorieLimitsStorageService.shared.load() else { return false }
+    return saved.customProteinGoal != nil || saved.customFatGoal != nil
+      || saved.customCarbsGoal != nil
+  }
+
+  private func saveMacroGoals(protein: Double, fat: Double, carbs: Double) {
+    var limits =
+      CalorieLimitsStorageService.shared.load()
+      ?? .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false)
+    limits.customProteinGoal = protein
+    limits.customFatGoal = fat
+    limits.customCarbsGoal = carbs
+    CalorieLimitsStorageService.shared.save(limits)
+
+    GRPCService().updateMacroGoals(
+      proteinTargetGrams: protein, fatTargetGrams: fat, carbsTargetGrams: carbs
+    ) { _ in }
+  }
+
+  private func resetMacroGoalsToRecommended() {
+    guard var limits = CalorieLimitsStorageService.shared.load() else { return }
+    limits.customProteinGoal = nil
+    limits.customFatGoal = nil
+    limits.customCarbsGoal = nil
+    CalorieLimitsStorageService.shared.save(limits)
   }
 
   private var macrosLineView: some View {
@@ -754,46 +852,22 @@ struct ContentView: View {
     }
     .buttonStyle(PlainButtonStyle())
     .sheet(isPresented: $showMacroTargets) {
-      macroTargetsSheetContent(softLimit: softLimit)
+      MacroGoalsEditView(
+        initialTargets: macroTargetsFromDailyKcal(softLimit),
+        hasCustomGoals: hasCustomMacroGoals,
+        onSave: { protein, fat, carbs in
+          saveMacroGoals(protein: protein, fat: fat, carbs: carbs)
+          showMacroTargets = false
+        },
+        onResetToRecommended: {
+          resetMacroGoalsToRecommended()
+          showMacroTargets = false
+        },
+        onCancel: {
+          showMacroTargets = false
+        }
+      )
     }
-  }
-
-  private func macroTargetsSheetContent(softLimit: Int) -> some View {
-    let targets = macroTargetsFromDailyKcal(softLimit)
-    func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
-    let grams = loc("units.g", "g")
-    let proLabel = loc("macro.pro", "PRO")
-    let fatLabel = loc("macro.fat", "FAT")
-    let carLabel = loc("macro.car", "CAR")
-    let sugLabel = loc("macro.sug", "SUG")
-    let macroGreenPurple = Color(red: 0.22, green: 0.55, blue: 0.6)
-    return VStack(spacing: 0) {
-      Spacer(minLength: 0)
-      Text(loc("macro.targets.alert.title", "Macro goals"))
-        .font(.subheadline.weight(.semibold))
-        .scaleEffect(1.25)
-        .foregroundColor(macroGreenPurple)
-      VStack(alignment: .center, spacing: 4) {
-        Text(proLabel + " " + fmt(targets.protein) + grams)
-        Text(fatLabel + " " + fmt(targets.fat) + grams)
-        Text(carLabel + " " + fmt(targets.carbs) + grams)
-        Text(sugLabel + " < 40" + grams)
-      }
-      .font(.subheadline)
-      .foregroundColor(macroGreenPurple)
-      .padding(.top, 8)
-      Button(loc("common.ok", "OK")) {
-        showMacroTargets = false
-      }
-      .buttonStyle(PrimaryButtonStyle())
-      .padding(.top, 12)
-      Spacer(minLength: 0)
-    }
-    .frame(maxWidth: .infinity)
-    .padding(.horizontal, 24)
-    .padding(.vertical, 16)
-    .presentationDetents([.height(240)])
-    .presentationDragIndicator(.visible)
   }
 
   private var cameraButtonView: some View {
@@ -823,9 +897,11 @@ struct ContentView: View {
         isLoadingFoodPhoto = false
       },
       onPhotoStarted: {
-        // Photo processing started
         HapticsService.shared.mediumImpact()
         isLoadingFoodPhoto = true
+        if authService.recordAnonymousFoodScanIfNeeded() {
+          showAnonymousLoginPrompt = true
+        }
       },
       onReturnToToday: {
         returnToToday()
@@ -834,7 +910,8 @@ struct ContentView: View {
           if let step = MainAppTutorialView.steps.first(where: { $0.key == key }) {
               activeTutorialStep = step
           }
-      }
+      },
+      externalCameraTrigger: $swipeCameraTrigger
     )
     .buttonStyle(PrimaryButtonStyle())
   }
@@ -1197,7 +1274,8 @@ struct ContentView: View {
   }
 
   func tryAgainProduct(time: Int64, imageId: String) {
-    guard let userEmail = authService.userEmail else {
+    // "Try manually" – user can fix the dish name, optionally from LLM suggestions.
+    guard authService.userEmail != nil else {
       AlertHelper.showAlert(
         title: loc("common.error", "Error"),
         message: loc(
@@ -1209,48 +1287,49 @@ struct ContentView: View {
       return
     }
 
-    AlertHelper.showTextInputAlert(
-      title: loc("manual_food.title", "Fix food name"),
-      message: loc(
-        "manual_food.msg",
-        "Enter the correct dish name. Weight (grams) stays the same — use Custom grams to change it."
-      ),
-      placeholder: product.name,
-      initialText: product.name,
-      confirmTitle: loc("common.save", "Save")
-    ) { newName in
-      self.deletingProductTime = time
-      GRPCService().modifyFoodRecord(
-        time: time,
-        userEmail: userEmail,
-        percentage: 100,
-        isTryManually: true,
-        imageId: imageId,
-        manualFoodName: newName
-      ) { success in
-        DispatchQueue.main.async {
-          self.deletingProductTime = nil
-          if success {
-            StatisticsService.shared.clearExpiredCache()
-            ProductStorageService.shared.clearCache()
-            AlertHelper.showAlert(
-              title: loc("manual_food.success.title", "Updated"),
-              message: String(
-                format: loc(
-                  "manual_food.success.msg", "Updated '%@'."), newName),
-              haptic: .success
-            ) {
-              self.returnToToday()
-            }
-          } else {
-            HapticsService.shared.error()
-            AlertHelper.showAlert(
-              title: loc("common.error", "Error"),
-              message: loc(
-                "manual_food.error",
-                "Failed to update. Please try again.")
-            )
+    fixFoodNameData = FixFoodNameData(time: time, imageId: imageId, currentName: product.name)
+  }
+
+  private func submitManualFoodName(time: Int64, imageId: String, newName: String) {
+    guard let userEmail = authService.userEmail else {
+      AlertHelper.showAlert(
+        title: loc("common.error", "Error"),
+        message: loc(
+          "portion.modify.need_login", "Unable to update. Please sign in again."))
+      return
+    }
+
+    self.deletingProductTime = time
+    GRPCService().modifyFoodRecord(
+      time: time,
+      userEmail: userEmail,
+      percentage: 100,
+      isTryManually: true,
+      imageId: imageId,
+      manualFoodName: newName
+    ) { success in
+      DispatchQueue.main.async {
+        self.deletingProductTime = nil
+        if success {
+          StatisticsService.shared.clearExpiredCache()
+          ProductStorageService.shared.clearCache()
+          AlertHelper.showAlert(
+            title: loc("manual_food.success.title", "Updated"),
+            message: String(
+              format: loc(
+                "manual_food.success.msg", "Updated '%@'."), newName),
+            haptic: .success
+          ) {
+            self.returnToToday()
           }
+        } else {
+          HapticsService.shared.error()
+          AlertHelper.showAlert(
+            title: loc("common.error", "Error"),
+            message: loc(
+              "manual_food.error",
+              "Failed to update. Please try again.")
+          )
         }
       }
     }

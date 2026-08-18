@@ -422,6 +422,53 @@ class GRPCService {
     }
   }
 
+  /// Asks the backend to re-analyze the already-uploaded photo and suggest a
+  /// short list of alternate dish names (for when the LLM misidentified the food).
+  func suggestDishNames(
+    imageId: String,
+    currentName: String,
+    languageCode: String,
+    completion: @escaping ([String]) -> Void
+  ) {
+    guard !imageId.isEmpty else {
+      completion([])
+      return
+    }
+
+    let payload: [String: Any] = [
+      "image_id": imageId,
+      "current_name": currentName,
+      "language_code": languageCode,
+    ]
+
+    guard let body = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+      completion([])
+      return
+    }
+
+    guard var request = createRequest(
+      endpoint: "suggest_dish_names", httpMethod: "POST", body: body)
+    else {
+      completion([])
+      return
+    }
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    sendRequest(request: request, retriesLeft: 0) { data, response, error in
+      guard error == nil,
+        let response = response as? HTTPURLResponse,
+        response.statusCode >= 200, response.statusCode < 300,
+        let data = data,
+        let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+        let suggestions = json["suggestions"] as? [String]
+      else {
+        completion([])
+        return
+      }
+      completion(suggestions)
+    }
+  }
+
   /// JSON endpoint to rename a food item manually, without re-triggering AI analysis.
   func renameFood(
     time: Int64,
@@ -1241,6 +1288,52 @@ class GRPCService {
       "goal_mode": goalMode,
       "goal_months": goalMonths,
       "recommended_calories": recommendedCalories,
+    ]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200
+      else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
+  func updateMacroGoals(
+    proteinTargetGrams: Double,
+    fatTargetGrams: Double,
+    carbsTargetGrams: Double,
+    completion: @escaping (Bool) -> Void
+  ) {
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/goal_update") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    if let token = KeychainHelper.shared.read("auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let body: [String: Any] = [
+      "protein_target_g": proteinTargetGrams,
+      "fat_target_g": fatTargetGrams,
+      "carbs_target_g": carbsTargetGrams,
     ]
 
     do {
