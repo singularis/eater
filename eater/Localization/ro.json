@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Editează porecla",
   "profile.email": "Email",
+  "profile.font_size": "Dimensiune text",
+  "profile.font_size.desc": "Micșorează sau mărește textul pentru ochii tăi",
   "profile.friend": "Alege prietenul",
   "profile.friend.desc": "Pictograme, sunete și mesaje motivazionale personalizate!",
   "profile.header": "Profil",

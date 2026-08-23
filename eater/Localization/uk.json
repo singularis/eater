@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Редагувати профіль",
   "profile.email": "Електронна пошта",
+  "profile.font_size": "Розмір тексту",
+  "profile.font_size.desc": "Зменшіть або збільшіть текст під свій зір",
   "profile.friend": "Обери свого Друга",
   "profile.friend.desc": "Отримай унікальні іконки, звуки та мотиваційні повідомлення!",
   "profile.header": "Профіль",

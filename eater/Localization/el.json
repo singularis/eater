@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Επεξεργασία ψευδωνύμου",
   "profile.email": "Email",
+  "profile.font_size": "Μέγεθος κειμένου",
+  "profile.font_size.desc": "Μίκρυνε ή μεγάλωσε το κείμενο για τα μάτια σου",
   "profile.friend": "Επίλεξτε φίλο",
   "profile.friend.desc": "Προσαρμοσμένα εικονίδια, ήχοι και κινητήρια μηνύματα!",
   "profile.header": "Προφίλ",

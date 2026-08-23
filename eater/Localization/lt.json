@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Redaguoti slapyvardį",
   "profile.email": "El. paštas",
+  "profile.font_size": "Teksto dydis",
+  "profile.font_size.desc": "Sumažinkite arba padidinkite tekstą pagal akis",
   "profile.friend": "Pasirink draugą",
   "profile.friend.desc": "Pritaikytos piktogramos, garsai ir motyvacinės žinutės!",
   "profile.header": "Profilis",

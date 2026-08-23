@@ -4,15 +4,80 @@ struct RecommendationView: View {
   @Environment(\.dismiss) private var dismiss
   let recommendationText: String
 
-  /// Replaces API English labels with localized strings in recommendation body
+  /// Localizes labels and drops favorite / recommended dish blocks.
   private var localizedRecommendationText: String {
     var text = recommendationText
-    text = text.replacingOccurrences(of: "Favorite dish:", with: loc("rec.favorite_dish", "Favorite dish:"))
+    text = stripUnwantedSections(from: text)
+    text = limitBulletSection(in: text, matching: ["Foods to Reduce", "Reduce or Avoid"], maxItems: 2)
     text = text.replacingOccurrences(of: "- Dish Name:", with: "- " + loc("rec.dish_name_label", "Dish Name:"))
     text = text.replacingOccurrences(of: "- Description:", with: "- " + loc("rec.description_label", "Description:"))
     text = text.replacingOccurrences(of: "Dish Name:", with: loc("rec.dish_name_label", "Dish Name:"))
     text = text.replacingOccurrences(of: "Description:", with: loc("rec.description_label", "Description:"))
     return text
+  }
+
+  private func stripUnwantedSections(from text: String) -> String {
+    let markers = [
+      "Favorite dish",
+      "Favourite dish",
+      loc("rec.favorite_dish", "Favorite dish:").replacingOccurrences(of: ":", with: ""),
+      "Recommended dish",
+      "Try This Dish",
+      "Улюблена страва",
+      "Рекомендована страва",
+    ]
+    let lines = text.components(separatedBy: "\n")
+    var kept: [String] = []
+    var skipping = false
+    for line in lines {
+      let trimmed = line.trimmingCharacters(in: .whitespaces)
+      if skipping {
+        if trimmed.isEmpty {
+          skipping = false
+        }
+        continue
+      }
+      if markers.contains(where: { trimmed.localizedCaseInsensitiveContains($0) }) {
+        skipping = true
+        continue
+      }
+      kept.append(line)
+    }
+    return kept.joined(separator: "\n")
+      .replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+  }
+
+  private func limitBulletSection(in text: String, matching headers: [String], maxItems: Int) -> String {
+    let lines = text.components(separatedBy: "\n")
+    var result: [String] = []
+    var inSection = false
+    var bullets = 0
+    for line in lines {
+      let trimmed = line.trimmingCharacters(in: .whitespaces)
+      if headers.contains(where: { !$0.isEmpty && trimmed.localizedCaseInsensitiveContains($0) }) {
+        inSection = true
+        bullets = 0
+        result.append(line)
+        continue
+      }
+      if inSection {
+        if trimmed.hasPrefix("-") || trimmed.hasPrefix("•") {
+          if bullets < maxItems {
+            result.append(line)
+            bullets += 1
+          }
+          continue
+        }
+        if trimmed.isEmpty {
+          inSection = false
+          result.append(line)
+          continue
+        }
+        inSection = false
+      }
+      result.append(line)
+    }
+    return result.joined(separator: "\n")
   }
 
   var body: some View {

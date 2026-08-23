@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Rediģēt iesauku",
   "profile.email": "E-pasts",
+  "profile.font_size": "Teksta izmērs",
+  "profile.font_size.desc": "Samazini vai palielini tekstu savām acīm",
   "profile.friend": "Izvēlies draugu",
   "profile.friend.desc": "Pielāgotas ikonas, skaņas un motivējoši ziņojumi!",
   "profile.header": "Profils",

@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "عرفیت میں ترمیم",
   "profile.email": "ای میل",
+  "profile.font_size": "متن کا سائز",
+  "profile.font_size.desc": "اپنی آنکھوں کے لیے متن چھوٹا یا بڑا کریں",
   "profile.friend": "اپنا دوست منتخب کریں",
   "profile.friend.desc": "حسب ضرورت آئیکن، آوازیں اور حوصلہ افزا پیغامات!",
   "profile.header": "پروفائل",

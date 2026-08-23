@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Editja l-laqam",
   "profile.email": "Email",
+  "profile.font_size": "Daqs tat-test",
+  "profile.font_size.desc": "Agħmel it-test iżgħar jew akbar għal għajnejk",
   "profile.friend": "Għażel il-ħabib",
   "profile.friend.desc": "Ikoni, ħsejjes u messaġġi motivazzjonali!",
   "profile.header": "Profil",

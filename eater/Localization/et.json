@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Muuda hüüdnime",
   "profile.email": "E-post",
+  "profile.font_size": "Teksti suurus",
+  "profile.font_size.desc": "Muuda tekst väiksemaks või suuremaks oma silmadele",
   "profile.friend": "Vali sõber",
   "profile.friend.desc": "Kohandatud ikoonid, helid ja motivatsiooniteated!",
   "profile.header": "Profiil",

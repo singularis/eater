@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Takma adı düzenle",
   "profile.email": "E-posta",
+  "profile.font_size": "Yazı boyutu",
+  "profile.font_size.desc": "Metni gözlerin için küçült veya büyüt",
   "profile.friend": "Arkadaşını seç",
   "profile.friend.desc": "Özel ikonlar, sesler ve motive edici mesajlar!",
   "profile.header": "Profil",

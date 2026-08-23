@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "تعديل الاسم المستعار",
   "profile.email": "البريد الإلكتروني",
+  "profile.font_size": "حجم النص",
+  "profile.font_size.desc": "صغّر النص أو كبّره حسب نظرك",
   "profile.friend": "اختر صديقك",
   "profile.friend.desc": "احصل على أيقونات وأصوات ورسائل تحفيزية مخصصة!",
   "profile.header": "الملف الشخصي",

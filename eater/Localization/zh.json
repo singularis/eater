@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "编辑昵称",
   "profile.email": "邮箱",
+  "profile.font_size": "文字大小",
+  "profile.font_size.desc": "按视力把文字调小或调大",
   "profile.friend": "选择你的伙伴",
   "profile.friend.desc": "自定义图标、声音和励志消息！",
   "profile.header": "个人资料",

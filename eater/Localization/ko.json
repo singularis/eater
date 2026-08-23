@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "닉네임 편집",
   "profile.email": "이메일",
+  "profile.font_size": "글자 크기",
+  "profile.font_size.desc": "눈에 맞게 글자를 작게 또는 크게 하세요",
   "profile.friend": "친구 선택",
   "profile.friend.desc": "맞춤 아이콘, 소리, 동기 부여 메시지!",
   "profile.header": "프로필",

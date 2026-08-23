@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Muokkaa lempinimeä",
   "profile.email": "Sähköposti",
+  "profile.font_size": "Tekstikoko",
+  "profile.font_size.desc": "Pienennä tai suurenna tekstiä silmillesi",
   "profile.friend": "Valitse ystävä",
   "profile.friend.desc": "Omat kuvakkeet, äänet ja motivoivat viestit!",
   "profile.header": "Profiili",

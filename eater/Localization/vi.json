@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Sửa biệt danh",
   "profile.email": "Email",
+  "profile.font_size": "Cỡ chữ",
+  "profile.font_size.desc": "Thu nhỏ hoặc phóng to chữ cho mắt bạn",
   "profile.friend": "Chọn bạn",
   "profile.friend.desc": "Biểu tượng, âm thanh và tin nhắn động viên tùy chỉnh!",
   "profile.header": "Hồ sơ",

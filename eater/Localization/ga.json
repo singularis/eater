@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Cuir leasainm in eagar",
   "profile.email": "Ríomhphost",
+  "profile.font_size": "Méid téacs",
+  "profile.font_size.desc": "Déan an téacs níos lú nó níos mó do do shúile",
   "profile.friend": "Roghnaigh do chara",
   "profile.friend.desc": "Deilbhíní, fuaimeanna agus teachtaireachtaí spreagúla!",
   "profile.header": "Próifíl",

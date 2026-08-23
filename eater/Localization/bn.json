@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "ডাকনাম সম্পাদনা",
   "profile.email": "ইমেইল",
+  "profile.font_size": "টেক্সটের আকার",
+  "profile.font_size.desc": "চোখের জন্য লেখা ছোট বা বড় করুন",
   "profile.friend": "বন্ধু বেছে নিন",
   "profile.friend.desc": "কাস্টম আইকন, সাউন্ড এবং মোটিভেশনাল মেসেজ পাবেন!",
   "profile.header": "প্রোফাইল",

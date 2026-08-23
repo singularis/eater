@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Rediger kaldenavn",
   "profile.email": "Email",
+  "profile.font_size": "Tekststørrelse",
+  "profile.font_size.desc": "Gør teksten mindre eller større til dine øjne",
   "profile.friend": "Vælg din ven",
   "profile.friend.desc": "Tilpassede ikoner, lyde og motiverende beskeder!",
   "profile.header": "Profil",

@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Edytuj nick",
   "profile.email": "E-mail",
+  "profile.font_size": "Rozmiar tekstu",
+  "profile.font_size.desc": "Zmniejsz lub powiększ tekst pod swój wzrok",
   "profile.friend": "Wybierz przyjaciela",
   "profile.friend.desc": "Własne ikony, dźwięki i motywujące wiadomości!",
   "profile.header": "Profil",

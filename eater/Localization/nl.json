@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Bijnaam bewerken",
   "profile.email": "E-mail",
+  "profile.font_size": "Tekstgrootte",
+  "profile.font_size.desc": "Maak tekst kleiner of groter voor je ogen",
   "profile.friend": "Kies je vriend",
   "profile.friend.desc": "Aangepaste iconen, geluiden en motiverende berichten!",
   "profile.header": "Profiel",

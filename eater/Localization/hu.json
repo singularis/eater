@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Becenév szerkesztése",
   "profile.email": "E-mail",
+  "profile.font_size": "Szövegméret",
+  "profile.font_size.desc": "Kicsinyítsd vagy nagyítsd a szöveget a szemedhez",
   "profile.friend": "Válaszd ki a barátod",
   "profile.friend.desc": "Egyedi ikonok, hangok és motivációs üzenetek!",
   "profile.header": "Profil",

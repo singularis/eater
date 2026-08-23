@@ -9,7 +9,7 @@ final class AppSettingsService: ObservableObject {
 
   static let shared = AppSettingsService()
 
-  @AppStorage("app_appearance_mode") var storedAppearance: String = AppearanceMode.system.rawValue {
+  @AppStorage("app_appearance_mode") var storedAppearance: String = AppearanceMode.light.rawValue {
     didSet { objectWillChange.send() }
   }
 
@@ -19,6 +19,36 @@ final class AppSettingsService: ObservableObject {
 
   @AppStorage("save_photos_to_library") var savePhotosToLibrary: Bool = true {
     didSet { objectWillChange.send() }
+  }
+
+  /// Home meal-card scale. Slider 80%…120%, step 1%.
+  @Published var fontScale: Double {
+    didSet { UserDefaults.standard.set(fontScale, forKey: Self.fontScaleKey) }
+  }
+
+  static let fontScaleMin = 0.80
+  static let fontScaleMax = 1.20
+  static let fontScaleStep = 0.01
+
+  private static let fontScaleKey = "app_dish_card_scale_v4"
+  private static let fontScaleDefault = 1.0
+
+  private init() {
+    let stored = UserDefaults.standard.object(forKey: Self.fontScaleKey) as? Double
+    let raw = stored ?? Self.fontScaleDefault
+    fontScale = min(Self.fontScaleMax, max(Self.fontScaleMin, raw))
+  }
+
+  var dynamicTypeSize: DynamicTypeSize {
+    switch fontScale {
+    case ..<0.88: return .small
+    case ..<0.95: return .medium
+    case ..<1.05: return .large
+    case ..<1.15: return .xLarge
+    case ..<1.25: return .xxLarge
+    case ..<1.35: return .xxxLarge
+    default: return .accessibility1
+    }
   }
 
   @AppStorage("food_shared_count") var foodSharedCount: Int = 0 {
@@ -99,8 +129,11 @@ final class AppSettingsService: ObservableObject {
   }
 
   var appearance: AppearanceMode {
-    get { AppearanceMode(rawValue: storedAppearance) ?? .system }
-    set { storedAppearance = newValue.rawValue }
+    get {
+      let mode = AppearanceMode(rawValue: storedAppearance) ?? .light
+      return mode == .system ? .light : mode
+    }
+    set { storedAppearance = newValue == .system ? AppearanceMode.light.rawValue : newValue.rawValue }
   }
 
   var scheme: ColorScheme? {

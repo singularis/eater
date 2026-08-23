@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "แก้ไขชื่อเล่น",
   "profile.email": "อีเมล",
+  "profile.font_size": "ขนาดข้อความ",
+  "profile.font_size.desc": "ย่อหรือขยายข้อความให้เหมาะกับสายตา",
   "profile.friend": "เลือกเพื่อน",
   "profile.friend.desc": "ไอคอน เสียง และข้อความสร้างแรงบันดาลใจ!",
   "profile.header": "โปรไฟล์",

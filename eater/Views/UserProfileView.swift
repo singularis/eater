@@ -29,6 +29,7 @@ struct UserProfileView: View {
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = false
   #endif
   @EnvironmentObject var languageService: LanguageService
+  @ObservedObject private var appSettings = AppSettingsService.shared
   @State private var showLanguagePicker = false
   @ObservedObject private var themeService = ThemeService.shared
   /// Defer heavy mascot artwork so menu buttons appear immediately.
@@ -342,13 +343,53 @@ struct UserProfileView: View {
                 
                 Picker("Appearance", selection: Binding<String>(
                   get: { AppSettingsService.shared.appearance.rawValue },
-                  set: { AppSettingsService.shared.appearance = AppSettingsService.AppearanceMode(rawValue: $0) ?? .system }
+                  set: { AppSettingsService.shared.appearance = AppSettingsService.AppearanceMode(rawValue: $0) ?? .light }
                 )) {
-                  Text(loc("appearance.system", "System")).tag(AppSettingsService.AppearanceMode.system.rawValue)
                   Text(loc("appearance.light", "Light")).tag(AppSettingsService.AppearanceMode.light.rawValue)
                   Text(loc("appearance.dark", "Dark")).tag(AppSettingsService.AppearanceMode.dark.rawValue)
                 }
                 .pickerStyle(.segmented)
+              }
+              .padding(.horizontal, 8)
+              
+              Divider().padding(.horizontal, 8)
+
+              VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                  Text(loc("profile.font_size", "Text size"))
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(AppTheme.textSecondary)
+                  Spacer()
+                  Text("\(Int((appSettings.fontScale * 100).rounded()))%")
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(AppTheme.textSecondary)
+                }
+
+                HStack(spacing: 10) {
+                  Text("A")
+                    .font(.caption)
+                    .foregroundColor(AppTheme.textSecondary)
+                    .accessibilityHidden(true)
+                  Slider(
+                    value: Binding(
+                      get: { appSettings.fontScale },
+                      set: { appSettings.fontScale = $0 }
+                    ),
+                    in: AppSettingsService.fontScaleMin...AppSettingsService.fontScaleMax,
+                    step: AppSettingsService.fontScaleStep
+                  )
+                  .tint(AppTheme.accent)
+                  .accessibilityLabel(loc("profile.font_size", "Text size"))
+                  Text("A")
+                    .font(.title3)
+                    .foregroundColor(AppTheme.textSecondary)
+                    .accessibilityHidden(true)
+                }
+
+                Text(loc("profile.font_size.desc", "Make text smaller or larger for your eyes"))
+                  .font(.caption2)
+                  .foregroundColor(AppTheme.textSecondary)
               }
               .padding(.horizontal, 8)
               

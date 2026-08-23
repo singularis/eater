@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "ニックネームを編集",
   "profile.email": "メール",
+  "profile.font_size": "文字サイズ",
+  "profile.font_size.desc": "見やすいように文字を小さくまたは大きくします",
   "profile.friend": "おともを選ぶ",
   "profile.friend.desc": "カスタムアイコン、音、励ましメッセージ！",
   "profile.header": "プロフィール",

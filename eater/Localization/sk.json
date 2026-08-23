@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Upraviť prezývku",
   "profile.email": "E‑mail",
+  "profile.font_size": "Veľkosť textu",
+  "profile.font_size.desc": "Zmenši alebo zväčši text podľa zraku",
   "profile.friend": "Vyberte priateľa",
   "profile.friend.desc": "Vlastné ikony, zvuky a motivačné správy!",
   "profile.header": "Profil",

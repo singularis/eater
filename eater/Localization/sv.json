@@ -595,6 +595,8 @@
   "profile.dev_environment": "Server Environment",
   "profile.edit_nickname": "Redigera smeknamn",
   "profile.email": "E-post",
+  "profile.font_size": "Textstorlek",
+  "profile.font_size.desc": "Gör texten mindre eller större för dina ögon",
   "profile.friend": "Välj din vän",
   "profile.friend.desc": "Anpassade ikoner, ljud och motiverande meddelanden!",
   "profile.header": "Profil",
