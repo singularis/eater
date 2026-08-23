@@ -17,6 +17,9 @@ struct CameraButtonView: View {
   let isLoadingFoodPhoto: Bool
   let selectedDate: Date
   let isViewingCustomDate: Bool
+  let mealRemaining: MealPlannerRemaining
+  let mealsToday: Int
+  let languageCode: String
   var onPhotoSuccess: (() -> Void)?
   var onPhotoFailure: (() -> Void)?
   var onPhotoStarted: (() -> Void)?
@@ -26,10 +29,16 @@ struct CameraButtonView: View {
   /// camera flow as tapping "Take Food Photo", including backdating checks.
   var externalCameraTrigger: Binding<Bool> = .constant(false)
 
+  @State private var showMealPlanner = false
+  @State private var mealPlannerCycle = 0
+
   init(
     isLoadingFoodPhoto: Bool,
     selectedDate: Date = Date(),
     isViewingCustomDate: Bool = false,
+    mealRemaining: MealPlannerRemaining = MealPlannerRemaining(kcal: 0, protein: 0, carbs: 0, fats: 0, sugar: 0),
+    mealsToday: Int = 0,
+    languageCode: String = "en",
     onPhotoSuccess: (() -> Void)?,
     onPhotoFailure: (() -> Void)?,
     onPhotoStarted: (() -> Void)?,
@@ -40,6 +49,9 @@ struct CameraButtonView: View {
     self.isLoadingFoodPhoto = isLoadingFoodPhoto
     self.selectedDate = selectedDate
     self.isViewingCustomDate = isViewingCustomDate
+    self.mealRemaining = mealRemaining
+    self.mealsToday = mealsToday
+    self.languageCode = languageCode
     self.onPhotoSuccess = onPhotoSuccess
     self.onPhotoFailure = onPhotoFailure
     self.onPhotoStarted = onPhotoStarted
@@ -53,9 +65,10 @@ struct CameraButtonView: View {
       // First row: Single upload and Camera
       GeometryReader { geo in
         let totalWidth = geo.size.width
-        let uploadWidth = totalWidth * 0.30
-        let gapWidth = totalWidth * 0.05
-        let takeWidth = totalWidth - uploadWidth - gapWidth
+        let uploadWidth = totalWidth * 0.26
+        let plannerWidth = totalWidth * 0.16
+        let gapWidth = totalWidth * 0.03
+        let takeWidth = totalWidth - uploadWidth - plannerWidth - gapWidth * 2
 
         HStack(spacing: 0) {
           Button(action: {
@@ -96,6 +109,47 @@ struct CameraButtonView: View {
           .buttonStyle(.plain)
           .disabled(isLoadingFoodPhoto)
           .buttonStyle(PressScaleButtonStyle())
+
+          Color.clear
+            .frame(width: gapWidth)
+
+          Button(action: {
+            HapticsService.shared.select()
+            if showMealPlanner {
+              mealPlannerCycle += 1
+            } else {
+              showMealPlanner = true
+            }
+          }) {
+            VStack(spacing: 4) {
+              Image(systemName: "fork.knife")
+                .font(.system(size: 20, weight: .semibold))
+              Text(loc("camera.mealplan", "Plan"))
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            }
+            .padding(.vertical, 16)
+            .frame(width: plannerWidth, height: 72)
+            .background(AppTheme.primaryButtonGradient)
+            .cornerRadius(AppTheme.cornerRadius)
+            .foregroundColor(.white)
+            .overlay(
+              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                .stroke(
+                  LinearGradient(
+                    gradient: Gradient(colors: [Color(red: 1.0, green: 0.75, blue: 0.2).opacity(0.95), Color(red: 1.0, green: 0.55, blue: 0.15).opacity(0.35)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  ),
+                  lineWidth: 2
+                )
+            )
+            .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.4), radius: 6, x: 0, y: 3)
+          }
+          .buttonStyle(.plain)
+          .buttonStyle(PressScaleButtonStyle())
+          .accessibilityLabel(loc("meal_planner.title", "Meal Plan"))
 
           Color.clear
             .frame(width: gapWidth)
@@ -162,6 +216,14 @@ struct CameraButtonView: View {
             onPhotoStarted: onPhotoStarted
           )
         }
+    }
+    .sheet(isPresented: $showMealPlanner) {
+      MealPlannerView(
+        remaining: mealRemaining,
+        mealsToday: mealsToday,
+        languageCode: languageCode,
+        cycleToken: mealPlannerCycle
+      )
     }
     .alert(
       loc("camera.unavailable.title", "Camera Unavailable"), isPresented: $cameraUnavailableAlert

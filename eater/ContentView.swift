@@ -895,6 +895,9 @@ struct ContentView: View {
       isLoadingFoodPhoto: isLoadingFoodPhoto,
       selectedDate: selectedDate,
       isViewingCustomDate: isViewingCustomDate,
+      mealRemaining: mealPlannerRemaining,
+      mealsToday: products.count,
+      languageCode: languageService.currentCode,
       onPhotoSuccess: {
         // Increment scan count
         AppSettingsService.shared.foodScannedCount += 1
@@ -1942,6 +1945,18 @@ struct ContentView: View {
 
   private func getAdjustedSoftLimit() -> Int {
     return softLimit + activityCaloriesForViewedDate()
+  }
+
+  private var mealPlannerRemaining: MealPlannerRemaining {
+    let budget = getAdjustedSoftLimit()
+    let targets = macroTargetsFromDailyKcal(budget)
+    return MealPlannerRemaining(
+      kcal: budget - caloriesLeft,
+      protein: max(0, targets.protein - proteins),
+      carbs: max(0, targets.carbs - carbs),
+      fats: max(0, targets.fat - fats),
+      sugar: max(0, targets.sugarMax - sugar)
+    )
   }
 
   private func loadTodaySportCalories() {
