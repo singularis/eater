@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Suggested names",
   "manual_food.title": "Fix food name",
   "meal_planner.error": "Could not load a meal plan. Try again.",
+  "meal_planner.extras": "Extra tips",
   "meal_planner.loading": "Preparing a meal idea...",
   "meal_planner.next": "Another idea",
   "meal_planner.retry": "Retry",

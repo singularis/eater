@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Noms suggérés",
   "manual_food.title": "Corriger le nom de l'aliment",
   "meal_planner.error": "Impossible de charger le menu. Réessayez.",
+  "meal_planner.extras": "Conseils extra",
   "meal_planner.loading": "Préparation d’une idée de repas...",
   "meal_planner.next": "Autre idée",
   "meal_planner.retry": "Réessayer",

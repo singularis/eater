@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Foreslåede navne",
   "manual_food.title": "Ret madnavn",
   "meal_planner.error": "Kunne ikke indlæse planen. Prøv igen.",
+  "meal_planner.extras": "Ekstra råd",
   "meal_planner.loading": "Forbereder en måltidsidé...",
   "meal_planner.next": "En anden idé",
   "meal_planner.retry": "Prøv igen",

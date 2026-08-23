@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "建议名称",
   "manual_food.title": "修改食物名称",
   "meal_planner.error": "无法加载计划。请重试。",
+  "meal_planner.extras": "额外建议",
   "meal_planner.loading": "正在准备用餐建议...",
   "meal_planner.next": "换一个",
   "meal_planner.retry": "重试",

@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Predloženi nazivi",
   "manual_food.title": "Popravi naziv hrane",
   "meal_planner.error": "Plan se nije mogao učitati. Pokušajte ponovno.",
+  "meal_planner.extras": "Dodatni savjeti",
   "meal_planner.loading": "Pripremam ideju za obrok...",
   "meal_planner.next": "Druga ideja",
   "meal_planner.retry": "Ponovno",

@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Önerilen adlar",
   "manual_food.title": "Yemek adını düzelt",
   "meal_planner.error": "Plan yüklenemedi. Tekrar dene.",
+  "meal_planner.extras": "Ek öneriler",
   "meal_planner.loading": "Bir öğün fikri hazırlanıyor...",
   "meal_planner.next": "Başka fikir",
   "meal_planner.retry": "Tekrar dene",

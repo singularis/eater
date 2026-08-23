@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Vorgeschlagene Namen",
   "manual_food.title": "Lebensmittelnamen korrigieren",
   "meal_planner.error": "Essensplan konnte nicht geladen werden. Bitte erneut versuchen.",
+  "meal_planner.extras": "Extra-Tipps",
   "meal_planner.loading": "Idee wird vorbereitet...",
   "meal_planner.next": "Andere Idee",
   "meal_planner.retry": "Erneut",

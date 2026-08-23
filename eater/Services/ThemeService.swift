@@ -29,6 +29,14 @@ enum AppMascot: String, CaseIterable {
     case .dog: return "🐶"
     }
   }
+
+  var mealPlannerMascotImage: String? {
+    switch self {
+    case .none: return nil
+    case .cat: return "british_cat_food_bowl"
+    case .dog: return "french_bulldog_happy"
+    }
+  }
   
   // All available images for each state (for rotation)
   func images(for state: MascotState) -> [String] {

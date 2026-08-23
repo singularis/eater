@@ -31,6 +31,7 @@ struct CameraButtonView: View {
 
   @State private var showMealPlanner = false
   @State private var mealPlannerCycle = 0
+  @State private var plannerBeatScale: CGFloat = 1.0
 
   init(
     isLoadingFoodPhoto: Bool,
@@ -62,15 +63,15 @@ struct CameraButtonView: View {
 
   var body: some View {
     VStack(spacing: 10) {
-      // First row: Single upload and Camera
       GeometryReader { geo in
         let totalWidth = geo.size.width
+        let rowHeight = geo.size.height
         let uploadWidth = totalWidth * 0.26
-        let plannerWidth = totalWidth * 0.16
+        let plannerWidth = min(rowHeight, totalWidth * 0.22)
         let gapWidth = totalWidth * 0.03
         let takeWidth = totalWidth - uploadWidth - plannerWidth - gapWidth * 2
 
-        HStack(spacing: 0) {
+        HStack(alignment: .center, spacing: 0) {
           Button(action: {
             if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
                 req("hasSeenCameraTutorial")
@@ -79,17 +80,16 @@ struct CameraButtonView: View {
             HapticsService.shared.select()
             checkBackdating(sourceType: .photoLibrary)
           }) {
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
               Image(systemName: "photo.fill")
-                .font(.system(size: 18))
+                .font(.system(size: 16))
               Text(loc("camera.upload", "Upload"))
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.system(size: 15, weight: .medium, design: .rounded))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
             }
-            .padding(.vertical, 24)
-            .frame(width: uploadWidth)
+            .frame(width: uploadWidth, height: rowHeight)
             .background(AppTheme.primaryButtonGradient)
             .cornerRadius(AppTheme.cornerRadius)
             .foregroundColor(.white)
@@ -111,7 +111,7 @@ struct CameraButtonView: View {
           .buttonStyle(PressScaleButtonStyle())
 
           Color.clear
-            .frame(width: gapWidth)
+            .frame(width: gapWidth, height: rowHeight)
 
           Button(action: {
             HapticsService.shared.select()
@@ -121,38 +121,21 @@ struct CameraButtonView: View {
               showMealPlanner = true
             }
           }) {
-            VStack(spacing: 4) {
-              Image(systemName: "fork.knife")
-                .font(.system(size: 20, weight: .semibold))
-              Text(loc("camera.mealplan", "Plan"))
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            }
-            .padding(.vertical, 16)
-            .frame(width: plannerWidth, height: 72)
-            .background(AppTheme.primaryButtonGradient)
-            .cornerRadius(AppTheme.cornerRadius)
-            .foregroundColor(.white)
-            .overlay(
-              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                .stroke(
-                  LinearGradient(
-                    gradient: Gradient(colors: [Color(red: 1.0, green: 0.75, blue: 0.2).opacity(0.95), Color(red: 1.0, green: 0.55, blue: 0.15).opacity(0.35)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                  ),
-                  lineWidth: 2
-                )
-            )
-            .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.4), radius: 6, x: 0, y: 3)
+            Image("meal_planner")
+              .resizable()
+              .scaledToFill()
+              .frame(width: plannerWidth, height: rowHeight)
+              .clipped()
+              .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+              .scaleEffect(shouldPulsePlanner ? plannerBeatScale : 1.0)
+              .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.45), radius: 6, x: 0, y: 3)
           }
           .buttonStyle(.plain)
           .buttonStyle(PressScaleButtonStyle())
           .accessibilityLabel(loc("meal_planner.title", "Meal Plan"))
 
           Color.clear
-            .frame(width: gapWidth)
+            .frame(width: gapWidth, height: rowHeight)
 
           Button(action: {
             if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
@@ -162,16 +145,15 @@ struct CameraButtonView: View {
             HapticsService.shared.select()
             checkBackdating(sourceType: .camera)
           }) {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
               Image(systemName: "camera.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 18))
               Text(loc("camera.takefood", "Take Food Photo"))
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.system(size: 15, weight: .medium, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             }
-            .padding(.vertical, 24)
-            .frame(width: takeWidth)
+            .frame(width: takeWidth, height: rowHeight)
             .background(AppTheme.primaryButtonGradient)
             .cornerRadius(AppTheme.cornerRadius)
             .foregroundColor(.white)
@@ -192,11 +174,12 @@ struct CameraButtonView: View {
           .disabled(isLoadingFoodPhoto)
           .buttonStyle(PressScaleButtonStyle())
         }
-        .frame(height: 100)
+        .frame(width: totalWidth, height: rowHeight, alignment: .center)
       }
-      .frame(height: 100)
+      .frame(height: 80)
     }
-    .frame(height: 100)
+    .frame(height: 80)
+    .onAppear { startPlannerPulse() }
     .sheet(isPresented: $showCamera) {
       CameraView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
         .onAppear {
@@ -258,6 +241,24 @@ struct CameraButtonView: View {
     }
     .onChange(of: externalCameraTrigger.wrappedValue) { _, _ in
       checkBackdating(sourceType: .camera)
+    }
+  }
+
+  private var shouldPulsePlanner: Bool {
+    mealsToday < 1 && !AppSettingsService.shared.reduceMotion
+  }
+
+  private func startPlannerPulse() {
+    guard shouldPulsePlanner else {
+      plannerBeatScale = 1.0
+      return
+    }
+    plannerBeatScale = 1.0
+    withAnimation(
+      .easeInOut(duration: 0.45)
+      .repeatForever(autoreverses: true)
+    ) {
+      plannerBeatScale = 1.12
     }
   }
 

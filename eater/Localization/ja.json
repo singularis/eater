@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "候補の名前",
   "manual_food.title": "料理名を修正する",
   "meal_planner.error": "プランを読み込めませんでした。再試行してください。",
+  "meal_planner.extras": "追加のヒント",
   "meal_planner.loading": "食事の提案を準備しています...",
   "meal_planner.next": "別の提案",
   "meal_planner.retry": "再試行",

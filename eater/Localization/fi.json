@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "Ehdotetut nimet",
   "manual_food.title": "Korjaa ruoan nimi",
   "meal_planner.error": "Suunnitelmaa ei voitu ladata. Yritä uudelleen.",
+  "meal_planner.extras": "Lisävinkit",
   "meal_planner.loading": "Valmistellaan ateriaideaa...",
   "meal_planner.next": "Toinen idea",
   "meal_planner.retry": "Yritä uudelleen",

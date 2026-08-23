@@ -487,6 +487,7 @@
   "manual_food.suggestions_title": "추천 이름",
   "manual_food.title": "음식 이름 수정",
   "meal_planner.error": "계획을 불러오지 못했습니다. 다시 시도하세요.",
+  "meal_planner.extras": "추가 팁",
   "meal_planner.loading": "식사 아이디어를 준비하는 중...",
   "meal_planner.next": "다른 아이디어",
   "meal_planner.retry": "다시 시도",

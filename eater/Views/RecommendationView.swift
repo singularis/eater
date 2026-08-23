@@ -4,7 +4,6 @@ struct RecommendationView: View {
   @Environment(\.dismiss) private var dismiss
   let recommendationText: String
 
-  /// Localizes labels and drops favorite / recommended dish blocks.
   private var localizedRecommendationText: String {
     var text = recommendationText
     text = stripUnwantedSections(from: text)
@@ -20,25 +19,46 @@ struct RecommendationView: View {
     let markers = [
       "Favorite dish",
       "Favourite dish",
+      "Favorite healthy",
+      "Favourite healthy",
       loc("rec.favorite_dish", "Favorite dish:").replacingOccurrences(of: ":", with: ""),
       "Recommended dish",
       "Try This Dish",
-      "Улюблена страва",
+      "Health Advice",
+      "Age advice",
+      "Age-based",
+      "Порада за віком",
+      "Улюблена",
       "Рекомендована страва",
+    ]
+    let dishFieldMarkers = [
+      "Dish Name:",
+      "Description:",
+      loc("rec.dish_name_label", "Dish Name:"),
+      loc("rec.description_label", "Description:"),
     ]
     let lines = text.components(separatedBy: "\n")
     var kept: [String] = []
     var skipping = false
     for line in lines {
       let trimmed = line.trimmingCharacters(in: .whitespaces)
+      let isBullet = trimmed.hasPrefix("-") || trimmed.hasPrefix("•")
       if skipping {
         if trimmed.isEmpty {
           skipping = false
+          continue
         }
+        if ["🍬", "☕", "🔴", "🟢"].contains(where: { trimmed.hasPrefix($0) }) {
+          skipping = false
+        } else {
+          continue
+        }
+      }
+      if !isBullet && (trimmed.hasPrefix("💡") || markers.contains(where: { trimmed.localizedCaseInsensitiveContains($0) })) {
+        skipping = true
         continue
       }
-      if markers.contains(where: { trimmed.localizedCaseInsensitiveContains($0) }) {
-        skipping = true
+      if isBullet && dishFieldMarkers.contains(where: { trimmed.localizedCaseInsensitiveContains($0) }) {
         continue
       }
       kept.append(line)
