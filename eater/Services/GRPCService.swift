@@ -636,7 +636,9 @@ class GRPCService {
             carbohydrates: carbs,
             sugar: customDateFood.totalForDay.contains.sugar,
             numberOfMeals: numberOfMeals,
-            hasData: hasActualData
+            hasData: hasActualData,
+            averageHealthScore: DailyStatistics.averageHealthScore(
+              from: customDateFood.dishesForDate.map { Int($0.healthRating) })
           )
 
           completion(dailyStats)
@@ -737,7 +739,9 @@ class GRPCService {
           carbohydrates: carbs,
           sugar: sugar,
           numberOfMeals: numberOfMeals,
-          hasData: hasActualData
+          hasData: hasActualData,
+          averageHealthScore: DailyStatistics.averageHealthScore(
+            from: todayFood.dishesToday.map { Int($0.healthRating) })
         )
 
         completion(dailyStats)
