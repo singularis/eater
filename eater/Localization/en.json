@@ -111,7 +111,7 @@
   "calories.invalid.msg": "Please enter a valid number of calories burned.",
   "calories.invalid.title": "Invalid Calories",
   "calories.label": "Calories",
-  "camera.mealplan": "Plan",
+  "camera.mealplan": "Meal",
   "camera.takefood": "Take Food Photo",
   "camera.unavailable.msg": "Your device does not have a camera.",
   "camera.unavailable.title": "Camera Unavailable",

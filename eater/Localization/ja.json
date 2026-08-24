@@ -111,7 +111,7 @@
   "calories.invalid.msg": "消費カロリーの有効な数値を入力してください。",
   "calories.invalid.title": "無効なカロリー",
   "calories.label": "カロリー",
-  "camera.mealplan": "献立",
+  "camera.mealplan": "食事",
   "camera.takefood": "食べ物の写真を撮る",
   "camera.unavailable.msg": "お使いのデバイスにはカメラがありません。",
   "camera.unavailable.title": "カメラが利用できません",

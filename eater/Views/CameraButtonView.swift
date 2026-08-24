@@ -32,6 +32,7 @@ struct CameraButtonView: View {
   @State private var showMealPlanner = false
   @State private var mealPlannerCycle = 0
   @State private var plannerBeatScale: CGFloat = 1.0
+  @ObservedObject private var themeService = ThemeService.shared
 
   init(
     isLoadingFoodPhoto: Bool,
@@ -66,8 +67,12 @@ struct CameraButtonView: View {
       GeometryReader { geo in
         let totalWidth = geo.size.width
         let rowHeight = geo.size.height
+        let usesPlannerImage = themeService.currentMascot != .none
         let uploadWidth = totalWidth * 0.26
-        let plannerWidth = min(rowHeight, totalWidth * 0.22)
+        // Picture stays square. Word button matches Upload so the text is not crushed.
+        let plannerWidth = usesPlannerImage
+          ? min(rowHeight, totalWidth * 0.22)
+          : uploadWidth
         let gapWidth = totalWidth * 0.03
         let takeWidth = totalWidth - uploadWidth - plannerWidth - gapWidth * 2
 
@@ -121,18 +126,11 @@ struct CameraButtonView: View {
               showMealPlanner = true
             }
           }) {
-            Image("meal_planner")
-              .resizable()
-              .scaledToFill()
-              .frame(width: plannerWidth, height: rowHeight)
-              .clipped()
-              .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
-              .scaleEffect(shouldPulsePlanner ? plannerBeatScale : 1.0)
-              .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.45), radius: 6, x: 0, y: 3)
+            plannerButtonLabel(width: plannerWidth, height: rowHeight)
           }
           .buttonStyle(.plain)
           .buttonStyle(PressScaleButtonStyle())
-          .accessibilityLabel(loc("meal_planner.title", "Meal Plan"))
+          .accessibilityLabel(loc("camera.mealplan", "Meal"))
 
           Color.clear
             .frame(width: gapWidth, height: rowHeight)
@@ -180,6 +178,9 @@ struct CameraButtonView: View {
     }
     .frame(height: 80)
     .onAppear { startPlannerPulse() }
+    .onChange(of: themeService.currentMascot) { _, _ in
+      startPlannerPulse()
+    }
     .sheet(isPresented: $showCamera) {
       CameraView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
         .onAppear {
@@ -248,8 +249,53 @@ struct CameraButtonView: View {
     mealsToday < 1 && !AppSettingsService.shared.reduceMotion
   }
 
+  /// Cat/dog theme: meal-advice artwork. Default theme: Meal word, like Upload / Take Food.
+  @ViewBuilder
+  private func plannerButtonLabel(width: CGFloat, height: CGFloat) -> some View {
+    if themeService.currentMascot != .none {
+      Image("meal_planner")
+        .resizable()
+        .interpolation(.high)
+        .scaledToFill()
+        .frame(width: width, height: height)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+        .scaleEffect(shouldPulsePlanner ? plannerBeatScale : 1.0)
+        .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.45), radius: 6, x: 0, y: 3)
+    } else {
+      HStack(spacing: 3) {
+        Image(systemName: "fork.knife")
+          .font(.system(size: 16))
+        Text(loc("camera.mealplan", "Meal"))
+          .font(.system(size: 15, weight: .medium, design: .rounded))
+          .multilineTextAlignment(.center)
+          .lineLimit(1)
+      }
+      .frame(width: width, height: height)
+      .background(AppTheme.primaryButtonGradient)
+      .cornerRadius(AppTheme.cornerRadius)
+      .foregroundColor(.white)
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+          .stroke(
+            LinearGradient(
+              gradient: Gradient(colors: [
+                Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.9),
+                Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.3),
+              ]),
+              startPoint: .topLeading,
+              endPoint: .bottomTrailing
+            ),
+            lineWidth: 2
+          )
+      )
+      .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.4), radius: 6, x: 0, y: 3)
+    }
+  }
+
   private func startPlannerPulse() {
-    guard shouldPulsePlanner else {
+    // Pulse only the themed picture. Scaling the word button makes the text look low-res.
+    guard shouldPulsePlanner, themeService.currentMascot != .none else {
       plannerBeatScale = 1.0
       return
     }
