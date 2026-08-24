@@ -1698,7 +1698,7 @@ class GRPCService {
               return
             }
             completion(
-              MealPlanResult(text: mealResponse.text, variant: variant, variantCount: 5))
+              MealPlanResult(text: mealResponse.text, variant: variant, variantCount: 3))
           } catch {
             completion(nil)
           }

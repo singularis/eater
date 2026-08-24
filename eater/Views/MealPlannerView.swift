@@ -23,7 +23,7 @@ struct MealPlannerView: View {
 
   @State private var variant = 0
   @State private var text = ""
-  @State private var variantCount = 5
+  @State private var variantCount = 3
   @State private var loading = false
   @State private var failed = false
   @ObservedObject private var themeService = ThemeService.shared
