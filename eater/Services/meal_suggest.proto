@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package eater;
+
+// Next-meal idea from what this person actually ate. Same HTTP+protobuf style as get_recomendation.
+message MealSuggestRequest {
+  int32 days = 1;
+  string language_code = 2;  // ISO 639-1 (e.g. pl, uk). Suggestion text in this language.
+  int32 variant = 3;  // 0-based; another idea from the same history
+  int32 remaining_kcal = 4;
+  double remaining_protein = 5;
+  double remaining_carbs = 6;
+  double remaining_fats = 7;
+  double remaining_sugar = 8;
+  int32 meals_today = 9;
+}
+
+message MealSuggestDish {
+  string name = 1;
+  string why = 2;
+  string based_on = 3;
+  string how_to = 4;
+}
+
+message MealSuggestResponse {
+  string text = 1;
+  MealSuggestDish dish = 2;
+}
