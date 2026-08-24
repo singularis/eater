@@ -26,7 +26,6 @@ struct MealPlannerView: View {
   @State private var variantCount = 5
   @State private var loading = false
   @State private var failed = false
-  @State private var showExtras = false
   @ObservedObject private var themeService = ThemeService.shared
 
   var body: some View {
@@ -79,10 +78,6 @@ struct MealPlannerView: View {
                 .font(.caption)
                 .foregroundColor(AppTheme.textSecondary)
                 .padding(.top, 8)
-
-              if remaining.kcal >= 80 {
-                extrasButton
-              }
             }
           }
           .padding()
@@ -114,76 +109,28 @@ struct MealPlannerView: View {
     }
   }
 
-  private var extrasButton: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Button {
-        HapticsService.shared.select()
-        withAnimation(.easeInOut(duration: 0.2)) {
-          showExtras.toggle()
-        }
-      } label: {
-        HStack(spacing: 8) {
-          Text(MealPlannerEngine.extrasTitle(language: languageCode))
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(AppTheme.textPrimary)
-          Spacer()
-          Image(systemName: showExtras ? "chevron.up" : "chevron.down")
-            .font(.footnote.weight(.semibold))
-            .foregroundColor(AppTheme.textSecondary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background(AppTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
-        .overlay(
-          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-            .stroke(AppTheme.divider, lineWidth: 1)
-        )
-      }
-      .buttonStyle(PressScaleButtonStyle())
-      .accessibilityHint(MealPlannerEngine.extrasTitle(language: languageCode))
-
-      if showExtras {
-        Text(MealPlannerEngine.extraTips(language: languageCode))
-          .font(.body)
-          .foregroundColor(AppTheme.textPrimary)
-          .lineSpacing(4)
-          .textSelection(.enabled)
-          .transition(.opacity.combined(with: .move(edge: .top)))
-      }
-    }
-    .padding(.top, 8)
-  }
-
   func nextVariant() {
     variant = (variant + 1) % max(variantCount, 1)
     fetchPlan()
   }
 
   private func fetchPlan() {
-    let local = MealPlannerEngine.plan(
-      language: languageCode,
-      variant: variant,
-      mealsToday: mealsToday,
-      remaining: remaining
-    )
-    text = local.text
-    variantCount = local.variantCount
-    variant = local.variant
+    loading = true
     failed = false
-    loading = false
-
-    GRPCService().fetchMealPlan(
+    GRPCService().getMealSuggest(
       languageCode: languageCode,
       variant: variant,
       mealsToday: mealsToday,
       remaining: remaining
     ) { result in
+      loading = false
       if let result, !result.text.isEmpty {
-        self.text = result.text
-        self.variantCount = max(1, result.variantCount)
-        self.variant = result.variant
+        text = result.text
+        variantCount = max(1, result.variantCount)
+        variant = result.variant
+        failed = false
+      } else {
+        failed = text.isEmpty
       }
     }
   }
