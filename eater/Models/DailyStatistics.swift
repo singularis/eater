@@ -13,11 +13,13 @@ struct DailyStatistics: Identifiable, Equatable {
   let sugar: Double  // in grams
   let numberOfMeals: Int
   let hasData: Bool  // Indicates if this day has actual data vs empty placeholder
+  let averageHealthScore: Int?  // Average meal health_rating for the day; nil if none rated
 
   init(
     date: Date, dateString: String, totalCalories: Int, totalFoodWeight: Int, personWeight: Float,
     proteins: Double, fats: Double, carbohydrates: Double, sugar: Double, numberOfMeals: Int,
-    hasData: Bool = true
+    hasData: Bool = true,
+    averageHealthScore: Int? = nil
   ) {
     self.date = date
     self.dateString = dateString
@@ -30,6 +32,15 @@ struct DailyStatistics: Identifiable, Equatable {
     self.sugar = sugar
     self.numberOfMeals = numberOfMeals
     self.hasData = hasData
+    self.averageHealthScore = averageHealthScore
+  }
+
+  /// Average of rated meals (`health_rating` > 0). Nil when nothing was scored that day.
+  static func averageHealthScore(from ratings: [Int]) -> Int? {
+    let scored = ratings.filter { $0 > 0 }
+    guard !scored.isEmpty else { return nil }
+    let avg = Double(scored.reduce(0, +)) / Double(scored.count)
+    return max(0, min(100, Int(avg.rounded())))
   }
 
   // Computed properties for additional insights

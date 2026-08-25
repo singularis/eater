@@ -636,7 +636,9 @@ class GRPCService {
             carbohydrates: carbs,
             sugar: customDateFood.totalForDay.contains.sugar,
             numberOfMeals: numberOfMeals,
-            hasData: hasActualData
+            hasData: hasActualData,
+            averageHealthScore: DailyStatistics.averageHealthScore(
+              from: customDateFood.dishesForDate.map { Int($0.healthRating) })
           )
 
           completion(dailyStats)
@@ -737,7 +739,9 @@ class GRPCService {
           carbohydrates: carbs,
           sugar: sugar,
           numberOfMeals: numberOfMeals,
-          hasData: hasActualData
+          hasData: hasActualData,
+          averageHealthScore: DailyStatistics.averageHealthScore(
+            from: todayFood.dishesToday.map { Int($0.healthRating) })
         )
 
         completion(dailyStats)
@@ -1646,6 +1650,55 @@ class GRPCService {
         completion(true, totalWins, simpleOpponents)
       } catch {
         completion(false, 0, [:])
+      }
+    }
+  }
+
+  func fetchMealPlan(
+    languageCode: String,
+    variant: Int,
+    mealsToday: Int,
+    remaining: MealPlannerRemaining,
+    completion: @escaping (MealPlanResult?) -> Void
+  ) {
+    guard var request = createRequest(endpoint: "meal_plan", httpMethod: "POST", timeout: 10)
+    else {
+      completion(nil)
+      return
+    }
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    let body: [String: Any] = [
+      "language": languageCode,
+      "variant": variant,
+      "meals_today": mealsToday,
+      "remaining": [
+        "kcal": remaining.kcal,
+        "protein_g": remaining.protein,
+        "carbs_g": remaining.carbs,
+        "fats_g": remaining.fats,
+        "sugar_g": remaining.sugar,
+      ],
+    ]
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(nil)
+      return
+    }
+    sendRequest(request: request, retriesLeft: 0) { data, response, error in
+      DispatchQueue.main.async {
+        guard error == nil,
+          let http = response as? HTTPURLResponse, http.statusCode == 200,
+          let data = data,
+          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let text = json["text"] as? String, !text.isEmpty
+        else {
+          completion(nil)
+          return
+        }
+        let count = json["variant_count"] as? Int ?? 5
+        let v = json["variant"] as? Int ?? variant
+        completion(MealPlanResult(text: text, variant: v, variantCount: count))
       }
     }
   }

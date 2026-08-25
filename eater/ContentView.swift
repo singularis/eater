@@ -16,6 +16,7 @@ struct FixFoodNameData: Identifiable {
 struct ContentView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
+  @ObservedObject private var appSettings = AppSettingsService.shared
   @Environment(\.scenePhase) var scenePhase
   @StateObject private var themeService = ThemeService.shared
   @ObservedObject private var profilePhotoStore = ProfilePhotoStore.shared
@@ -344,7 +345,7 @@ struct ContentView: View {
       )
 
       if selectedPage == 0 {
-        StatisticsView(isPresented: statisticsBinding, targetChartType: .macros)
+        StatisticsView(isPresented: statisticsBinding)
           .transition(.move(edge: .leading))
           .zIndex(1)
       }
@@ -703,17 +704,22 @@ struct ContentView: View {
 
   private var caloriesButton: some View {
     let adjustedSoftLimit = getAdjustedSoftLimit()
+    let remaining = adjustedSoftLimit - caloriesLeft
     let shadow = AppTheme.cardShadow
+    let calorieColor: Color =
+      remaining <= -1
+      ? AppTheme.danger
+      : getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit)
     return Button(action: {
       checkTutorial(key: "hasSeenCaloriesTutorial", action: .calories)
     }) {
       HStack(spacing: 4) {
         Image(systemName: themeService.icon(for: "flame.fill"))
           .font(.system(size: 20))
-        Text("\(adjustedSoftLimit - caloriesLeft)")
+        Text("\(remaining)")
           .font(.system(size: 22, weight: .semibold, design: .rounded))
       }
-      .foregroundColor(getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit))
+      .foregroundColor(calorieColor)
       .frame(maxWidth: .infinity)
       .padding(8)
       .background(AppTheme.surface)
@@ -794,6 +800,10 @@ struct ContentView: View {
     let shadow = AppTheme.cardShadow
     let targets = macroTargetsFromDailyKcal(softLimit)
     func fmt(_ v: Double) -> String { String(format: "%.1f", v) }
+    func pct(_ value: Double, _ target: Double) -> String {
+      guard target > 0 else { return "–" }
+      return "\(Int((value / target * 100.0).rounded()))%"
+    }
     // Green zones (ranges) for macros
     let proteinLower = targets.protein * 0.8
     let fatLower = targets.fat * 0.8
@@ -822,28 +832,38 @@ struct ContentView: View {
       sugar >= sugarUpper ? AppTheme.danger
       : (sugar >= sugarLower ? AppTheme.warning : AppTheme.success)
 
+    func column(_ percent: String, _ text: String, _ color: Color) -> some View {
+      VStack(spacing: 1) {
+        Text(percent)
+          .font(.system(size: 11, weight: .semibold, design: .rounded))
+          .foregroundColor(color.opacity(0.9))
+        Text(text)
+          .font(.system(size: 16, weight: .semibold, design: .rounded))
+          .foregroundColor(color)
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+      }
+    }
+
     return Button(action: {
       HapticsService.shared.select()
       showMacroTargets = true
     }) {
-      HStack(spacing: 6) {
+      HStack(alignment: .bottom, spacing: 6) {
         Spacer(minLength: 0)
-        Text(proLabel + " " + fmt(proteins) + grams).foregroundColor(proColor)
+        column(pct(proteins, targets.protein), proLabel + " " + fmt(proteins) + grams, proColor)
         Text("•").foregroundColor(AppTheme.textSecondary)
-        Text(fatLabel + " " + fmt(fats) + grams).foregroundColor(fatColor)
+        column(pct(fats, targets.fat), fatLabel + " " + fmt(fats) + grams, fatColor)
         Text("•").foregroundColor(AppTheme.textSecondary)
-        Text(carLabel + " " + fmt(carbs) + grams).foregroundColor(carColor)
+        column(pct(carbs, targets.carbs), carLabel + " " + fmt(carbs) + grams, carColor)
         Text("•").foregroundColor(AppTheme.textSecondary)
-        Text(sugLabel + " " + fmt(sugar) + grams).foregroundColor(sugColor)
+        column(pct(sugar, targets.sugarMax), sugLabel + " " + fmt(sugar) + grams, sugColor)
         Spacer(minLength: 0)
       }
-      .lineLimit(1)
-      .truncationMode(.tail)
       .font(.system(size: 16, weight: .semibold, design: .rounded))
-      .minimumScaleFactor(0.85)
       .frame(maxWidth: .infinity)
       .padding(.horizontal, 16)
-      .padding(.vertical, 8)
+      .padding(.vertical, 6)
       .background(AppTheme.surface)
       .cornerRadius(AppTheme.cornerRadius)
       .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
@@ -875,6 +895,9 @@ struct ContentView: View {
       isLoadingFoodPhoto: isLoadingFoodPhoto,
       selectedDate: selectedDate,
       isViewingCustomDate: isViewingCustomDate,
+      mealRemaining: mealPlannerRemaining,
+      mealsToday: products.count,
+      languageCode: languageService.currentCode,
       onPhotoSuccess: {
         // Increment scan count
         AppSettingsService.shared.foodScannedCount += 1
@@ -1922,6 +1945,18 @@ struct ContentView: View {
 
   private func getAdjustedSoftLimit() -> Int {
     return softLimit + activityCaloriesForViewedDate()
+  }
+
+  private var mealPlannerRemaining: MealPlannerRemaining {
+    let budget = getAdjustedSoftLimit()
+    let targets = macroTargetsFromDailyKcal(budget)
+    return MealPlannerRemaining(
+      kcal: budget - caloriesLeft,
+      protein: max(0, targets.protein - proteins),
+      carbs: max(0, targets.carbs - carbs),
+      fats: max(0, targets.fat - fats),
+      sugar: max(0, targets.sugarMax - sugar)
+    )
   }
 
   private func loadTodaySportCalories() {

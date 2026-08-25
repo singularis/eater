@@ -129,23 +129,9 @@ private struct FoodListRow<Content: View>: View {
       }
 
       content()
+        .frame(maxWidth: .infinity, alignment: .top)
         .background(AppTheme.backgroundGradient)
-        .padding(.trailing, 44)
         .offset(x: offset)
-        .overlay(alignment: .trailing) {
-          Button {
-            requestDelete()
-          } label: {
-            Image(systemName: "trash")
-              .font(.system(size: 18, weight: .medium))
-              .foregroundColor(.red)
-              .frame(width: 44, height: 44)
-              .contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          .disabled(isDisabled)
-          .opacity(isDisabled ? 0.5 : 1)
-        }
         // minimumDistance keeps vertical list scroll / pull-to-refresh intact
         .gesture(
           DragGesture(minimumDistance: 24)
@@ -204,6 +190,7 @@ struct ProductListView: View {
   let deletingProductTime: Int64?
   let onShareSuccess: () -> Void
 
+  @ObservedObject private var appSettings = AppSettingsService.shared
   private static let swipeOptionsHintKey = "hasSeenSwipeOptionsHint"
   @State private var showSwipeOptionsHintBanner = false
 
@@ -317,26 +304,31 @@ struct ProductListView: View {
                   onAddSugar: onAddSugar,
                   onAddDrinkExtra: onAddDrinkExtra,
                   onAddFoodExtra: onAddFoodExtra,
-                  onShareSuccess: onShareSuccess
+                  onShareSuccess: onShareSuccess,
+                  onDelete: { onDelete(product.time) }
                 )
               }
+              .id("\(product.time)-\(appSettings.fontScale)")
               .listRowBackground(Color.clear)
               .listRowSeparatorTint(AppTheme.textSecondary.opacity(0.3))
-              .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+              .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
             }
           }
+          .listRowSpacing(0)
+          .environment(\.defaultMinListRowHeight, 1)
+          .contentMargins(.vertical, 0, for: .scrollContent)
           .scrollContentBackground(.hidden)
           .listStyle(.plain)
           .padding(.top, 0)
-          .refreshable {
-            onRefresh()
-          }
-          .animation(
-            AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.2),
-            value: products)
-          .onAppear {
-            maybeShowSwipeOptionsHint()
-          }
+            .refreshable {
+              onRefresh()
+            }
+            .animation(
+              AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.2),
+              value: products)
+            .onAppear {
+              maybeShowSwipeOptionsHint()
+            }
 
           if showSwipeOptionsHintBanner {
             SwipeOptionsHintBanner(onDismiss: dismissSwipeOptionsHint)
@@ -346,6 +338,7 @@ struct ProductListView: View {
               .zIndex(1)
           }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }
   }

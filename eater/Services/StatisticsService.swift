@@ -37,6 +37,13 @@ class StatisticsService {
       UserDefaults.standard.set(true, forKey: "hasDataLogicCacheFix")
     }
 
+    // Refresh cache so daily health scores are present for the new stats screen.
+    let hasHealthScoreCache = UserDefaults.standard.bool(forKey: "healthScoreStatsCacheV1")
+    if !hasHealthScoreCache {
+      cacheService.clearAllCache()
+      UserDefaults.standard.set(true, forKey: "healthScoreStatsCacheV1")
+    }
+
     // Get cached statistics
     let cachedStatistics = cacheService.getCachedStatistics(for: allDateStrings)
 
