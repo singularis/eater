@@ -149,7 +149,7 @@ private struct CachedDailyStatistics: Codable {
 extension DailyStatistics: Codable {
   private enum CodingKeys: String, CodingKey {
     case dateString, totalCalories, totalFoodWeight, personWeight
-    case proteins, fats, carbohydrates, sugar, numberOfMeals, hasData
+    case proteins, fats, carbohydrates, sugar, numberOfMeals, hasData, averageHealthScore
   }
 
   init(from decoder: Decoder) throws {
@@ -171,7 +171,8 @@ extension DailyStatistics: Codable {
       carbohydrates: container.decode(Double.self, forKey: .carbohydrates),
       sugar: container.decode(Double.self, forKey: .sugar),
       numberOfMeals: container.decode(Int.self, forKey: .numberOfMeals),
-      hasData: container.decodeIfPresent(Bool.self, forKey: .hasData) ?? true  // Default to true for backward compatibility
+      hasData: container.decodeIfPresent(Bool.self, forKey: .hasData) ?? true,
+      averageHealthScore: container.decodeIfPresent(Int.self, forKey: .averageHealthScore)
     )
   }
 
@@ -188,5 +189,6 @@ extension DailyStatistics: Codable {
     try container.encode(sugar, forKey: .sugar)
     try container.encode(numberOfMeals, forKey: .numberOfMeals)
     try container.encode(hasData, forKey: .hasData)
+    try container.encodeIfPresent(averageHealthScore, forKey: .averageHealthScore)
   }
 }

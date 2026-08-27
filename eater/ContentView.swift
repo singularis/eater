@@ -345,7 +345,7 @@ struct ContentView: View {
       )
 
       if selectedPage == 0 {
-        StatisticsView(isPresented: statisticsBinding, targetChartType: .macros)
+        StatisticsView(isPresented: statisticsBinding)
           .transition(.move(edge: .leading))
           .zIndex(1)
       }

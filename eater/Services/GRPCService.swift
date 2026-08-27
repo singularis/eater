@@ -636,7 +636,9 @@ class GRPCService {
             carbohydrates: carbs,
             sugar: customDateFood.totalForDay.contains.sugar,
             numberOfMeals: numberOfMeals,
-            hasData: hasActualData
+            hasData: hasActualData,
+            averageHealthScore: DailyStatistics.averageHealthScore(
+              from: customDateFood.dishesForDate.map { Int($0.healthRating) })
           )
 
           completion(dailyStats)
@@ -737,7 +739,9 @@ class GRPCService {
           carbohydrates: carbs,
           sugar: sugar,
           numberOfMeals: numberOfMeals,
-          hasData: hasActualData
+          hasData: hasActualData,
+          averageHealthScore: DailyStatistics.averageHealthScore(
+            from: todayFood.dishesToday.map { Int($0.healthRating) })
         )
 
         completion(dailyStats)
@@ -1650,52 +1654,58 @@ class GRPCService {
     }
   }
 
-  func fetchMealPlan(
+  func getMealSuggest(
     languageCode: String,
     variant: Int,
     mealsToday: Int,
     remaining: MealPlannerRemaining,
     completion: @escaping (MealPlanResult?) -> Void
   ) {
-    guard var request = createRequest(endpoint: "meal_plan", httpMethod: "POST", timeout: 10)
-    else {
-      completion(nil)
-      return
-    }
-    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    let body: [String: Any] = [
-      "language": languageCode,
-      "variant": variant,
-      "meals_today": mealsToday,
-      "remaining": [
-        "kcal": remaining.kcal,
-        "protein_g": remaining.protein,
-        "carbs_g": remaining.carbs,
-        "fats_g": remaining.fats,
-        "sugar_g": remaining.sugar,
-      ],
-    ]
+    var mealRequest = Eater_MealSuggestRequest()
+    mealRequest.days = 7
+    mealRequest.languageCode = languageCode
+    mealRequest.variant = Int32(variant)
+    mealRequest.remainingKcal = Int32(remaining.kcal)
+    mealRequest.remainingProtein = remaining.protein
+    mealRequest.remainingCarbs = remaining.carbs
+    mealRequest.remainingFats = remaining.fats
+    mealRequest.remainingSugar = remaining.sugar
+    mealRequest.mealsToday = Int32(mealsToday)
+
     do {
-      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+      let requestBody = try mealRequest.serializedData()
+      guard
+        var request = createRequest(
+          endpoint: "meal_suggest", httpMethod: "POST", body: requestBody, timeout: 90)
+      else {
+        completion(nil)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
+        DispatchQueue.main.async {
+          guard error == nil,
+            let http = response as? HTTPURLResponse, http.statusCode == 200,
+            let data = data
+          else {
+            completion(nil)
+            return
+          }
+          do {
+            let mealResponse = try Eater_MealSuggestResponse(serializedBytes: data)
+            guard !mealResponse.text.isEmpty else {
+              completion(nil)
+              return
+            }
+            completion(
+              MealPlanResult(text: mealResponse.text, variant: variant, variantCount: 3))
+          } catch {
+            completion(nil)
+          }
+        }
+      }
     } catch {
       completion(nil)
-      return
-    }
-    sendRequest(request: request, retriesLeft: 0) { data, response, error in
-      DispatchQueue.main.async {
-        guard error == nil,
-          let http = response as? HTTPURLResponse, http.statusCode == 200,
-          let data = data,
-          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-          let text = json["text"] as? String, !text.isEmpty
-        else {
-          completion(nil)
-          return
-        }
-        let count = json["variant_count"] as? Int ?? 5
-        let v = json["variant"] as? Int ?? variant
-        completion(MealPlanResult(text: text, variant: v, variantCount: count))
-      }
     }
   }
 }

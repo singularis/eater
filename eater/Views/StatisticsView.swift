@@ -3,103 +3,54 @@ import SwiftUI
 
 struct StatisticsView: View {
   @Binding var isPresented: Bool
-  var targetChartType: ChartType? = nil
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
-  @AppStorage("selectedChartType") private var selectedChart: ChartType = .insights
+  @State private var selectedDay: DailyStatistics?
+  @State private var showGraphs = false
 
   private let statisticsService = StatisticsService.shared
-
-  enum ChartType: String, CaseIterable {
-    case insights
-    case calories
-    case macros
-    case personWeight
-    case foodWeight
-    case trends
-  }
-
-  private func localizedChartTypeName(_ type: ChartType) -> String {
-    switch type {
-    case .insights: return loc("stats.chart.insights", "Insights")
-    case .calories: return loc("stats.chart.calories", "Calories")
-    case .macros: return loc("stats.chart.macros", "Macronutrients")
-    case .personWeight: return loc("stats.chart.personweight", "Body Weight")
-    case .foodWeight: return loc("stats.chart.foodweight", "Food Weight")
-    case .trends: return loc("stats.chart.trends", "Trends")
-    }
-  }
-
-  private func localizedPeriod(_ period: StatisticsPeriod) -> String {
-    let formatter = DateComponentsFormatter()
-    formatter.unitsStyle = .full
-    formatter.maximumUnitCount = 1
-    formatter.zeroFormattingBehavior = .dropAll
-    // Set locale via calendar
-    var cal = Calendar.current
-    cal.locale = Locale(identifier: LanguageService.shared.currentCode)
-    formatter.calendar = cal
-    var comps = DateComponents()
-    switch period {
-    case .week:
-      comps.day = 7
-      formatter.allowedUnits = [.day]
-    case .month:
-      comps.day = 30
-      formatter.allowedUnits = [.day]
-    case .twoMonths:
-      comps.month = 2
-      formatter.allowedUnits = [.month]
-    case .threeMonths:
-      comps.month = 3
-      formatter.allowedUnits = [.month]
-    }
-    return formatter.string(from: comps) ?? period.rawValue
-  }
+  private let visiblePeriods: [StatisticsPeriod] = [.week, .month]
 
   var body: some View {
     NavigationView {
-      GeometryReader { geometry in
-        ZStack {
-          AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
+      ZStack {
+        AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
 
-          if isLoading {
-            VStack {
-              ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
-                .scaleEffect(1.5)
-              Text(loc("stats.loading", "Loading statistics..."))
-                .foregroundColor(AppTheme.textPrimary)
-                .padding(.top)
-            }
-          } else {
-            VStack(spacing: 0) {
-              // Period Selection
+        if isLoading {
+          VStack {
+            ProgressView()
+              .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
+              .scaleEffect(1.5)
+            Text(loc("stats.loading", "Loading statistics..."))
+              .foregroundColor(AppTheme.textPrimary)
+              .padding(.top)
+          }
+        } else {
+          ScrollView {
+            VStack(spacing: 14) {
               periodSelectionView
-                .padding(.horizontal, 16)
-                .padding(.top, 5)
-
-              // Chart Type Selection
-              chartTypeSelectionView
-                .padding(.vertical, 8)
-
-              // Main content area - reduced spacing
-              ScrollView {
-                VStack(spacing: 8) {
-                  // Main Chart - increased height for better visibility
-                  chartView
-                    .frame(height: geometry.size.height * 0.5)
+              if loggedDays.isEmpty {
+                EmptyStateView(
+                  systemImage: "chart.line.uptrend.xyaxis",
+                  title: loc("stats.hero.empty", "Start this week"),
+                  subtitle: loc(
+                    "stats.hero.empty.body", "Log a meal to see how you are doing.")
+                )
+              } else {
+                heroCard
+                energyCard
+                if !weightDays.isEmpty {
+                  bodyCard
                 }
-                .padding(.horizontal, 16)
+                plateCard
+                proteinCard
+                consistencyRow
               }
-
-              // Summary Stats - reduced height to give more space to chart
-              summaryStatsView
-                .frame(height: geometry.size.height * 0.15)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+              openGraphsButton
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
           }
         }
       }
@@ -113,15 +64,15 @@ struct StatisticsView: View {
           .foregroundColor(AppTheme.textPrimary)
         }
       }
-      .onAppear {
-        if let target = targetChartType {
-          selectedChart = target
-        }
-        loadData()
+      .onAppear { loadData() }
+      .sheet(item: $selectedDay) { day in
+        dayDetailSheet(day)
+      }
+      .sheet(isPresented: $showGraphs) {
+        StatisticsGraphsView(isPresented: $showGraphs, initialPeriod: selectedPeriod)
       }
     }
     .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
-    // Swipe right to return to Home (mirrors Home swipe-left → Statistics)
     .simultaneousGesture(
       DragGesture(minimumDistance: 40)
         .onEnded { value in
@@ -134,491 +85,689 @@ struct StatisticsView: View {
     )
   }
 
+  // MARK: - Data
+
+  private var loggedDays: [DailyStatistics] {
+    statistics.filter { $0.hasData }
+  }
+
+  private var weightDays: [DailyStatistics] {
+    statistics.filter { $0.personWeight > 0 }
+  }
+
+  private var scoredDays: [DailyStatistics] {
+    statistics.filter { $0.averageHealthScore != nil }
+  }
+
+  private var calorieTarget: Int {
+    let stored = CalorieLimitsStorageService.shared.load()?.softLimit
+      ?? UserDefaults.standard.integer(forKey: "softLimit")
+    return stored > 0 ? stored : 0
+  }
+
+  private var proteinTarget: Double {
+    if let custom = CalorieLimitsStorageService.shared.load()?.customProteinGoal {
+      return custom
+    }
+    guard calorieTarget > 0 else { return 80 }
+    return (Double(calorieTarget) * 0.20) / 4.0
+  }
+
+  private var goalMode: String {
+    UserDefaults.standard.string(forKey: "userGoalMode") ?? "maintain"
+  }
+
+  private var targetWeightKg: Double {
+    UserDefaults.standard.double(forKey: "userTargetWeight")
+  }
+
+  private var daysInCalorieRange: Int {
+    guard calorieTarget > 0 else { return 0 }
+    return loggedDays.filter { isInCalorieRange($0.totalCalories) }.count
+  }
+
+  private var daysOverCalories: Int {
+    guard calorieTarget > 0 else { return 0 }
+    return loggedDays.filter { Double($0.totalCalories) > Double(calorieTarget) * 1.1 }.count
+  }
+
+  private var averageCalories: Int {
+    guard !loggedDays.isEmpty else { return 0 }
+    return loggedDays.reduce(0) { $0 + $1.totalCalories } / loggedDays.count
+  }
+
+  private var averageProtein: Double {
+    guard !loggedDays.isEmpty else { return 0 }
+    return loggedDays.reduce(0) { $0 + $1.proteins } / Double(loggedDays.count)
+  }
+
+  private var weekHealthScore: Int? {
+    let scores = scoredDays.compactMap { $0.averageHealthScore }
+    guard !scores.isEmpty else { return nil }
+    return Int((Double(scores.reduce(0, +)) / Double(scores.count)).rounded())
+  }
+
+  private var latestWeight: DailyStatistics? {
+    weightDays.max(by: { $0.date < $1.date })
+  }
+
+  private var firstWeight: DailyStatistics? {
+    weightDays.min(by: { $0.date < $1.date })
+  }
+
+  private var todayLogged: Bool {
+    loggedDays.contains { Calendar.current.isDateInToday($0.date) }
+  }
+
+  private func isInCalorieRange(_ kcal: Int) -> Bool {
+    guard calorieTarget > 0 else { return false }
+    let ratio = Double(kcal) / Double(calorieTarget)
+    return ratio >= 0.9 && ratio <= 1.1
+  }
+
+  // MARK: - Period
+
   private var periodSelectionView: some View {
-    VStack(spacing: 10) {
-      Text(loc("stats.timeperiod", "Time Period"))
+    Picker("", selection: $selectedPeriod) {
+      ForEach(visiblePeriods, id: \.self) { period in
+        Text(localizedPeriod(period)).tag(period)
+      }
+    }
+    .pickerStyle(SegmentedPickerStyle())
+    .onChange(of: selectedPeriod) { _, _ in
+      loadData()
+    }
+  }
+
+  private func localizedPeriod(_ period: StatisticsPeriod) -> String {
+    switch period {
+    case .week:
+      return loc("stats.period.week", "This week")
+    case .month:
+      return loc("stats.period.month", "30 days")
+    case .twoMonths, .threeMonths:
+      return period.rawValue
+    }
+  }
+
+  // MARK: - Hero
+
+  private var heroCard: some View {
+    let copy = heroCopy
+    return VStack(alignment: .leading, spacing: 8) {
+      Text(copy.title)
+        .font(.title2)
+        .fontWeight(.bold)
+        .foregroundColor(AppTheme.textPrimary)
+      Text(copy.body)
+        .font(.subheadline)
+        .foregroundColor(AppTheme.textSecondary)
+        .fixedSize(horizontal: false, vertical: true)
+      Text(copy.action)
+        .font(.subheadline)
+        .fontWeight(.semibold)
+        .foregroundColor(AppTheme.accent)
+        .padding(.top, 2)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .cardContainer(padding: 16)
+  }
+
+  private var heroCopy: (title: String, body: String, action: String) {
+    let days = statistics.count
+    let logged = loggedDays.count
+
+    if logged == 0 {
+      return (
+        loc("stats.hero.empty", "Start this week"),
+        loc("stats.hero.empty.body", "Log a meal to see how you are doing."),
+        loc("stats.hero.action.log", "Next: log today's meal")
+      )
+    }
+
+    if !todayLogged {
+      return (
+        loc("stats.hero.mixed", "This week is mixed"),
+        loc("stats.hero.log_today", "Log today's meal to keep the streak."),
+        loc("stats.hero.action.log", "Next: log today's meal")
+      )
+    }
+
+    let proteinLow = proteinTarget > 0 && averageProtein < proteinTarget * 0.8
+    let mostlyOver = calorieTarget > 0 && daysOverCalories * 2 >= logged
+    let mostlyInRange = calorieTarget > 0 && daysInCalorieRange * 2 >= logged
+    let platesGood = (weekHealthScore ?? 0) >= 80
+
+    if mostlyOver {
+      return (
+        loc("stats.hero.off_track", "A bit off track"),
+        String(
+          format: loc(
+            "stats.hero.over",
+            "You went over calories on %d days. Tomorrow keep lunch and skip the late snack."),
+          daysOverCalories),
+        loc("stats.hero.action.calories", "Next: stay in your calorie band")
+      )
+    }
+
+    if proteinLow && (mostlyInRange || calorieTarget == 0) {
+      return (
+        loc("stats.hero.mixed", "This week is mixed"),
+        loc(
+          "stats.hero.protein_low",
+          "Calories are fine. Protein is low. Add eggs, yogurt, or chicken tomorrow."),
+        loc("stats.hero.action.protein", "Next: more protein tomorrow")
+      )
+    }
+
+    if platesGood && mostlyInRange {
+      return (
+        loc("stats.hero.on_track", "Closer to your goal"),
+        loc(
+          "stats.hero.plates_good",
+          "Your plates this week look balanced. That is the habit to keep."),
+        loc("stats.hero.action.keep", "Next: repeat a high-score plate")
+      )
+    }
+
+    if mostlyInRange {
+      return (
+        loc("stats.hero.on_track", "Closer to your goal"),
+        String(
+          format: loc(
+            "stats.hero.in_range",
+            "You stayed near your calorie target on %d of %d days. Keep it up."),
+          daysInCalorieRange, logged),
+        loc("stats.hero.action.keep", "Next: repeat a high-score plate")
+      )
+    }
+
+    if weightDays.isEmpty && targetWeightKg > 0 {
+      return (
+        loc("stats.hero.mixed", "This week is mixed"),
+        loc(
+          "stats.hero.weigh_in",
+          "Add a weigh-in to see if your body is moving the right way."),
+        loc("stats.hero.action.weight", "Next: weigh in")
+      )
+    }
+
+    _ = days
+    return (
+      loc("stats.hero.mixed", "This week is mixed"),
+      String(
+        format: loc("stats.consistency.format", "Logged %d of %d days"), logged, days),
+      loc("stats.hero.action.calories", "Next: stay in your calorie band")
+    )
+  }
+
+  // MARK: - Energy
+
+  private var energyCard: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(loc("stats.card.energy", "Energy"))
         .font(.headline)
         .foregroundColor(AppTheme.textPrimary)
 
-        Picker("Period", selection: $selectedPeriod) {
-          ForEach(StatisticsPeriod.allCases, id: \.self) { period in
-            Text(localizedPeriod(period)).tag(period)
-          }
-        }
-        .pickerStyle(SegmentedPickerStyle())
-        .background(AppTheme.surface)
-        .cornerRadius(AppTheme.smallRadius)
-        .onChange(of: selectedPeriod) { _, _ in
-          loadData()
-        }
-    }
-  }
-
-  private var chartTypeSelectionView: some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 12) {
-        ForEach(ChartType.allCases, id: \.self) { chartType in
-          Button(action: {
-            HapticsService.shared.select()
-            withAnimation {
-              selectedChart = chartType
-            }
-          }) {
-            Text(localizedChartTypeName(chartType))
-              .font(.caption)
-              .fontWeight(.semibold)
-              .padding(.horizontal, 12)
-              .padding(.vertical, 8)
-              .background(selectedChart == chartType ? AppTheme.accent : AppTheme.surfaceAlt)
-              .foregroundColor(selectedChart == chartType ? Color.black.opacity(0.9) : AppTheme.textPrimary)
-              .cornerRadius(16)
-          }
-        }
-      }
-      .padding(.horizontal, 16)
-    }
-    .frame(height: 44)
-  }
-
-  @ViewBuilder
-  private var chartView: some View {
-    VStack(alignment: .leading, spacing: 5) {
-      // Removed redundant titles since chart type is already highlighted above
-
-      switch selectedChart {
-      case .calories:
-        caloriesChart
-      case .personWeight:
-        personWeightChart
-      case .foodWeight:
-        foodWeightChart
-      case .macros:
-        macronutrientsChart
-      case .trends:
-        trendsView
-      case .insights:
-        insightsView
-      }
-    }
-    .padding(12)
-    .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
-  }
-
-  private var caloriesChart: some View {
-    Chart(statistics) { stat in
-      LineMark(
-        x: .value(loc("stats.axis.date", "Date"), stat.date),
-        y: .value(loc("stats.axis.calories", "Calories"), stat.totalCalories)
-      )
-      .foregroundStyle(Color.orange)
-      .lineStyle(StrokeStyle(lineWidth: 2))
-
-      PointMark(
-        x: .value(loc("stats.axis.date", "Date"), stat.date),
-        y: .value(loc("stats.axis.calories", "Calories"), stat.totalCalories)
-      )
-      .foregroundStyle(Color.orange)
-    }
-    .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: statistics)
-      .chartXAxis {
-      AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-          .foregroundStyle(Color.gray.opacity(0.3))
-        AxisValueLabel()
-          .foregroundStyle(AppTheme.textPrimary)
-          .font(.caption)
-      }
-    }
-      .chartYAxis {
-      AxisMarks { _ in
-        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-          .foregroundStyle(Color.gray.opacity(0.3))
-        AxisValueLabel()
-          .foregroundStyle(AppTheme.textPrimary)
-          .font(.caption)
-      }
-    }
-    .frame(height: 300)
-  }
-
-  private var personWeightChart: some View {
-    let allWeightStats = statistics.filter { $0.personWeight > 0 }
-    let uniqueWeights = Set(allWeightStats.map { $0.personWeight })
-    let validWeightStats: [DailyStatistics]
-
-    if uniqueWeights.count <= 1 && !allWeightStats.isEmpty {
-      let today = Date()
-      let calendar = Calendar.current
-      let todayStats = allWeightStats.first { calendar.isDate($0.date, inSameDayAs: today) }
-
-      if let todayStats = todayStats {
-        validWeightStats = [todayStats]
-      } else {
-        validWeightStats = [allWeightStats.max(by: { $0.date < $1.date })!]
-      }
-    } else {
-      validWeightStats = allWeightStats
-    }
-
-    let weights = validWeightStats.map { Double($0.personWeight) }
-    let minWeight = weights.min() ?? 0
-    let maxWeight = weights.max() ?? 0
-    let weightRange = maxWeight - minWeight
-
-    let padding: Double
-    if weightRange == 0 {
-      padding = max(minWeight * 0.05, 2.0)
-    } else {
-      padding = max(weightRange * 0.2, 1.0)
-    }
-
-    let yAxisMin = max(0, minWeight - padding)
-    let yAxisMax = maxWeight + padding
-
-    return VStack(alignment: .leading, spacing: 10) {
-      if validWeightStats.count == 1 {
-        let isToday = Calendar.current.isDate(validWeightStats[0].date, inSameDayAs: Date())
-        let prefix =
-          isToday ? loc("stats.weight.current", "Current") : loc("stats.weight.latest", "Latest")
-        Text(
-          "\(prefix) \(loc("stats.axis.weight", "Weight")): \(String(format: "%.1f", validWeightStats[0].personWeight)) \(loc("units.kg", "kg"))"
-        )
-        .font(.headline)
-        .foregroundColor(AppTheme.textPrimary)
-        .padding(.bottom, 5)
+      if selectedPeriod == .week {
+        weekDots
       }
 
-      Chart(validWeightStats) { stat in
-        if validWeightStats.count == 1 {
-          PointMark(
-            x: .value(loc("stats.axis.date", "Date"), stat.date),
-            y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
-          )
-          .foregroundStyle(Color.green)
-          .symbolSize(100)
-        } else {
+      Chart {
+        ForEach(loggedDays) { stat in
           LineMark(
             x: .value(loc("stats.axis.date", "Date"), stat.date),
-            y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
+            y: .value(loc("stats.axis.calories", "Calories"), stat.totalCalories)
           )
-          .foregroundStyle(Color.green)
+          .foregroundStyle(AppTheme.accent)
           .lineStyle(StrokeStyle(lineWidth: 2))
 
           PointMark(
             x: .value(loc("stats.axis.date", "Date"), stat.date),
+            y: .value(loc("stats.axis.calories", "Calories"), stat.totalCalories)
+          )
+          .foregroundStyle(calorieDotColor(stat.totalCalories))
+          .symbolSize(60)
+        }
+
+        if calorieTarget > 0 {
+          RuleMark(y: .value(loc("stats.axis.goal", "Goal"), calorieTarget))
+            .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 4]))
+            .foregroundStyle(AppTheme.textSecondary.opacity(0.8))
+        }
+      }
+      .chartXAxis {
+        AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+          AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+            .foregroundStyle(Color.gray.opacity(0.3))
+          AxisValueLabel()
+            .foregroundStyle(AppTheme.textPrimary)
+            .font(.caption2)
+        }
+      }
+      .chartYAxis {
+        AxisMarks { _ in
+          AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+            .foregroundStyle(Color.gray.opacity(0.3))
+          AxisValueLabel()
+            .foregroundStyle(AppTheme.textPrimary)
+            .font(.caption2)
+        }
+      }
+      .frame(height: 160)
+      .animation(
+        AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25),
+        value: loggedDays)
+      .chartOverlay { proxy in
+        GeometryReader { geo in
+          Rectangle()
+            .fill(Color.clear)
+            .contentShape(Rectangle())
+            .onTapGesture { location in
+              selectDay(at: location, proxy: proxy, geo: geo)
+            }
+        }
+      }
+
+      Text(energyCaption)
+        .font(.caption)
+        .foregroundColor(AppTheme.textSecondary)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .cardContainer(padding: 16)
+  }
+
+  private var weekDots: some View {
+    HStack(spacing: 8) {
+      ForEach(statistics) { stat in
+        VStack(spacing: 4) {
+          Circle()
+            .fill(dotColor(stat))
+            .frame(width: 14, height: 14)
+          Text(shortWeekday(stat.date))
+            .font(.caption2)
+            .foregroundColor(AppTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .onTapGesture {
+          guard stat.hasData else { return }
+          HapticsService.shared.select()
+          selectedDay = stat
+        }
+      }
+    }
+  }
+
+  private var energyCaption: String {
+    if calorieTarget > 0 {
+      return String(
+        format: loc(
+          "stats.energy.caption",
+          "In range %d of %d days · avg %d / %d kcal"),
+        daysInCalorieRange, loggedDays.count, averageCalories, calorieTarget)
+    }
+    return String(
+      format: loc("stats.energy.no_target", "Avg %d kcal/day"), averageCalories)
+  }
+
+  // MARK: - Body
+
+  private var bodyCard: some View {
+    let latest = latestWeight
+    let first = firstWeight
+    let delta: Double = {
+      guard let latest, let first else { return 0 }
+      return Double(latest.personWeight - first.personWeight)
+    }()
+
+    return VStack(alignment: .leading, spacing: 12) {
+      Text(loc("stats.card.body", "Body"))
+        .font(.headline)
+        .foregroundColor(AppTheme.textPrimary)
+
+      if let latest {
+        if targetWeightKg > 0 {
+          Text(
+            String(
+              format: loc("stats.body.latest_format", "%.1f kg · target %.1f kg"),
+              latest.personWeight, targetWeightKg)
+          )
+          .font(.title3)
+          .fontWeight(.semibold)
+          .foregroundColor(AppTheme.textPrimary)
+        } else {
+          Text(
+            String(
+              format: loc("stats.body.no_target", "Latest %.1f kg"), latest.personWeight)
+          )
+          .font(.title3)
+          .fontWeight(.semibold)
+          .foregroundColor(AppTheme.textPrimary)
+        }
+
+        if weightDays.count >= 2 {
+          Text(weightDeltaCopy(delta))
+            .font(.caption)
+            .foregroundColor(weightDeltaColor(delta))
+        }
+      }
+
+      if weightDays.count >= 2 {
+        Chart(weightDays) { stat in
+          LineMark(
+            x: .value(loc("stats.axis.date", "Date"), stat.date),
             y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
           )
-          .foregroundStyle(Color.green)
+          .foregroundStyle(AppTheme.success)
+          .lineStyle(StrokeStyle(lineWidth: 2))
+          PointMark(
+            x: .value(loc("stats.axis.date", "Date"), stat.date),
+            y: .value(loc("stats.axis.weight", "Weight"), stat.personWeight)
+          )
+          .foregroundStyle(AppTheme.success)
         }
-      }
-      .chartXAxis {
-        AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-          AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-            .foregroundStyle(Color.gray.opacity(0.3))
-          AxisValueLabel()
-            .foregroundStyle(AppTheme.textPrimary)
-            .font(.caption)
-        }
-      }
-      .chartYAxis {
-        AxisMarks { _ in
-          AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-            .foregroundStyle(Color.gray.opacity(0.3))
-          AxisValueLabel()
-            .foregroundStyle(AppTheme.textPrimary)
-            .font(.caption)
-        }
-      }
-      .chartYScale(domain: yAxisMin...yAxisMax)
-      .frame(height: validWeightStats.count == 1 ? 200 : 300)
-      .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: validWeightStats)
-      .overlay(
-        validWeightStats.isEmpty
-          ? EmptyStateView(
-            systemImage: "figure.stand",
-            title: loc("stats.weight.empty.title", "No weight data available"),
-            subtitle: loc("stats.weight.empty.subtitle", "Submit weight via camera or manual entry")
-          ) : nil
-      )
-    }
-  }
-
-  private var foodWeightChart: some View {
-      Chart(statistics) { stat in
-      BarMark(
-        x: .value(loc("stats.axis.date", "Date"), stat.date),
-        y: .value(loc("stats.axis.foodweight", "Food Weight"), stat.totalFoodWeight)
-      )
-      .foregroundStyle(Color.blue)
-    }
-    .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: statistics)
-    .chartXAxis {
-      AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-          .foregroundStyle(Color.gray.opacity(0.3))
-        AxisValueLabel()
-          .foregroundStyle(AppTheme.textPrimary)
-          .font(.caption)
-      }
-    }
-    .chartYAxis {
-      AxisMarks { _ in
-        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-          .foregroundStyle(Color.gray.opacity(0.3))
-        AxisValueLabel()
-          .foregroundStyle(AppTheme.textPrimary)
-          .font(.caption)
-      }
-    }
-    .frame(height: 300)
-  }
-
-  private var macronutrientsChart: some View {
-    return VStack(spacing: 16) {
-      Chart(statistics) { stat in
-        BarMark(
-          x: .value(loc("stats.axis.date", "Date"), stat.date),
-          y: .value(loc("stats.axis.proteins", "Proteins"), stat.proteins)
-        )
-        .foregroundStyle(AppTheme.macroProtein)
-
-        BarMark(
-          x: .value(loc("stats.axis.date", "Date"), stat.date),
-          y: .value(loc("stats.axis.fats", "Fats"), stat.fats)
-        )
-        .foregroundStyle(AppTheme.macroFat)
-
-        BarMark(
-          x: .value(loc("stats.axis.date", "Date"), stat.date),
-          y: .value(loc("stats.axis.carbs", "Carbs"), stat.carbohydrates)
-        )
-        .foregroundStyle(AppTheme.macroCarb)
-
-        BarMark(
-          x: .value(loc("stats.axis.date", "Date"), stat.date),
-          y: .value(loc("stats.axis.fiber", "Fiber"), stat.fiber)
-        )
-        .foregroundStyle(AppTheme.macroFiber)
-      }
-      .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.25), value: statistics)
-      .chartXAxis {
-        AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-          AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-            .foregroundStyle(Color.gray.opacity(0.3))
-          AxisValueLabel()
-            .foregroundStyle(AppTheme.textPrimary)
-            .font(.caption)
-        }
-      }
-      .chartYAxis {
-        AxisMarks { _ in
-          AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-            .foregroundStyle(Color.gray.opacity(0.3))
-          AxisValueLabel()
-            .foregroundStyle(AppTheme.textPrimary)
-            .font(.caption)
-        }
-      }
-      .frame(height: 300)
-
-      // Legend
-      HStack(spacing: 16) {
-        ForEach(
-          [
-            (loc("stats.axis.proteins", "Proteins"), Color.red),
-            (loc("stats.axis.fats", "Fats"), Color.yellow),
-            (loc("stats.axis.carbs", "Carbs"), Color.blue),
-            (loc("stats.axis.fiber", "Fiber"), Color.green),
-          ], id: \.0
-        ) { item in
-          HStack(spacing: 4) {
-            Circle()
-              .fill(item.1)
-              .frame(width: 8, height: 8)
-            Text(item.0)
-              .font(.caption)
-              .foregroundColor(AppTheme.textPrimary)
+        .chartXAxis {
+          AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+            AxisValueLabel()
+              .foregroundStyle(AppTheme.textPrimary)
+              .font(.caption2)
           }
         }
-      }
-      .padding(.horizontal)
-    }
-  }
-
-  private var trendsView: some View {
-    let trends = statisticsService.calculateTrends(from: statistics)
-
-    return VStack(alignment: .leading, spacing: 15) {
-        Text(loc("stats.trend.title", "Trend Analysis"))
-          .font(.title2)
-          .fontWeight(.bold)
-          .foregroundColor(AppTheme.textPrimary)
-        .padding(.bottom, 5)
-
-      VStack(spacing: 12) {
-        trendCard(
-          title: loc("stats.trend.calories", "Calories Trend"), value: trends.caloriesTrend,
-          unit: loc("units.kcal", "kcal"), color: .orange)
-        trendCard(
-          title: loc("stats.trend.body_weight", "Body Weight Trend"),
-          value: trends.personWeightTrend, unit: loc("units.kg", "kg"), color: .green)
-        trendCard(
-          title: loc("stats.trend.food_weight", "Food Weight Trend"), value: trends.weightTrend,
-          unit: loc("units.g", "g"), color: .blue)
+        .chartYAxis {
+          AxisMarks { _ in
+            AxisValueLabel()
+              .foregroundStyle(AppTheme.textPrimary)
+              .font(.caption2)
+          }
+        }
+        .frame(height: 120)
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
+    .cardContainer(padding: 16)
   }
 
-  private func trendCard(title: String, value: Double, unit: String, color: Color) -> some View {
-    HStack {
-      VStack(alignment: .leading) {
-        Text(title)
-          .font(.subheadline)
-          .foregroundColor(AppTheme.textPrimary)
+  private func weightDeltaCopy(_ delta: Double) -> String {
+    let absDelta = abs(delta)
+    let towardTarget: Bool = {
+      guard let latest = latestWeight, targetWeightKg > 0 else { return delta <= 0 }
+      let before = abs(Double(firstWeight?.personWeight ?? latest.personWeight) - targetWeightKg)
+      let after = abs(Double(latest.personWeight) - targetWeightKg)
+      return after <= before
+    }()
 
-        HStack {
-          Image(systemName: value > 0 ? "arrow.up" : value < 0 ? "arrow.down" : "minus")
-            .foregroundColor(value > 0 ? .red : value < 0 ? .green : .gray)
-
-          Text(String(format: "%.1f %@", abs(value), unit))
-            .font(.title3)
-            .fontWeight(.semibold)
-            .foregroundColor(color)
-        }
+    if goalMode == "lose" {
+      if delta < -0.05 {
+        return String(
+          format: loc("stats.body.delta_down", "%.1f kg this period, on track"), absDelta)
       }
-
-      Spacer()
+      if delta > 0.05 {
+        return String(format: loc("stats.body.delta_up", "+%.1f kg this period"), absDelta)
+      }
+    } else if goalMode == "gain" {
+      if delta > 0.05 && towardTarget {
+        return String(
+          format: loc("stats.body.delta_down", "%.1f kg this period, on track"), absDelta)
+      }
+      if delta < -0.05 {
+        return String(format: loc("stats.body.delta_up", "+%.1f kg this period"), absDelta)
+          .replacingOccurrences(of: "+", with: "")
+      }
     }
-    .padding()
-    .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
+
+    if towardTarget {
+      return String(
+        format: loc("stats.body.delta_down", "%.1f kg this period, on track"), absDelta)
+    }
+    return String(format: loc("stats.body.delta_up", "+%.1f kg this period"), absDelta)
   }
 
-  private var insightsView: some View {
-    let averages = statisticsService.calculateAverages(from: statistics)
-    let validDays = statistics.filter { $0.hasData }.count
+  private func weightDeltaColor(_ delta: Double) -> Color {
+    guard let latest = latestWeight, targetWeightKg > 0 else {
+      if goalMode == "lose" { return delta < 0 ? AppTheme.success : AppTheme.warning }
+      if goalMode == "gain" { return delta > 0 ? AppTheme.success : AppTheme.warning }
+      return AppTheme.textSecondary
+    }
+    let before = abs(Double(firstWeight?.personWeight ?? latest.personWeight) - targetWeightKg)
+    let after = abs(Double(latest.personWeight) - targetWeightKg)
+    return after <= before ? AppTheme.success : AppTheme.warning
+  }
 
-    return ScrollView {
-      VStack(alignment: .leading, spacing: 15) {
-        Text(loc("stats.insights.title", "Insights Overview"))
-          .font(.title2)
-          .fontWeight(.bold)
-          .foregroundColor(AppTheme.textPrimary)
-          .padding(.bottom, 5)
+  // MARK: - Plate
 
-        VStack(spacing: 12) {
-          insightCard(
-            title: loc("stats.insights.active_days", "Active Days"),
-            value: "\(validDays)/\(statistics.count)")
-          insightCard(
-            title: loc("stats.insights.avg_daily_calories", "Avg Daily Calories"),
-            value: "\(Int(averages.avgCalories)) \(loc("units.kcal", "kcal"))")
-          insightCard(
-            title: loc("stats.insights.avg_food_weight", "Avg Food Weight"),
-            value: "\(Int(averages.avgWeight)) \(loc("units.g", "g"))")
-          insightCard(
-            title: loc("stats.insights.avg_protein", "Avg Protein"),
-            value: "\(Int(averages.avgProteins)) \(loc("units.g", "g"))")
-          insightCard(
-            title: loc("stats.insights.avg_fiber", "Avg Fiber"),
-            value: "\(Int(averages.avgFiber)) \(loc("units.g", "g"))")
+  private var plateCard: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(loc("stats.card.plate", "Plate"))
+        .font(.headline)
+        .foregroundColor(AppTheme.textPrimary)
 
-          if averages.avgPersonWeight > 0 {
-            insightCard(
-              title: loc("stats.insights.avg_body_weight", "Avg Body Weight"),
-              value: String(format: "%.1f %@", averages.avgPersonWeight, loc("units.kg", "kg")))
+      if let score = weekHealthScore {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+          Text("\(score)")
+            .font(.system(size: 36, weight: .bold, design: .rounded))
+            .foregroundColor(healthScoreColor(score))
+          VStack(alignment: .leading, spacing: 2) {
+            Text(loc("health.score.value.label", "Today's Score"))
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
+            Text(scoreBandLabel(score))
+              .font(.subheadline)
+              .fontWeight(.semibold)
+              .foregroundColor(AppTheme.textPrimary)
           }
         }
-      }
-      .frame(maxWidth: .infinity)
-      .padding(.horizontal, 4)
-    }
-  }
 
-  private func insightCard(title: String, value: String) -> some View {
-    HStack {
-      Text(title)
-        .font(.subheadline)
-        .foregroundColor(AppTheme.textSecondary)
-        .lineLimit(1)
-
-      Spacer()
-
-      Text(value)
-        .font(.subheadline)
-        .fontWeight(.semibold)
-        .foregroundColor(AppTheme.textPrimary)
-        .lineLimit(1)
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 10)
-    .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
-    .frame(maxWidth: .infinity)
-  }
-
-  private var summaryStatsView: some View {
-    let averages = statisticsService.calculateAverages(from: statistics)
-
-    return VStack(alignment: .leading, spacing: 6) {
-      Text(
-        String(
-          format: loc("stats.summary.title_format", "Summary (%@)"), localizedPeriod(selectedPeriod)
-        )
-      )
-      .font(.subheadline)
-      .fontWeight(.semibold)
-      .foregroundColor(AppTheme.textPrimary)
-
-      LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
-        summaryCard(
-          title: loc("stats.summary.avg_calories", "Avg Calories"),
-          value: "\(Int(averages.avgCalories))",
-          subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.kcal", "kcal"))
-        )
-        summaryCard(
-          title: loc("stats.summary.avg_food", "Avg Food"), value: "\(Int(averages.avgWeight))",
-          subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.g", "g")))
-        summaryCard(
-          title: loc("stats.summary.avg_protein", "Avg Protein"),
-          value: "\(Int(averages.avgProteins))",
-          subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.g", "g")))
-        summaryCard(
-          title: loc("stats.summary.avg_fiber", "Avg Fiber"), value: "\(Int(averages.avgFiber))",
-          subtitle: String(format: loc("units.per_day_format", "%@/day"), loc("units.g", "g")))
+        if scoredDays.count >= 2 {
+          Chart(scoredDays) { stat in
+            LineMark(
+              x: .value(loc("stats.axis.date", "Date"), stat.date),
+              y: .value(loc("stats.card.plate", "Plate"), stat.averageHealthScore ?? 0)
+            )
+            .foregroundStyle(healthScoreColor(stat.averageHealthScore ?? 0))
+            PointMark(
+              x: .value(loc("stats.axis.date", "Date"), stat.date),
+              y: .value(loc("stats.card.plate", "Plate"), stat.averageHealthScore ?? 0)
+            )
+            .foregroundStyle(healthScoreColor(stat.averageHealthScore ?? 0))
+          }
+          .chartYScale(domain: 0...100)
+          .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+              AxisValueLabel()
+                .foregroundStyle(AppTheme.textPrimary)
+                .font(.caption2)
+            }
+          }
+          .chartYAxis {
+            AxisMarks(values: [0, 50, 100]) { _ in
+              AxisValueLabel()
+                .foregroundStyle(AppTheme.textPrimary)
+                .font(.caption2)
+            }
+          }
+          .frame(height: 100)
+        }
+      } else {
+        Text(loc("stats.plate.empty", "Log meals to see your plate score this week."))
+          .font(.subheadline)
+          .foregroundColor(AppTheme.textSecondary)
       }
     }
-    .padding(.horizontal, 10)
-    .padding(.vertical, 6)
-    .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .cardContainer(padding: 16)
   }
 
-  private func summaryCard(title: String, value: String, subtitle: String) -> some View {
-    VStack(spacing: 3) {
-      Text(title)
-        .font(.caption2)
-        .foregroundColor(AppTheme.textSecondary)
-        .lineLimit(1)
+  // MARK: - Protein / consistency
 
-      Text(value)
-        .font(.subheadline)
-        .fontWeight(.bold)
+  private var proteinCard: some View {
+    let met = proteinTarget > 0 && averageProtein >= proteinTarget * 0.8
+    return VStack(alignment: .leading, spacing: 8) {
+      Text(loc("stats.card.protein", "Protein"))
+        .font(.headline)
         .foregroundColor(AppTheme.textPrimary)
-        .lineLimit(1)
-
-      Text(subtitle)
-        .font(.caption2)
-        .foregroundColor(AppTheme.textSecondary)
-        .lineLimit(1)
+      HStack {
+        Text(
+          String(
+            format: loc("stats.protein.caption", "%d / %d g per day"),
+            Int(averageProtein.rounded()), Int(proteinTarget.rounded()))
+        )
+        .font(.subheadline)
+        .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        Circle()
+          .fill(met ? AppTheme.success : AppTheme.warning)
+          .frame(width: 10, height: 10)
+      }
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 6)
-    .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
-    .frame(maxWidth: .infinity)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .cardContainer(padding: 16)
+  }
+
+  private var consistencyRow: some View {
+    Text(
+      String(
+        format: loc("stats.consistency.format", "Logged %d of %d days"),
+        loggedDays.count, statistics.count)
+    )
+    .font(.footnote)
+    .foregroundColor(AppTheme.textSecondary)
+    .frame(maxWidth: .infinity, alignment: .center)
+    .padding(.top, 4)
+  }
+
+  private var openGraphsButton: some View {
+    Button {
+      HapticsService.shared.select()
+      showGraphs = true
+    } label: {
+      Label(loc("stats.open_graphs", "View graphs"), systemImage: "chart.xyaxis.line")
+        .font(.headline)
+        .frame(maxWidth: .infinity)
+    }
+    .buttonStyle(SecondaryButtonStyle())
+    .padding(.top, 8)
+    .accessibilityHint(loc("stats.open_graphs.hint", "Opens the detailed statistics graphs"))
+  }
+
+  // MARK: - Day detail
+
+  private func dayDetailSheet(_ day: DailyStatistics) -> some View {
+    NavigationView {
+      VStack(alignment: .leading, spacing: 16) {
+        Text(mediumDate(day.date))
+          .font(.title3)
+          .fontWeight(.semibold)
+          .foregroundColor(AppTheme.textPrimary)
+
+        if calorieTarget > 0 {
+          HStack {
+            Text("\(day.totalCalories) / \(calorieTarget) \(loc("units.kcal", "kcal"))")
+              .foregroundColor(AppTheme.textPrimary)
+            Text(calorieStatusLabel(day.totalCalories))
+              .font(.caption)
+              .foregroundColor(calorieDotColor(day.totalCalories))
+          }
+        } else {
+          Text("\(day.totalCalories) \(loc("units.kcal", "kcal"))")
+            .foregroundColor(AppTheme.textPrimary)
+        }
+
+        Text(
+          String(
+            format: loc("stats.day.meals", "%d meals"), day.numberOfMeals)
+        )
+        .foregroundColor(AppTheme.textSecondary)
+
+        if let score = day.averageHealthScore {
+          Text(
+            "\(loc("stats.card.plate", "Plate")) \(score) · \(scoreBandLabel(score))"
+          )
+          .foregroundColor(healthScoreColor(score))
+        }
+
+        Spacer()
+      }
+      .padding(20)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(AppTheme.backgroundGradient.ignoresSafeArea())
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button(loc("common.done", "Done")) {
+            selectedDay = nil
+          }
+          .foregroundColor(AppTheme.textPrimary)
+        }
+      }
+    }
+    .presentationDetents([.medium])
+  }
+
+  // MARK: - Helpers
+
+  private func selectDay(at location: CGPoint, proxy: ChartProxy, geo: GeometryProxy) {
+    let plotFrame = geo[proxy.plotFrame!]
+    let x = location.x - plotFrame.origin.x
+    guard let date: Date = proxy.value(atX: x) else { return }
+    let match = loggedDays.min {
+      abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+    }
+    guard let match else { return }
+    HapticsService.shared.select()
+    selectedDay = match
+  }
+
+  private func calorieDotColor(_ kcal: Int) -> Color {
+    guard calorieTarget > 0 else { return AppTheme.accent }
+    if isInCalorieRange(kcal) { return AppTheme.success }
+    if Double(kcal) > Double(calorieTarget) * 1.1 { return AppTheme.danger }
+    return AppTheme.warning
+  }
+
+  private func calorieStatusLabel(_ kcal: Int) -> String {
+    guard calorieTarget > 0 else { return "" }
+    if isInCalorieRange(kcal) { return loc("stats.day.on_target", "on target") }
+    if Double(kcal) > Double(calorieTarget) { return loc("stats.day.over", "over") }
+    return loc("stats.day.under", "under")
+  }
+
+  private func dotColor(_ stat: DailyStatistics) -> Color {
+    if !stat.hasData { return AppTheme.textSecondary.opacity(0.25) }
+    return calorieDotColor(stat.totalCalories)
+  }
+
+  private func shortWeekday(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: LanguageService.shared.currentCode)
+    formatter.dateFormat = "EEEEE"
+    return formatter.string(from: date)
+  }
+
+  private func mediumDate(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: LanguageService.shared.currentCode)
+    formatter.dateStyle = .medium
+    return formatter.string(from: date)
+  }
+
+  private func healthScoreColor(_ rating: Int) -> Color {
+    switch rating {
+    case 0..<40: return Color(red: 1.0, green: 0.0, blue: 0.0)
+    case 40..<60: return Color(red: 1.0, green: 0.6, blue: 0.0)
+    case 60..<80: return Color(red: 0.85, green: 0.7, blue: 0.0)
+    case 80..<95: return Color(red: 0.5, green: 0.9, blue: 0.3)
+    default: return Color(red: 0.0, green: 1.0, blue: 0.0)
+    }
+  }
+
+  private func scoreBandLabel(_ score: Int) -> String {
+    switch score {
+    case 0..<40: return loc("health.score.band.poor", "Needs Improvement")
+    case 40..<60: return loc("health.score.band.low", "Fair")
+    case 60..<80: return loc("health.score.band.fair", "Good")
+    case 80..<95: return loc("health.score.band.good", "Very Good")
+    default: return loc("health.score.band.great", "Excellent")
+    }
   }
 
   private func loadData() {
@@ -630,14 +779,6 @@ struct StatisticsView: View {
       }
     }
   }
-}
-
-struct MacroData: Identifiable {
-  let id = UUID()
-  let date: Date
-  let nutrient: String
-  let value: Double
-  let color: Color
 }
 
 #Preview {
