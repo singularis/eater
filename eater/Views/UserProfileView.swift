@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct UserProfileView: View {
+  var embeddedInTab: Bool = false
   @EnvironmentObject var authService: AuthenticationService
   @Environment(\.dismiss) private var dismiss
   @State private var showDeleteConfirmation = false
@@ -97,7 +98,7 @@ struct UserProfileView: View {
               }
               .frame(maxWidth: .infinity)
             }
-            .buttonStyle(GreenToPurpleButtonStyle())
+            .buttonStyle(PrimaryButtonStyle())
             .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
 
             // Theme Section
@@ -116,7 +117,7 @@ struct UserProfileView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 56, height: 56)
                         .clipShape(Circle())
-                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .appCardShadow()
                     }
                     Spacer(minLength: 0)
                   }
@@ -224,24 +225,8 @@ struct UserProfileView: View {
                 }) {
                   Text(loc("health.update.title", "Update Health Settings"))
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                      RoundedRectangle(cornerRadius: 25, style: .continuous)
-                        .fill(
-                          LinearGradient(
-                            colors: [
-                              Color(red: 0.72, green: 0.62, blue: 0.92),
-                              Color(red: 0.65, green: 0.52, blue: 0.88)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                        )
-                    )
                 }
-                .buttonStyle(PressScaleButtonStyle())
+                .buttonStyle(PrimaryButtonStyle())
                 .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
               }
               .cardContainer(padding: 14)
@@ -262,24 +247,8 @@ struct UserProfileView: View {
                 }) {
                   Text(loc("health.update.title", "Setup Health Profile"))
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                      RoundedRectangle(cornerRadius: 25, style: .continuous)
-                        .fill(
-                          LinearGradient(
-                            colors: [
-                              Color(red: 0.72, green: 0.62, blue: 0.92),
-                              Color(red: 0.65, green: 0.52, blue: 0.88)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                        )
-                    )
                 }
-                .buttonStyle(PressScaleButtonStyle())
+                .buttonStyle(PrimaryButtonStyle())
                 .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
               }
               .cardContainer(padding: 14)
@@ -415,7 +384,7 @@ struct UserProfileView: View {
                   
                   // Clear caches that depend on the backend environment
                   ProductStorageService.shared.clearCache()
-                  StatisticsService.shared.clearExpiredCache()
+                  StatisticsService.shared.clearCache()
                   
                   // Clear local chess data so we don't mix environments
                   let chessKeys = [
@@ -472,21 +441,7 @@ struct UserProfileView: View {
               }
               .padding(.horizontal, 8)
               .padding(.vertical, 6)
-              .background(
-                RoundedRectangle(cornerRadius: 12)
-                  .fill(.ultraThinMaterial)
-                  .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                      .stroke(
-                        LinearGradient(
-                          colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
-                          startPoint: .topLeading,
-                          endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                      )
-                  )
-              )
+              .appSurface(cornerRadius: AppTheme.smallRadius)
               .padding(.horizontal, 4)
             }
             .padding(.vertical, 12)
@@ -512,16 +467,16 @@ struct UserProfileView: View {
                     .fontWeight(.semibold)
                 }
                 .font(.subheadline)
-                .foregroundColor(Color(red: 0.42, green: 0.0, blue: 0.05))
+                .foregroundColor(AppTheme.danger)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                  RoundedRectangle(cornerRadius: 25, style: .continuous)
-                    .fill(Color.white)
+                  RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+                    .fill(AppTheme.surface)
                 )
                 .overlay(
-                  RoundedRectangle(cornerRadius: 25, style: .continuous)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                  RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+                    .stroke(AppTheme.divider, lineWidth: 1)
                 )
               }
               .buttonStyle(PressScaleButtonStyle())
@@ -551,11 +506,13 @@ struct UserProfileView: View {
       .navigationTitle(loc("nav.profile", "Profile"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button(loc("common.done", "Done")) {
-            dismiss()
+        if !embeddedInTab {
+          ToolbarItem(placement: .navigationBarTrailing) {
+            Button(loc("common.done", "Done")) {
+              dismiss()
+            }
+            .foregroundColor(AppTheme.textPrimary)
           }
-          .foregroundColor(AppTheme.textPrimary)
         }
       }
       .alert(loc("alert.delete.title", "Delete Account"), isPresented: $showDeleteConfirmation) {
@@ -960,22 +917,11 @@ struct MascotButton: View {
     Button(action: action) {
       VStack(spacing: 8) {
         ZStack {
-          RoundedRectangle(cornerRadius: 16)
-            .fill(isSelected ? 
-              LinearGradient(
-                colors: [AppTheme.accent, AppTheme.accent.opacity(0.7)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-              ) : 
-              LinearGradient(
-                colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.1)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-              )
-            )
+          RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+            .fill(isSelected ? AppTheme.primaryButtonFill : AppTheme.surface)
             .overlay(
-              RoundedRectangle(cornerRadius: 16)
-                .stroke(isSelected ? Color.white.opacity(0.3) : Color.clear, lineWidth: 2)
+              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                .stroke(isSelected ? AppTheme.primaryButtonFill : AppTheme.divider, lineWidth: 1)
             )
           
           if mascot == .none {

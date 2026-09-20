@@ -14,16 +14,14 @@ final class LanguageService: ObservableObject {
   private init() {
     // Load stored or detect device preferred language
     if let stored = defaults.string(forKey: languageKey), !stored.isEmpty {
-      currentCode = stored
-      // Prefer native name for consistent display across app restarts
-      let native = LanguageService.nativeNameStatic(for: stored)
+      let code = LanguageService.normalize(code: stored)
+      let native = LanguageService.nativeNameStatic(for: code)
+      currentCode = code
       currentDisplayName = native
       defaults.set(native, forKey: displayNameKey)
       defaults.synchronize()
-    } else if let deviceCode = Locale.preferredLanguages.first.flatMap({
-      Locale(identifier: $0).language.languageCode?.identifier
-    }) {
-      let normalized = LanguageService.normalize(code: deviceCode)
+    } else if let preferred = Locale.preferredLanguages.first {
+      let normalized = LanguageService.normalize(code: preferred)
       currentCode = normalized
       currentDisplayName = LanguageService.nativeNameStatic(for: normalized)
       defaults.set(normalized, forKey: languageKey)
@@ -31,7 +29,7 @@ final class LanguageService: ObservableObject {
       defaults.synchronize()
     } else {
       currentCode = "en"
-      currentDisplayName = "English"
+      currentDisplayName = LanguageService.nativeNameStatic(for: "en")
     }
   }
 
@@ -75,25 +73,20 @@ final class LanguageService: ObservableObject {
   }
 
   func nativeName(for code: String) -> String {
-    let norm = LanguageService.normalize(code: code)
-    // Try to get native name using the locale itself
-    if let name = Locale(identifier: norm).localizedString(forLanguageCode: norm) {
-      return name.capitalized
-    }
-    // Fallback to current locale
-    if let name = Locale.current.localizedString(forLanguageCode: norm) {
-      return name.capitalized
-    }
-    return norm.uppercased()
+    LanguageService.nativeNameStatic(for: code)
   }
 
   // Static variant safe for use during initialization
   static func nativeNameStatic(for code: String) -> String {
     let norm = LanguageService.normalize(code: code)
-    if let name = Locale(identifier: norm).localizedString(forLanguageCode: norm) {
+    if let name = displayNames[norm] {
+      return name
+    }
+    let lang = LanguageService.baseLanguageCode(of: norm)
+    if let name = Locale(identifier: norm).localizedString(forLanguageCode: lang) {
       return name.capitalized
     }
-    if let name = Locale.current.localizedString(forLanguageCode: norm) {
+    if let name = Locale.current.localizedString(forLanguageCode: lang) {
       return name.capitalized
     }
     return norm.uppercased()
@@ -120,7 +113,9 @@ final class LanguageService: ObservableObject {
       completion?(true)
       return
     }
-    GRPCService().setLanguage(userEmail: email, languageCode: normalized) { success in
+    GRPCService().setLanguage(
+      userEmail: email, languageCode: LanguageService.baseLanguageCode(of: normalized)
+    ) { success in
       if !success {
         // Fallback to English
         DispatchQueue.main.async {
@@ -170,15 +165,40 @@ final class LanguageService: ObservableObject {
     let manual: [String: String] = [
       "Chinese (Mandarin)": "zh",
       "Slovene (Slovenian)": "sl",
+      "English (US)": "en-US",
+      "English (UK)": "en",
     ]
     if let c = manual[displayName] { return c }
     // Default to English
     return "en"
   }
 
+  private static let displayNames: [String: String] = [
+    "en": "English (UK)",
+    "en-US": "English (US)",
+  ]
+
+  /// Regional packs that have their own `Localization/*.json` file.
+  private static let regionalVariants: Set<String> = ["en-us"]
+
+  static func baseLanguageCode(of code: String) -> String {
+    code.lowercased().replacingOccurrences(of: "_", with: "-")
+      .split(separator: "-").first.map(String.init) ?? code.lowercased()
+  }
+
   static func normalize(code: String) -> String {
-    // Only keep language part (e.g., "en-US" -> "en")
-    return code.lowercased().split(separator: "-").first.map(String.init) ?? code.lowercased()
+    let raw = code.trimmingCharacters(in: .whitespacesAndNewlines)
+      .replacingOccurrences(of: "_", with: "-")
+      .lowercased()
+    let parts = raw.split(separator: "-").map(String.init)
+    guard let lang = parts.first, !lang.isEmpty else { return raw }
+    if parts.count >= 2 {
+      let region = parts[1]
+      if regionalVariants.contains("\(lang)-\(region)") {
+        return "\(lang)-\(region.uppercased())"
+      }
+    }
+    return lang
   }
 
   // Short label for Recommendation/Advice
@@ -221,11 +241,18 @@ final class LanguageService: ObservableObject {
       "vi": "L.khuyên", // lời khuyên (advice)
       "zh": "建议",      // jiànyi (advice)
     ]
-    return map[currentCode] ?? "Advice"
+    return map[currentCode] ?? map[LanguageService.baseLanguageCode(of: currentCode)] ?? "Advice"
   }
 
   func flagEmoji(forLanguageCode code: String) -> String {
-    let lang = LanguageService.normalize(code: code)
+    let norm = LanguageService.normalize(code: code)
+    let regionalCountry: [String: String] = [
+      "en-US": "US",
+    ]
+    if let country = regionalCountry[norm] {
+      return flagEmoji(forRegionCode: country)
+    }
+    let lang = LanguageService.baseLanguageCode(of: norm)
     let representativeCountry: [String: String] = [
       "en": "GB", "es": "ES", "fr": "FR", "de": "DE", "it": "IT", "pt": "PT",
       "ru": "RU", "uk": "UA", "zh": "CN", "ja": "JP", "ar": "SA", "hi": "IN",

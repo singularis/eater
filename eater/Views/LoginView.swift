@@ -37,8 +37,7 @@ struct LoginView: View {
         ProgressView()
           .scaleEffect(1.3)
           .padding(28)
-          .background(.ultraThinMaterial)
-          .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+          .appSurface()
       }
     }
     .sheet(isPresented: $showAppInfo) {
@@ -87,7 +86,7 @@ struct LoginView: View {
                 lineWidth: 2.5
               )
           )
-          .shadow(color: AppTheme.accent.opacity(0.35), radius: 14, x: 0, y: 6)
+          .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
 
         Image(systemName: "fork.knife")
           .font(.system(size: 34, weight: .semibold))

@@ -14,7 +14,7 @@ struct MascotAvatarView: View {
         .aspectRatio(contentMode: .fit)
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .appCardShadow()
     } else if themeService.currentMascot != .none {
       Image(systemName: "pawprint.circle.fill")
         .font(.system(size: size * 0.5))

@@ -290,9 +290,7 @@ struct ActivitiesView: View {
       }
     }
     .padding()
-    .background(AppTheme.surface)
-    .cornerRadius(16)
-    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+    .appSurface()
     .padding(.horizontal)
     .id("burned-\(summaryTotalCalories)-\(summaryActivityTypes.joined(separator: ","))")
   }
@@ -393,7 +391,7 @@ struct ActivitiesView: View {
         .scaleEffect(1.25)
       }
       .clipShape(HexagonShape())
-      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+      .appCardShadow()
     }
     .buttonStyle(.plain)
   }
@@ -409,7 +407,7 @@ struct ActivitiesView: View {
       ZStack {
         if tracked {
           HexagonShape()
-            .fill(LinearGradient(colors: [.green, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+            .fill(AppTheme.success)
         } else {
           HexagonShape()
             .fill(AppTheme.surface)
@@ -428,7 +426,7 @@ struct ActivitiesView: View {
         }
       }
       .clipShape(HexagonShape())
-      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+      .appCardShadow()
     }
     .buttonStyle(.plain)
   }
@@ -442,7 +440,7 @@ struct ActivitiesView: View {
       ZStack {
         if tracked {
           HexagonShape()
-            .fill(LinearGradient(colors: [.green, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+            .fill(AppTheme.success)
         } else {
           HexagonShape()
             .fill(AppTheme.surface)
@@ -461,7 +459,7 @@ struct ActivitiesView: View {
         }
       }
       .clipShape(HexagonShape())
-      .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+      .appCardShadow()
     }
     .buttonStyle(.plain)
   }
@@ -613,20 +611,12 @@ struct ActivitiesView: View {
         .foregroundColor(.white)
         .frame(maxWidth: .infinity)
         .padding()
-        .background(
-          LinearGradient(
-            gradient: Gradient(colors: [Color.purple, Color.purple.opacity(0.7)]),
-            startPoint: .leading,
-            endPoint: .trailing
-          )
-        )
-        .cornerRadius(12)
+        .background(Color.purple)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
       }
     }
     .padding()
-    .background(AppTheme.surface)
-    .cornerRadius(16)
-    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+    .appSurface()
     .padding(.horizontal)
   }
   
@@ -666,14 +656,18 @@ struct ActivitiesView: View {
       .background(
         Group {
           if tracked {
-            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+            AppTheme.success
           } else {
             AppTheme.surface
           }
         }
       )
-      .cornerRadius(12)
-      .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
+      .appCardShadow()
     }
     .buttonStyle(.plain)
   }
@@ -781,14 +775,18 @@ struct ActivitiesView: View {
       .background(
         Group {
           if tracked {
-            LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
+            AppTheme.success
           } else {
             AppTheme.surface
           }
         }
       )
-      .cornerRadius(12)
-      .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
+      .appCardShadow()
     }
     .buttonStyle(.plain)
   }
@@ -825,9 +823,7 @@ struct ActivitiesView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 150)
-            .background(AppTheme.surface)
-            .cornerRadius(20)
-            .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
+            .appSurface()
           }
           
           Button(action: { 
@@ -847,9 +843,7 @@ struct ActivitiesView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 150)
-            .background(AppTheme.surface)
-            .cornerRadius(20)
-            .shadow(color: Color.gray.opacity(0.3), radius: 10, x: 0, y: 5)
+            .appSurface()
           }
           
           Button(action: { 
@@ -869,9 +863,7 @@ struct ActivitiesView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 150)
-            .background(AppTheme.surface)
-            .cornerRadius(20)
-            .shadow(color: Color.red.opacity(0.3), radius: 10, x: 0, y: 5)
+            .appSurface()
           }
           
           Spacer()
@@ -947,12 +939,10 @@ struct ActivitiesView: View {
         .padding(.vertical, 10)
         .padding(.horizontal, 16)
         .background(AppTheme.surfaceAlt)
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
     }
     .padding(20)
-    .background(AppTheme.surface)
-    .cornerRadius(18)
-    .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 8)
+    .appSurface()
   }
   
   // MARK: - Helper Properties

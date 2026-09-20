@@ -21,9 +21,7 @@ struct LoadingOverlay: View {
             .multilineTextAlignment(.center)
         }
         .padding(24)
-        .background(AppTheme.surface)
-        .cornerRadius(AppTheme.cornerRadius)
-        .shadow(color: AppTheme.cardShadow.color, radius: AppTheme.cardShadow.radius, x: AppTheme.cardShadow.x, y: AppTheme.cardShadow.y)
+        .appSurface()
       }
       .animation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3), value: isVisible)
     }

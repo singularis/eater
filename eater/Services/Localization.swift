@@ -46,6 +46,13 @@ final class Localization {
     if let v = map[key] {
       return v
     }
+    let base = LanguageService.baseLanguageCode(of: code)
+    if base != code {
+      let baseMap = translations(for: base)
+      if let v = baseMap[key] {
+        return v
+      }
+    }
     // Fallback to English map
     let en = translations(for: "en")
     if let v = en[key] {

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct StatisticsView: View {
   @Binding var isPresented: Bool
+  var showsCloseButton: Bool = true
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
@@ -57,11 +58,13 @@ struct StatisticsView: View {
       .navigationTitle(loc("nav.statistics", "Statistics"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button(loc("common.close", "Close")) {
-            isPresented = false
+        if showsCloseButton {
+          ToolbarItem(placement: .navigationBarLeading) {
+            Button(loc("common.close", "Close")) {
+              isPresented = false
+            }
+            .foregroundColor(AppTheme.textPrimary)
           }
-          .foregroundColor(AppTheme.textPrimary)
         }
       }
       .onAppear { loadData() }
@@ -76,6 +79,7 @@ struct StatisticsView: View {
     .simultaneousGesture(
       DragGesture(minimumDistance: 40)
         .onEnded { value in
+          guard showsCloseButton else { return }
           let dx = value.translation.width
           let dy = value.translation.height
           guard abs(dx) > abs(dy), dx > 70 else { return }

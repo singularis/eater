@@ -639,7 +639,11 @@ private struct ControlGlass: ViewModifier {
     } else {
       content
         .background(AppTheme.surface)
-        .cornerRadius(AppTheme.smallRadius)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+            .stroke(AppTheme.divider, lineWidth: 1)
+        )
     }
   }
 }
@@ -654,8 +658,11 @@ private struct ChipGlass: ViewModifier {
       )
     } else {
       content
-        .background(selected ? AppTheme.accent : AppTheme.surfaceAlt)
-        .cornerRadius(16)
+        .background(selected ? AppTheme.accent : AppTheme.surface)
+        .clipShape(Capsule())
+        .overlay(
+          Capsule().stroke(AppTheme.divider, lineWidth: 1)
+        )
     }
   }
 }
@@ -667,7 +674,12 @@ private struct ChartCardGlass: ViewModifier {
     } else {
       content
         .background(AppTheme.surface)
-        .cornerRadius(AppTheme.smallRadius)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+            .stroke(AppTheme.divider, lineWidth: 1)
+        )
+        .appCardShadow()
     }
   }
 }
@@ -677,7 +689,14 @@ private struct SelectionPopoverGlass: ViewModifier {
     if #available(iOS 26.0, *) {
       content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
     } else {
-      content.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+      content.background(
+        AppTheme.surface,
+        in: RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
     }
   }
 }

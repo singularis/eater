@@ -13,7 +13,7 @@ struct ChessOpponentPickerView: View {
   @State private var showAddFriend = false
   
   var body: some View {
-    NavigationView {
+    NavigationStack {
       ZStack {
         AppTheme.backgroundGradient.ignoresSafeArea()
         
@@ -97,10 +97,9 @@ struct ChessOpponentPickerView: View {
           }
         }
       }
-      .sheet(isPresented: $showAddFriend) {
+      .navigationDestination(isPresented: $showAddFriend) {
         AddFriendsView(isPresented: $showAddFriend)
           .onDisappear {
-            // Refresh list after adding friend
             fetchFriends()
           }
       }
@@ -161,8 +160,12 @@ struct ChessOpponentPickerView: View {
       }
       .padding()
       .background(AppTheme.surface)
-      .cornerRadius(12)
-      .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
+      .appCardShadow()
     }
   }
   

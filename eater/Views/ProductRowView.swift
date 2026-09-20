@@ -20,8 +20,6 @@ struct ProductRowView: View {
   @State private var showShareLoginPrompt = false
   @State private var showDeleteConfirmation = false
 
-  private static let macrosLilac = Color(red: 0.72, green: 0.66, blue: 0.88)
-
   private var displayImage: UIImage? {
     product.image ?? remoteImage
   }
@@ -142,8 +140,10 @@ struct ProductRowView: View {
             }
           }
           .onLongPressGesture {
+            #if DEBUG
             HapticsService.shared.mediumImpact()
             runDiagnostic()
+            #endif
           }
       }
     }
@@ -187,7 +187,7 @@ struct ProductRowView: View {
             Text(dishMacrosLine2)
           }
           .font(.system(size: 13 * scale, weight: .medium, design: .rounded))
-          .foregroundColor(Self.macrosLilac)
+          .foregroundColor(AppTheme.textSecondary)
           .lineLimit(1)
           .minimumScaleFactor(0.7)
           .allowsTightening(true)
@@ -248,7 +248,6 @@ struct ProductRowView: View {
         fill: AppTheme.surface,
         glyphOffsetY: -1
       )
-      .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
     }
     .buttonStyle(.plain)
     .alert(
@@ -256,7 +255,7 @@ struct ProductRowView: View {
     ) {
       Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
       Button(loc("login.prompt.confirm", "Login Now")) {
-        NotificationCenter.default.post(name: NSNotification.Name("ForceLogout"), object: nil)
+        AppNavigation.shared.showInPlaceLogin = true
       }
     } message: {
       Text(
@@ -273,7 +272,7 @@ struct ProductRowView: View {
       actionCircle(
         systemName: "ellipsis",
         color: AppTheme.textSecondary,
-        fill: AppTheme.surfaceAlt
+        fill: AppTheme.surface
       )
     }
     .buttonStyle(.plain)
@@ -286,10 +285,9 @@ struct ProductRowView: View {
     }) {
       actionCircle(
         systemName: "trash",
-        color: .red,
+        color: AppTheme.danger,
         fill: AppTheme.surface
       )
-      .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
     }
     .buttonStyle(.plain)
     .disabled(onDelete == nil)
@@ -321,6 +319,7 @@ struct ProductRowView: View {
       .frame(width: actionIconFrame, height: actionIconFrame, alignment: .center)
       .background(fill)
       .clipShape(Circle())
+      .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
   }
 
   private func openPortionMenu() {
@@ -441,6 +440,7 @@ struct ProductRowView: View {
     }
   }
   
+  #if DEBUG
   private func runDiagnostic() {
       let imageId = product.imageId
       let hasLocal = ImageStorageService.shared.imageExists(forTime: product.time)
@@ -484,6 +484,7 @@ struct ProductRowView: View {
       
       AlertHelper.showAlert(title: "Diagnostic Result", message: message)
   }
+  #endif
 
   private static func isCoveredByDishName(_ ingredient: String, dish: String) -> Bool {
     let ingredientWords = tokenWords(ingredient)

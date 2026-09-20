@@ -21,6 +21,8 @@ final class FriendsSearchWebSocket: NSObject {
   private var isAuthenticated = false
   private var pendingSearch: (query: String, limit: Int)?
   private var lastFailureMessage: String?
+  /// Bumped on every connect/teardown so callbacks from a dead socket are ignored.
+  private var generation = 0
 
   private let tokenProvider: () -> String?
 
@@ -40,7 +42,7 @@ final class FriendsSearchWebSocket: NSObject {
   func connect() {
     teardown(notifyDisconnected: false)
     lastFailureMessage = nil
-    onStateChange?(.connecting)
+    emit(.connecting)
     let config = URLSessionConfiguration.default
     config.timeoutIntervalForRequest = 30
     config.timeoutIntervalForResource = 30
@@ -49,7 +51,7 @@ final class FriendsSearchWebSocket: NSObject {
     let task = session.webSocketTask(with: AppEnvironment.webSocketURL)
     webSocketTask = task
     task.resume()
-    onStateChange?(.connected)
+    emit(.connected)
     listen()
     sendAuthIfNeeded()
   }
@@ -70,6 +72,7 @@ final class FriendsSearchWebSocket: NSObject {
   }
 
   private func teardown(notifyDisconnected: Bool) {
+    generation += 1
     isListening = false
     isAuthSent = false
     isAuthenticated = false
@@ -82,17 +85,39 @@ final class FriendsSearchWebSocket: NSObject {
     session = nil
     if notifyDisconnected {
       if let lastFailureMessage, !lastFailureMessage.isEmpty {
-        onStateChange?(.failed(lastFailureMessage))
+        emit(.failed(lastFailureMessage))
       } else {
-        onStateChange?(.disconnected)
+        emit(.disconnected)
       }
     }
   }
 
   private func fail(_ message: String) {
     lastFailureMessage = message
-    onStateChange?(.failed(message))
+    emit(.failed(message))
     teardown(notifyDisconnected: false)
+  }
+
+  /// SwiftUI state lives behind these callbacks, and URLSession delivers on its
+  /// own queue.
+  private func emit(_ state: ConnectionState) {
+    DispatchQueue.main.async { [weak self] in
+      self?.onStateChange?(state)
+    }
+  }
+
+  /// Closing the sheet cancels in-flight sends and receives. Those errors describe
+  /// our own teardown, not a search problem.
+  private func isTeardownError(_ error: Error) -> Bool {
+    let nsError = error as NSError
+    guard nsError.domain == NSURLErrorDomain || nsError.domain == NSPOSIXErrorDomain else {
+      return false
+    }
+    return [
+      NSURLErrorCancelled,
+      NSURLErrorNetworkConnectionLost,
+      Int(ENOTCONN),
+    ].contains(nsError.code)
   }
 
   private func sendAuthIfNeeded() {
@@ -123,13 +148,19 @@ final class FriendsSearchWebSocket: NSObject {
 
   private func send(json: [String: Any]) {
     guard let task = webSocketTask else { return }
+    let sentGeneration = generation
     do {
       let data = try JSONSerialization.data(withJSONObject: json, options: [])
-      if let text = String(data: data, encoding: .utf8) {
-        task.send(.string(text)) { [weak self] error in
-          if let error = error {
-            self?.fail(error.localizedDescription)
-          }
+      guard let text = String(data: data, encoding: .utf8) else {
+        fail("Failed to encode JSON")
+        return
+      }
+      task.send(.string(text)) { [weak self] error in
+        guard let error = error else { return }
+        DispatchQueue.main.async {
+          guard let self = self, self.generation == sentGeneration else { return }
+          guard !self.isTeardownError(error) else { return }
+          self.fail(error.localizedDescription)
         }
       }
     } catch {
@@ -140,15 +171,19 @@ final class FriendsSearchWebSocket: NSObject {
   private func listen() {
     guard let task = webSocketTask else { return }
     isListening = true
+    let listenGeneration = generation
     task.receive { [weak self] result in
-      guard let self = self else { return }
-      switch result {
-      case let .failure(error):
-        self.fail(error.localizedDescription)
-      case let .success(message):
-        self.handle(message: message)
-        if self.isListening {
-          self.listen()
+      DispatchQueue.main.async {
+        guard let self = self, self.generation == listenGeneration else { return }
+        switch result {
+        case let .failure(error):
+          guard !self.isTeardownError(error) else { return }
+          self.fail(error.localizedDescription)
+        case let .success(message):
+          self.handle(message: message)
+          if self.isListening, self.generation == listenGeneration {
+            self.listen()
+          }
         }
       }
     }
@@ -165,9 +200,17 @@ final class FriendsSearchWebSocket: NSObject {
       data = nil
     }
     guard let data = data else { return }
-    guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+    guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+      #if DEBUG
+      print("friend search: unexpected frame \(String(data: data, encoding: .utf8) ?? "<binary>")")
+      #endif
+      return
+    }
 
     if let error = obj["error"] as? String {
+      #if DEBUG
+      print("friend search server error: \(error) | frame: \(obj)")
+      #endif
       fail(error)
       return
     }
@@ -175,6 +218,9 @@ final class FriendsSearchWebSocket: NSObject {
     guard let type = obj["type"] as? String else { return }
 
     if type == "error" {
+      #if DEBUG
+      print("friend search server error frame: \(obj)")
+      #endif
       fail((obj["message"] as? String) ?? "Search failed")
       return
     }
@@ -182,7 +228,7 @@ final class FriendsSearchWebSocket: NSObject {
     if type == "connection" {
       if let status = obj["status"] as? String, status == "connected" {
         isAuthenticated = true
-        onStateChange?(.authenticated)
+        emit(.authenticated)
         if let pending = pendingSearch {
           pendingSearch = nil
           sendSearch(query: pending.query, limit: pending.limit)
@@ -198,9 +244,10 @@ final class FriendsSearchWebSocket: NSObject {
           let nickname = dict["nickname"] as? String
           return UserSearchResult(email: email, nickname: nickname)
         }
-        onResults?(AnonymousUserIdentity.addFriendVisible(userResults))
+        let visible = AnonymousUserIdentity.addFriendVisible(userResults)
+        DispatchQueue.main.async { [weak self] in self?.onResults?(visible) }
       } else {
-        onResults?([])
+        DispatchQueue.main.async { [weak self] in self?.onResults?([]) }
       }
       return
     }

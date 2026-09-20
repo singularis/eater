@@ -6,6 +6,18 @@ class StatisticsService {
 
   private let grpcService = GRPCService()
   private let cacheService = StatisticsCacheService.shared
+  private let fetchQueue = DispatchQueue(label: "com.eater.stats.fetch")
+  private var rangeUnavailableThisSession = false
+
+  static func dateString(for date: Date = Date()) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "dd-MM-yyyy"
+    return formatter.string(from: date)
+  }
+
+  func invalidateDay(_ dateString: String? = nil) {
+    cacheService.invalidate(dateString: dateString ?? Self.dateString())
+  }
 
   func fetchStatisticsForPeriod(
     period: StatisticsPeriod,
@@ -44,6 +56,12 @@ class StatisticsService {
       UserDefaults.standard.set(true, forKey: "healthScoreStatsCacheV1")
     }
 
+    let hasRangeCache = UserDefaults.standard.bool(forKey: "statsRangeCacheV1")
+    if !hasRangeCache {
+      cacheService.clearAllCache()
+      UserDefaults.standard.set(true, forKey: "statsRangeCacheV1")
+    }
+
     // Get cached statistics
     let cachedStatistics = cacheService.getCachedStatistics(for: allDateStrings)
 
@@ -61,18 +79,18 @@ class StatisticsService {
     fetchMissingStatistics(dateStrings: missingDateStrings) { [weak self] newStatistics in
       guard let self = self else { return }
 
-      // Cache the new data
+      // Range responses cover the whole span, including days we already had cached.
+      var byDate: [String: DailyStatistics] = [:]
+      for stats in cachedStatistics {
+        byDate[stats.dateString] = stats
+      }
       for stats in newStatistics {
         self.cacheService.cacheStatistics(stats, for: stats.dateString)
+        byDate[stats.dateString] = stats
       }
 
-      // Combine cached and new data
-      let allStatistics = cachedStatistics + newStatistics
-
-      // Create empty stats for any remaining missing dates
-      let allStatsDateStrings = Set(allStatistics.map { $0.dateString })
       let emptyStats = allDateStrings.compactMap { dateString -> DailyStatistics? in
-        guard !allStatsDateStrings.contains(dateString) else { return nil }
+        guard byDate[dateString] == nil else { return nil }
 
         let date = dateFormatter.date(from: dateString) ?? Date()
         return DailyStatistics(
@@ -86,12 +104,11 @@ class StatisticsService {
           carbohydrates: 0,
           sugar: 0,
           numberOfMeals: 0,
-          hasData: false  // Mark as placeholder data
+          hasData: false
         )
       }
 
-      // Combine all data and sort by date
-      let finalStatistics = (allStatistics + emptyStats).sorted { $0.date < $1.date }
+      let finalStatistics = (Array(byDate.values) + emptyStats).sorted { $0.date < $1.date }
 
       DispatchQueue.main.async {
         completion(finalStatistics)
@@ -103,36 +120,67 @@ class StatisticsService {
     dateStrings: [String],
     completion: @escaping ([DailyStatistics]) -> Void
   ) {
+    if rangeUnavailableThisSession {
+      fetchMissingStatisticsPerDay(dateStrings: dateStrings, completion: completion)
+      return
+    }
+
+    let formatter = DateFormatter()
+    formatter.dateFormat = "dd-MM-yyyy"
+    let sorted = dateStrings.compactMap { dateString -> (String, Date)? in
+      guard let date = formatter.date(from: dateString) else { return nil }
+      return (dateString, date)
+    }.sorted { $0.1 < $1.1 }
+    guard let start = sorted.first?.0, let end = sorted.last?.0 else {
+      completion([])
+      return
+    }
+
+    grpcService.fetchStatisticsRange(startDate: start, endDate: end) { [weak self] result in
+      guard let self = self else { return }
+      switch result {
+      case .days(let days):
+        completion(days)
+      case .unavailable:
+        self.rangeUnavailableThisSession = true
+        self.fetchMissingStatisticsPerDay(dateStrings: dateStrings, completion: completion)
+      case .failed:
+        completion([])
+      }
+    }
+  }
+
+  private func fetchMissingStatisticsPerDay(
+    dateStrings: [String],
+    completion: @escaping ([DailyStatistics]) -> Void
+  ) {
     var fetchedStatistics: [DailyStatistics] = []
     let dispatchGroup = DispatchGroup()
-
-    let todayDateFormatter = DateFormatter()
-    todayDateFormatter.dateFormat = "dd-MM-yyyy"
-    let todayString = todayDateFormatter.string(from: Date())
+    let todayString = Self.dateString()
 
     for dateString in dateStrings {
       dispatchGroup.enter()
+      let finish: (DailyStatistics?) -> Void = { stats in
+        self.fetchQueue.async {
+          if let stats = stats {
+            fetchedStatistics.append(stats)
+          }
+          dispatchGroup.leave()
+        }
+      }
 
       if dateString == todayString {
         grpcService.fetchTodayStatistics { dailyStats in
-          defer { dispatchGroup.leave() }
-
-          if let stats = dailyStats {
-            fetchedStatistics.append(stats)
-          }
+          finish(dailyStats)
         }
       } else {
         grpcService.fetchStatisticsData(date: dateString) { dailyStats in
-          defer { dispatchGroup.leave() }
-
-          if let stats = dailyStats {
-            fetchedStatistics.append(stats)
-          }
+          finish(dailyStats)
         }
       }
     }
 
-    dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
+    dispatchGroup.notify(queue: fetchQueue) {
       completion(fetchedStatistics)
     }
   }

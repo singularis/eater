@@ -55,11 +55,11 @@ enum AppTheme {
   static let smallRadius: CGFloat = 12
   static let cardPadding: CGFloat = 16
 
-  // Shadows - consistent and subtle
+  // Shadows - same weight on tiles, cards, and header circles
   static var cardShadow: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) {
     colorScheme() == .light
-      ? (.black.opacity(0.1), 8, 0, 4)
-      : (.black.opacity(0.3), 8, 0, 4)
+      ? (.black.opacity(0.08), 4, 0, 2)
+      : (.black.opacity(0.28), 4, 0, 2)
   }
 
   // Backgrounds - improved modern gradients
@@ -85,27 +85,20 @@ enum AppTheme {
     }
   }
 
-  // Buttons - improved contrast and accessibility
+  /// Solid primary fill. Blue reads as the one action, and holds white text contrast.
+  static var primaryButtonFill: Color {
+    colorScheme() == .light
+      ? Color(red: 0.0, green: 0.48, blue: 1.0)
+      : Color(red: 0.1, green: 0.58, blue: 1.0)
+  }
+
+  /// Kept as a solid so leftover gradient callers stay flat.
   static var primaryButtonGradient: LinearGradient {
-    if colorScheme() == .light {
-      return LinearGradient(
-        gradient: Gradient(colors: [
-          Color(red: 0.0, green: 0.48, blue: 1.0),
-          Color(red: 0.0, green: 0.78, blue: 0.85)
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
-    } else {
-      return LinearGradient(
-        gradient: Gradient(colors: [
-          Color(red: 0.1, green: 0.58, blue: 1.0),
-          Color(red: 0.0, green: 0.88, blue: 0.95)
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
-    }
+    LinearGradient(
+      colors: [primaryButtonFill, primaryButtonFill],
+      startPoint: .top,
+      endPoint: .bottom
+    )
   }
 
   // Liquid Glass Styles
@@ -130,118 +123,57 @@ enum AppTheme {
   }
 }
 
-struct PrimaryButtonStyle: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
+private struct FilledButtonChrome: ViewModifier {
+  let fill: Color
+  let isPressed: Bool
+
+  func body(content: Content) -> some View {
     let shadow = AppTheme.cardShadow
-    return configuration.label
+    content
       .padding()
       .frame(maxWidth: .infinity)
-      .background(
-        ZStack {
-           AppTheme.primaryButtonGradient
-           // Liquid overlay
-           RoundedRectangle(cornerRadius: 25, style: .continuous)
-             .fill(.white.opacity(0.1))
-             .blur(radius: 0.5)
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
-      )
+      .background(fill)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
       .foregroundColor(.white)
       .shadow(
-        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
+        color: isPressed ? shadow.color.opacity(0.3) : shadow.color,
         radius: shadow.radius,
         x: shadow.x,
-        y: configuration.isPressed ? shadow.y - 2 : shadow.y
+        y: isPressed ? shadow.y - 2 : shadow.y
       )
-      .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+      .scaleEffect(isPressed ? 0.97 : 1.0)
       .transaction { t in
         if AppSettingsService.shared.reduceMotion { t.disablesAnimations = true }
       }
       .animation(
         AppSettingsService.shared.reduceMotion
           ? .none : .spring(response: 0.28, dampingFraction: 0.7, blendDuration: 0),
-        value: configuration.isPressed)
+        value: isPressed
+      )
+  }
+}
+
+struct PrimaryButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label.modifier(
+      FilledButtonChrome(fill: AppTheme.primaryButtonFill, isPressed: configuration.isPressed)
+    )
   }
 }
 
 struct GreenToPurpleButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
-    let shadow = AppTheme.cardShadow
-    return configuration.label
-      .padding()
-      .frame(maxWidth: .infinity)
-      .background(
-        ZStack {
-          LinearGradient(
-            colors: [.green, .purple],
-            startPoint: .leading,
-            endPoint: .trailing
-          )
-          RoundedRectangle(cornerRadius: 25, style: .continuous)
-            .fill(.white.opacity(0.1))
-            .blur(radius: 0.5)
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
-      )
-      .foregroundColor(.white)
-      .shadow(
-        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
-        radius: shadow.radius,
-        x: shadow.x,
-        y: configuration.isPressed ? shadow.y - 2 : shadow.y
-      )
-      .scaleEffect(configuration.isPressed ? 0.98 : 1)
-      .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+    configuration.label.modifier(
+      FilledButtonChrome(fill: AppTheme.primaryButtonFill, isPressed: configuration.isPressed)
+    )
   }
 }
 
 struct GreenButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
-    let shadow = AppTheme.cardShadow
-    return configuration.label
-      .padding()
-      .frame(maxWidth: .infinity)
-      .background(
-        ZStack {
-           LinearGradient(
-             colors: [Color(red: 0.2, green: 0.78, blue: 0.35), Color(red: 0.1, green: 0.62, blue: 0.3)],
-             startPoint: .leading,
-             endPoint: .trailing
-           )
-           // Liquid overlay
-           RoundedRectangle(cornerRadius: 25, style: .continuous)
-             .fill(.white.opacity(0.1))
-             .blur(radius: 0.5)
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
-      )
-      .foregroundColor(.white)
-      .shadow(
-        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
-        radius: shadow.radius,
-        x: shadow.x,
-        y: configuration.isPressed ? shadow.y - 2 : shadow.y
-      )
-      .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-      .transaction { t in
-        if AppSettingsService.shared.reduceMotion { t.disablesAnimations = true }
-      }
-      .animation(
-        AppSettingsService.shared.reduceMotion
-          ? .none : .spring(response: 0.28, dampingFraction: 0.7, blendDuration: 0),
-        value: configuration.isPressed)
+    configuration.label.modifier(
+      FilledButtonChrome(fill: AppTheme.success, isPressed: configuration.isPressed)
+    )
   }
 }
 
@@ -267,23 +199,13 @@ struct CardModifier: ViewModifier {
     let shadow = AppTheme.cardShadow
     return content
       .padding(paddingValue)
-      .background(
-        ZStack {
-          // Glass material
-          Rectangle()
-            .fill(.ultraThinMaterial)
-          
-          // Subtle tint for definition
-          Rectangle()
-            .fill(AppTheme.surface.opacity(0.3))
-        }
-      )
+      .background(AppTheme.surface)
       .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
       .overlay(
         RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1)
+          .stroke(AppTheme.divider, lineWidth: 1)
       )
-      .shadow(color: shadow.color.opacity(0.5), radius: shadow.radius + 2, x: shadow.x, y: shadow.y)
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
   }
 }
 
@@ -297,15 +219,16 @@ struct LiquidGlassModifier: ViewModifier {
   }
 
   func body(content: Content) -> some View {
+    let shadow = AppTheme.cardShadow
     content
       .padding(paddingValue)
-      .background(.ultraThinMaterial)
+      .background(AppTheme.surface)
       .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
       .overlay(
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1)
+          .stroke(AppTheme.divider, lineWidth: 1)
       )
-      .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
   }
 }
 
@@ -317,6 +240,34 @@ extension View {
   func liquidGlass(padding: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
     modifier(LiquidGlassModifier(paddingValue: padding, cornerRadius: cornerRadius))
   }
+
+  /// Flat panel used by Home tiles, date chip, and cards.
+  func appSurface(cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
+    let shadow = AppTheme.cardShadow
+    return self
+      .background(AppTheme.surface)
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+  }
+
+  /// Same fill, stroke, and shadow as `appSurface`, for circular header chips.
+  func appCircleSurface() -> some View {
+    let shadow = AppTheme.cardShadow
+    return self
+      .background(AppTheme.surface)
+      .clipShape(Circle())
+      .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
+      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+  }
+
+  func appCardShadow() -> some View {
+    let shadow = AppTheme.cardShadow
+    return self.shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+  }
 }
 
 // Secondary (neutral) button style
@@ -325,18 +276,11 @@ struct SecondaryButtonStyle: ButtonStyle {
     configuration.label
       .padding()
       .frame(maxWidth: .infinity)
-      .background(
-        ZStack {
-          Rectangle()
-            .fill(.ultraThinMaterial)
-          Rectangle()
-            .fill(AppTheme.surface.opacity(0.5))
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+      .background(AppTheme.surface)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
       .overlay(
-        RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1)
+        RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
       )
       .foregroundColor(AppTheme.textPrimary)
       .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
@@ -353,44 +297,9 @@ struct SecondaryButtonStyle: ButtonStyle {
 // Destructive (danger) button style
 struct DestructiveButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
-    let gradient = LinearGradient(
-      gradient: Gradient(colors: [AppTheme.danger.opacity(0.9), AppTheme.danger.opacity(0.7)]),
-      startPoint: .topLeading,
-      endPoint: .bottomTrailing
+    configuration.label.modifier(
+      FilledButtonChrome(fill: AppTheme.danger, isPressed: configuration.isPressed)
     )
-    let shadow = AppTheme.cardShadow
-
-    return configuration.label
-      .padding()
-      .frame(maxWidth: .infinity)
-      .background(
-        ZStack {
-          gradient
-          RoundedRectangle(cornerRadius: 25, style: .continuous)
-            .fill(.white.opacity(0.1))
-            .blur(radius: 0.5)
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: 25, style: .continuous)
-          .stroke(AppTheme.liquidGlassStroke, lineWidth: 1.5)
-      )
-      .foregroundColor(.white)
-      .shadow(
-        color: configuration.isPressed ? shadow.color.opacity(0.3) : shadow.color,
-        radius: shadow.radius,
-        x: shadow.x,
-        y: configuration.isPressed ? shadow.y - 2 : shadow.y
-      )
-      .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-      .transaction { t in
-        if AppSettingsService.shared.reduceMotion { t.disablesAnimations = true }
-      }
-      .animation(
-        AppSettingsService.shared.reduceMotion
-          ? .none : .spring(response: 0.28, dampingFraction: 0.7, blendDuration: 0),
-        value: configuration.isPressed)
   }
 }
 

@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 class CameraCallbackManager {
   static let shared = CameraCallbackManager()
@@ -6,12 +7,12 @@ class CameraCallbackManager {
 
   private var onPhotoSuccess: (() -> Void)?
   private var onPhotoFailure: (() -> Void)?
-  private var onPhotoStarted: (() -> Void)?
+  private var onPhotoStarted: ((UIImage?) -> Void)?
 
   func setCallbacks(
     onPhotoSuccess: (() -> Void)?,
     onPhotoFailure: (() -> Void)?,
-    onPhotoStarted: (() -> Void)?
+    onPhotoStarted: ((UIImage?) -> Void)?
   ) {
     self.onPhotoSuccess = onPhotoSuccess
     self.onPhotoFailure = onPhotoFailure
@@ -20,19 +21,18 @@ class CameraCallbackManager {
 
   func callPhotoSuccess() {
     let callback = onPhotoSuccess
-    clearCallbacks()  // Clear first to prevent re-entry
+    clearCallbacks()
     callback?()
   }
 
   func callPhotoFailure() {
     let callback = onPhotoFailure
-    clearCallbacks()  // Clear first to prevent re-entry
+    clearCallbacks()
     callback?()
   }
 
-  func callPhotoStarted() {
-    onPhotoStarted?()
-    // Don't clear callbacks here since success/failure will be called later
+  func callPhotoStarted(image: UIImage? = nil) {
+    onPhotoStarted?(image)
   }
 
   func clearCallbacks() {

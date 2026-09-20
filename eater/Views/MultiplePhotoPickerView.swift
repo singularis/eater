@@ -78,20 +78,10 @@ struct MultiplePhotoUploadButton: View {
       }
       .padding(.vertical, 24)
       .frame(maxWidth: .infinity)
-      .background(
-        LinearGradient(
-          gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.6)]),
-          startPoint: .topLeading,
-          endPoint: .bottomTrailing
-        )
-      )
-      .cornerRadius(AppTheme.cornerRadius)
+      .background(AppTheme.primaryButtonFill)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
       .foregroundColor(.white)
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-          .stroke(Color.blue.opacity(0.5), lineWidth: 2)
-      )
-      .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+      .appCardShadow()
     }
     .disabled(isUploading)
     .sheet(isPresented: $showPicker) {

@@ -177,16 +177,18 @@ struct AlcoholCalendarView: View {
       .frame(maxWidth: .infinity)
       .frame(height: 44)
       .background(
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .fill(AppTheme.surface)
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
       )
       .overlay(alignment: .center) {
         if amount > 0 {
-          let shadow = AppTheme.cardShadow
           Circle()
             .fill(AppTheme.danger)
             .frame(width: dotSize(for: amount), height: dotSize(for: amount))
-            .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
             .offset(y: 14)
             .zIndex(10)
         }
