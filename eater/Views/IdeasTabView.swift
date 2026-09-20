@@ -6,6 +6,7 @@ struct IdeasTabView: View {
   @State private var recommendationText = ""
   @State private var isLoadingRecommendation = false
   @State private var recommendationFailed = false
+  @State private var isScrollAtTop = true
 
   private var isActive: Bool { nav.selectedTab == .ideas }
 
@@ -30,6 +31,7 @@ struct IdeasTabView: View {
           .padding(.bottom, 96)
           .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .reportScrollAtTop($isScrollAtTop)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .navigationTitle(loc("tab.ideas", "Ideas"))
@@ -38,6 +40,9 @@ struct IdeasTabView: View {
       .onChange(of: nav.selectedTab) { _, tab in
         if tab == .ideas { fetchRecommendationIfNeeded() }
       }
+    }
+    .swipeDownToToday(enabled: isActive, isScrollAtTop: $isScrollAtTop) {
+      nav.selectedTab = .today
     }
     .environment(\.locale, Locale(identifier: languageService.currentCode))
   }

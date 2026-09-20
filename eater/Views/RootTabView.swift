@@ -13,10 +13,8 @@ struct RootTabView: View {
   var body: some View {
     ZStack {
       ContentView()
-        .opacity(selectedTab == .today ? 1 : 0)
         .allowsHitTesting(selectedTab == .today)
         .accessibilityHidden(selectedTab != .today)
-        .zIndex(selectedTab == .today ? 1 : 0)
 
       IdeasTabView()
         .opacity(selectedTab == .ideas ? 1 : 0)

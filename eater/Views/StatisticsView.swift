@@ -11,6 +11,8 @@ struct StatisticsView: View {
   @State private var needsSignIn = false
   @State private var selectedDay: DailyStatistics?
   @State private var showGraphs = false
+  @State private var isScrollAtTop = true
+  @ObservedObject private var nav = AppNavigation.shared
 
   private let statisticsService = StatisticsService.shared
   private let visiblePeriods: [StatisticsPeriod] = [.week, .month]
@@ -59,6 +61,7 @@ struct StatisticsView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, showsCloseButton ? 24 : 96)
           }
+          .reportScrollAtTop($isScrollAtTop)
         }
       }
       .navigationTitle(loc("nav.statistics", "Statistics"))
@@ -82,6 +85,9 @@ struct StatisticsView: View {
       }
     }
     .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
+    .swipeDownToToday(enabled: !showsCloseButton, isScrollAtTop: $isScrollAtTop) {
+      nav.selectedTab = .today
+    }
     .simultaneousGesture(
       DragGesture(minimumDistance: 40)
         .onEnded { value in
