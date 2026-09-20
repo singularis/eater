@@ -126,24 +126,37 @@ struct ActivitiesView: View {
       .sheet(isPresented: $showActivityInputSheet) {
         activityInputSheet
       }
-      .sheet(isPresented: $showChessSheet) {
-        NavigationView {
-          ScrollView {
-            chessActivityCard
-              .padding(.bottom, 24)
-          }
-          .background(AppTheme.backgroundGradient.ignoresSafeArea())
-          .navigationTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
-          .navigationBarTitleDisplayMode(.inline)
-          .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-              Button(Localization.shared.tr("common.done", default: "Done")) {
-                showChessSheet = false
+      .sheet(isPresented: $showChessSheet, onDismiss: { showChessHistory = false }) {
+        ZStack {
+          NavigationView {
+            ScrollView {
+              chessActivityCard
+                .padding(.bottom, 24)
+            }
+            .background(AppTheme.backgroundGradient.ignoresSafeArea())
+            .navigationTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+              ToolbarItem(placement: .navigationBarTrailing) {
+                Button(Localization.shared.tr("common.done", default: "Done")) {
+                  showChessSheet = false
+                }
+                .foregroundColor(AppTheme.textPrimary)
               }
-              .foregroundColor(AppTheme.textPrimary)
             }
           }
+
+          if showChessHistory {
+            ChessOpponentsHistoryView(
+              opponentsJSON: chessOpponents,
+              isPresented: $showChessHistory,
+              startOnHistory: true
+            )
+            .transition(.move(edge: .trailing).combined(with: .opacity))
+            .zIndex(1)
+          }
         }
+        .animation(.easeInOut(duration: 0.2), value: showChessHistory)
       }
       .onAppear {
         // Initialize player name if not set
@@ -173,9 +186,6 @@ struct ActivitiesView: View {
       }
       .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("EnvironmentChanged"))) { _ in
         resetChessDataForEnvironmentSwitch()
-      }
-      .sheet(isPresented: $showChessHistory) {
-        ChessOpponentsHistoryView(opponentsJSON: chessOpponents, isPresented: $showChessHistory)
       }
     }
   }

@@ -35,6 +35,9 @@ final class AppNavigation: ObservableObject {
   @Published var showHowItWorks = false
   @Published var cameraUnavailableAlert = false
   @Published var photoLibraryUnavailableAlert = false
+  @Published var showBackdatingAlert = false
+  @Published var backdatingStatusEmoji = ""
+  @Published var backdatingMessage = ""
 
   @Published var pendingMeal: PendingMeal?
   @Published var toastMessage: String?
@@ -54,6 +57,7 @@ final class AppNavigation: ObservableObject {
   @Published var photoFailureToken = 0
   @Published var todayRefreshToken = 0
   @Published var weightSuccessToken = 0
+  @Published var returnToTodayToken = 0
 
   @Published var cameraTutorialRequested = false
   @Published var pendingCaptureIsUpload = false
@@ -71,11 +75,11 @@ final class AppNavigation: ObservableObject {
       cameraTutorialRequested = true
       return
     }
-    guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-      cameraUnavailableAlert = true
+    if needsBackdatingConfirm {
+      presentBackdatingPrompt()
       return
     }
-    showFoodCamera = true
+    presentPendingCapture()
   }
 
   func openPhotoLibrary() {
@@ -85,11 +89,74 @@ final class AppNavigation: ObservableObject {
       cameraTutorialRequested = true
       return
     }
-    guard UIImagePickerController.isSourceTypeAvailable(.photoLibrary) else {
-      photoLibraryUnavailableAlert = true
+    if needsBackdatingConfirm {
+      presentBackdatingPrompt()
       return
     }
-    showPhotoLibrary = true
+    presentPendingCapture()
+  }
+
+  var needsBackdatingConfirm: Bool {
+    isViewingCustomDate && !Calendar.current.isDateInToday(selectedDate)
+  }
+
+  func confirmPastDateCapture() {
+    presentPendingCapture()
+  }
+
+  func captureForTodayInstead() {
+    isViewingCustomDate = false
+    selectedDate = Date()
+    returnToTodayToken += 1
+    presentPendingCapture()
+  }
+
+  func requestReturnToToday() {
+    isViewingCustomDate = false
+    selectedDate = Date()
+    returnToTodayToken += 1
+  }
+
+  private func presentBackdatingPrompt() {
+    let diff = Date().timeIntervalSince(selectedDate)
+    let days = diff / 86400
+    let hours = diff / 3600
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: LanguageService.shared.currentCode)
+    formatter.dateFormat = "EEEE, d MMMM"
+    let dateString = formatter.string(from: selectedDate)
+    let timeAgo: String
+    if days >= 1 {
+      timeAgo = String(format: loc("backdating.time.days_ago", "%d days ago"), Int(days))
+    } else {
+      timeAgo = String(format: loc("backdating.time.hours_ago", "%d hours ago"), Int(hours))
+    }
+    if days > 30 {
+      backdatingStatusEmoji = "🔴"
+    } else if days < 5 {
+      backdatingStatusEmoji = "🟢"
+    } else {
+      backdatingStatusEmoji = "🟠"
+    }
+    backdatingMessage = String(
+      format: loc("backdating.message.submitting", "Submitting for %@\n(%@)"), dateString, timeAgo)
+    showBackdatingAlert = true
+  }
+
+  private func presentPendingCapture() {
+    if pendingCaptureIsUpload {
+      guard UIImagePickerController.isSourceTypeAvailable(.photoLibrary) else {
+        photoLibraryUnavailableAlert = true
+        return
+      }
+      showPhotoLibrary = true
+    } else {
+      guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+        cameraUnavailableAlert = true
+        return
+      }
+      showFoodCamera = true
+    }
   }
 
   func beginPendingMeal(image: UIImage?) {

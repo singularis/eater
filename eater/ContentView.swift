@@ -217,6 +217,11 @@ struct ContentView: View {
       .onChange(of: todayActivityDate) {
         uiRefreshTrigger.toggle()
       }
+      .onChange(of: nav.returnToTodayToken) { _, _ in
+        if isViewingCustomDate {
+          returnToToday()
+        }
+      }
       .onChange(of: nav.photoSuccessToken) { _, _ in
         handlePhotoLogged()
       }
@@ -224,6 +229,9 @@ struct ContentView: View {
         syncMealNav()
       }
       .onChange(of: isViewingCustomDate) { _, _ in
+        syncMealNav()
+      }
+      .onChange(of: selectedDate) { _, _ in
         syncMealNav()
       }
       .onChange(of: scenePhase) { _, newPhase in
@@ -706,6 +714,7 @@ struct ContentView: View {
     limits.customFatGoal = fat
     limits.customCarbsGoal = carbs
     CalorieLimitsStorageService.shared.save(limits)
+    uiRefreshTrigger.toggle()
 
     GRPCService().updateMacroGoals(
       proteinTargetGrams: protein, fatTargetGrams: fat, carbsTargetGrams: carbs
@@ -717,7 +726,8 @@ struct ContentView: View {
     limits.customProteinGoal = nil
     limits.customFatGoal = nil
     limits.customCarbsGoal = nil
-    CalorieLimitsStorageService.shared.save(limits)
+    CalorieLimitsStorageService.shared.save(limits, preserveCustomMacros: false)
+    uiRefreshTrigger.toggle()
   }
 
   private var macrosLineView: some View {
@@ -791,6 +801,9 @@ struct ContentView: View {
       .padding(.horizontal, -6)
       .padding(.top, 6)
     }
+    .id(
+      "macros-\(Int(targets.protein))-\(Int(targets.fat))-\(Int(targets.carbs))-\(uiRefreshTrigger)"
+    )
     .buttonStyle(PlainButtonStyle())
     .sheet(isPresented: $showMacroTargets) {
       MacroGoalsEditView(
@@ -1139,12 +1152,9 @@ struct ContentView: View {
       ProductStorageService.shared.clearCache() // Clear cache to force fresh data
       fetchDataWithLoading() // This will fetch data for the currently selected date
       
-      // After 30 seconds, ask user if they want to go back to Today
-
-      DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
-        // Only prompt if still viewing the custom date
+      // After the camera closes, ask whether to stay on the past day or go back to Today.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
         guard self.isViewingCustomDate else { return }
-
         AlertHelper.showConfirmation(
           title: loc("backdating.return_today.title", "Food Logged"),
           message: loc("backdating.return_today.msg", "Your food was recorded for the selected past date. Would you like to return to Today?"),
@@ -1418,6 +1428,7 @@ struct ContentView: View {
     } else {
       currentViewingDate = dateString
     }
+    syncMealNav()
 
     ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: dateString) {
       fetchedProducts, calories, weight, success in

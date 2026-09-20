@@ -3,11 +3,23 @@ import SwiftUI
 struct ChessOpponentsHistoryView: View {
   let opponentsJSON: String
   @Binding var isPresented: Bool
-  
+  var startOnHistory: Bool = false
+
   @State private var selectedTab = 0
   @State private var games: [[String: Any]] = []
   @State private var isLoadingHistory = false
   @State private var historyLoaded = false
+
+  init(
+    opponentsJSON: String,
+    isPresented: Binding<Bool>,
+    startOnHistory: Bool = false
+  ) {
+    self.opponentsJSON = opponentsJSON
+    self._isPresented = isPresented
+    self.startOnHistory = startOnHistory
+    _selectedTab = State(initialValue: startOnHistory ? 1 : 0)
+  }
   
   private var parsedOpponents: [(email: String, wins: Int, losses: Int)] {
     guard let data = opponentsJSON.data(using: .utf8),
@@ -54,6 +66,14 @@ struct ChessOpponentsHistoryView: View {
             Text(Localization.shared.tr("common.done", default: "Done"))
               .bold()
           }
+        }
+      }
+      .onAppear {
+        if startOnHistory && selectedTab != 1 {
+          selectedTab = 1
+        }
+        if selectedTab == 1 && !historyLoaded {
+          loadHistory()
         }
       }
       .onChange(of: selectedTab) { _, newValue in

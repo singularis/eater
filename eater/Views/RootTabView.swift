@@ -11,19 +11,26 @@ struct RootTabView: View {
   @State private var selectedTab: AppTab = .today
 
   var body: some View {
-    TabView(selection: $selectedTab) {
+    ZStack {
       ContentView()
-        .tag(AppTab.today)
-        .toolbar(.hidden, for: .tabBar)
+        .opacity(selectedTab == .today ? 1 : 0)
+        .allowsHitTesting(selectedTab == .today)
+        .accessibilityHidden(selectedTab != .today)
+        .zIndex(selectedTab == .today ? 1 : 0)
 
       IdeasTabView()
-        .tag(AppTab.ideas)
-        .toolbar(.hidden, for: .tabBar)
+        .opacity(selectedTab == .ideas ? 1 : 0)
+        .allowsHitTesting(selectedTab == .ideas)
+        .accessibilityHidden(selectedTab != .ideas)
+        .zIndex(selectedTab == .ideas ? 1 : 0)
 
       StatisticsView(isPresented: $statsPresented, showsCloseButton: false)
-        .tag(AppTab.stats)
-        .toolbar(.hidden, for: .tabBar)
+        .opacity(selectedTab == .stats ? 1 : 0)
+        .allowsHitTesting(selectedTab == .stats)
+        .accessibilityHidden(selectedTab != .stats)
+        .zIndex(selectedTab == .stats ? 1 : 0)
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .safeAreaInset(edge: .bottom, spacing: 0) {
       AppBottomBar(
         selection: selectedTab,
@@ -311,6 +318,19 @@ struct RootTabView: View {
           Button(loc("common.ok", "OK")) {}
         } message: {
           Text(loc("library.unavailable.msg", "Photo library is not available."))
+        }
+        .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $nav.showBackdatingAlert) {
+          Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) {}
+          Button(loc("backdating.alert.confirm", "Confirm")) {
+            nav.confirmPastDateCapture()
+          }
+          Button(loc("backdating.alert.log_today", "Log Today's Food")) {
+            nav.captureForTodayInstead()
+          }
+        } message: {
+          Text(
+            nav.backdatingStatusEmoji + " " + nav.backdatingMessage + "\n\n"
+              + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
         }
         .onChange(of: nav.cameraTutorialRequested) { _, requested in
           guard requested else { return }
