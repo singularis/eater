@@ -1,187 +1,93 @@
 import Foundation
 
+enum StatisticsPeriodFetchResult {
+  case success([DailyStatistics])
+  case unauthorized
+  case failed
+}
+
 class StatisticsService {
   static let shared = StatisticsService()
   private init() {}
 
   private let grpcService = GRPCService()
   private let cacheService = StatisticsCacheService.shared
-  private let fetchQueue = DispatchQueue(label: "com.eater.stats.fetch")
-  private var rangeUnavailableThisSession = false
 
   static func dateString(for date: Date = Date()) -> String {
+    rangeDateFormatter().string(from: date)
+  }
+
+  private static func rangeDateFormatter() -> DateFormatter {
     let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
     formatter.dateFormat = "dd-MM-yyyy"
-    return formatter.string(from: date)
+    return formatter
   }
 
   func invalidateDay(_ dateString: String? = nil) {
     cacheService.invalidate(dateString: dateString ?? Self.dateString())
   }
 
+  /// One `get_statistics_range` call for the whole window. Empty calendar days are filled locally.
   func fetchStatisticsForPeriod(
     period: StatisticsPeriod,
-    completion: @escaping ([DailyStatistics]) -> Void
+    completion: @escaping (StatisticsPeriodFetchResult) -> Void
   ) {
     let calendar = Calendar.current
-    let endDate = Date()
+    let endDate = calendar.startOfDay(for: Date())
     let startDate = calendar.date(byAdding: .day, value: -period.days + 1, to: endDate) ?? endDate
+    let dateFormatter = Self.rangeDateFormatter()
+    let startString = dateFormatter.string(from: startDate)
+    let endString = dateFormatter.string(from: endDate)
 
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "dd-MM-yyyy"
-
-    // Generate all dates in the period
     var allDateStrings: [String] = []
     var currentDate = startDate
     while currentDate <= endDate {
-      let dateString = dateFormatter.string(from: currentDate)
-      allDateStrings.append(dateString)
+      allDateStrings.append(dateFormatter.string(from: currentDate))
       currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
     }
 
-    // Clean up expired cache entries first
-    cacheService.clearExpiredCache()
-
-    // ONE-TIME FIX: Clear cache if it contains data with incorrect hasData logic
-    let hasCacheFix = UserDefaults.standard.bool(forKey: "hasDataLogicCacheFix")
-    if !hasCacheFix {
-      cacheService.clearAllCache()
-      UserDefaults.standard.set(true, forKey: "hasDataLogicCacheFix")
-    }
-
-    // Refresh cache so daily health scores are present for the new stats screen.
-    let hasHealthScoreCache = UserDefaults.standard.bool(forKey: "healthScoreStatsCacheV1")
-    if !hasHealthScoreCache {
-      cacheService.clearAllCache()
-      UserDefaults.standard.set(true, forKey: "healthScoreStatsCacheV1")
-    }
-
-    let hasRangeCache = UserDefaults.standard.bool(forKey: "statsRangeCacheV1")
-    if !hasRangeCache {
-      cacheService.clearAllCache()
-      UserDefaults.standard.set(true, forKey: "statsRangeCacheV1")
-    }
-
-    // Get cached statistics
-    let cachedStatistics = cacheService.getCachedStatistics(for: allDateStrings)
-
-    // Find missing dates that need to be fetched
-    let missingDateStrings = cacheService.getMissingDates(from: allDateStrings)
-
-    if missingDateStrings.isEmpty {
-      // All data is cached, return immediately
-      let sortedStats = cachedStatistics.sorted { $0.date < $1.date }
-      completion(sortedStats)
-      return
-    }
-
-    // Fetch missing data from server
-    fetchMissingStatistics(dateStrings: missingDateStrings) { [weak self] newStatistics in
-      guard let self = self else { return }
-
-      // Range responses cover the whole span, including days we already had cached.
-      var byDate: [String: DailyStatistics] = [:]
-      for stats in cachedStatistics {
-        byDate[stats.dateString] = stats
-      }
-      for stats in newStatistics {
-        self.cacheService.cacheStatistics(stats, for: stats.dateString)
-        byDate[stats.dateString] = stats
-      }
-
-      let emptyStats = allDateStrings.compactMap { dateString -> DailyStatistics? in
-        guard byDate[dateString] == nil else { return nil }
-
-        let date = dateFormatter.date(from: dateString) ?? Date()
-        return DailyStatistics(
-          date: date,
-          dateString: dateString,
-          totalCalories: 0,
-          totalFoodWeight: 0,
-          personWeight: 0,
-          proteins: 0,
-          fats: 0,
-          carbohydrates: 0,
-          sugar: 0,
-          numberOfMeals: 0,
-          hasData: false
-        )
-      }
-
-      let finalStatistics = (Array(byDate.values) + emptyStats).sorted { $0.date < $1.date }
-
-      DispatchQueue.main.async {
-        completion(finalStatistics)
-      }
-    }
-  }
-
-  private func fetchMissingStatistics(
-    dateStrings: [String],
-    completion: @escaping ([DailyStatistics]) -> Void
-  ) {
-    if rangeUnavailableThisSession {
-      fetchMissingStatisticsPerDay(dateStrings: dateStrings, completion: completion)
-      return
-    }
-
-    let formatter = DateFormatter()
-    formatter.dateFormat = "dd-MM-yyyy"
-    let sorted = dateStrings.compactMap { dateString -> (String, Date)? in
-      guard let date = formatter.date(from: dateString) else { return nil }
-      return (dateString, date)
-    }.sorted { $0.1 < $1.1 }
-    guard let start = sorted.first?.0, let end = sorted.last?.0 else {
-      completion([])
-      return
-    }
-
-    grpcService.fetchStatisticsRange(startDate: start, endDate: end) { [weak self] result in
-      guard let self = self else { return }
+    grpcService.fetchStatisticsRange(startDate: startString, endDate: endString) { [weak self] result in
+      guard let self else { return }
       switch result {
       case .days(let days):
-        completion(days)
-      case .unavailable:
-        self.rangeUnavailableThisSession = true
-        self.fetchMissingStatisticsPerDay(dateStrings: dateStrings, completion: completion)
-      case .failed:
-        completion([])
-      }
-    }
-  }
-
-  private func fetchMissingStatisticsPerDay(
-    dateStrings: [String],
-    completion: @escaping ([DailyStatistics]) -> Void
-  ) {
-    var fetchedStatistics: [DailyStatistics] = []
-    let dispatchGroup = DispatchGroup()
-    let todayString = Self.dateString()
-
-    for dateString in dateStrings {
-      dispatchGroup.enter()
-      let finish: (DailyStatistics?) -> Void = { stats in
-        self.fetchQueue.async {
-          if let stats = stats {
-            fetchedStatistics.append(stats)
+        let formatter = Self.rangeDateFormatter()
+        var byDate: [String: DailyStatistics] = [:]
+        for stats in days {
+          self.cacheService.cacheStatistics(stats, for: stats.dateString)
+          byDate[stats.dateString] = stats
+        }
+        let filled = allDateStrings.map { dateString -> DailyStatistics in
+          if let existing = byDate[dateString] {
+            return existing
           }
-          dispatchGroup.leave()
+          return DailyStatistics(
+            date: formatter.date(from: dateString) ?? Date(),
+            dateString: dateString,
+            totalCalories: 0,
+            totalFoodWeight: 0,
+            personWeight: 0,
+            proteins: 0,
+            fats: 0,
+            carbohydrates: 0,
+            sugar: 0,
+            numberOfMeals: 0,
+            hasData: false
+          )
+        }
+        DispatchQueue.main.async {
+          completion(.success(filled))
+        }
+      case .unauthorized:
+        DispatchQueue.main.async {
+          completion(.unauthorized)
+        }
+      case .failed:
+        DispatchQueue.main.async {
+          completion(.failed)
         }
       }
-
-      if dateString == todayString {
-        grpcService.fetchTodayStatistics { dailyStats in
-          finish(dailyStats)
-        }
-      } else {
-        grpcService.fetchStatisticsData(date: dateString) { dailyStats in
-          finish(dailyStats)
-        }
-      }
-    }
-
-    dispatchGroup.notify(queue: fetchQueue) {
-      completion(fetchedStatistics)
     }
   }
 

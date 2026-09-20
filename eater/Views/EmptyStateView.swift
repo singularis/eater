@@ -48,4 +48,37 @@ extension EmptyStateView where Actions == EmptyView {
   }
 }
 
+struct StatisticsFetchErrorView: View {
+  let unauthorized: Bool
+  let retry: () -> Void
+
+  var body: some View {
+    if unauthorized {
+      EmptyStateView(
+        systemImage: "person.crop.circle.badge.exclamationmark",
+        title: loc("login.scan_prompt_title", "Unlock All Features"),
+        subtitle: loc(
+          "login.scan_prompt_message",
+          "Please login to Google if you are ready or want to recover past food.")
+      ) {
+        Button(loc("login.prompt.confirm", "Login Now")) {
+          AppNavigation.shared.showInPlaceLogin = true
+        }
+        .buttonStyle(PrimaryButtonStyle())
+      }
+    } else {
+      EmptyStateView(
+        systemImage: "wifi.exclamationmark",
+        title: loc("error.network.title", "Connection Error"),
+        subtitle: loc("error.network.generic", "We are sorry. Network connection. Please try later.")
+      ) {
+        Button(loc("common.try_again", "Try Again")) {
+          retry()
+        }
+        .buttonStyle(SecondaryButtonStyle())
+      }
+    }
+  }
+}
+
 

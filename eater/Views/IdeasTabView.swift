@@ -5,6 +5,9 @@ struct IdeasTabView: View {
   @EnvironmentObject var languageService: LanguageService
   @State private var recommendationText = ""
   @State private var isLoadingRecommendation = false
+  @State private var recommendationFailed = false
+
+  private var isActive: Bool { nav.selectedTab == .ideas }
 
   var body: some View {
     NavigationStack {
@@ -17,18 +20,24 @@ struct IdeasTabView: View {
               remaining: nav.mealRemaining,
               mealsToday: nav.mealsToday,
               languageCode: languageService.currentCode,
-              embedded: true
+              embedded: true,
+              isActive: isActive
             )
 
             recommendationSection
           }
           .padding(.horizontal, 16)
-          .padding(.bottom, 24)
+          .padding(.bottom, 96)
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
       .navigationTitle(loc("tab.ideas", "Ideas"))
       .navigationBarTitleDisplayMode(.inline)
-      .onAppear { fetchRecommendationIfNeeded() }
+      .onAppear { if isActive { fetchRecommendationIfNeeded() } }
+      .onChange(of: nav.selectedTab) { _, tab in
+        if tab == .ideas { fetchRecommendationIfNeeded() }
+      }
     }
     .environment(\.locale, Locale(identifier: languageService.currentCode))
   }
@@ -45,7 +54,15 @@ struct IdeasTabView: View {
         }
       }
 
-      if recommendationText.isEmpty && !isLoadingRecommendation {
+      if recommendationFailed && recommendationText.isEmpty && !isLoadingRecommendation {
+        Text(loc("error.network.generic", "We are sorry. Network connection. Please try later."))
+          .font(.body)
+          .foregroundColor(AppTheme.textPrimary)
+        Button(loc("ideas.load_advice", "Load this week's advice")) {
+          fetchRecommendationIfNeeded(force: true)
+        }
+        .buttonStyle(PrimaryButtonStyle())
+      } else if recommendationText.isEmpty && !isLoadingRecommendation {
         Button(loc("ideas.load_advice", "Load this week's advice")) {
           fetchRecommendationIfNeeded(force: true)
         }
@@ -57,20 +74,23 @@ struct IdeasTabView: View {
   }
 
   private func fetchRecommendationIfNeeded(force: Bool = false) {
+    guard isActive || force else { return }
     guard force || recommendationText.isEmpty else { return }
+    guard !isLoadingRecommendation || force else { return }
     isLoadingRecommendation = true
+    recommendationFailed = false
     GRPCService().getRecommendation(days: 7, languageCode: languageService.currentCode) { recommendation in
-      DispatchQueue.main.async {
-        if recommendation.isEmpty {
-          recommendationText = loc(
-            "rec.fallback",
-            "We couldn't customize your advice right now, but here are some general wellness tips:\n\nConsistent habits build a healthy lifestyle. Start by incorporating more whole foods like vegetables, fruits, nuts, and legumes into your meals. These provide essential fiber and nutrients that processed food often lacks.\n\nTry to limit added sugars and heavily processed snacks, opting instead for natural sweetness from fruit. Staying hydrated is often overlooked but crucial for metabolism and energy.\n\nPhysical activity is the perfect partner to nutrition. Even a daily 30-minute walk can make a significant difference. Lastly, quality sleep is when your body repairs itself—prioritize it just as you do your meals.\n\n⚠️ Disclaimer: This guide is for informational purposes only and is not a substitute for professional medical advice."
-          )
-        } else {
-          recommendationText = recommendation
-        }
-        isLoadingRecommendation = false
+      if recommendation.isEmpty {
+        recommendationFailed = true
+        recommendationText = loc(
+          "rec.fallback",
+          "We couldn't customize your advice right now, but here are some general wellness tips:\n\nConsistent habits build a healthy lifestyle. Start by incorporating more whole foods like vegetables, fruits, nuts, and legumes into your meals. These provide essential fiber and nutrients that processed food often lacks.\n\nTry to limit added sugars and heavily processed snacks, opting instead for natural sweetness from fruit. Staying hydrated is often overlooked but crucial for metabolism and energy.\n\nPhysical activity is the perfect partner to nutrition. Even a daily 30-minute walk can make a significant difference. Lastly, quality sleep is when your body repairs itself—prioritize it just as you do your meals.\n\n⚠️ Disclaimer: This guide is for informational purposes only and is not a substitute for professional medical advice."
+        )
+      } else {
+        recommendationFailed = false
+        recommendationText = recommendation
       }
+      isLoadingRecommendation = false
     }
   }
 }

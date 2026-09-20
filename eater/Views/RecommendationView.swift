@@ -6,16 +6,110 @@ struct RecommendationView: View {
   var embedded: Bool = false
 
   private var localizedRecommendationText: String {
+    if let json = Self.jsonObject(from: recommendationText) {
+      return formatRecommendationJSON(json)
+    }
     var text = recommendationText
     // Keep until recommendation cache TTL (7 days) has turned over after the
     // backend format change. Do not remove in the same App Store build as that deploy.
     text = stripUnwantedSections(from: text)
-    text = limitBulletSection(in: text, matching: ["Foods to Reduce", "Reduce or Avoid"], maxItems: 2)
+    text = limitBulletSection(in: text, matching: ["Foods to Reduce", "Reduce or Avoid", loc("rec.foods_to_reduce", "Foods to Reduce or Avoid")], maxItems: 2)
+    text = localizeSectionHeaders(in: text)
     text = text.replacingOccurrences(of: "- Dish Name:", with: "- " + loc("rec.dish_name_label", "Dish Name:"))
     text = text.replacingOccurrences(of: "- Description:", with: "- " + loc("rec.description_label", "Description:"))
     text = text.replacingOccurrences(of: "Dish Name:", with: loc("rec.dish_name_label", "Dish Name:"))
     text = text.replacingOccurrences(of: "Description:", with: loc("rec.description_label", "Description:"))
     return text
+  }
+
+  private func localizeSectionHeaders(in text: String) -> String {
+    let pairs: [(String, String)] = [
+      ("Healthier Food Options", loc("rec.healthier_foods", "Healthier Food Options")),
+      ("Foods to Reduce or Avoid", loc("rec.foods_to_reduce", "Foods to Reduce or Avoid")),
+      ("General Recommendations", loc("rec.general", "General Recommendations")),
+      ("Coffee Warning", loc("rec.coffee_warning", "Coffee Warning")),
+      ("Weekly Sugar Intake", loc("rec.weekly_sugar", "Weekly Sugar Intake")),
+      ("healthier_foods", loc("rec.healthier_foods", "Healthier Food Options")),
+      ("foods_to_reduce_or_avoid", loc("rec.foods_to_reduce", "Foods to Reduce or Avoid")),
+      ("general_recommendations", loc("rec.general", "General Recommendations")),
+      ("weekly_sugar_summary", loc("rec.weekly_sugar", "Weekly Sugar Intake")),
+      ("coffee_warning", loc("rec.coffee_warning", "Coffee Warning")),
+    ]
+    var result = text
+    for (english, localized) in pairs where english != localized {
+      result = result.replacingOccurrences(of: english, with: localized)
+    }
+    return result
+  }
+
+  private static func jsonObject(from raw: String) -> [String: Any]? {
+    var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    if s.hasPrefix("```") {
+      s = s.replacingOccurrences(of: "^```(?:json)?\\s*", with: "", options: .regularExpression)
+      s = s.replacingOccurrences(of: "\\s*```$", with: "", options: .regularExpression)
+      s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    guard s.hasPrefix("{"), let data = s.data(using: .utf8),
+      let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else {
+      return nil
+    }
+    return obj
+  }
+
+  private func formatRecommendationJSON(_ json: [String: Any]) -> String {
+    var parts: [String] = []
+    parts.append(contentsOf: formatFoodList(json["foods_to_reduce_or_avoid"], emoji: "🔴", header: loc("rec.foods_to_reduce", "Foods to Reduce or Avoid"), maxItems: 2))
+    parts.append(contentsOf: formatFoodList(json["healthier_foods"], emoji: "🟢", header: loc("rec.healthier_foods", "Healthier Food Options"), maxItems: nil))
+    if let general = formatRecommendations(json["general_recommendations"]) {
+      parts.append(general)
+    }
+    if let coffee = json["coffee_warning"] as? String, !coffee.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      parts.append("☕ \(loc("rec.coffee_warning", "Coffee Warning")):\n\(coffee)")
+    }
+    if let sugar = json["weekly_sugar_summary"] as? String, !sugar.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      parts.append("🍬 \(loc("rec.weekly_sugar", "Weekly Sugar Intake")):\n\(sugar)")
+    }
+    let joined = parts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.joined(separator: "\n\n")
+    if !joined.isEmpty { return joined }
+    return localizeSectionHeaders(in: stripUnwantedSections(from: recommendationText))
+  }
+
+  private func formatFoodList(_ value: Any?, emoji: String, header: String, maxItems: Int?) -> [String] {
+    guard let foods = value as? [Any], !foods.isEmpty else { return [] }
+    var lines = ["\(emoji) \(header):\n"]
+    let limited = maxItems.map { Array(foods.prefix($0)) } ?? foods
+    for food in limited {
+      if let dict = food as? [String: Any] {
+        let name = (dict["dish_name"] as? String) ?? loc("rec.unnamed_dish", "Unnamed Dish")
+        let reason = (dict["reason"] as? String) ?? ""
+        if reason.isEmpty {
+          lines.append("- \(name)")
+        } else {
+          lines.append("- \(name): \(reason)")
+        }
+      } else {
+        lines.append("- \(food)")
+      }
+    }
+    return [lines.joined(separator: "\n")]
+  }
+
+  private func formatRecommendations(_ value: Any?) -> String? {
+    let header = loc("rec.general", "General Recommendations")
+    if let dict = value as? [String: Any], !dict.isEmpty {
+      let bullets = dict.values.compactMap { $0 as? String }.map { "- \($0)" }
+      guard !bullets.isEmpty else { return nil }
+      return "\(header):\n\n" + bullets.joined(separator: "\n")
+    }
+    if let list = value as? [Any], !list.isEmpty {
+      let bullets = list.map { "- \($0)" }
+      return "\(header):\n\n" + bullets.joined(separator: "\n")
+    }
+    if let text = value as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return "\(header):\n\n\(text)"
+    }
+    return nil
   }
 
   private func stripUnwantedSections(from text: String) -> String {

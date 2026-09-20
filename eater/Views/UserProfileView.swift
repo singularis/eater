@@ -32,6 +32,7 @@ struct UserProfileView: View {
   @EnvironmentObject var languageService: LanguageService
   @ObservedObject private var appSettings = AppSettingsService.shared
   @State private var showLanguagePicker = false
+  @State private var showSignIn = false
   @ObservedObject private var themeService = ThemeService.shared
   /// Defer heavy mascot artwork so menu buttons appear immediately.
   @State private var loadMascotArtwork = false
@@ -551,6 +552,10 @@ struct UserProfileView: View {
         LanguageSelectionSheet(isPresented: $showLanguagePicker)
           .environmentObject(languageService)
       }
+      .sheet(isPresented: $showSignIn) {
+        SignInSheet()
+          .environmentObject(authService)
+      }
       .onChange(of: showHealthSettings) { _, newValue in
         if !newValue {  // Sheet was dismissed
           loadHealthData()
@@ -631,8 +636,18 @@ struct UserProfileView: View {
           .fontWeight(.semibold)
           .foregroundColor(Self.greetingLilac)
         Text(loc("profile.trial_usage.hint", "Sign in to save your progress"))
-          .font(.caption2)
+          .font(.caption)
           .foregroundColor(AppTheme.textSecondary)
+        Button {
+          HapticsService.shared.select()
+          showSignIn = true
+        } label: {
+          Text(loc("login.prompt.confirm", "Login Now"))
+            .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(PrimaryButtonStyle())
+        .padding(.top, 4)
       } else {
         Button(action: {
           HapticsService.shared.select()

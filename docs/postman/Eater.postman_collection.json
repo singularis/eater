@@ -1,0 +1,1360 @@
+{
+  "info": {
+    "_postman_id": "c8e1b0a2-eater-4c11-90d4-postman-col",
+    "name": "Eater",
+    "description": "Eateria backend at https://chater.singularis.work\n\nIf the response is {\"message\":\"Token is missing\"} you imported the collection without the environment (or No Environment is selected).\nImport Eater.postman_environment.json and select **Eater prod TEST_USER** in the top-right dropdown. Collection JSON has no JWT on purpose.\n\nAuth: collection-level Bearer {{token}} (TEST_USER danteiva3141@gmail.com, 48h).\nDo not put the token in a screenshot or commit. After 48h mint another into the environment.\n\nQuick auth check: GET /eater_get_today \u2192 200.\n\nPOST /get_statistics_range body is **binary protobuf** (Content-Type application/grpc+proto), not JSON. Empty body waits ~30s then 500. Same proto as statistics_range.proto.\nDefault 20-06-2026 \u2192 20-09-2026 hex:\n`0a0a32302d30362d32303236120a32302d30392d32303236`\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection file has no JWT. Resolve token and set Authorization, or fail",
+          "// before the server returns {\"message\":\"Token is missing\"}.",
+          "function resolvedToken() {",
+          "  const raw =",
+          "    (typeof pm.variables.get === \"function\" && pm.variables.get(\"token\")) ||",
+          "    pm.environment.get(\"token\") ||",
+          "    pm.collectionVariables.get(\"token\") ||",
+          "    (typeof pm.globals !== \"undefined\" && pm.globals.get(\"token\")) ||",
+          "    \"\";",
+          "  return String(raw || \"\").replace(/^Bearer\\s+/i, \"\").trim();",
+          "}",
+          "",
+          "if (pm.info.requestName !== \"eater_auth\") {",
+          "  const token = resolvedToken();",
+          "  if (!token) {",
+          "    throw new Error(",
+          "      \"Token is missing. Import Eater.postman_environment.json and select environment \\\"Eater prod TEST_USER\\\" (top-right dropdown). Or paste the JWT into that environment's token variable, or Collection \u2192 Authorization \u2192 Bearer Token. Do not put the JWT in the collection JSON.\"",
+          "    );",
+          "  }",
+          "  pm.request.headers.upsert({ key: \"Authorization\", value: \"Bearer \" + token });",
+          "}",
+          "",
+          "// Encode proto3 bodies for named requests. Dates: dd-MM-yyyy.",
+          "// JS bitwise >> is 32-bit \u2014 use Math.floor(n/128) for timestamps.",
+          "function encodeVarint(value) {",
+          "  let n = Math.trunc(Number(value));",
+          "  if (!isFinite(n) || n < 0) n = 0;",
+          "  const bytes = [];",
+          "  while (n >= 128) {",
+          "    bytes.push((n % 128) + 128);",
+          "    n = Math.floor(n / 128);",
+          "  }",
+          "  bytes.push(n);",
+          "  return bytes;",
+          "}",
+          "",
+          "function utf8Bytes(str) {",
+          "  const s = unescape(encodeURIComponent(String(str)));",
+          "  const out = [];",
+          "  for (let i = 0; i < s.length; i++) out.push(s.charCodeAt(i));",
+          "  return out;",
+          "}",
+          "",
+          "function tag(field, wire) {",
+          "  return encodeVarint((field << 3) | wire);",
+          "}",
+          "",
+          "function encodeString(field, value) {",
+          "  if (value === undefined || value === null || value === \"\") return [];",
+          "  const b = utf8Bytes(value);",
+          "  return tag(field, 2).concat(encodeVarint(b.length), b);",
+          "}",
+          "",
+          "function encodeInt(field, value) {",
+          "  if (value === undefined || value === null || value === \"\") return [];",
+          "  return tag(field, 0).concat(encodeVarint(value));",
+          "}",
+          "",
+          "function encodeBool(field, value) {",
+          "  const on = value === true || value === \"true\" || value === 1 || value === \"1\";",
+          "  if (!on) return [];",
+          "  return tag(field, 0).concat([1]);",
+          "}",
+          "",
+          "function encodeFloat(field, value) {",
+          "  if (value === undefined || value === null || value === \"\") return [];",
+          "  const buf = new ArrayBuffer(4);",
+          "  new DataView(buf).setFloat32(0, Number(value), true);",
+          "  return tag(field, 5).concat(Array.from(new Uint8Array(buf)));",
+          "}",
+          "",
+          "function encodeDouble(field, value) {",
+          "  if (value === undefined || value === null || value === \"\") return [];",
+          "  const buf = new ArrayBuffer(8);",
+          "  new DataView(buf).setFloat64(0, Number(value), true);",
+          "  return tag(field, 1).concat(Array.from(new Uint8Array(buf)));",
+          "}",
+          "",
+          "function toBinaryString(bytes) {",
+          "  return bytes.map((b) => String.fromCharCode(b)).join(\"\");",
+          "}",
+          "",
+          "function v(key) {",
+          "  return pm.environment.get(key) || pm.collectionVariables.get(key) || \"\";",
+          "}",
+          "",
+          "function applyProtoBody(bytes, contentType) {",
+          "  if (!bytes.length) {",
+          "    throw new Error(",
+          "      \"Empty protobuf body. This server waits ~30s then returns 500. Set the date/fields on the environment.\"",
+          "    );",
+          "  }",
+          "  pm.request.body.update({ mode: \"raw\", raw: toBinaryString(bytes) });",
+          "  pm.request.headers.upsert({ key: \"Content-Type\", value: contentType });",
+          "}",
+          "",
+          "const name = pm.info.requestName;",
+          "const grpc = \"application/grpc+proto\";",
+          "const pb = \"application/protobuf\";",
+          "",
+          "if (name === \"get_statistics_range\") {",
+          "  const start = v(\"start_date\");",
+          "  const end = v(\"end_date\");",
+          "  if (!start || !end) {",
+          "    throw new Error(\"Set start_date and end_date (dd-MM-yyyy). Empty body hangs ~30s then 500.\");",
+          "  }",
+          "  applyProtoBody(encodeString(1, start).concat(encodeString(2, end)), grpc);",
+          "  pm.request.headers.upsert({ key: \"Accept\", value: grpc });",
+          "} else if (name === \"alcohol_range\") {",
+          "  applyProtoBody(encodeString(1, v(\"start_date\")).concat(encodeString(2, v(\"end_date\"))), grpc);",
+          "  pm.request.headers.upsert({ key: \"Accept\", value: grpc });",
+          "} else if (name === \"get_food_custom_date\") {",
+          "  applyProtoBody(encodeString(1, v(\"custom_date\")), pb);",
+          "} else if (name === \"get_recommendation\") {",
+          "  applyProtoBody(encodeInt(1, v(\"rec_days\")).concat(encodeString(2, v(\"language_code\"))), pb);",
+          "} else if (name === \"meal_suggest\") {",
+          "  applyProtoBody(",
+          "    encodeInt(1, 7)",
+          "      .concat(encodeString(2, v(\"language_code\")))",
+          "      .concat(encodeInt(3, v(\"meal_variant\") || 0))",
+          "      .concat(encodeInt(4, v(\"remaining_kcal\") || 600))",
+          "      .concat(encodeDouble(5, v(\"remaining_protein\") || 40))",
+          "      .concat(encodeDouble(6, v(\"remaining_carbs\") || 60))",
+          "      .concat(encodeDouble(7, v(\"remaining_fats\") || 20))",
+          "      .concat(encodeDouble(8, v(\"remaining_sugar\") || 10))",
+          "      .concat(encodeInt(9, v(\"meals_today\") || 2)),",
+          "    pb",
+          "  );",
+          "} else if (name === \"set_language\") {",
+          "  applyProtoBody(encodeString(1, v(\"test_user_email\")).concat(encodeString(2, v(\"language_code\"))), pb);",
+          "} else if (name === \"manual_weight\") {",
+          "  applyProtoBody(encodeFloat(1, v(\"manual_weight\") || 75).concat(encodeString(2, v(\"test_user_email\"))), pb);",
+          "} else if (name === \"food_health_level\") {",
+          "  applyProtoBody(encodeInt(1, v(\"food_time\")).concat(encodeString(2, v(\"food_name\") || \"salad\")), pb);",
+          "} else if (name === \"feedback\") {",
+          "  applyProtoBody(",
+          "    encodeString(1, new Date().toISOString())",
+          "      .concat(encodeString(2, v(\"test_user_email\")))",
+          "      .concat(encodeString(3, v(\"feedback_text\") || \"postman test\")),",
+          "    pb",
+          "  );",
+          "} else if (name === \"addfriend\") {",
+          "  applyProtoBody(encodeString(1, v(\"friend_email\")), pb);",
+          "} else if (name === \"sharefood\") {",
+          "  applyProtoBody(",
+          "    encodeInt(1, v(\"food_time\"))",
+          "      .concat(encodeString(2, v(\"test_user_email\")))",
+          "      .concat(encodeString(3, v(\"friend_email\")))",
+          "      .concat(encodeInt(4, v(\"share_percentage\") || 50)),",
+          "    pb",
+          "  );",
+          "} else if (name === \"modify_food_record\") {",
+          "  applyProtoBody(",
+          "    encodeInt(1, v(\"food_time\"))",
+          "      .concat(encodeString(2, v(\"test_user_email\")))",
+          "      .concat(encodeInt(3, v(\"portion_percentage\") || 100))",
+          "      .concat(encodeBool(4, v(\"is_try_manually\")))",
+          "      .concat(encodeString(5, v(\"manual_food_name\")))",
+          "      .concat(encodeString(8, v(\"image_id\")))",
+          "      .concat(encodeFloat(9, v(\"added_sugar_tsp\") || 0)),",
+          "    pb",
+          "  );",
+          "} else if (name === \"delete_food\") {",
+          "  applyProtoBody(encodeInt(1, v(\"food_time\")), pb);",
+          "} else if (name === \"delete_user\") {",
+          "  applyProtoBody(encodeString(1, v(\"test_user_email\")), pb);",
+          "}",
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const ct = (pm.response.headers.get(\"Content-Type\") || \"\").toLowerCase();",
+          "if (pm.response.code === 401 || (ct.indexOf(\"json\") !== -1 && (pm.response.text() || \"\").indexOf(\"Token is missing\") !== -1)) {",
+          "  console.warn(\"Token is missing. Import Eater.postman_environment.json and select Eater prod TEST_USER (top right). Do not commit the JWT. Do not screenshot it.\");",
+          "}",
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://chater.singularis.work"
+    },
+    {
+      "key": "test_user_email",
+      "value": "danteiva3141@gmail.com"
+    },
+    {
+      "key": "start_date",
+      "value": "20-06-2026"
+    },
+    {
+      "key": "end_date",
+      "value": "20-09-2026"
+    },
+    {
+      "key": "custom_date",
+      "value": "20-09-2026"
+    },
+    {
+      "key": "language_code",
+      "value": "en"
+    },
+    {
+      "key": "rec_days",
+      "value": "7"
+    },
+    {
+      "key": "activity_date",
+      "value": "2026-09-20"
+    },
+    {
+      "key": "image_id",
+      "value": ""
+    },
+    {
+      "key": "food_time",
+      "value": ""
+    },
+    {
+      "key": "friend_email",
+      "value": ""
+    },
+    {
+      "key": "food_name",
+      "value": ""
+    },
+    {
+      "key": "manual_weight",
+      "value": "75"
+    },
+    {
+      "key": "meal_variant",
+      "value": "0"
+    },
+    {
+      "key": "remaining_kcal",
+      "value": "600"
+    },
+    {
+      "key": "meals_today",
+      "value": "2"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth check",
+      "item": [
+        {
+          "name": "eater_get_today",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/eater_get_today",
+            "description": "Quick auth check (JSON not needed).\n\nGET https://chater.singularis.work/eater_get_today\nAuthorization: Bearer {{token}}\n\nExpect 200. Response is TodayFood protobuf.",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"body is not empty\", function () {",
+                  "  pm.expect(pm.response.size().body).to.be.above(0);",
+                  "});",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "eater_auth",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/eater_auth",
+            "description": "Mint a JWT from a Google/Apple idToken. Does not use the collection Bearer token. Do not store real provider tokens in git.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"google\",\n  \"idToken\": \"\",\n  \"email\": \"{{test_user_email}}\",\n  \"name\": \"Dante Iva\",\n  \"profilePictureURL\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Start here. GET eater_get_today must be 200 before range calls."
+    },
+    {
+      "name": "Statistics",
+      "item": [
+        {
+          "name": "get_statistics_range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/grpc+proto",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/grpc+proto",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/get_statistics_range",
+            "description": "Kafka-backed range for week / month / 3-month charts.\n\nHeader Content-Type: application/grpc+proto\nBody must be **binary protobuf**, not JSON. Empty body waits ~30s then **500**.\n\nCollection pre-request encodes start_date + end_date.\nExample body for 20-06-2026 \u2192 20-09-2026 (hex):\n\n0a0a32302d30362d32303236120a32302d30392d32303236\n\nIn Postman: Body \u2192 binary, or keep this request and let the script build bytes.\nSame proto as statistics_range.proto.\nRaw proto3 \u2014 not gRPC framed.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200 (empty proto body is 500 after ~30s)\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"body is not empty\", function () {",
+                  "  pm.expect(pm.response.size().body).to.be.above(0);",
+                  "});",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "get_food_custom_date",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/get_food_custom_date",
+            "description": "One day (dd-MM-yyyy) as CustomDateFoodRequest protobuf. Variable: custom_date.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        }
+      ],
+      "description": "Range call is binary proto. JSON body will fail."
+    },
+    {
+      "name": "Alcohol",
+      "item": [
+        {
+          "name": "alcohol_latest",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/grpc+proto",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/alcohol_latest",
+            "description": "Latest alcohol day summary. Protobuf response.",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "alcohol_range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/grpc+proto",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/grpc+proto",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/alcohol_range",
+            "description": "Same date fields as statistics range (start_date, end_date). application/grpc+proto.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reads (JSON / photo)",
+      "item": [
+        {
+          "name": "profile_get",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/profile_get",
+            "description": "Nickname, name, profile_picture_id.",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "activity_summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/activity_summary?date={{activity_date}}",
+            "description": "ISO date query. JSON.",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_photo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/get_photo?image_id={{image_id}}",
+            "description": "JPEG bytes. Set image_id from a dish in eater_get_today.",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getfriend",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/autocomplete/getfriend",
+            "description": "Friends list protobuf.",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_all_chess_data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/autocomplete/get_all_chess_data",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_chess_history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/autocomplete/get_chess_history?limit=50&offset=0",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_chess_stats",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/autocomplete/get_chess_stats",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_email\": \"{{test_user_email}}\",\n  \"opponent_email\": \"{{friend_email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_recommendation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/get_recommendation",
+            "description": "AI dietary recommendation. Protobuf. rec_days + language_code.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "meal_suggest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/meal_suggest",
+            "description": "Next-meal idea. Protobuf. Timeout on server can be long (~90s in app).",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "food_health_level",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/food_health_level",
+            "description": "Needs food_time (unix ms) from a dish.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Writes (mutates TEST_USER)",
+      "item": [
+        {
+          "name": "nickname_update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/nickname_update",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"Dante\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "profile_update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/profile_update",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Dante\",\n  \"last_name\": \"Iva\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "goal_update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/goal_update",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_weight\": 75,\n  \"goal_mode\": \"lose\",\n  \"goal_months\": 3,\n  \"recommended_calories\": 1800\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "modify_food_manual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/modify_food_manual",
+            "description": "Rename without re-analysis. Needs food_time.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"time\": \"{{food_time}}\",\n  \"user_email\": \"{{test_user_email}}\",\n  \"manual_food_name\": \"renamed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "suggest_dish_names",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/suggest_dish_names",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_id\": \"{{image_id}}\",\n  \"current_name\": \"{{food_name}}\",\n  \"language_code\": \"{{language_code}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "activity_log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/activity_log",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activity_type\": \"walk\",\n  \"value\": 30,\n  \"calories\": 120,\n  \"time\": 0,\n  \"date\": \"{{activity_date}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "record_chess_game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/record_chess_game",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"player_email\": \"{{test_user_email}}\",\n  \"opponent_email\": \"{{friend_email}}\",\n  \"result\": \"win\",\n  \"timestamp\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "set_language",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/set_language",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "manual_weight",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/manual_weight",
+            "description": "Writes weight for TEST_USER. Variable manual_weight.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "modify_food_record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/modify_food_record",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/feedback",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "addfriend",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/autocomplete/addfriend",
+            "description": "Needs friend_email.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "sharefood",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/autocomplete/sharefood",
+            "description": "",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        }
+      ],
+      "description": "These change TEST_USER data. Prefer Auth check + Statistics for probing."
+    },
+    {
+      "name": "Danger",
+      "item": [
+        {
+          "name": "delete_food",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/delete_food",
+            "description": "Deletes a dish by food_time. Guarded \u2014 remove the request pre-request to run.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "throw new Error(\"Blocked: delete_food. Remove this Pre-request Script if you really mean it.\");",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        },
+        {
+          "name": "delete_user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/protobuf",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/delete_user",
+            "description": "Deletes the account. Guarded \u2014 remove the request pre-request to run.",
+            "auth": {
+              "type": "inherit"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "throw new Error(\"Blocked: delete_user. Remove this Pre-request Script if you really mean it.\");",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "content-type": true
+            }
+          }
+        }
+      ],
+      "description": "Pre-request throws until you remove the guard."
+    }
+  ]
+}

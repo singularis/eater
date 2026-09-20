@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MealPlannerRemaining {
+struct MealPlannerRemaining: Equatable {
   let kcal: Int
   let protein: Double
   let carbs: Double
@@ -25,6 +25,8 @@ struct MealPlannerView: View {
   let languageCode: String
   var cycleToken: Int = 0
   var embedded: Bool = false
+  /// When false (hidden tab), do not hit the LLM. TabView can appear this view at launch.
+  var isActive: Bool = true
 
   @State private var variant = 0
   @State private var result: MealPlanResult?
@@ -60,7 +62,10 @@ struct MealPlannerView: View {
         }
       }
     }
-    .onAppear { fetchPlan() }
+    .onAppear { loadIfNeeded() }
+    .onChange(of: isActive) { _, active in
+      if active { loadIfNeeded() }
+    }
     .onChange(of: cycleToken) { _, token in
       if token > 0 { nextVariant() }
     }
@@ -122,10 +127,11 @@ struct MealPlannerView: View {
         Text(loc("meal_planner.error", "Could not load a meal plan. Try again."))
           .font(.body)
           .foregroundColor(AppTheme.textPrimary)
+          .fixedSize(horizontal: false, vertical: true)
         Button(loc("meal_planner.retry", "Retry")) {
           fetchPlan()
         }
-        .buttonStyle(PressScaleButtonStyle())
+        .buttonStyle(PrimaryButtonStyle())
       } else if let result {
         mealContent(result)
         Text(String(format: loc("meal_planner.variant", "%d of %d"), variant + 1, variantCount))
@@ -214,6 +220,13 @@ struct MealPlannerView: View {
 
   func nextVariant() {
     variant = (variant + 1) % max(variantCount, 1)
+    fetchPlan()
+  }
+
+  private func loadIfNeeded() {
+    guard isActive else { return }
+    guard !loading else { return }
+    if result != nil, !failed { return }
     fetchPlan()
   }
 

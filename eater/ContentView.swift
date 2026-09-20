@@ -65,7 +65,6 @@ struct ContentView: View {
   @State private var isLoadingFoodPhoto = false
   @State private var deletingProductTime: Int64? = nil
   @State private var isFetchingData = false  // Flag to prevent multiple simultaneous data fetches
-  @State private var showAnonymousLoginPrompt = false
 
   // Tutorial pending action
   enum PendingTutorialAction {
@@ -150,6 +149,9 @@ struct ContentView: View {
       // are ours (Statistics / Camera) instead of a competing pager.
       VStack(spacing: 2) {
         topBarView
+        if authService.isAnonymous {
+          guestLoginInvite
+        }
         statsButtonsView
           .frame(height: 60)
         if hasMacrosData {
@@ -232,42 +234,14 @@ struct ContentView: View {
         }
       }
       .padding()
-      .alert(loc("limits.title", "Set Calorie Limits"), isPresented: $showLimitsAlert) {
-        VStack {
-          TextField(loc("limits.soft", "Soft Limit"), text: $tempSoftLimit)
-            .keyboardType(.numberPad)
-          TextField(loc("limits.hard", "Hard Limit"), text: $tempHardLimit)
-            .keyboardType(.numberPad)
-        }
-        Button(loc("limits.save_manual", "Save Manual Limits")) {
-          saveLimits()
-        }
-        if UserDefaults.standard.bool(forKey: "hasUserHealthData") {
-          Button(loc("limits.use_health", "Use Health-Based Calculation")) {
-            resetToHealthBasedLimits()
-          }
-        }
-        Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-      } message: {
-        Text(
-          loc(
-            "limits.msg",
-            "Set your daily calorie limits manually, or use health-based calculation if you have health data.\n\n⚠️ These are general guidelines. Consult a healthcare provider for personalized dietary advice."
-          ))
-      }
-      .alert(
-        loc("login.scan_prompt_title", "Unlock All Features"), isPresented: $showAnonymousLoginPrompt
-      ) {
-        Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
-        Button(loc("login.prompt.confirm", "Login Now")) {
-          authService.signOut()
-        }
-      } message: {
-        Text(
-          loc(
-            "login.scan_prompt_message",
-            "Please login to Google if you are ready or want to recover past food."
-          ))
+      .sheet(isPresented: $showLimitsAlert) {
+        CalorieLimitsEditView(
+          softLimitText: $tempSoftLimit,
+          hardLimitText: $tempHardLimit,
+          hasHealthData: UserDefaults.standard.bool(forKey: "hasUserHealthData"),
+          onSave: saveLimits,
+          onUseHealth: resetToHealthBasedLimits
+        )
       }
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
@@ -335,6 +309,11 @@ struct ContentView: View {
           .environmentObject(languageService)
           .opacity(showOnboarding ? 1 : 0)
       )
+      .onChange(of: showOnboarding) { _, showing in
+        if !showing {
+          nav.tryPresentAnonymousLoginPrompt()
+        }
+      }
 
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
@@ -394,6 +373,38 @@ struct ContentView: View {
         }
       }
     }
+  }
+
+  private var guestLoginInvite: some View {
+    Button {
+      HapticsService.shared.select()
+      nav.showInPlaceLogin = true
+    } label: {
+      HStack(spacing: 10) {
+        Image(systemName: "person.crop.circle.badge.plus")
+          .font(.system(size: 16, weight: .semibold))
+          .foregroundColor(AppTheme.primaryButtonFill)
+        VStack(alignment: .leading, spacing: 2) {
+          Text(loc("login.scan_prompt_title", "Unlock All Features"))
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(AppTheme.textPrimary)
+          Text(loc("login.prompt.confirm", "Login Now"))
+            .font(.caption.weight(.medium))
+            .foregroundColor(AppTheme.primaryButtonFill)
+        }
+        Spacer(minLength: 0)
+        Image(systemName: "chevron.right")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundColor(AppTheme.textSecondary)
+      }
+      .padding(.horizontal, 14)
+      .padding(.vertical, 10)
+      .appSurface()
+    }
+    .buttonStyle(PressScaleButtonStyle())
+    .padding(.top, 6)
+    .padding(.bottom, 4)
+    .accessibilityHint(loc("login.scan_prompt_message", "Please login to Google if you are ready or want to recover past food."))
   }
 
   private var profileButton: some View {
@@ -1600,21 +1611,15 @@ struct ContentView: View {
     }
   }
 
-  private func saveLimits() {
+  @discardableResult
+  private func saveLimits() -> Bool {
     guard let newSoftLimit = Int(tempSoftLimit),
       let newHardLimit = Int(tempHardLimit),
       newSoftLimit > 0,
       newHardLimit > 0,
       newSoftLimit <= newHardLimit
     else {
-      // Show error if invalid input
-      AlertHelper.showAlert(
-        title: loc("limits.invalid_input_title", "Invalid Input"),
-        message: loc(
-          "limits.invalid_input_msg",
-          "Please enter valid positive numbers. Soft limit must be less than or equal to hard limit."
-        ))
-      return
+      return false
     }
 
     softLimit = newSoftLimit
@@ -1628,6 +1633,7 @@ struct ContentView: View {
     userDefaults.set(softLimit, forKey: "softLimit")
     userDefaults.set(hardLimit, forKey: "hardLimit")
     userDefaults.set(true, forKey: "hasManualCalorieLimits")
+    return true
   }
 
   private func resetToHealthBasedLimits() {

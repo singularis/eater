@@ -30,6 +30,8 @@ final class AppNavigation: ObservableObject {
   @Published var showAlcohol = false
   @Published var showInPlaceLogin = false
   @Published var showAnonymousLoginPrompt = false
+  /// Set while a capture sheet is up so the guest login ask waits until the camera closes.
+  var pendingAnonymousLoginPrompt = false
   @Published var showHowItWorks = false
   @Published var cameraUnavailableAlert = false
   @Published var photoLibraryUnavailableAlert = false
@@ -122,6 +124,25 @@ final class AppNavigation: ObservableObject {
     isLoadingWeightPhoto = false
     weightSuccessToken += 1
     todayRefreshToken += 1
+  }
+
+  func queueAnonymousLoginPrompt() {
+    pendingAnonymousLoginPrompt = true
+    tryPresentAnonymousLoginPrompt()
+  }
+
+  func tryPresentAnonymousLoginPrompt() {
+    guard pendingAnonymousLoginPrompt else { return }
+    if showFoodCamera || showPhotoLibrary || showInPlaceLogin || showHowItWorks { return }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+      guard let self else { return }
+      guard self.pendingAnonymousLoginPrompt else { return }
+      if self.showFoodCamera || self.showPhotoLibrary || self.showInPlaceLogin || self.showHowItWorks {
+        return
+      }
+      self.pendingAnonymousLoginPrompt = false
+      self.showAnonymousLoginPrompt = true
+    }
   }
 
   func presentToast(_ message: String) {

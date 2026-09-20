@@ -1,13 +1,6 @@
 import SwiftUI
 import UIKit
 
-extension UIImage {
-  /// Empty 25pt slot so the Photo label sits with the other tab titles.
-  static let transparentTabIcon: UIImage = UIGraphicsImageRenderer(
-    size: CGSize(width: 25, height: 25)
-  ).image { _ in }.withRenderingMode(.alwaysOriginal)
-}
-
 struct RootTabView: View {
   @EnvironmentObject var authService: AuthenticationService
   @EnvironmentObject var languageService: LanguageService
@@ -20,45 +13,38 @@ struct RootTabView: View {
   var body: some View {
     TabView(selection: $selectedTab) {
       ContentView()
-        .tabItem { Label(loc("tab.today", "Today"), systemImage: "sun.max.fill") }
         .tag(AppTab.today)
+        .toolbar(.hidden, for: .tabBar)
 
       IdeasTabView()
-        .tabItem { Label(loc("tab.ideas", "Ideas"), systemImage: "lightbulb.fill") }
         .tag(AppTab.ideas)
-
-      PhotoActionPage()
-        .tabItem {
-          Image(uiImage: .transparentTabIcon)
-          Text(loc("tab.photo", "Photo"))
-        }
-        .tag(AppTab.camera)
-
-      UploadActionPage()
-        .tabItem { Label(loc("camera.upload", "Upload"), systemImage: "photo.fill") }
-        .tag(AppTab.upload)
+        .toolbar(.hidden, for: .tabBar)
 
       StatisticsView(isPresented: $statsPresented, showsCloseButton: false)
-        .tabItem { Label(loc("tab.stats", "Stats"), systemImage: "chart.bar.fill") }
         .tag(AppTab.stats)
+        .toolbar(.hidden, for: .tabBar)
     }
-    .tint(AppTheme.primaryButtonFill)
-    .overlay {
-      PhotoCaptureButton {
-        HapticsService.shared.select()
-        nav.openCamera()
-      }
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      AppBottomBar(
+        selection: selectedTab,
+        onSelect: select,
+        onCamera: {
+          HapticsService.shared.select()
+          nav.openCamera()
+        },
+        onUpload: {
+          HapticsService.shared.select()
+          nav.openPhotoLibrary()
+        }
+      )
     }
     .overlay(alignment: .top) {
       toastOverlay
     }
     .animation(.easeInOut(duration: 0.25), value: nav.toastMessage)
-    .onChange(of: selectedTab) { oldTab, newTab in
-      handleLocalTabChange(from: oldTab, to: newTab)
-    }
     .onChange(of: nav.selectedTab) { _, newTab in
-      guard newTab != .camera, newTab != .upload, selectedTab != newTab else { return }
-      selectedTab = newTab
+      guard newTab != .camera, newTab != .upload else { return }
+      select(newTab)
     }
     .modifier(SheetsModifier(
       nav: nav,
@@ -82,34 +68,27 @@ struct RootTabView: View {
     }
   }
 
-  private func handleLocalTabChange(from oldTab: AppTab, to newTab: AppTab) {
-    if newTab == .stats, !KeychainHelper.shared.getBool("hasSeenStatsTutorial") {
-      let restore = (oldTab == .camera || oldTab == .upload) ? .today : oldTab
-      DispatchQueue.main.async {
-        selectedTab = restore
-        nav.selectedTab = restore
-        nav.openCaptureAfterTutorial = false
-        nav.openStatsAfterTutorial = true
-        if let step = MainAppTutorialView.steps.first(where: { $0.key == "hasSeenStatsTutorial" }) {
-          cameraTutorialStep = step
-        }
-      }
+  private func select(_ tab: AppTab) {
+    guard tab != selectedTab else { return }
+    if tab == .stats, !KeychainHelper.shared.getBool("hasSeenStatsTutorial") {
+      presentStatsTutorial()
       return
     }
-    guard newTab == .camera || newTab == .upload else {
-      if nav.selectedTab != newTab {
-        nav.selectedTab = newTab
-      }
-      return
+    HapticsService.shared.select()
+    selectedTab = tab
+    if nav.selectedTab != tab {
+      nav.selectedTab = tab
     }
-    let restore: AppTab = (oldTab == .camera || oldTab == .upload) ? .today : oldTab
+  }
+
+  /// First Stats open shows the explainer, and the current tab stays put.
+  private func presentStatsTutorial() {
     DispatchQueue.main.async {
-      selectedTab = restore
-      nav.selectedTab = restore
-      if newTab == .camera {
-        nav.openCamera()
-      } else {
-        nav.openPhotoLibrary()
+      nav.selectedTab = selectedTab
+      nav.openCaptureAfterTutorial = false
+      nav.openStatsAfterTutorial = true
+      if let step = MainAppTutorialView.steps.first(where: { $0.key == "hasSeenStatsTutorial" }) {
+        cameraTutorialStep = step
       }
     }
   }
@@ -127,6 +106,9 @@ struct RootTabView: View {
     CameraCallbackManager.shared.setCallbacks(
       onPhotoSuccess: {
         AppSettingsService.shared.foodScannedCount += 1
+        if authService.recordAnonymousFoodScanIfNeeded() {
+          nav.queueAnonymousLoginPrompt()
+        }
         nav.notePhotoSuccess()
       },
       onPhotoFailure: {
@@ -134,9 +116,6 @@ struct RootTabView: View {
       },
       onPhotoStarted: { image in
         nav.beginPendingMeal(image: image)
-        if authService.recordAnonymousFoodScanIfNeeded() {
-          nav.showAnonymousLoginPrompt = true
-        }
       }
     )
   }
@@ -180,14 +159,18 @@ struct RootTabView: View {
 
     func body(content: Content) -> some View {
       content
-        .sheet(isPresented: $nav.showFoodCamera) {
+        .sheet(isPresented: $nav.showFoodCamera, onDismiss: {
+          nav.tryPresentAnonymousLoginPrompt()
+        }) {
           CameraView(
             photoType: "default_prompt",
             targetDate: nav.isViewingCustomDate ? nav.selectedDate : nil
           )
           .onAppear { bindCameraCallbacks() }
         }
-        .sheet(isPresented: $nav.showPhotoLibrary) {
+        .sheet(isPresented: $nav.showPhotoLibrary, onDismiss: {
+          nav.tryPresentAnonymousLoginPrompt()
+        }) {
           PhotoLibraryView(
             photoType: "default_prompt",
             targetDate: nav.isViewingCustomDate ? nav.selectedDate : nil
@@ -345,128 +328,98 @@ struct RootTabView: View {
   }
 }
 
-/// Capture control in the middle tab slot. Shares the other glyphs' midline;
-/// only this control is 1.2× and stays primary blue.
-private struct PhotoCaptureButton: View {
-  let action: () -> Void
-  @State private var iconCenter: CGPoint = .zero
+/// Floating bottom bar: four small items, plus the raised camera button in the middle.
+private struct AppBottomBar: View {
+  let selection: AppTab
+  let onSelect: (AppTab) -> Void
+  let onCamera: () -> Void
+  let onUpload: () -> Void
 
-  private let tabIconSize: CGFloat = 25
+  @ObservedObject private var appSettings = AppSettingsService.shared
+
+  /// Follows the app text size setting, same as the meal cards.
+  private var scale: CGFloat { CGFloat(appSettings.fontScale) }
+
+  /// Camera disc is 1.5x a side item, and pokes above the bar by `lift`.
+  private var itemSize: CGFloat { 44 * scale }
+  private var cameraSize: CGFloat { 66 * scale }
+  private var barHeight: CGFloat { 58 * scale }
+  private var lift: CGFloat { 26 * scale }
+  private var iconSize: CGFloat { 17 * scale }
+  private var labelSize: CGFloat { 10 * scale }
+  private var cameraGlyphSize: CGFloat { 25 * scale }
 
   var body: some View {
-    ZStack {
-      TabIconCenterReader(tabIndex: 2) { iconCenter = $0 }
-        .allowsHitTesting(false)
-      if iconCenter != .zero {
-        Button(action: action) {
+    ZStack(alignment: .top) {
+      items.padding(.top, lift)
+      cameraButton
+    }
+    .padding(.horizontal, 16)
+    .padding(.bottom, 2)
+  }
+
+  private var items: some View {
+    HStack(spacing: 0) {
+      item(icon: "sun.max.fill", title: loc("tab.today", "Today"), isOn: selection == .today) {
+        onSelect(.today)
+      }
+      item(icon: "lightbulb.fill", title: loc("tab.ideas", "Ideas"), isOn: selection == .ideas) {
+        onSelect(.ideas)
+      }
+      Color.clear.frame(width: cameraSize + 12, height: 1)
+      item(icon: "photo.fill", title: loc("camera.upload", "Upload"), isOn: false, action: onUpload)
+      item(icon: "chart.bar.fill", title: loc("tab.stats", "Stats"), isOn: selection == .stats) {
+        onSelect(.stats)
+      }
+    }
+    .frame(height: barHeight)
+    .background(barSurface)
+  }
+
+  private var barSurface: some View {
+    let shadow = AppTheme.cardShadow
+    return Capsule(style: .continuous)
+      .fill(.ultraThinMaterial)
+      .overlay(Capsule(style: .continuous).strokeBorder(AppTheme.divider, lineWidth: 0.5))
+      .shadow(color: shadow.color, radius: 12, x: 0, y: 4)
+  }
+
+  private func item(
+    icon: String,
+    title: String,
+    isOn: Bool,
+    action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      VStack(spacing: 3 * scale) {
+        Image(systemName: icon)
+          .font(.system(size: iconSize, weight: .semibold))
+        Text(title)
+          .font(.system(size: labelSize, weight: .semibold))
+          .lineLimit(1)
+          .minimumScaleFactor(0.75)
+      }
+      .foregroundStyle(isOn ? AppTheme.primaryButtonFill : AppTheme.textSecondary)
+      .frame(maxWidth: .infinity, minHeight: itemSize)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(PressScaleButtonStyle())
+  }
+
+  private var cameraButton: some View {
+    Button(action: onCamera) {
+      Circle()
+        .fill(AppTheme.primaryButtonFill)
+        .frame(width: cameraSize, height: cameraSize)
+        .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
+        .overlay(
           Image(systemName: "camera.fill")
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: cameraGlyphSize, weight: .semibold))
             .foregroundStyle(.white)
-            .frame(width: tabIconSize, height: tabIconSize)
-            .background(AppTheme.primaryButtonFill, in: Circle())
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .scaleEffect(1.2)
-        .position(iconCenter)
-        .accessibilityLabel(loc("camera.takefood", "Take Food Photo"))
-      }
+        )
+        .shadow(color: AppTheme.primaryButtonFill.opacity(0.4), radius: 12, x: 0, y: 6)
     }
-    .ignoresSafeArea()
-  }
-}
-
-/// Reads the center of a system tab-bar glyph so overlays sit on the same line.
-private struct TabIconCenterReader: UIViewRepresentable {
-  let tabIndex: Int
-  let onChange: (CGPoint) -> Void
-
-  func makeUIView(context: Context) -> ProbeView {
-    let view = ProbeView()
-    view.tabIndex = tabIndex
-    view.onChange = onChange
-    view.isUserInteractionEnabled = false
-    view.backgroundColor = .clear
-    return view
-  }
-
-  func updateUIView(_ uiView: ProbeView, context: Context) {
-    uiView.tabIndex = tabIndex
-    uiView.onChange = onChange
-    uiView.report()
-  }
-
-  final class ProbeView: UIView {
-    var tabIndex = 2
-    var onChange: ((CGPoint) -> Void)?
-    private var lastCenter = CGPoint(x: -1, y: -1)
-
-    override func didMoveToWindow() {
-      super.didMoveToWindow()
-      DispatchQueue.main.async { [weak self] in self?.report() }
-    }
-
-    override func layoutSubviews() {
-      super.layoutSubviews()
-      DispatchQueue.main.async { [weak self] in self?.report() }
-    }
-
-    func report() {
-      guard let window else { return }
-      guard let bar = Self.tabBar(in: window) else { return }
-      let buttons = bar.subviews
-        .filter { NSStringFromClass(type(of: $0)).contains("TabBarButton") }
-        .sorted { $0.frame.minX < $1.frame.minX }
-      guard buttons.indices.contains(tabIndex) else { return }
-      let slot = buttons[tabIndex]
-      let midX = slot.convert(CGPoint(x: slot.bounds.midX, y: 0), to: self).x
-      let neighborIndexes = [tabIndex - 1, tabIndex + 1].filter { buttons.indices.contains($0) }
-      let neighborYs = neighborIndexes.compactMap { Self.iconCenter(of: buttons[$0], to: self)?.y }
-      let midY: CGFloat
-      if !neighborYs.isEmpty {
-        midY = neighborYs.reduce(0, +) / CGFloat(neighborYs.count)
-      } else if let own = Self.iconCenter(of: slot, to: self) {
-        midY = own.y
-      } else {
-        return
-      }
-      let center = CGPoint(x: midX, y: midY)
-      guard hypot(center.x - lastCenter.x, center.y - lastCenter.y) > 0.5 else { return }
-      lastCenter = center
-      onChange?(center)
-    }
-
-    private static func iconCenter(of button: UIView, to host: UIView) -> CGPoint? {
-      let image = firstImage(in: button)
-      guard let image, image.bounds.width >= 8 else { return nil }
-      return image.convert(CGPoint(x: image.bounds.midX, y: image.bounds.midY), to: host)
-    }
-
-    private static func firstImage(in view: UIView) -> UIImageView? {
-      if let image = view as? UIImageView, image.bounds.width >= 8 { return image }
-      for child in view.subviews {
-        if let image = firstImage(in: child) { return image }
-      }
-      return nil
-    }
-
-    private static func tabBar(in root: UIView) -> UITabBar? {
-      if let bar = root as? UITabBar { return bar }
-      for child in root.subviews {
-        if let bar = tabBar(in: child) { return bar }
-      }
-      return nil
-    }
-  }
-}
-
-private struct PhotoActionPage: View {
-  var body: some View {
-    AppTheme.backgroundGradient.ignoresSafeArea()
-  }
-}
-
-private struct UploadActionPage: View {
-  var body: some View {
-    AppTheme.backgroundGradient.ignoresSafeArea()
+    .buttonStyle(PressScaleButtonStyle())
+    .accessibilityLabel(loc("tab.photo", "Photo"))
   }
 }

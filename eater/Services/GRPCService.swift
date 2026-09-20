@@ -4,9 +4,9 @@ import UIKit
 
 enum StatisticsRangeFetchResult {
   case days([DailyStatistics])
-  /// 404, 5xx, or transport error. Caller may fall back to per-day fetches.
-  case unavailable
-  /// Other 4xx (including 401). Do not fan out; surface as a single failure.
+  /// Token missing, bad, or expired. JSON body, not proto. Re-auth; do not fan out.
+  case unauthorized
+  /// Transport error or 5xx after one retry. Show sorry; do not fan out.
   case failed
 }
 
@@ -292,32 +292,40 @@ class GRPCService {
         var request = createRequest(
           endpoint: "get_recommendation", httpMethod: "POST", body: requestBody)
       else {
-        completion("")
+        DispatchQueue.main.async { completion("") }
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+        let finish: (String) -> Void = { text in
+          DispatchQueue.main.async { completion(text) }
+        }
         if error != nil {
-          completion("")
+          finish("")
           return
         }
-
-        if let response = response as? HTTPURLResponse {
-          if response.statusCode == 200, let data = data {
-            do {
-              let recommendationResponse = try Eater_RecommendationResponse(serializedBytes: data)
-              completion(recommendationResponse.recommendation)
-            } catch {
-              completion("")
-            }
-          } else {
-            completion("")
-          }
+        guard let http = response as? HTTPURLResponse else {
+          finish("")
+          return
+        }
+        if Self.presentDailyLimitIfNeeded(data: data, statusCode: http.statusCode) {
+          finish("")
+          return
+        }
+        guard http.statusCode == 200, let data = data else {
+          finish("")
+          return
+        }
+        do {
+          let recommendationResponse = try Eater_RecommendationResponse(serializedBytes: data)
+          finish(recommendationResponse.recommendation)
+        } catch {
+          finish("")
         }
       }
     } catch {
-      completion("")
+      DispatchQueue.main.async { completion("") }
     }
   }
 
@@ -991,34 +999,62 @@ class GRPCService {
     }
   }
 
+  /// One Kafka-backed range for week / month / 3-month charts. Never loop `get_food_custom_date`.
   func fetchStatisticsRange(
     startDate: String, endDate: String,
     completion: @escaping (StatisticsRangeFetchResult) -> Void
   ) {
+    sendStatisticsRange(startDate: startDate, endDate: endDate, retriesLeft: 1, completion: completion)
+  }
+
+  private func sendStatisticsRange(
+    startDate: String, endDate: String, retriesLeft: Int,
+    completion: @escaping (StatisticsRangeFetchResult) -> Void
+  ) {
+    guard let token = KeychainHelper.shared.read("auth_token"), !token.isEmpty else {
+      completion(.unauthorized)
+      return
+    }
+
     var req = Eater_GetStatisticsRangeRequest()
     req.startDate = startDate
     req.endDate = endDate
     do {
       let body = try req.serializedData()
-      guard var request = createRequest(endpoint: "get_statistics_range", httpMethod: "POST", body: body)
+      guard var request = createRequest(
+        endpoint: "get_statistics_range", httpMethod: "POST", body: body, timeout: 30)
       else {
-        completion(.unavailable)
+        completion(.failed)
         return
       }
       request.addValue("application/grpc+proto", forHTTPHeaderField: "Content-Type")
       request.addValue("application/grpc+proto", forHTTPHeaderField: "Accept")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
+        let retryable: Bool = {
+          if error != nil { return true }
+          if let http = response as? HTTPURLResponse, http.statusCode >= 500 { return true }
+          return false
+        }()
+        if retryable, retriesLeft > 0 {
+          DispatchQueue.main.asyncAfter(deadline: .now() + self.baseDelay) {
+            self.sendStatisticsRange(
+              startDate: startDate, endDate: endDate, retriesLeft: retriesLeft - 1,
+              completion: completion)
+          }
+          return
+        }
+
         if error != nil {
-          completion(.unavailable)
+          completion(.failed)
           return
         }
         guard let http = response as? HTTPURLResponse else {
-          completion(.unavailable)
+          completion(.failed)
           return
         }
-        if http.statusCode == 404 || http.statusCode >= 500 {
-          completion(.unavailable)
+        if http.statusCode == 401 {
+          completion(.unauthorized)
           return
         }
         guard http.statusCode >= 200, http.statusCode < 300, let data = data else {
@@ -1027,20 +1063,29 @@ class GRPCService {
         }
         do {
           let resp = try Eater_GetStatisticsRangeResponse(serializedBytes: data)
-          completion(.days(resp.days.map { Self.dailyStatistics(from: $0) }))
+          let formatter = Self.statisticsDateFormatter()
+          completion(.days(resp.days.compactMap { Self.dailyStatistics(from: $0, formatter: formatter) }))
         } catch {
-          completion(.unavailable)
+          completion(.failed)
         }
       }
     } catch {
-      completion(.unavailable)
+      completion(.failed)
     }
   }
 
-  private static func dailyStatistics(from day: Eater_DayStatistics) -> DailyStatistics {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "dd-MM-yyyy"
-    let parsedDate = dateFormatter.date(from: day.date) ?? Date()
+  private static func statisticsDateFormatter() -> DateFormatter {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
+    formatter.dateFormat = "dd-MM-yyyy"
+    return formatter
+  }
+
+  private static func dailyStatistics(
+    from day: Eater_DayStatistics, formatter: DateFormatter
+  ) -> DailyStatistics? {
+    guard let parsedDate = formatter.date(from: day.date) else { return nil }
     let health: Int? = day.avgHealthScore == 0 ? nil : Int(day.avgHealthScore)
     return DailyStatistics(
       date: parsedDate,
@@ -1053,7 +1098,7 @@ class GRPCService {
       carbohydrates: day.carbohydrates,
       sugar: day.sugar,
       numberOfMeals: Int(day.numberOfMeals),
-      hasData: day.hasData_p,
+      hasData: true,
       averageHealthScore: health
     )
   }
@@ -1791,16 +1836,21 @@ class GRPCService {
         var request = createRequest(
           endpoint: "meal_suggest", httpMethod: "POST", body: requestBody, timeout: 90)
       else {
-        completion(nil)
+        DispatchQueue.main.async { completion(nil) }
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
       sendRequest(request: request, retriesLeft: 0) { data, response, error in
         DispatchQueue.main.async {
-          guard error == nil,
-            let http = response as? HTTPURLResponse, http.statusCode == 200,
-            let data = data
-          else {
+          guard error == nil, let http = response as? HTTPURLResponse else {
+            completion(nil)
+            return
+          }
+          if Self.presentDailyLimitIfNeeded(data: data, statusCode: http.statusCode) {
+            completion(nil)
+            return
+          }
+          guard (200..<300).contains(http.statusCode), let data = data else {
             completion(nil)
             return
           }
@@ -1829,7 +1879,7 @@ class GRPCService {
         }
       }
     } catch {
-      completion(nil)
+      DispatchQueue.main.async { completion(nil) }
     }
   }
 }
