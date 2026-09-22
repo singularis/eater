@@ -99,7 +99,7 @@ struct UserProfileView: View {
               }
               .frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(MascotCalloutButtonStyle())
             .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
 
             // Theme Section

@@ -100,6 +100,29 @@ enum AppTheme {
     )
   }
 
+  /// Mascot callout: action blue into the theme violet, left to right.
+  /// Both stops stay dark enough for white text (system purple is too light).
+  static var mascotCalloutGradient: LinearGradient {
+    if colorScheme() == .light {
+      return LinearGradient(
+        colors: [
+          Color(red: 0.05, green: 0.36, blue: 0.76),
+          Color(red: 0.38, green: 0.24, blue: 0.70),
+        ],
+        startPoint: .leading,
+        endPoint: .trailing
+      )
+    }
+    return LinearGradient(
+      colors: [
+        Color(red: 0.14, green: 0.38, blue: 0.78),
+        Color(red: 0.42, green: 0.28, blue: 0.76),
+      ],
+      startPoint: .leading,
+      endPoint: .trailing
+    )
+  }
+
   // Liquid Glass Styles
   static var liquidGlassStroke: LinearGradient {
     LinearGradient(
@@ -156,6 +179,44 @@ struct PrimaryButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label.modifier(
       FilledButtonChrome(fill: AppTheme.primaryButtonFill, isPressed: configuration.isPressed)
+    )
+  }
+}
+
+private struct GradientButtonChrome: ViewModifier {
+  let fill: LinearGradient
+  let isPressed: Bool
+
+  func body(content: Content) -> some View {
+    let shadow = AppTheme.cardShadow
+    content
+      .padding()
+      .frame(maxWidth: .infinity)
+      .background(fill)
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+      .foregroundColor(.white)
+      .shadow(
+        color: isPressed ? shadow.color.opacity(0.3) : shadow.color,
+        radius: shadow.radius,
+        x: shadow.x,
+        y: isPressed ? shadow.y - 2 : shadow.y
+      )
+      .scaleEffect(isPressed ? 0.97 : 1.0)
+      .transaction { t in
+        if AppSettingsService.shared.reduceMotion { t.disablesAnimations = true }
+      }
+      .animation(
+        AppSettingsService.shared.reduceMotion
+          ? .none : .spring(response: 0.28, dampingFraction: 0.7, blendDuration: 0),
+        value: isPressed
+      )
+  }
+}
+
+struct MascotCalloutButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label.modifier(
+      GradientButtonChrome(fill: AppTheme.mascotCalloutGradient, isPressed: configuration.isPressed)
     )
   }
 }
