@@ -27,5 +27,13 @@ COMMIT_MSG.txt
 # Local scratch / restore-audit dumps
 tmp/
 
+# Postman live JWT (TEST_USER, 48h). Collection has no token.
+docs/postman/Eater.postman_environment.json
+docs/postman/*.local.json
+docs/postman/.token
+
 # Xcode Cloud workflow dump; not needed in this repo
 eater.xcodeproj/xcshareddata/xcodecloud/manifest.json
+
+# Python helper bytecode
+scripts/__pycache__/

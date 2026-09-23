@@ -54,7 +54,7 @@ struct AppInfoView: View {
               Text(
                 loc(
                   "info.guest.text",
-                  "\"Let Me Try\" starts a guest session with every feature unlocked. Sign in whenever you are ready to keep your history and use the app on more devices."
+                  "\"Let Me Try\" starts a guest session so you can log meals right away. Sharing meals and manually fixing a dish name need an account. Sign in whenever you are ready to keep your history and use the app on more devices."
                 )
               )
               .font(.body)

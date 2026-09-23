@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package eater;
+
+message GetStatisticsRangeRequest {
+  string start_date = 1; // dd-mm-yyyy
+  string end_date = 2;   // dd-mm-yyyy
+}
+
+message DayStatistics {
+  string date = 1;          // dd-mm-yyyy
+  int32 total_calories = 2;
+  int32 total_avg_weight = 3;
+  double proteins = 4;
+  double fats = 5;
+  double carbohydrates = 6;
+  double sugar = 7;
+  int32 number_of_meals = 8;
+  int32 avg_health_score = 9; // 0 = nothing rated that day
+  float person_weight = 10;
+  bool has_data = 11;
+}
+
+message GetStatisticsRangeResponse {
+  repeated DayStatistics days = 1;
+}

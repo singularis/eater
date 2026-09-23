@@ -7,6 +7,10 @@ enum FoodQuotesLocalized {
     if let fileQuotes = loadQuotesFile(for: code), !fileQuotes.isEmpty {
       return fileQuotes
     }
+    let base = LanguageService.baseLanguageCode(of: code)
+    if base != code, let baseQuotes = loadQuotesFile(for: base), !baseQuotes.isEmpty {
+      return baseQuotes
+    }
     // Fallback to English file
     if let enQuotes = loadQuotesFile(for: "en"), !enQuotes.isEmpty {
       return enQuotes

@@ -159,8 +159,15 @@ All requests include `Authorization: Bearer <JWT>` header.
 | POST | `/feedback` | Submit user feedback |
 | POST | `/food_health_level` | Get detailed health analysis for a food item |
 | POST | `/set_language` | Set user's preferred language |
-| GET | `/alcohol_latest` | Get latest alcohol event |
-| POST | `/alcohol_range` | Get alcohol events in date range |
+| GET | `/alcohol_latest` | Get latest alcohol event (`Accept: application/grpc+proto`) |
+| POST | `/alcohol_range` | Alcohol events in date range (`application/grpc+proto`) |
+| POST | `/get_statistics_range` | Kafka-backed day stats for a date range. **Binary protobuf**, not JSON. `Content-Type: application/grpc+proto`. Empty body waits ~30s then 500. Raw proto3 (not gRPC-framed). Proto: `statistics_range.proto` |
+
+Alcohol range and statistics range still send **raw protobuf bytes** (no 5-byte gRPC prefix). The iOS client uses the same pattern.
+
+### Postman
+
+`docs/postman/` — collection `Eater.postman_collection.json`. Live Bearer JWT is only in gitignored `Eater.postman_environment.json` (TEST_USER, 48h). Import steps and range hex: `docs/postman/README.md`. Do not commit or screenshot the token.
 
 ### JSON Endpoints (Content-Type: application/json)
 | Method | Endpoint | Purpose |

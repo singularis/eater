@@ -16,6 +16,7 @@ struct OnboardingView: View {
       case initial
       case health
       case social
+      case howItWorks
   }
   
   @SceneStorage("onboardingCurrentStep") private var currentStep = 0
@@ -77,7 +78,7 @@ struct OnboardingView: View {
 
   var steps: [OnboardingStep] {
       switch mode {
-      case .initial:
+      case .initial, .howItWorks:
           return [
             OnboardingStep(
               title: "",
@@ -1798,6 +1799,8 @@ struct OnboardingView: View {
         AppSettingsService.shared.markHealthOnboardingSeen(for: email)
     case .social:
         AppSettingsService.shared.markSocialOnboardingSeen(for: email)
+    case .howItWorks:
+        break
     }
     
     currentStep = 0

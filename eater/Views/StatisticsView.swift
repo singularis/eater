@@ -3,11 +3,16 @@ import SwiftUI
 
 struct StatisticsView: View {
   @Binding var isPresented: Bool
+  var showsCloseButton: Bool = true
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
+  @State private var fetchFailed = false
+  @State private var needsSignIn = false
   @State private var selectedDay: DailyStatistics?
   @State private var showGraphs = false
+  @State private var isScrollAtTop = true
+  @ObservedObject private var nav = AppNavigation.shared
 
   private let statisticsService = StatisticsService.shared
   private let visiblePeriods: [StatisticsPeriod] = [.week, .month]
@@ -30,7 +35,9 @@ struct StatisticsView: View {
           ScrollView {
             VStack(spacing: 14) {
               periodSelectionView
-              if loggedDays.isEmpty {
+              if needsSignIn || fetchFailed {
+                StatisticsFetchErrorView(unauthorized: needsSignIn, retry: { loadData() })
+              } else if loggedDays.isEmpty {
                 EmptyStateView(
                   systemImage: "chart.line.uptrend.xyaxis",
                   title: loc("stats.hero.empty", "Start this week"),
@@ -47,21 +54,26 @@ struct StatisticsView: View {
                 proteinCard
                 consistencyRow
               }
-              openGraphsButton
+              if !needsSignIn && !fetchFailed {
+                openGraphsButton
+              }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 24)
+            .padding(.bottom, showsCloseButton ? 24 : 96)
           }
+          .reportScrollAtTop($isScrollAtTop)
         }
       }
       .navigationTitle(loc("nav.statistics", "Statistics"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button(loc("common.close", "Close")) {
-            isPresented = false
+        if showsCloseButton {
+          ToolbarItem(placement: .navigationBarLeading) {
+            Button(loc("common.close", "Close")) {
+              isPresented = false
+            }
+            .foregroundColor(AppTheme.textPrimary)
           }
-          .foregroundColor(AppTheme.textPrimary)
         }
       }
       .onAppear { loadData() }
@@ -73,9 +85,13 @@ struct StatisticsView: View {
       }
     }
     .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
+    .swipeDownToToday(enabled: !showsCloseButton, isScrollAtTop: $isScrollAtTop) {
+      nav.selectedTab = .today
+    }
     .simultaneousGesture(
       DragGesture(minimumDistance: 40)
         .onEnded { value in
+          guard showsCloseButton else { return }
           let dx = value.translation.width
           let dy = value.translation.height
           guard abs(dx) > abs(dy), dx > 70 else { return }
@@ -149,6 +165,16 @@ struct StatisticsView: View {
 
   private var latestWeight: DailyStatistics? {
     weightDays.max(by: { $0.date < $1.date })
+  }
+
+  /// Strictly > 0 so a log Y axis does not collapse.
+  private var weightLogDomain: ClosedRange<Double> {
+    let weights = weightDays.map { Double($0.personWeight) }.filter { $0 > 0 }
+    let minW = weights.min() ?? 50
+    let maxW = weights.max() ?? 90
+    let lo = max(1, minW * 0.94)
+    let hi = max(lo * 1.02, maxW * 1.06)
+    return lo...hi
   }
 
   private var firstWeight: DailyStatistics? {
@@ -466,6 +492,7 @@ struct StatisticsView: View {
           )
           .foregroundStyle(AppTheme.success)
         }
+        .chartYScale(domain: weightLogDomain, type: .log)
         .chartXAxis {
           AxisMarks(values: .automatic(desiredCount: 4)) { _ in
             AxisValueLabel()
@@ -481,6 +508,19 @@ struct StatisticsView: View {
           }
         }
         .frame(height: 120)
+        .chartOverlay { proxy in
+          GeometryReader { geo in
+            Rectangle()
+              .fill(Color.clear)
+              .contentShape(Rectangle())
+              .onTapGesture { location in
+                selectDay(at: location, proxy: proxy, geo: geo, from: weightDays)
+              }
+          }
+        }
+        Text(loc("stats.weight.log_scale", "Log scale"))
+          .font(.caption2)
+          .foregroundColor(AppTheme.textSecondary)
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -705,11 +745,17 @@ struct StatisticsView: View {
 
   // MARK: - Helpers
 
-  private func selectDay(at location: CGPoint, proxy: ChartProxy, geo: GeometryProxy) {
+  private func selectDay(
+    at location: CGPoint,
+    proxy: ChartProxy,
+    geo: GeometryProxy,
+    from days: [DailyStatistics]? = nil
+  ) {
     let plotFrame = geo[proxy.plotFrame!]
     let x = location.x - plotFrame.origin.x
     guard let date: Date = proxy.value(atX: x) else { return }
-    let match = loggedDays.min {
+    let pool = days ?? loggedDays
+    let match = pool.min {
       abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
     }
     guard let match else { return }
@@ -772,10 +818,20 @@ struct StatisticsView: View {
 
   private func loadData() {
     isLoading = true
-    statisticsService.fetchStatisticsForPeriod(period: selectedPeriod) { fetchedStats in
-      DispatchQueue.main.async {
+    fetchFailed = false
+    needsSignIn = false
+    statisticsService.fetchStatisticsForPeriod(period: selectedPeriod) { result in
+      self.isLoading = false
+      switch result {
+      case .success(let fetchedStats):
         self.statistics = fetchedStats
-        self.isLoading = false
+      case .unauthorized:
+        self.statistics = []
+        self.needsSignIn = true
+        AppNavigation.shared.showInPlaceLogin = true
+      case .failed:
+        self.statistics = []
+        self.fetchFailed = true
       }
     }
   }

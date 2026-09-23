@@ -99,10 +99,14 @@ enum AnonymousUserIdentity {
   }
 
   /// Whether a person should appear in Add Friend / friend pickers.
-  /// Nickname required; anonymous and private-relay-without-nickname stay out.
+  /// Real emails show without a nickname. Guests stay hidden. Apple Hide My Email
+  /// still needs a nickname.
   static func isAddFriendVisible(email: String?, nickname: String?) -> Bool {
-    guard hasUsableNickname(nickname) else { return false }
-    return !isAnonymous(email: email, nickname: nickname)
+    if isAnonymous(email: email, nickname: nickname) { return false }
+    if isPrivateRelayEmail(email) { return hasUsableNickname(nickname) }
+    guard let email = email?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty
+    else { return false }
+    return true
   }
 
   static func excludingAnonymous(

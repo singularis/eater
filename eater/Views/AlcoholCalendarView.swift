@@ -33,31 +33,39 @@ struct AlcoholCalendarView: View {
     return head + tail
   }
 
+  private var todayDateString: String {
+    let df = DateFormatter()
+    df.dateFormat = "yyyy-MM-dd"
+    return df.string(from: Date())
+  }
+
   var body: some View {
-    VStack(spacing: 12) {
-      addictionModeExplanation
-      header
-      weekdayHeader
-      monthGrid
-      Spacer(minLength: 0)
-      HStack {
-        Spacer(minLength: 0)
-        Button(action: { isPresented = false }) {
-          Text(loc("common.done", "Done"))
+    NavigationStack {
+      ScrollView {
+        VStack(spacing: 16) {
+          addictionModeExplanation
+          calendarCard
         }
-        .buttonStyle(PrimaryButtonStyle())
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 24)
       }
-      .padding(.horizontal)
-      .padding(.bottom, 12)
+      .background(Color(.systemGroupedBackground).ignoresSafeArea())
+      .navigationTitle(loc("alcohol.addiction_mode.title", "🍷 Addiction Mode"))
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) {
+          Button(loc("common.done", "Done")) {
+            isPresented = false
+          }
+          .fontWeight(.semibold)
+          .foregroundColor(AppTheme.primaryButtonFill)
+        }
+      }
     }
-    .padding(.top, 16)
-    .background(AppTheme.backgroundGradient)
-    .onAppear {
-      fetchMonth()
-    }
-    .onChange(of: monthAnchorDate) { _, _ in
-      fetchMonth()
-    }
+    .tint(AppTheme.primaryButtonFill)
+    .onAppear { fetchMonth() }
+    .onChange(of: monthAnchorDate) { _, _ in fetchMonth() }
     .overlay(
       LoadingOverlay(
         isVisible: isLoading, message: loc("overlay.loading_alcohol", "Loading alcohol..."))
@@ -67,140 +75,196 @@ struct AlcoholCalendarView: View {
     } message: {
       Text(detailsAlertMessage)
     }
+  }
+
+  private var addictionModeExplanation: some View {
+    Text(
+      loc(
+        "alcohol.addiction_mode.desc",
+        "Alcohol entries are automatically logged in your calendar, and the alcohol icon turns red to highlight the day."
+      )
+    )
+    .font(.subheadline)
+    .foregroundColor(AppTheme.textSecondary)
+    .fixedSize(horizontal: false, vertical: true)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .background(
+      RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+        .fill(Color(.secondarySystemGroupedBackground))
+    )
+  }
+
+  private var calendarCard: some View {
+    VStack(spacing: 12) {
+      header
+      weekdayHeader
+      monthGrid
+      legend
+    }
+    .padding(14)
+    .background(
+      RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+        .fill(Color(.secondarySystemGroupedBackground))
+    )
     .gesture(
-      DragGesture(minimumDistance: 20, coordinateSpace: .local)
+      DragGesture(minimumDistance: 24, coordinateSpace: .local)
         .onEnded { value in
           let horizontal = value.translation.width
           let vertical = abs(value.translation.height)
           guard abs(horizontal) > 40, vertical < 60 else { return }
           if horizontal < 0 {
-            withAnimation { changeMonth(by: 1) }  // swipe left → next month
+            withAnimation { changeMonth(by: 1) }
           } else {
-            withAnimation { changeMonth(by: -1) }  // swipe right → previous month
+            withAnimation { changeMonth(by: -1) }
           }
         }
     )
-  }
-
-  private var addictionModeExplanation: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(loc("alcohol.addiction_mode.title", "🍷 Addiction Mode"))
-        .font(.system(size: 17, weight: .bold, design: .rounded))
-        .foregroundColor(AppTheme.textPrimary)
-      Text(loc("alcohol.addiction_mode.subtitle", "Track alcohol intake and stay mindful."))
-        .font(.system(size: 19, weight: .medium, design: .rounded))
-        .foregroundStyle(
-          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
-        )
-      Text(loc("alcohol.addiction_mode.desc", "Alcohol entries are automatically logged in your calendar, and the alcohol icon turns red to highlight the day."))
-        .font(.system(size: 18, weight: .regular, design: .rounded))
-        .foregroundStyle(
-          LinearGradient(colors: [.green, .purple], startPoint: .leading, endPoint: .trailing)
-        )
-        .lineSpacing(3)
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 20)
-    .padding(.vertical, 12)
-    .background(AppTheme.surface.opacity(0.8))
-    .cornerRadius(12)
-    .padding(.horizontal, 16)
   }
 
   private var header: some View {
     HStack {
       Button(action: { changeMonth(by: -1) }) {
         Image(systemName: "chevron.left")
+          .font(.body.weight(.semibold))
           .foregroundColor(AppTheme.textPrimary)
+          .frame(width: 44, height: 44)
+          .contentShape(Rectangle())
       }
+      .accessibilityLabel(loc("common.previous", "Previous"))
       Spacer()
       Text(monthTitle(for: monthAnchorDate))
-        .font(.system(size: 18, weight: .bold, design: .rounded))
+        .font(.headline)
         .foregroundColor(AppTheme.textPrimary)
       Spacer()
       Button(action: { changeMonth(by: 1) }) {
         Image(systemName: "chevron.right")
+          .font(.body.weight(.semibold))
           .foregroundColor(AppTheme.textPrimary)
+          .frame(width: 44, height: 44)
+          .contentShape(Rectangle())
       }
+      .accessibilityLabel(loc("common.next", "Next"))
     }
-    .padding(.horizontal)
   }
 
   private var weekdayHeader: some View {
-    HStack {
+    HStack(spacing: 0) {
       ForEach(0..<weekdaySymbols.count, id: \.self) { idx in
-        let sym = weekdaySymbols[idx]
-        Text(sym)
-          .font(.system(size: 12, weight: .semibold, design: .rounded))
+        Text(weekdaySymbols[idx])
+          .font(.caption.weight(.semibold))
           .foregroundColor(AppTheme.textSecondary)
           .frame(maxWidth: .infinity)
       }
     }
-    .padding(.horizontal)
   }
 
   private var monthGrid: some View {
     let days = daysForMonthGrid(date: monthAnchorDate)
-    return VStack(spacing: 8) {
+    return VStack(spacing: 6) {
       ForEach(0..<days.count / 7 + (days.count % 7 == 0 ? 0 : 1), id: \.self) { row in
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
           ForEach(0..<7, id: \.self) { col in
             let idx = row * 7 + col
             if idx < days.count {
-              let day = days[idx]
-              dayCell(day: day)
+              dayCell(day: days[idx])
             } else {
-              Spacer()
+              Color.clear.frame(maxWidth: .infinity, minHeight: 48)
             }
           }
         }
       }
     }
-    .padding(.horizontal)
+  }
+
+  private var legend: some View {
+    HStack(spacing: 16) {
+      legendItem(fill: AppTheme.primaryButtonFill.opacity(0.16), ring: true, text: loc("date.today", "Today"))
+      legendItem(fill: AppTheme.danger.opacity(0.18), ring: false, text: loc("alcohol.legend.logged", "Logged"))
+      Spacer(minLength: 0)
+    }
+  }
+
+  private func legendItem(fill: Color, ring: Bool, text: String) -> some View {
+    HStack(spacing: 6) {
+      RoundedRectangle(cornerRadius: 4, style: .continuous)
+        .fill(fill)
+        .overlay(
+          RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .stroke(ring ? AppTheme.primaryButtonFill : Color.clear, lineWidth: 1.5)
+        )
+        .frame(width: 16, height: 16)
+      Text(text)
+        .font(.caption)
+        .foregroundColor(AppTheme.textSecondary)
+        .lineLimit(1)
+    }
   }
 
   private func dayCell(day: DayCell) -> some View {
     let isCurrentMonth = day.isCurrentMonth
     let amount = eventsByDateString[day.dateString] ?? 0
+    let isToday = day.dateString == todayDateString
+    let hasDrinks = amount > 0
+
     return Button(action: {
       guard let events = dayEvents[day.dateString], !events.isEmpty else { return }
       detailsAlertTitle = prettyDate(fromYYYYMMDD: day.dateString)
       detailsAlertMessage = formattedEventsList(events)
       showDetailsAlert = true
     }) {
-      VStack(spacing: 6) {
+      VStack(spacing: 2) {
         Text("\(day.dayNumber)")
-          .font(.system(size: 14, weight: .medium, design: .rounded))
-          .foregroundColor(isCurrentMonth ? AppTheme.textPrimary : AppTheme.textSecondary.opacity(0.4))
-          .frame(maxWidth: .infinity)
-      }
-      .frame(maxWidth: .infinity)
-      .frame(height: 44)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(AppTheme.surface)
-      )
-      .overlay(alignment: .center) {
-        if amount > 0 {
-          let shadow = AppTheme.cardShadow
-          Circle()
-            .fill(AppTheme.danger)
-            .frame(width: dotSize(for: amount), height: dotSize(for: amount))
-            .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
-            .offset(y: 14)
-            .zIndex(10)
+          .font(.system(size: 15, weight: isToday ? .semibold : .medium, design: .rounded))
+          .foregroundColor(dayNumberColor(isCurrentMonth: isCurrentMonth, hasDrinks: hasDrinks))
+        if hasDrinks {
+          Text(amount > 9 ? "9+" : "\(amount)")
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.danger)
+        } else {
+          Text(" ")
+            .font(.system(size: 10, weight: .bold, design: .rounded))
         }
       }
+      .frame(maxWidth: .infinity)
+      .frame(minHeight: 48)
+      .background(
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+          .fill(dayFill(isToday: isToday, hasDrinks: hasDrinks, isCurrentMonth: isCurrentMonth))
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+          .stroke(isToday ? AppTheme.primaryButtonFill : Color.clear, lineWidth: 2)
+      )
+      .opacity(isCurrentMonth ? 1 : 0.45)
       .contentShape(Rectangle())
     }
-    .buttonStyle(PressScaleButtonStyle())
+    .buttonStyle(.plain)
+    .disabled(!hasDrinks)
+    .accessibilityLabel(dayAccessibility(day: day, amount: amount, isToday: isToday))
   }
 
-  private func dotSize(for amount: Int) -> CGFloat {
-    let base: CGFloat = 16
-    let maxSize: CGFloat = 56
-    guard amount > 0 else { return base }
-    return min(base * CGFloat(amount), maxSize)
+  private func dayFill(isToday: Bool, hasDrinks: Bool, isCurrentMonth: Bool) -> Color {
+    if hasDrinks {
+      return AppTheme.danger.opacity(isCurrentMonth ? 0.16 : 0.08)
+    }
+    if isToday {
+      return AppTheme.primaryButtonFill.opacity(0.10)
+    }
+    return Color.clear
+  }
+
+  private func dayNumberColor(isCurrentMonth: Bool, hasDrinks: Bool) -> Color {
+    if hasDrinks { return AppTheme.textPrimary }
+    return isCurrentMonth ? AppTheme.textPrimary : AppTheme.textSecondary
+  }
+
+  private func dayAccessibility(day: DayCell, amount: Int, isToday: Bool) -> String {
+    let date = prettyDate(fromYYYYMMDD: day.dateString)
+    if amount > 0 {
+      return "\(date), \(amount)"
+    }
+    return isToday ? "\(date), \(loc("date.today", "Today"))" : date
   }
 
   private func changeMonth(by delta: Int) {

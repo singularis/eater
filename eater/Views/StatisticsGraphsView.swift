@@ -10,6 +10,8 @@ struct StatisticsGraphsView: View {
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
   @State private var isLoading = false
+  @State private var fetchFailed = false
+  @State private var needsSignIn = false
   @State private var selectedChart: ChartType = .calories
   @State private var selectedDate: Date?
   @State private var scrollDate: Date = Date()
@@ -49,19 +51,26 @@ struct StatisticsGraphsView: View {
               .padding(.horizontal, 16)
               .padding(.top, 8)
 
-            chartTypeSelectionView
-              .padding(.vertical, 8)
-
-            ScrollView {
-              chartView
+            if needsSignIn || fetchFailed {
+              StatisticsFetchErrorView(unauthorized: needsSignIn, retry: { loadData() })
                 .padding(.horizontal, 16)
-                .padding(.bottom, 12)
-            }
+                .padding(.top, 24)
+              Spacer()
+            } else {
+              chartTypeSelectionView
+                .padding(.vertical, 8)
 
-            if selectedChart != .insights && selectedChart != .trends {
-              summaryStatsView
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+              ScrollView {
+                chartView
+                  .padding(.horizontal, 16)
+                  .padding(.bottom, 12)
+              }
+
+              if selectedChart != .insights && selectedChart != .trends {
+                summaryStatsView
+                  .padding(.horizontal, 16)
+                  .padding(.bottom, 8)
+              }
             }
           }
         }
@@ -174,7 +183,13 @@ struct StatisticsGraphsView: View {
 
   private var caloriesChart: some View {
     let days = plottedDays
-    return interactiveTimeChart(days: days, yLabel: loc("stats.axis.calories", "Calories")) {
+    return interactiveTimeChart(
+      days: days,
+      yLabel: loc("stats.axis.calories", "Calories"),
+      selectedCaption: { stat in
+        "\(stat.totalCalories) \(loc("units.kcal", "kcal"))"
+      }
+    ) {
       ForEach(days, id: \.dateString) { stat in
         AreaMark(
           x: .value(loc("stats.axis.date", "Date"), stat.date, unit: .day),
@@ -216,9 +231,7 @@ struct StatisticsGraphsView: View {
           }
       }
 
-      selectionRule(in: days) { stat in
-        "\(stat.totalCalories) \(loc("units.kcal", "kcal"))"
-      }
+      selectionRule(in: days)
     }
   }
 
@@ -226,13 +239,11 @@ struct StatisticsGraphsView: View {
 
   private var personWeightChart: some View {
     let validWeightStats = weightSeries
-    let weights = validWeightStats.map { Double($0.personWeight) }
-    let minWeight = weights.min() ?? 0
-    let maxWeight = weights.max() ?? 0
-    let weightRange = maxWeight - minWeight
-    let padding = weightRange == 0 ? max(minWeight * 0.05, 2.0) : max(weightRange * 0.2, 1.0)
-    let yAxisMin = max(0, minWeight - padding)
-    let yAxisMax = maxWeight + padding
+    let weights = validWeightStats.map { Double($0.personWeight) }.filter { $0 > 0 }
+    let minWeight = weights.min() ?? 50
+    let maxWeight = weights.max() ?? 90
+    let yAxisMin = max(1, minWeight * 0.94)
+    let yAxisMax = max(yAxisMin * 1.02, maxWeight * 1.06)
 
     return VStack(alignment: .leading, spacing: 10) {
       if validWeightStats.count == 1 {
@@ -256,7 +267,11 @@ struct StatisticsGraphsView: View {
         interactiveTimeChart(
           days: validWeightStats,
           yLabel: loc("stats.axis.weight", "Weight"),
-          yDomain: yAxisMin...yAxisMax
+          yDomain: yAxisMin...yAxisMax,
+          yLog: true,
+          selectedCaption: { stat in
+            String(format: "%.1f %@", stat.personWeight, loc("units.kg", "kg"))
+          }
         ) {
           ForEach(validWeightStats, id: \.dateString) { stat in
             if validWeightStats.count > 1 {
@@ -287,10 +302,11 @@ struct StatisticsGraphsView: View {
             .foregroundStyle(Color.green)
             .symbolSize(validWeightStats.count == 1 ? 100 : 50)
           }
-          selectionRule(in: validWeightStats) { stat in
-            String(format: "%.1f %@", stat.personWeight, loc("units.kg", "kg"))
-          }
+          selectionRule(in: validWeightStats)
         }
+        Text(loc("stats.weight.log_scale", "Log scale"))
+          .font(.caption2)
+          .foregroundColor(AppTheme.textSecondary)
       }
     }
   }
@@ -312,7 +328,13 @@ struct StatisticsGraphsView: View {
 
   private var foodWeightChart: some View {
     let days = plottedDays.filter { $0.totalFoodWeight > 0 }
-    return interactiveTimeChart(days: days, yLabel: loc("stats.axis.foodweight", "Food Weight")) {
+    return interactiveTimeChart(
+      days: days,
+      yLabel: loc("stats.axis.foodweight", "Food Weight"),
+      selectedCaption: { stat in
+        "\(stat.totalFoodWeight) \(loc("units.g", "g"))"
+      }
+    ) {
       ForEach(days, id: \.dateString) { stat in
         BarMark(
           x: .value(loc("stats.axis.date", "Date"), stat.date, unit: .day),
@@ -327,9 +349,7 @@ struct StatisticsGraphsView: View {
         )
         .cornerRadius(6)
       }
-      selectionRule(in: days) { stat in
-        "\(stat.totalFoodWeight) \(loc("units.g", "g"))"
-      }
+      selectionRule(in: days)
     }
   }
 
@@ -338,7 +358,15 @@ struct StatisticsGraphsView: View {
   private var macronutrientsChart: some View {
     let series = macroSeries
     return VStack(spacing: 12) {
-      interactiveTimeChart(days: plottedDays, yLabel: loc("units.g", "g")) {
+      interactiveTimeChart(
+        days: plottedDays,
+        yLabel: loc("units.g", "g"),
+        selectedCaption: { stat in
+          String(
+            format: loc("stats.graphs.macro_selected", "P %.0f  F %.0f  C %.0f"),
+            stat.proteins, stat.fats, stat.carbohydrates)
+        }
+      ) {
         ForEach(series) { item in
           BarMark(
             x: .value(loc("stats.axis.date", "Date"), item.date, unit: .day),
@@ -347,11 +375,7 @@ struct StatisticsGraphsView: View {
           .foregroundStyle(by: .value(loc("stats.chart.macros", "Macronutrients"), item.nutrient))
           .cornerRadius(3)
         }
-        selectionRule(in: plottedDays) { stat in
-          String(
-            format: loc("stats.graphs.macro_selected", "P %.0f  F %.0f  C %.0f"),
-            stat.proteins, stat.fats, stat.carbohydrates)
-        }
+        selectionRule(in: plottedDays)
       }
       .chartForegroundStyleScale([
         loc("stats.axis.proteins", "Proteins"): AppTheme.macroProtein,
@@ -531,6 +555,21 @@ struct StatisticsGraphsView: View {
     days: [DailyStatistics],
     yLabel: String,
     yDomain: ClosedRange<Double>? = nil,
+    yLog: Bool = false,
+    selectedCaption: ((DailyStatistics) -> String)? = nil,
+    @ChartContentBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      selectionCaptionRow(in: days, text: selectedCaption)
+      scaledChart(days: days, yDomain: yDomain, yLog: yLog, content: content)
+    }
+  }
+
+  @ViewBuilder
+  private func scaledChart<Content: ChartContent>(
+    days: [DailyStatistics],
+    yDomain: ClosedRange<Double>?,
+    yLog: Bool,
     @ChartContentBuilder content: () -> Content
   ) -> some View {
     let base = Chart { content() }
@@ -558,11 +597,44 @@ struct StatisticsGraphsView: View {
         AppSettingsService.shared.reduceMotion ? .none : .snappy(duration: 0.25),
         value: days.map(\.dateString))
 
-    if let yDomain {
+    if let yDomain, yLog {
+      scrolledChart(base.chartYScale(domain: yDomain, type: .log), daysCount: days.count)
+    } else if let yDomain {
       scrolledChart(base.chartYScale(domain: yDomain), daysCount: days.count)
     } else {
       scrolledChart(base, daysCount: days.count)
     }
+  }
+
+  @ViewBuilder
+  private func selectionCaptionRow(
+    in days: [DailyStatistics],
+    text: ((DailyStatistics) -> String)?
+  ) -> some View {
+    let picked: DailyStatistics? = {
+      guard let selectedDate else { return nil }
+      return days.min {
+        abs($0.date.timeIntervalSince(selectedDate))
+          < abs($1.date.timeIntervalSince(selectedDate))
+      }
+    }()
+
+    HStack {
+      if let picked, let text {
+        Text(picked.date, format: .dateTime.month(.abbreviated).day())
+          .foregroundStyle(AppTheme.textSecondary)
+        Spacer()
+        Text(text(picked))
+          .fontWeight(.semibold)
+          .foregroundStyle(AppTheme.textPrimary)
+      } else {
+        Text(loc("stats.graphs.tap_hint", "Tap a point to see the value"))
+          .foregroundStyle(AppTheme.textSecondary)
+        Spacer()
+      }
+    }
+    .font(.caption)
+    .padding(.horizontal, 4)
   }
 
   @ViewBuilder
@@ -578,10 +650,7 @@ struct StatisticsGraphsView: View {
   }
 
   @ChartContentBuilder
-  private func selectionRule(
-    in days: [DailyStatistics],
-    valueText: (DailyStatistics) -> String
-  ) -> some ChartContent {
+  private func selectionRule(in days: [DailyStatistics]) -> some ChartContent {
     if let selectedDate,
       let stat = days.min(by: {
         abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
@@ -590,20 +659,6 @@ struct StatisticsGraphsView: View {
       RuleMark(x: .value(loc("stats.axis.date", "Date"), stat.date, unit: .day))
         .foregroundStyle(AppTheme.accent.opacity(0.45))
         .lineStyle(StrokeStyle(lineWidth: 1))
-        .annotation(position: .top, spacing: 4) {
-          VStack(alignment: .leading, spacing: 2) {
-            Text(stat.date, format: .dateTime.month(.abbreviated).day())
-              .font(.caption2)
-              .foregroundStyle(AppTheme.textSecondary)
-            Text(valueText(stat))
-              .font(.caption)
-              .fontWeight(.semibold)
-              .foregroundStyle(AppTheme.textPrimary)
-          }
-          .padding(.horizontal, 10)
-          .padding(.vertical, 6)
-          .modifier(SelectionPopoverGlass())
-        }
     }
   }
 
@@ -615,11 +670,21 @@ struct StatisticsGraphsView: View {
 
   private func loadData() {
     isLoading = true
-    statisticsService.fetchStatisticsForPeriod(period: selectedPeriod) { fetchedStats in
-      DispatchQueue.main.async {
+    fetchFailed = false
+    needsSignIn = false
+    statisticsService.fetchStatisticsForPeriod(period: selectedPeriod) { result in
+      self.isLoading = false
+      switch result {
+      case .success(let fetchedStats):
         self.statistics = fetchedStats
         self.scrollDate = fetchedStats.last?.date ?? Date()
-        self.isLoading = false
+      case .unauthorized:
+        self.statistics = []
+        self.needsSignIn = true
+        AppNavigation.shared.showInPlaceLogin = true
+      case .failed:
+        self.statistics = []
+        self.fetchFailed = true
       }
     }
   }
@@ -639,7 +704,11 @@ private struct ControlGlass: ViewModifier {
     } else {
       content
         .background(AppTheme.surface)
-        .cornerRadius(AppTheme.smallRadius)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+            .stroke(AppTheme.divider, lineWidth: 1)
+        )
     }
   }
 }
@@ -654,8 +723,11 @@ private struct ChipGlass: ViewModifier {
       )
     } else {
       content
-        .background(selected ? AppTheme.accent : AppTheme.surfaceAlt)
-        .cornerRadius(16)
+        .background(selected ? AppTheme.accent : AppTheme.surface)
+        .clipShape(Capsule())
+        .overlay(
+          Capsule().stroke(AppTheme.divider, lineWidth: 1)
+        )
     }
   }
 }
@@ -667,7 +739,12 @@ private struct ChartCardGlass: ViewModifier {
     } else {
       content
         .background(AppTheme.surface)
-        .cornerRadius(AppTheme.smallRadius)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+            .stroke(AppTheme.divider, lineWidth: 1)
+        )
+        .appCardShadow()
     }
   }
 }
@@ -677,7 +754,14 @@ private struct SelectionPopoverGlass: ViewModifier {
     if #available(iOS 26.0, *) {
       content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
     } else {
-      content.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+      content.background(
+        AppTheme.surface,
+        in: RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
     }
   }
 }

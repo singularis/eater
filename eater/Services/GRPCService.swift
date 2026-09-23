@@ -2,9 +2,18 @@ import Foundation
 import SwiftProtobuf
 import UIKit
 
+enum StatisticsRangeFetchResult {
+  case days([DailyStatistics])
+  /// Token missing, bad, or expired. JSON body, not proto. Re-auth; do not fan out.
+  case unauthorized
+  /// Transport error or 5xx after one retry. Show sorry; do not fan out.
+  case failed
+}
+
 class GRPCService {
-  private let maxRetries = 10
-  private let baseDelay: TimeInterval = 10
+  /// Transport retries only. Write POSTs pass `retriesLeft: 0` so a timeout cannot duplicate them.
+  private let maxRetries = 2
+  private let baseDelay: TimeInterval = 0.8
 
   internal func createRequest(endpoint: String, httpMethod: String, body: Data? = nil, timeout: TimeInterval? = nil) -> URLRequest?
   {
@@ -38,7 +47,8 @@ class GRPCService {
     let task = URLSession.shared.dataTask(with: request) { data, response, error in
       if let error = error {
         if retriesLeft > 0 {
-          let delay = self.baseDelay * pow(2, Double(self.maxRetries - retriesLeft))
+          let attempt = self.maxRetries - retriesLeft
+          let delay = self.baseDelay * pow(2, Double(max(0, attempt))) + TimeInterval.random(in: 0...0.4)
           DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             self.sendRequest(request: request, retriesLeft: retriesLeft - 1, completion: completion)
           }
@@ -64,21 +74,21 @@ class GRPCService {
     task.resume()
   }
 
-  func fetchProducts(completion: @escaping ([Product], Int, Float) -> Void) {
+  func fetchProducts(completion: @escaping ([Product], Int, Float, Bool) -> Void) {
     // Use 5-second timeout for initial load to speed up app startup
     guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET", timeout: 5.0) else {
-      completion([], 0, 0)
+      completion([], 0, 0, false)
       return
     }
 
     sendRequest(request: request, retriesLeft: 0) { data, _, error in
       if error != nil {
-        completion([], 0, 0)
+        completion([], 0, 0, false)
         return
       }
 
       guard let data = data else {
-        completion([], 0, 0)
+        completion([], 0, 0, false)
         return
       }
 
@@ -102,9 +112,9 @@ class GRPCService {
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
         let persohWeight = Float(todayFood.personWeight)
 
-        completion(products, remainingCalories, persohWeight)
+        completion(products, remainingCalories, persohWeight, true)
       } catch {
-        completion([], 0, 0)
+        completion([], 0, 0, false)
       }
     }
   }
@@ -113,7 +123,8 @@ class GRPCService {
     image: UIImage, photoType: String, timestampMillis: Int64? = nil,
     completion: @escaping (Bool) -> Void
   ) {
-    guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+    let uploadImage = image.downscaledForUpload()
+    guard let imageData = uploadImage.jpegData(compressionQuality: 0.8) else {
       completion(false)
       return
     }
@@ -197,45 +208,27 @@ class GRPCService {
               completion(true)
             }
           } else {
+            if Self.presentDailyLimitIfNeeded(data: data, statusCode: response.statusCode) {
+              completion(false)
+              return
+            }
             // ANY non-2xx status code - ALWAYS show popup
             DispatchQueue.main.async {
 
               if photoType == "weight_prompt" {
-                // Weight processing failed
-                if let data = data, let responseText = String(data: data, encoding: .utf8) {
-                  let base = loc(
+                AlertHelper.showAlert(
+                  title: loc("error.scale.title", "Scale Not Recognized"),
+                  message: loc(
                     "error.scale.msg",
                     "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on"
-                  )
-                  let msg = base + "\n\n" + loc("common.error", "Error") + ": " + responseText
-                  AlertHelper.showAlert(
-                    title: loc("error.scale.title", "Scale Not Recognized"), message: msg)
-                } else {
-                  AlertHelper.showAlert(
-                    title: loc("error.scale.title", "Scale Not Recognized"),
-                    message: loc(
-                      "error.scale.msg",
-                      "We couldn't read your weight scale. Please make sure:\n• The scale display shows a clear number\n• The lighting is good\n• The scale is on a flat surface\n• Take the photo straight on"
-                    ))
-                }
+                  ))
               } else {
-                // Food processing failed - ALWAYS show popup for non-2xx
-                if let data = data, let responseText = String(data: data, encoding: .utf8) {
-                  let base = loc(
+                AlertHelper.showAlert(
+                  title: loc("error.food.title", "Food Not Recognized"),
+                  message: loc(
                     "error.food.msg",
                     "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible."
-                  )
-                  let msg = base + "\n\n" + loc("common.error", "Error") + ": " + responseText
-                  AlertHelper.showAlert(
-                    title: loc("error.food.title", "Food Not Recognized"), message: msg)
-                } else {
-                  AlertHelper.showAlert(
-                    title: loc("error.food.title", "Food Not Recognized"),
-                    message: loc(
-                      "error.food.msg",
-                      "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible."
-                    ))
-                }
+                  ))
               }
             }
             completion(false)
@@ -263,7 +256,7 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false)
           return
@@ -299,32 +292,40 @@ class GRPCService {
         var request = createRequest(
           endpoint: "get_recommendation", httpMethod: "POST", body: requestBody)
       else {
-        completion("")
+        DispatchQueue.main.async { completion("") }
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+        let finish: (String) -> Void = { text in
+          DispatchQueue.main.async { completion(text) }
+        }
         if error != nil {
-          completion("")
+          finish("")
           return
         }
-
-        if let response = response as? HTTPURLResponse {
-          if response.statusCode == 200, let data = data {
-            do {
-              let recommendationResponse = try Eater_RecommendationResponse(serializedBytes: data)
-              completion(recommendationResponse.recommendation)
-            } catch {
-              completion("")
-            }
-          } else {
-            completion("")
-          }
+        guard let http = response as? HTTPURLResponse else {
+          finish("")
+          return
+        }
+        if Self.presentDailyLimitIfNeeded(data: data, statusCode: http.statusCode) {
+          finish("")
+          return
+        }
+        guard http.statusCode == 200, let data = data else {
+          finish("")
+          return
+        }
+        do {
+          let recommendationResponse = try Eater_RecommendationResponse(serializedBytes: data)
+          finish(recommendationResponse.recommendation)
+        } catch {
+          finish("")
         }
       }
     } catch {
-      completion("")
+      DispatchQueue.main.async { completion("") }
     }
   }
 
@@ -343,7 +344,7 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false)
           return
@@ -398,7 +399,7 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false)
           return
@@ -454,7 +455,7 @@ class GRPCService {
     }
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-    sendRequest(request: request, retriesLeft: 0) { data, response, error in
+    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
       guard error == nil,
         let response = response as? HTTPURLResponse,
         response.statusCode >= 200, response.statusCode < 300,
@@ -523,7 +524,7 @@ class GRPCService {
     }
   }
 
-  func fetchCustomDateFood(date: String, completion: @escaping ([Product], Int, Float) -> Void) {
+  func fetchCustomDateFood(date: String, completion: @escaping ([Product], Int, Float, Bool) -> Void) {
     var customDateRequest = Eater_CustomDateFoodRequest()
     customDateRequest.date = date
 
@@ -534,19 +535,19 @@ class GRPCService {
         var request = createRequest(
           endpoint: "get_food_custom_date", httpMethod: "POST", body: requestBody)
       else {
-        completion([], 0, 0)
+        completion([], 0, 0, false)
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
         if error != nil {
-          completion([], 0, 0)
+          completion([], 0, 0, false)
           return
         }
 
         guard let data = data else {
-          completion([], 0, 0)
+          completion([], 0, 0, false)
           return
         }
 
@@ -570,13 +571,13 @@ class GRPCService {
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
           let personWeight = Float(customDateFood.personWeight)
 
-          completion(products, remainingCalories, personWeight)
+          completion(products, remainingCalories, personWeight, true)
         } catch {
-          completion([], 0, 0)
+          completion([], 0, 0, false)
         }
       }
     } catch {
-      completion([], 0, 0)
+      completion([], 0, 0, false)
     }
   }
 
@@ -668,7 +669,7 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false)
           return
@@ -769,7 +770,7 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false)
           return
@@ -815,23 +816,40 @@ class GRPCService {
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
-        if error != nil {
+      // Tapping a friend blocks the sheet behind a spinner, so long exponential
+      // retries would look like a freeze. Fail fast instead.
+      sendRequest(request: request, retriesLeft: 1) { data, response, error in
+        if let error = error {
+          #if DEBUG
+          print("addFriend transport error: \(error.localizedDescription)")
+          #endif
           completion(false)
           return
         }
 
-        if let response = response as? HTTPURLResponse {
-          if response.statusCode == 200, let data = data {
-            do {
-              let addFriendResponse = try Eater_AddFriendResponse(serializedBytes: data)
-              completion(addFriendResponse.success)
-            } catch {
-              completion(false)
-            }
-          } else {
-            completion(false)
-          }
+        guard let response = response as? HTTPURLResponse else {
+          completion(false)
+          return
+        }
+
+        guard response.statusCode == 200, let data = data else {
+          #if DEBUG
+          let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+          print("addFriend HTTP \(response.statusCode): \(body)")
+          #endif
+          completion(false)
+          return
+        }
+
+        do {
+          let addFriendResponse = try Eater_AddFriendResponse(serializedBytes: data)
+          completion(addFriendResponse.success)
+        } catch {
+          #if DEBUG
+          let body = String(data: data, encoding: .utf8) ?? ""
+          print("addFriend decode failed, body: \(body)")
+          #endif
+          completion(false)
         }
       }
     } catch {
@@ -894,7 +912,7 @@ class GRPCService {
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false, nil)
           return
@@ -981,6 +999,146 @@ class GRPCService {
     }
   }
 
+  /// One Kafka-backed range for week / month / 3-month charts. Never loop `get_food_custom_date`.
+  func fetchStatisticsRange(
+    startDate: String, endDate: String,
+    completion: @escaping (StatisticsRangeFetchResult) -> Void
+  ) {
+    sendStatisticsRange(startDate: startDate, endDate: endDate, retriesLeft: 1, completion: completion)
+  }
+
+  private func sendStatisticsRange(
+    startDate: String, endDate: String, retriesLeft: Int,
+    completion: @escaping (StatisticsRangeFetchResult) -> Void
+  ) {
+    guard let token = KeychainHelper.shared.read("auth_token"), !token.isEmpty else {
+      completion(.unauthorized)
+      return
+    }
+
+    var req = Eater_GetStatisticsRangeRequest()
+    req.startDate = startDate
+    req.endDate = endDate
+    do {
+      let body = try req.serializedData()
+      guard var request = createRequest(
+        endpoint: "get_statistics_range", httpMethod: "POST", body: body, timeout: 30)
+      else {
+        completion(.failed)
+        return
+      }
+      request.addValue("application/grpc+proto", forHTTPHeaderField: "Content-Type")
+      request.addValue("application/grpc+proto", forHTTPHeaderField: "Accept")
+
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
+        let retryable: Bool = {
+          if error != nil { return true }
+          if let http = response as? HTTPURLResponse, http.statusCode >= 500 { return true }
+          return false
+        }()
+        if retryable, retriesLeft > 0 {
+          DispatchQueue.main.asyncAfter(deadline: .now() + self.baseDelay) {
+            self.sendStatisticsRange(
+              startDate: startDate, endDate: endDate, retriesLeft: retriesLeft - 1,
+              completion: completion)
+          }
+          return
+        }
+
+        if error != nil {
+          completion(.failed)
+          return
+        }
+        guard let http = response as? HTTPURLResponse else {
+          completion(.failed)
+          return
+        }
+        if http.statusCode == 401 {
+          completion(.unauthorized)
+          return
+        }
+        guard http.statusCode >= 200, http.statusCode < 300, let data = data else {
+          completion(.failed)
+          return
+        }
+        do {
+          let resp = try Eater_GetStatisticsRangeResponse(serializedBytes: data)
+          let formatter = Self.statisticsDateFormatter()
+          completion(.days(resp.days.compactMap { Self.dailyStatistics(from: $0, formatter: formatter) }))
+        } catch {
+          completion(.failed)
+        }
+      }
+    } catch {
+      completion(.failed)
+    }
+  }
+
+  private static func statisticsDateFormatter() -> DateFormatter {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
+    formatter.dateFormat = "dd-MM-yyyy"
+    return formatter
+  }
+
+  private static func dailyStatistics(
+    from day: Eater_DayStatistics, formatter: DateFormatter
+  ) -> DailyStatistics? {
+    guard let parsedDate = formatter.date(from: day.date) else { return nil }
+    let health: Int? = day.avgHealthScore == 0 ? nil : Int(day.avgHealthScore)
+    return DailyStatistics(
+      date: parsedDate,
+      dateString: day.date,
+      totalCalories: Int(day.totalCalories),
+      totalFoodWeight: Int(day.totalAvgWeight),
+      personWeight: day.personWeight,
+      proteins: day.proteins,
+      fats: day.fats,
+      carbohydrates: day.carbohydrates,
+      sugar: day.sugar,
+      numberOfMeals: Int(day.numberOfMeals),
+      hasData: true,
+      averageHealthScore: health
+    )
+  }
+
+  /// Returns true if a daily-quota alert was shown (caller should skip other error UI).
+  fileprivate static func presentDailyLimitIfNeeded(data: Data?, statusCode: Int) -> Bool {
+    guard let data = data,
+      let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else {
+      return false
+    }
+    let code = (obj["error_code"] as? String) ?? ""
+    let prose = ((obj["error"] as? String) ?? "").lowercased()
+    let isLimit =
+      code == "daily_limit_reached"
+      || (statusCode == 400 && prose.contains("daily limit"))
+    guard isLimit else { return false }
+    let isGuest: Bool
+    if let b = obj["is_guest"] as? Bool {
+      isGuest = b
+    } else if let n = obj["is_guest"] as? NSNumber {
+      isGuest = n.boolValue
+    } else {
+      isGuest = UserDefaults.standard.bool(forKey: "is_anonymous")
+    }
+    let parsedLimit: Int?
+    if let n = obj["limit"] as? Int {
+      parsedLimit = n
+    } else if let n = obj["limit"] as? NSNumber {
+      parsedLimit = n.intValue
+    } else {
+      parsedLimit = nil
+    }
+    let limit = parsedLimit ?? (isGuest ? 5 : 30)
+    DispatchQueue.main.async {
+      AlertHelper.showDailyLimitReached(isGuest: isGuest, limit: limit)
+    }
+    return true
+  }
+
   // MARK: - Language
 
   func setLanguage(userEmail: String, languageCode: String, completion: @escaping (Bool) -> Void) {
@@ -995,7 +1153,7 @@ class GRPCService {
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
-      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
         if error != nil {
           completion(false)
           return
@@ -1301,7 +1459,7 @@ class GRPCService {
       return
     }
 
-    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+    sendRequest(request: request, retriesLeft: 0) { _, response, error in
       if error != nil {
         completion(false)
         return
@@ -1347,7 +1505,7 @@ class GRPCService {
       return
     }
 
-    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+    sendRequest(request: request, retriesLeft: 0) { _, response, error in
       if error != nil {
         completion(false)
         return
@@ -1398,7 +1556,7 @@ class GRPCService {
       return
     }
 
-    sendRequest(request: request, retriesLeft: maxRetries) { _, response, error in
+    sendRequest(request: request, retriesLeft: 0) { _, response, error in
       if error != nil {
         completion(false)
         return
@@ -1678,34 +1836,50 @@ class GRPCService {
         var request = createRequest(
           endpoint: "meal_suggest", httpMethod: "POST", body: requestBody, timeout: 90)
       else {
-        completion(nil)
+        DispatchQueue.main.async { completion(nil) }
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
       sendRequest(request: request, retriesLeft: 0) { data, response, error in
         DispatchQueue.main.async {
-          guard error == nil,
-            let http = response as? HTTPURLResponse, http.statusCode == 200,
-            let data = data
-          else {
+          guard error == nil, let http = response as? HTTPURLResponse else {
+            completion(nil)
+            return
+          }
+          if Self.presentDailyLimitIfNeeded(data: data, statusCode: http.statusCode) {
+            completion(nil)
+            return
+          }
+          guard (200..<300).contains(http.statusCode), let data = data else {
             completion(nil)
             return
           }
           do {
             let mealResponse = try Eater_MealSuggestResponse(serializedBytes: data)
-            guard !mealResponse.text.isEmpty else {
+            let dish = mealResponse.dish
+            let name = dish.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = mealResponse.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty || !text.isEmpty else {
               completion(nil)
               return
             }
             completion(
-              MealPlanResult(text: mealResponse.text, variant: variant, variantCount: 3))
+              MealPlanResult(
+                text: text,
+                name: name,
+                why: dish.why.trimmingCharacters(in: .whitespacesAndNewlines),
+                howTo: dish.howTo.trimmingCharacters(in: .whitespacesAndNewlines),
+                basedOn: dish.basedOn.trimmingCharacters(in: .whitespacesAndNewlines),
+                variant: variant,
+                variantCount: 3
+              ))
           } catch {
             completion(nil)
           }
         }
       }
     } catch {
-      completion(nil)
+      DispatchQueue.main.async { completion(nil) }
     }
   }
 }

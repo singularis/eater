@@ -10,7 +10,6 @@ class StatisticsCacheService {
 
   // Cache expiry time (24 hours for current day, longer for past days)
   private let currentDayCacheExpiry: TimeInterval = 4 * 60 * 60  // 4 hours for current day
-  private let pastDayCacheExpiry: TimeInterval = 7 * 24 * 60 * 60  // 7 days for past days
 
   // MARK: - Cache Management
 
@@ -66,17 +65,12 @@ class StatisticsCacheService {
   // MARK: - Cache Validation
 
   private func isExpired(dateString: String, cachedTime: TimeInterval) -> Bool {
-    let now = Date()
-
-    // Check if this is today's data
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "dd-MM-yyyy"
-    let todayString = dateFormatter.string(from: now)
-
-    let expiryTime = (dateString == todayString) ? currentDayCacheExpiry : pastDayCacheExpiry
-    let timeSinceCache = now.timeIntervalSince1970 - cachedTime
-
-    return timeSinceCache > expiryTime
+    let todayString = dateFormatter.string(from: Date())
+    guard dateString == todayString else { return false }
+    let timeSinceCache = Date().timeIntervalSince1970 - cachedTime
+    return timeSinceCache > currentDayCacheExpiry
   }
 
   // MARK: - Data Persistence
@@ -105,6 +99,12 @@ class StatisticsCacheService {
   }
 
   // MARK: - Cache Cleanup
+
+  func invalidate(dateString: String) {
+    guard var cachedData = getCachedData() else { return }
+    cachedData.removeValue(forKey: dateString)
+    saveCachedData(cachedData)
+  }
 
   func clearExpiredCache() {
     guard var cachedData = getCachedData() else { return }

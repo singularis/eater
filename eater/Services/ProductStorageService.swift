@@ -64,7 +64,7 @@ class ProductStorageService {
 
   func fetchAndProcessProducts(
     tempImageTime: Int64? = nil, forceRefresh: Bool = false,
-    completion: @escaping ([Product], Int, Float) -> Void
+    completion: @escaping ([Product], Int, Float, Bool) -> Void
   ) {
     let shouldForceRefresh = forceRefresh || (tempImageTime != nil)
 
@@ -72,7 +72,7 @@ class ProductStorageService {
     if !shouldForceRefresh, !isDataStale() {
       let (cachedProducts, cachedCalories, cachedWeight) = loadProducts()
       if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
-        completion(cachedProducts, cachedCalories, cachedWeight)
+        completion(cachedProducts, cachedCalories, cachedWeight, true)
         return
       }
     }
@@ -89,27 +89,27 @@ class ProductStorageService {
        let isToday = Calendar.current.isDateInToday(date)
 
        // Always fetch using the specific date from the timestamp to ensure we get the list where this food belongs
-       GRPCService().fetchCustomDateFood(date: dateStr) { [weak self] products, calories, weight in
+       GRPCService().fetchCustomDateFood(date: dateStr) { [weak self] products, calories, weight, success in
          DispatchQueue.main.async {
-           self?.mapTemporaryImage(products: products, tempTime: tempTime)
-           
-           // If it turns out this date WAS today, update the local cache
-           if isToday {
+           if success {
+             self?.mapTemporaryImage(products: products, tempTime: tempTime)
+             if isToday {
                self?.saveProducts(products, calories: calories, weight: weight)
+             }
            }
-           
-           completion(products, calories, weight)
+           completion(products, calories, weight, success)
          }
        }
        return
     }
 
     // Default: Fetch today's data (no temp time provided)
-    GRPCService().fetchProducts { [weak self] products, calories, weight in
+    GRPCService().fetchProducts { [weak self] products, calories, weight, success in
       DispatchQueue.main.async {
-        // Save products locally (only for today's data)
-        self?.saveProducts(products, calories: calories, weight: weight)
-        completion(products, calories, weight)
+        if success {
+          self?.saveProducts(products, calories: calories, weight: weight)
+        }
+        completion(products, calories, weight, success)
       }
     }
   }
@@ -138,12 +138,11 @@ class ProductStorageService {
   }
 
   func fetchAndProcessCustomDateProducts(
-    date: String, completion: @escaping ([Product], Int, Float) -> Void
+    date: String, completion: @escaping ([Product], Int, Float, Bool) -> Void
   ) {
-    GRPCService().fetchCustomDateFood(date: date) { products, calories, weight in
+    GRPCService().fetchCustomDateFood(date: date) { products, calories, weight, success in
       DispatchQueue.main.async {
-        // Don't save custom date data to cache - only today's data should be cached
-        completion(products, calories, weight)
+        completion(products, calories, weight, success)
       }
     }
   }

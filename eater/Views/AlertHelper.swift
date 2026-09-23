@@ -139,6 +139,31 @@ class AlertHelper {
     presentAlert(alert, from: rootViewController)
   }
 
+  static func showDailyLimitReached(isGuest: Bool, limit: Int) {
+    let title = isGuest
+      ? loc("quota.guest.title", "Daily limit reached")
+      : loc("quota.user.title", "Daily limit reached")
+    let message = String(
+      format: isGuest
+        ? loc("quota.guest.msg", "You've used your %d free scans today. Sign in to keep going.")
+        : loc("quota.user.msg", "You've used your %d scans for today. Come back tomorrow."),
+      limit
+    )
+    var actions: [UIAlertAction] = [
+      UIAlertAction(title: loc("common.ok", "OK"), style: .cancel)
+    ]
+    if isGuest {
+      actions.append(
+        UIAlertAction(title: loc("quota.sign_in", "Sign in"), style: .default) { _ in
+          DispatchQueue.main.async {
+            AppNavigation.shared.showInPlaceLogin = true
+          }
+        }
+      )
+    }
+    showConfirmation(title: title, message: message, actions: actions, haptic: .warning)
+  }
+
   static func showConfirmation(
     title: String,
     message: String? = nil,
@@ -275,7 +300,7 @@ class AlertHelper {
     loginAlert.addAction(UIAlertAction(title: loc("common.not_yet", "Not Yet"), style: .cancel))
     loginAlert.addAction(
       UIAlertAction(title: loc("login.prompt.confirm", "Login Now"), style: .default) { _ in
-        NotificationCenter.default.post(name: NSNotification.Name("ForceLogout"), object: nil)
+        AppNavigation.shared.showInPlaceLogin = true
       })
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
       rootViewController.present(loginAlert, animated: true)

@@ -22,7 +22,7 @@ struct CameraButtonView: View {
   let languageCode: String
   var onPhotoSuccess: (() -> Void)?
   var onPhotoFailure: (() -> Void)?
-  var onPhotoStarted: (() -> Void)?
+  var onPhotoStarted: ((UIImage?) -> Void)?
   var onReturnToToday: (() -> Void)?
   var onRequestTutorial: ((String) -> Void)?
   /// Toggled externally (e.g. swipe-right on Home) to trigger the same
@@ -43,7 +43,7 @@ struct CameraButtonView: View {
     languageCode: String = "en",
     onPhotoSuccess: (() -> Void)?,
     onPhotoFailure: (() -> Void)?,
-    onPhotoStarted: (() -> Void)?,
+    onPhotoStarted: ((UIImage?) -> Void)?,
     onReturnToToday: (() -> Void)? = nil,
     onRequestTutorial: ((String) -> Void)? = nil,
     externalCameraTrigger: Binding<Bool> = .constant(false)
@@ -63,193 +63,154 @@ struct CameraButtonView: View {
   }
 
   var body: some View {
-    VStack(spacing: 10) {
-      GeometryReader { geo in
-        let totalWidth = geo.size.width
-        let rowHeight = geo.size.height
-        let usesPlannerImage = themeService.currentMascot != .none
-        let uploadWidth = totalWidth * 0.26
-        // Picture stays square. Word button matches Upload so the text is not crushed.
-        let plannerWidth = usesPlannerImage
-          ? min(rowHeight, totalWidth * 0.22)
-          : uploadWidth
-        let gapWidth = totalWidth * 0.03
-        let takeWidth = totalWidth - uploadWidth - plannerWidth - gapWidth * 2
-
-        HStack(alignment: .center, spacing: 0) {
-          Button(action: {
-            if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
-                req("hasSeenCameraTutorial")
-                return
-            }
-            HapticsService.shared.select()
-            checkBackdating(sourceType: .photoLibrary)
-          }) {
-            HStack(spacing: 3) {
-              Image(systemName: "photo.fill")
-                .font(.system(size: 16))
-              Text(loc("camera.upload", "Upload"))
-                .font(.system(size: 15, weight: .medium, design: .rounded))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-            }
-            .frame(width: uploadWidth, height: rowHeight)
-            .background(AppTheme.primaryButtonGradient)
-            .cornerRadius(AppTheme.cornerRadius)
-            .foregroundColor(.white)
-            .overlay(
-              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                .stroke(
-                  LinearGradient(
-                    gradient: Gradient(colors: [Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.9), Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.3)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                  ),
-                  lineWidth: 2
-                )
-            )
-            .shadow(color: Color(red: 0.2, green: 0.8, blue: 0.5).opacity(0.4), radius: 6, x: 0, y: 3)
-          }
-          .buttonStyle(.plain)
-          .disabled(isLoadingFoodPhoto)
-          .buttonStyle(PressScaleButtonStyle())
-
-          Color.clear
-            .frame(width: gapWidth, height: rowHeight)
-
-          Button(action: {
-            HapticsService.shared.select()
-            if showMealPlanner {
-              mealPlannerCycle += 1
-            } else {
-              showMealPlanner = true
-            }
-          }) {
-            plannerButtonLabel(width: plannerWidth, height: rowHeight)
-          }
-          .buttonStyle(.plain)
-          .buttonStyle(PressScaleButtonStyle())
-          .accessibilityLabel(loc("camera.mealplan", "Meal"))
-
-          Color.clear
-            .frame(width: gapWidth, height: rowHeight)
-
-          Button(action: {
-            if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
-                req("hasSeenCameraTutorial")
-                return
-            }
-            HapticsService.shared.select()
-            checkBackdating(sourceType: .camera)
-          }) {
-            HStack(spacing: 5) {
-              Image(systemName: "camera.fill")
-                .font(.system(size: 18))
-              Text(loc("camera.takefood", "Take Food Photo"))
-                .font(.system(size: 15, weight: .medium, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            }
-            .frame(width: takeWidth, height: rowHeight)
-            .background(AppTheme.primaryButtonGradient)
-            .cornerRadius(AppTheme.cornerRadius)
-            .foregroundColor(.white)
-            .overlay(
-              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                .stroke(
-                  LinearGradient(
-                    gradient: Gradient(colors: [Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.9), Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.3)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                  ),
-                  lineWidth: 2.5
-                )
-            )
-            .shadow(color: Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.5), radius: 8, x: 0, y: 3)
-          }
-          .buttonStyle(.plain)
-          .disabled(isLoadingFoodPhoto)
-          .buttonStyle(PressScaleButtonStyle())
-        }
-        .frame(width: totalWidth, height: rowHeight, alignment: .center)
-      }
+    cameraActionRow
       .frame(height: 80)
-    }
-    .frame(height: 80)
-    .onAppear { startPlannerPulse() }
-    .onChange(of: themeService.currentMascot) { _, _ in
-      startPlannerPulse()
-    }
-    .sheet(isPresented: $showCamera) {
-      CameraView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
-        .onAppear {
-          CameraCallbackManager.shared.setCallbacks(
-            onPhotoSuccess: onPhotoSuccess,
-            onPhotoFailure: onPhotoFailure,
-            onPhotoStarted: onPhotoStarted
-          )
-        }
-    }
-    .sheet(isPresented: $showPhotoLibrary) {
-      PhotoLibraryView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
-        .onAppear {
-          CameraCallbackManager.shared.setCallbacks(
-            onPhotoSuccess: onPhotoSuccess,
-            onPhotoFailure: onPhotoFailure,
-            onPhotoStarted: onPhotoStarted
-          )
-        }
-    }
-    .sheet(isPresented: $showMealPlanner) {
-      MealPlannerView(
-        remaining: mealRemaining,
+      .onAppear { startPlannerPulse() }
+      .onChange(of: themeService.currentMascot) { _, _ in
+        startPlannerPulse()
+      }
+      .onChange(of: externalCameraTrigger.wrappedValue) { _, _ in
+        checkBackdating(sourceType: .camera)
+      }
+      .modifier(CameraButtonSheets(
+        showCamera: $showCamera,
+        showPhotoLibrary: $showPhotoLibrary,
+        showMealPlanner: $showMealPlanner,
+        isViewingCustomDate: isViewingCustomDate,
+        selectedDate: selectedDate,
+        mealRemaining: mealRemaining,
         mealsToday: mealsToday,
         languageCode: languageCode,
-        cycleToken: mealPlannerCycle
-      )
-    }
-    .alert(
-      loc("camera.unavailable.title", "Camera Unavailable"), isPresented: $cameraUnavailableAlert
-    ) {
-      Button(loc("common.ok", "OK")) {}
-    } message: {
-      Text(loc("camera.unavailable.msg", "Your device does not have a camera."))
-    }
-    .alert(
-      loc("library.unavailable.title", "Photo Library Unavailable"),
-      isPresented: $photoLibraryUnavailableAlert
-    ) {
-      Button(loc("common.ok", "OK")) {}
-    } message: {
-      Text(loc("library.unavailable.msg", "Photo library is not available."))
-    }
-    .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $showBackdatingAlert) {
-      Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) {
-        pendingSourceType = nil
+        mealPlannerCycle: mealPlannerCycle,
+        onPhotoSuccess: onPhotoSuccess,
+        onPhotoFailure: onPhotoFailure,
+        onPhotoStarted: onPhotoStarted
+      ))
+      .modifier(CameraButtonAlerts(
+        cameraUnavailableAlert: $cameraUnavailableAlert,
+        photoLibraryUnavailableAlert: $photoLibraryUnavailableAlert,
+        showBackdatingAlert: $showBackdatingAlert,
+        pendingSourceType: $pendingSourceType,
+        backdatingStatusEmoji: backdatingStatusEmoji,
+        backdatingMessage: backdatingMessage,
+        onConfirmBackdate: {
+          if let type = pendingSourceType {
+            openCamera(sourceType: type)
+          }
+        },
+        onReturnToToday: onReturnToToday
+      ))
+  }
+
+  private var cameraActionRow: some View {
+    GeometryReader { geo in
+      let totalWidth = geo.size.width
+      let rowHeight = geo.size.height
+      let usesPlannerImage = themeService.currentMascot != .none
+      let uploadWidth = totalWidth * 0.26
+      let plannerWidth = usesPlannerImage
+        ? min(rowHeight, totalWidth * 0.22)
+        : uploadWidth
+      let gapWidth = totalWidth * 0.03
+      let takeWidth = totalWidth - uploadWidth - plannerWidth - gapWidth * 2
+
+      HStack(alignment: .center, spacing: 0) {
+        uploadButton(width: uploadWidth, height: rowHeight)
+        Color.clear.frame(width: gapWidth, height: rowHeight)
+        plannerButton(width: plannerWidth, height: rowHeight)
+        Color.clear.frame(width: gapWidth, height: rowHeight)
+        takePhotoButton(width: takeWidth, height: rowHeight)
       }
-      Button(loc("backdating.alert.confirm", "Confirm")) {
-        if let type = pendingSourceType {
-          openCamera(sourceType: type)
-        }
-      }
-      Button(loc("backdating.alert.log_today", "Log Today's Food")) {
-        pendingSourceType = nil
-        onReturnToToday?()
-      }
-    } message: {
-      Text(backdatingStatusEmoji + " " + backdatingMessage + "\n\n" + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
+      .frame(width: totalWidth, height: rowHeight, alignment: .center)
     }
-    .onChange(of: externalCameraTrigger.wrappedValue) { _, _ in
+  }
+
+  private func uploadButton(width: CGFloat, height: CGFloat) -> some View {
+    Button(action: {
+      if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
+        req("hasSeenCameraTutorial")
+        return
+      }
+      HapticsService.shared.select()
+      checkBackdating(sourceType: .photoLibrary)
+    }) {
+      HStack(spacing: 3) {
+        Image(systemName: "photo.fill")
+          .font(.system(size: 16))
+        Text(loc("camera.upload", "Upload"))
+          .font(.system(size: 15, weight: .medium, design: .rounded))
+          .multilineTextAlignment(.center)
+          .lineLimit(2)
+          .minimumScaleFactor(0.8)
+      }
+      .foregroundColor(AppTheme.textPrimary)
+      .frame(width: width, height: height)
+      .background(quietBarFill)
+    }
+    .buttonStyle(PressScaleButtonStyle())
+    .disabled(isLoadingFoodPhoto)
+  }
+
+  private func plannerButton(width: CGFloat, height: CGFloat) -> some View {
+    Button(action: {
+      HapticsService.shared.select()
+      if showMealPlanner {
+        mealPlannerCycle += 1
+      } else {
+        showMealPlanner = true
+      }
+    }) {
+      plannerButtonLabel(width: width, height: height)
+    }
+    .buttonStyle(PressScaleButtonStyle())
+    .accessibilityLabel(loc("camera.mealplan", "Meal"))
+  }
+
+  private func takePhotoButton(width: CGFloat, height: CGFloat) -> some View {
+    Button(action: {
+      if let req = onRequestTutorial, !KeychainHelper.shared.getBool("hasSeenCameraTutorial") {
+        req("hasSeenCameraTutorial")
+        return
+      }
+      HapticsService.shared.select()
       checkBackdating(sourceType: .camera)
+    }) {
+      HStack(spacing: 5) {
+        Image(systemName: "camera.fill")
+          .font(.system(size: 18))
+        Text(loc("camera.takefood", "Take Food Photo"))
+          .font(.system(size: 15, weight: .medium, design: .rounded))
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+      }
+      .foregroundColor(.white)
+      .frame(width: width, height: height)
+      .background(primaryBarFill)
     }
+    .buttonStyle(PressScaleButtonStyle())
+    .disabled(isLoadingFoodPhoto)
   }
 
   private var shouldPulsePlanner: Bool {
     mealsToday < 1 && !AppSettingsService.shared.reduceMotion
   }
 
-  /// Cat/dog theme: meal-advice artwork. Default theme: Meal word, like Upload / Take Food.
+  private var quietBarFill: some View {
+    RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+      .fill(AppTheme.surface)
+      .overlay(
+        RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+          .stroke(AppTheme.divider, lineWidth: 1)
+      )
+  }
+
+  private var primaryBarFill: some View {
+    RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
+      .fill(AppTheme.primaryButtonFill)
+      .appCardShadow()
+  }
+
+  /// Cat/dog theme: meal-advice artwork. Default theme: quiet Meal word, like Upload.
   @ViewBuilder
   private func plannerButtonLabel(width: CGFloat, height: CGFloat) -> some View {
     if themeService.currentMascot != .none {
@@ -261,7 +222,7 @@ struct CameraButtonView: View {
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
         .scaleEffect(shouldPulsePlanner ? plannerBeatScale : 1.0)
-        .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.45), radius: 6, x: 0, y: 3)
+        .appCardShadow()
     } else {
       HStack(spacing: 3) {
         Image(systemName: "fork.knife")
@@ -271,25 +232,9 @@ struct CameraButtonView: View {
           .multilineTextAlignment(.center)
           .lineLimit(1)
       }
+      .foregroundColor(AppTheme.textPrimary)
       .frame(width: width, height: height)
-      .background(AppTheme.primaryButtonGradient)
-      .cornerRadius(AppTheme.cornerRadius)
-      .foregroundColor(.white)
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-          .stroke(
-            LinearGradient(
-              gradient: Gradient(colors: [
-                Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.9),
-                Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.3),
-              ]),
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            ),
-            lineWidth: 2
-          )
-      )
-      .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.15).opacity(0.4), radius: 6, x: 0, y: 3)
+      .background(quietBarFill)
     }
   }
 
@@ -363,6 +308,99 @@ struct CameraButtonView: View {
   
 }
 
+private struct CameraButtonSheets: ViewModifier {
+  @Binding var showCamera: Bool
+  @Binding var showPhotoLibrary: Bool
+  @Binding var showMealPlanner: Bool
+  let isViewingCustomDate: Bool
+  let selectedDate: Date
+  let mealRemaining: MealPlannerRemaining
+  let mealsToday: Int
+  let languageCode: String
+  let mealPlannerCycle: Int
+  let onPhotoSuccess: (() -> Void)?
+  let onPhotoFailure: (() -> Void)?
+  let onPhotoStarted: ((UIImage?) -> Void)?
+
+  func body(content: Content) -> some View {
+    content
+      .sheet(isPresented: $showCamera) {
+        CameraView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
+          .onAppear {
+            CameraCallbackManager.shared.setCallbacks(
+              onPhotoSuccess: onPhotoSuccess,
+              onPhotoFailure: onPhotoFailure,
+              onPhotoStarted: onPhotoStarted
+            )
+          }
+      }
+      .sheet(isPresented: $showPhotoLibrary) {
+        PhotoLibraryView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
+          .onAppear {
+            CameraCallbackManager.shared.setCallbacks(
+              onPhotoSuccess: onPhotoSuccess,
+              onPhotoFailure: onPhotoFailure,
+              onPhotoStarted: onPhotoStarted
+            )
+          }
+      }
+      .sheet(isPresented: $showMealPlanner) {
+        MealPlannerView(
+          remaining: mealRemaining,
+          mealsToday: mealsToday,
+          languageCode: languageCode,
+          cycleToken: mealPlannerCycle
+        )
+      }
+  }
+}
+
+private struct CameraButtonAlerts: ViewModifier {
+  @Binding var cameraUnavailableAlert: Bool
+  @Binding var photoLibraryUnavailableAlert: Bool
+  @Binding var showBackdatingAlert: Bool
+  @Binding var pendingSourceType: UIImagePickerController.SourceType?
+  let backdatingStatusEmoji: String
+  let backdatingMessage: String
+  let onConfirmBackdate: () -> Void
+  let onReturnToToday: (() -> Void)?
+
+  func body(content: Content) -> some View {
+    content
+      .alert(
+        loc("camera.unavailable.title", "Camera Unavailable"), isPresented: $cameraUnavailableAlert
+      ) {
+        Button(loc("common.ok", "OK")) {}
+      } message: {
+        Text(loc("camera.unavailable.msg", "Your device does not have a camera."))
+      }
+      .alert(
+        loc("library.unavailable.title", "Photo Library Unavailable"),
+        isPresented: $photoLibraryUnavailableAlert
+      ) {
+        Button(loc("common.ok", "OK")) {}
+      } message: {
+        Text(loc("library.unavailable.msg", "Photo library is not available."))
+      }
+      .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $showBackdatingAlert) {
+        Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) {
+          pendingSourceType = nil
+        }
+        Button(loc("backdating.alert.confirm", "Confirm")) {
+          onConfirmBackdate()
+        }
+        Button(loc("backdating.alert.log_today", "Log Today's Food")) {
+          pendingSourceType = nil
+          onReturnToToday?()
+        }
+      } message: {
+        Text(
+          backdatingStatusEmoji + " " + backdatingMessage + "\n\n"
+            + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
+      }
+  }
+}
+
 // MARK: - Camera View
 
 struct CameraView: UIViewControllerRepresentable {
@@ -419,7 +457,7 @@ struct CameraView: UIViewControllerRepresentable {
 
       DispatchQueue.main.async {
         HapticsService.shared.mediumImpact()
-        CameraCallbackManager.shared.callPhotoStarted()
+        CameraCallbackManager.shared.callPhotoStarted(image: image)
       }
 
       // Show loading overlay on top of picker instead of dismissing
@@ -499,11 +537,12 @@ struct CameraView: UIViewControllerRepresentable {
       }
 
       // Clear today's statistics cache since new food was added
-      StatisticsService.shared.clearExpiredCache()
+      let dateString = parent.targetDate.map { StatisticsService.dateString(for: $0) }
+      StatisticsService.shared.invalidateDay(dateString)
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] products, calories, weight in
+        [weak self] products, calories, weight, _ in
         DispatchQueue.main.async {
             NotificationService.shared.recordFoodSnap()
             let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
@@ -588,7 +627,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
       DispatchQueue.main.async {
         HapticsService.shared.mediumImpact()
-        CameraCallbackManager.shared.callPhotoStarted()
+        CameraCallbackManager.shared.callPhotoStarted(image: image)
       }
 
       // Show loading overlay on top of picker instead of dismissing
@@ -668,11 +707,12 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
       }
 
       // Clear today's statistics cache since new food was added
-      StatisticsService.shared.clearExpiredCache()
+      let dateString = parent.targetDate.map { StatisticsService.dateString(for: $0) }
+      StatisticsService.shared.invalidateDay(dateString)
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] products, calories, weight in
+        [weak self] products, calories, weight, _ in
         DispatchQueue.main.async {
             NotificationService.shared.recordFoodSnap()
             let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")

@@ -15,7 +15,7 @@ struct MainAppTutorialView: View {
     @State private var appearAnimation = false
     
     struct TutorialStep: Identifiable, Equatable {
-        let id = UUID()
+        var id: String { key }
         let key: String // Keychain key
         let title: String
         let description: String
@@ -27,8 +27,8 @@ struct MainAppTutorialView: View {
         [
             TutorialStep(
                 key: "hasSeenCameraTutorial",
-                title: loc("tutorial.camera.title", "Snap & Track 📸"),
-                description: loc("tutorial.camera.desc", "Take a photo of your meal to instantly analyze calories and nutrients."),
+                title: loc("tutorial.camera.title", "Snap a meal 📸"),
+                description: loc("tutorial.camera.desc", "The blue camera button is how you add food. Take a photo of your plate and Eateria logs calories and nutrients for you."),
                 iconName: "camera.fill",
                 color: AppTheme.accent
             ),
@@ -63,7 +63,7 @@ struct MainAppTutorialView: View {
             TutorialStep(
                 key: "hasSeenAdviceTutorial",
                 title: loc("tutorial.advice.title", "Daily Advice 💡"),
-                description: loc("tutorial.advice.desc", "Get personalized insights and tips to improve your diet."),
+                description: loc("tutorial.advice.desc", "Advice is your weekly tips and meal ideas. This opens that tab, not Today."),
                 iconName: "sparkles",
                 color: .yellow
             ),
@@ -80,6 +80,13 @@ struct MainAppTutorialView: View {
                 description: loc("tutorial.alcohol.desc", "Keep an eye on alcohol consumption separately."),
                 iconName: "wineglass",
                 color: .pink
+            ),
+            TutorialStep(
+                key: "hasSeenStatsTutorial",
+                title: loc("tutorial.stats.title", "Your Stats 📊"),
+                description: loc("tutorial.stats.desc", "Stats shows calories, weight, and how your week is going. Open it anytime from the tab bar."),
+                iconName: "chart.bar.fill",
+                color: AppTheme.primaryButtonFill
             )
         ]
     }

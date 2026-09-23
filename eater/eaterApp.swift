@@ -11,7 +11,7 @@ struct AppNameApp: App {
     WindowGroup {
       Group {
         if authService.isAuthenticated {
-          ContentView()
+          RootTabView()
             .preferredColorScheme(appSettings.scheme)
             .tint(AppTheme.accent)
             .environmentObject(authService)

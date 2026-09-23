@@ -218,8 +218,9 @@ struct HealthSettingsView: View {
             .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("175", text: $height)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .textFieldStyle(.plain)
             .keyboardType(.numberPad)
+            .appFormField()
         }
 
         HStack {
@@ -227,8 +228,9 @@ struct HealthSettingsView: View {
             .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("70", text: $weight)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .textFieldStyle(.plain)
             .keyboardType(.decimalPad)
+            .appFormField()
         }
 
         let currentBmiText = currentBMIText()
@@ -244,8 +246,9 @@ struct HealthSettingsView: View {
             .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("65", text: $targetWeight)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .textFieldStyle(.plain)
             .keyboardType(.decimalPad)
+            .appFormField()
         }
 
         HStack {
@@ -253,8 +256,9 @@ struct HealthSettingsView: View {
             .foregroundColor(AppTheme.textPrimary)
             .frame(width: 100, alignment: .leading)
           TextField("25", text: $age)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .textFieldStyle(.plain)
             .keyboardType(.numberPad)
+            .appFormField()
         }
 
         HStack {
@@ -345,8 +349,9 @@ struct HealthSettingsView: View {
               .foregroundColor(AppTheme.textPrimary)
               .frame(width: 110, alignment: .leading)
             TextField("65", text: $targetWeight)
-              .textFieldStyle(RoundedBorderTextFieldStyle())
+              .textFieldStyle(.plain)
               .keyboardType(.decimalPad)
+              .appFormField()
           }
 
           let targetBmiText = targetBMIText()

@@ -51,7 +51,7 @@ struct WeightCameraView: UIViewControllerRepresentable {
 
           if success {
             // Clear today's statistics cache since weight was updated
-            StatisticsService.shared.clearExpiredCache()
+            StatisticsService.shared.invalidateDay()
             self?.parent.onPhotoSuccess?()
           } else {
             self?.parent.onPhotoFailure?()

@@ -82,7 +82,7 @@ private struct FoodListRow<Content: View>: View {
       .foregroundColor(.white)
       .frame(width: actionSize, height: actionSize)
       .background(Color.red)
-      .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
     }
     .buttonStyle(.plain)
     .opacity(Double(isDeleteZoneActive ? 1 : (deleteRevealProgress / 0.25)))
@@ -107,7 +107,7 @@ private struct FoodListRow<Content: View>: View {
       .foregroundColor(.white)
       .frame(width: actionSize, height: actionSize)
       .background(AppTheme.accent)
-      .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
     }
     .buttonStyle(.plain)
     .opacity(Double(optionsRevealProgress))
