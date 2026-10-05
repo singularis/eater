@@ -12,7 +12,7 @@
 - **Display Name:** Eateria
 - **Minimum iOS:** 15.0+
 - **Language:** Swift 5.5+, SwiftUI
-- **Current version:** 4.0
+- **Current version:** 5.0
 
 ---
 
@@ -39,6 +39,7 @@
 ├── src/                      ← Empty placeholder dirs (components, models, screens, services)
 ├── privacy-policy/           ← Privacy policy content
 ├── AppStore_Release_Notes_4.0.md ← Localized release notes for v4.0
+├── AppStore_Release_Notes_5.0.md ← Localized release notes for v5.0
 └── README.md                 ← High-level project description
 ```
 
