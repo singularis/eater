@@ -67,7 +67,15 @@ struct MealDetailSheet: View {
   private var header: some View {
     HStack(alignment: .top, spacing: 14) {
       Group {
-        if let image = displayImage {
+        if product.imageId.isEmpty {
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+            .fill(AppTheme.surfaceAlt)
+            .overlay(
+              Image(systemName: "fork.knife")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundColor(AppTheme.textSecondary)
+            )
+        } else if let image = displayImage {
           Image(uiImage: image)
             .resizable()
             .aspectRatio(contentMode: .fill)
@@ -80,6 +88,7 @@ struct MealDetailSheet: View {
       .frame(width: 88, height: 88)
       .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
       .onTapGesture {
+        guard !product.imageId.isEmpty else { return }
         onPhotoTap?(displayImage, product.name)
       }
 
@@ -227,15 +236,27 @@ struct MealDetailSheet: View {
       }
       .buttonStyle(SecondaryButtonStyle())
 
-      Button(loc("common.try_manual", "Try manually")) {
-        if authService.isAnonymous {
-          showShareLoginPrompt = true
-        } else {
-          onTryAgain(product.time, product.imageId)
-          dismiss()
+      if product.imageId.isEmpty {
+        Button(loc("manual_food.title", "Fix food name")) {
+          if authService.isAnonymous {
+            showShareLoginPrompt = true
+          } else {
+            onTryAgain(product.time, product.imageId)
+            dismiss()
+          }
         }
+        .buttonStyle(SecondaryButtonStyle())
+      } else {
+        Button(loc("common.try_manual", "Try manually")) {
+          if authService.isAnonymous {
+            showShareLoginPrompt = true
+          } else {
+            onTryAgain(product.time, product.imageId)
+            dismiss()
+          }
+        }
+        .buttonStyle(SecondaryButtonStyle())
       }
-      .buttonStyle(SecondaryButtonStyle())
     }
   }
 

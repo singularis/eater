@@ -98,7 +98,16 @@ struct ProductRowView: View {
   @ViewBuilder
   private var photoThumb: some View {
     let photo = Group {
-      if let image = displayImage {
+      if product.imageId.isEmpty {
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+          .fill(AppTheme.surfaceAlt)
+          .frame(width: photoSize, height: photoSize)
+          .overlay(
+            Image(systemName: "fork.knife")
+              .font(.system(size: 28 * dishFontScale, weight: .semibold))
+              .foregroundColor(AppTheme.textSecondary)
+          )
+      } else if let image = displayImage {
         Image(uiImage: image)
           .resizable()
           .aspectRatio(contentMode: .fill)

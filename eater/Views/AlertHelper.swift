@@ -555,10 +555,11 @@ class AlertHelper {
       alert.addAction(additionalAction)
     }
 
-    // Try manually – visible button between Share and Custom.
-    // Guest accounts have nowhere to save a name fix, so gray the button and ask to log in.
-    let tryManualTitle = loc("common.try_manual", "Try manually")
-    let tryManualAction = UIAlertAction(title: tryManualTitle, style: .default) { _ in
+    let nameActionTitle =
+      imageId.isEmpty
+      ? loc("manual_food.title", "Fix food name")
+      : loc("common.try_manual", "Try manually")
+    let nameAction = UIAlertAction(title: nameActionTitle, style: .default) { _ in
       if isAnonymousUser {
         presentLoginRequiredAlert(
           on: rootViewController,
@@ -569,9 +570,9 @@ class AlertHelper {
         onTryAgain?()
       }
     }
-    tryManualAction.setValue(
+    nameAction.setValue(
       isAnonymousUser ? UIColor.systemGray : UIColor.systemOrange, forKey: "titleTextColor")
-    alert.addAction(tryManualAction)
+    alert.addAction(nameAction)
 
     // Add custom option (purple)
     let customTitle = loc("portion.custom", "Custom grams")

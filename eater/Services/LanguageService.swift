@@ -201,49 +201,6 @@ final class LanguageService: ObservableObject {
     return lang
   }
 
-  // Short label for Recommendation/Advice
-  func shortRecommendationLabel() -> String {
-    let map: [String: String] = [
-      "ar": "نصيحة",    // naseeha (advice)
-      "be": "Пара",
-      "bg": "Съвет",
-      "bn": "পরামর্শ",   // paramarsha (advice)
-      "cs": "Rada",     // rada (advice)
-      "da": "Råd",      // råd (advice)
-      "de": "Rat",      // Rat (advice)
-      "el": "Συμβ",     // symvouli (advice) - short for συμβουλή
-      "en": "Advice",   // advice
-      "es": "Cons",     // consejo (advice)
-      "et": "Nõu",      // nõu (advice)
-      "fi": "Neuvo",    // neuvo (advice)
-      "fr": "Avis",     // avis (advice)
-      "ga": "Comh",     // comhairle (advice)
-      "hi": "सलाह",     // salah (advice)
-      "hr": "Savj",     // savjet (advice)
-      "hu": "Tanács",   // tanács (advice)
-      "it": "Cons",     // consiglio (advice)
-      "ja": "助言",      // jogen (advice)
-      "ko": "조언",      // jo-eon (advice)
-      "lt": "Patar",    // patarimas (advice)
-      "lv": "Padom",    // padoms (advice)
-      "mt": "Parir",    // parir (advice)
-      "nl": "Advies",   // advies (advice)
-      "pl": "Rada",     // rada (advice)
-      "pt": "Cons",     // conselho (advice)
-      "ro": "Sfat",     // sfat (advice)
-      "sk": "Rada",     // rada (advice)
-      "sl": "Nasvet",   // nasvet (advice)
-      "sv": "Råd",      // råd (advice)
-      "th": "แนะนำ",     // khamnaenam (advice)
-      "tr": "Tavsiye",  // tavsiye (advice)
-      "uk": "Порада",
-      "ur": "مشورہ",    // mashwara (advice)
-      "vi": "L.khuyên", // lời khuyên (advice)
-      "zh": "建议",      // jiànyi (advice)
-    ]
-    return map[currentCode] ?? map[LanguageService.baseLanguageCode(of: currentCode)] ?? "Advice"
-  }
-
   func flagEmoji(forLanguageCode code: String) -> String {
     let norm = LanguageService.normalize(code: code)
     let regionalCountry: [String: String] = [

@@ -46,6 +46,8 @@ struct ContentView: View {
   @State private var lastAlcoholEventDate: Date? = nil
   @State private var showMainAppTutorial = false
   @State private var activeTutorialStep: MainAppTutorialView.TutorialStep? = nil
+  @State private var showTypeFood = false
+  @State private var typeFoodTimestampMillis: Int64? = nil
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -75,7 +77,7 @@ struct ContentView: View {
       case sport
       case weight
       case calories
-      case advice
+      case typeFood
   }
   @State private var pendingTutorialAction: PendingTutorialAction = .none
 
@@ -337,12 +339,8 @@ struct ContentView: View {
         let action = pendingTutorialAction
         pendingTutorialAction = .none
         guard action != .none else { return }
-        if action == .advice {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
           executeAction(action)
-        } else {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            executeAction(action)
-          }
         }
     }) { step in
         MainAppTutorialView(isPresented: Binding(
@@ -350,6 +348,15 @@ struct ContentView: View {
             set: { if !$0 { activeTutorialStep = nil } }
         ), specificStep: step)
             .environmentObject(languageService)
+    }
+    .sheet(isPresented: $showTypeFood) {
+      TypeFoodSheet(timestampMillis: typeFoodTimestampMillis) {
+        showTypeFood = false
+        ProductStorageService.shared.clearCache()
+        StatisticsService.shared.invalidateDay(
+          currentViewingDateString.isEmpty ? nil : currentViewingDateString)
+        handlePhotoLogged()
+      }
     }
     .id(languageService.currentCode)
   }
@@ -572,7 +579,7 @@ struct ContentView: View {
     HStack(spacing: 12) {
       weightButton
       caloriesButton
-      recommendationButton
+      typeButton
     }
     .frame(maxWidth: .infinity)
   }
@@ -671,16 +678,23 @@ struct ContentView: View {
     .id("calories-\(todaySportCalories)-\(todaySportCaloriesDate)-\(uiRefreshTrigger)")
   }
 
-  private var recommendationButton: some View {
-    Text(languageService.shortRecommendationLabel())
-      .font(.system(size: 22, weight: .semibold, design: .rounded))
+  private var typeButton: some View {
+    Button(action: {
+      checkTutorial(key: "hasSeenTypeTutorial", action: .typeFood)
+    }) {
+      HStack(spacing: 6) {
+        Image(systemName: themeService.icon(for: "square.and.pencil"))
+          .font(.system(size: 18, weight: .semibold))
+        Text(loc("type_food.button", "Type"))
+          .font(.system(size: 18, weight: .semibold, design: .rounded))
+          .lineLimit(1)
+          .minimumScaleFactor(0.6)
+      }
       .foregroundColor(AppTheme.textPrimary)
       .frame(maxWidth: .infinity)
       .padding(8)
       .appSurface()
-      .onTapGesture {
-        checkTutorial(key: "hasSeenAdviceTutorial", action: .advice)
-      }
+    }
   }
 
   /// Daily macro targets (g) from calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
@@ -877,9 +891,10 @@ struct ContentView: View {
           tempSoftLimit = String(softLimit)
           tempHardLimit = String(hardLimit)
           showLimitsAlert = true
-      case .advice:
+      case .typeFood:
           HapticsService.shared.select()
-          nav.selectedTab = .ideas
+          typeFoodTimestampMillis = typedFoodTimestampMillis()
+          showTypeFood = true
       case .none:
           break
       }
@@ -892,6 +907,21 @@ struct ContentView: View {
     nav.mealRemaining = mealPlannerRemaining
     nav.selectedDate = selectedDate
     nav.isViewingCustomDate = isViewingCustomDate
+  }
+
+  private func typedFoodTimestampMillis() -> Int64? {
+    guard isViewingCustomDate else { return nil }
+    let components = Calendar.current.dateComponents([.year, .month, .day], from: selectedDate)
+    var utcComponents = DateComponents()
+    utcComponents.year = components.year
+    utcComponents.month = components.month
+    utcComponents.day = components.day
+    utcComponents.hour = 12
+    utcComponents.minute = 0
+    utcComponents.second = 0
+    utcComponents.timeZone = TimeZone(abbreviation: "UTC")
+    let dateToUse = Calendar(identifier: .gregorian).date(from: utcComponents) ?? selectedDate
+    return Int64(dateToUse.timeIntervalSince1970 * 1000)
   }
 
   private func handlePhotoLogged() {
@@ -1204,14 +1234,7 @@ struct ContentView: View {
     }
 
     self.deletingProductTime = time
-    GRPCService().modifyFoodRecord(
-      time: time,
-      userEmail: userEmail,
-      percentage: 100,
-      isTryManually: true,
-      imageId: imageId,
-      manualFoodName: newName
-    ) { success in
+    let handleResult: (Bool) -> Void = { success in
       DispatchQueue.main.async {
         self.deletingProductTime = nil
         if success {
@@ -1238,6 +1261,20 @@ struct ContentView: View {
           )
         }
       }
+    }
+    if imageId.isEmpty {
+      GRPCService().renameFood(
+        time: time, userEmail: userEmail, newName: newName, completion: handleResult)
+    } else {
+      GRPCService().modifyFoodRecord(
+        time: time,
+        userEmail: userEmail,
+        percentage: 100,
+        isTryManually: true,
+        imageId: imageId,
+        manualFoodName: newName,
+        completion: handleResult
+      )
     }
   }
   

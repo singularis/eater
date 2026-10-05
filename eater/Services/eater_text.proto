@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package eater;
+
+message FoodTextMessage {
+    string time = 1;  // ISO8601, same as PhotoMessage.time
+    string text = 2;  // max 200 chars
+}
+
+message FoodTextResponse {
+    bool success = 1;
+    string error_code = 2;  // "", "not_food", "blocked", "empty", "too_long", "timeout"
+    string message = 3;     // localized server text, empty on success and on blocked
+}

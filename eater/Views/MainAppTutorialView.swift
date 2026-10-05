@@ -61,11 +61,11 @@ struct MainAppTutorialView: View {
                 color: .purple
             ),
             TutorialStep(
-                key: "hasSeenAdviceTutorial",
-                title: loc("tutorial.advice.title", "Daily Advice 💡"),
-                description: loc("tutorial.advice.desc", "Advice is your weekly tips and meal ideas. This opens that tab, not Today."),
-                iconName: "sparkles",
-                color: .yellow
+                key: "hasSeenTypeTutorial",
+                title: loc("tutorial.type.title", "Type a meal ✏️"),
+                description: loc("tutorial.type.desc", "Tap Type to write what you ate, like beef steak 100g. Eateria logs it without a photo."),
+                iconName: "square.and.pencil",
+                color: AppTheme.accent
             ),
             TutorialStep(
                 key: "hasSeenCalendarTutorial",
