@@ -38,8 +38,7 @@
 ├── scripts/                  ← apple_submission.md, image resize scripts
 ├── src/                      ← Empty placeholder dirs (components, models, screens, services)
 ├── privacy-policy/           ← Privacy policy content
-├── AppStore_Release_Notes_4.0.md ← Localized release notes for v4.0
-├── AppStore_Release_Notes_5.0.md ← Localized release notes for v5.0
+├── docs/archive/             ← App Store listing and release notes for 4.0 and 5.0
 └── README.md                 ← High-level project description
 ```
 
