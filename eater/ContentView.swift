@@ -1215,6 +1215,7 @@ struct ContentView: View {
       DispatchQueue.main.async {
         self.deletingProductTime = nil
         if success {
+          ProductStorageService.shared.removeHealthLevel(time: time)
           StatisticsService.shared.invalidateDay(
             currentViewingDateString.isEmpty ? nil : currentViewingDateString)
           ProductStorageService.shared.clearCache()
