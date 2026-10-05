@@ -137,25 +137,21 @@ struct HealthSettingsView: View {
         }
 
         ToolbarItem(placement: .navigationBarTrailing) {
-          Button(loc("common.save", "Save")) {
-            // Always validate before saving (including when editing target on results screen)
-            if !showResults {
-              if validateAndCalculateHealthData() {
-                showResults = true
-              } else {
-                return  // one alert already set (health data or target weight)
+          if showResults {
+            Button(loc("common.back_to_edit", "Back to Edit")) {
+              HapticsService.shared.select()
+              withAnimation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3)) {
+                showResults = false
               }
             }
-            // Re-validate when on results screen (user may have edited target to invalid BMI)
-            if showResults && !validateAndCalculateHealthData(showTargetWeightAlert: true, showAlerts: true) {
-              return  // invalid target or fields — alert already shown, do not save
+            .foregroundColor(AppTheme.textPrimary)
+          } else {
+            Button(loc("common.save", "Save")) {
+              commitHealthPlan()
             }
-            HapticsService.shared.success()
-            saveHealthData()
-            isPresented = false
+            .foregroundColor(AppTheme.textPrimary)
+            .fontWeight(.semibold)
           }
-          .foregroundColor(AppTheme.textPrimary)
-          .fontWeight(.semibold)
         }
       }
     }
@@ -459,11 +455,8 @@ struct HealthSettingsView: View {
         .background(AppTheme.surfaceAlt)
         .cornerRadius(AppTheme.smallRadius)
 
-        Button(loc("common.back_to_edit", "Back to Edit")) {
-          HapticsService.shared.select()
-          withAnimation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3)) {
-            showResults = false
-          }
+        Button(loc("common.save", "Save")) {
+          commitHealthPlan()
         }
         .buttonStyle(PrimaryButtonStyle())
         .padding(.top, 10)
@@ -737,6 +730,22 @@ struct HealthSettingsView: View {
 
     recommendedCalories = Int(proposed.rounded())
     timeToOptimalWeight = String(format: loc("health.goal.months_to_goal", "%d months to reach your goal"), months)
+  }
+
+  private func commitHealthPlan() {
+    if !showResults {
+      if validateAndCalculateHealthData() {
+        showResults = true
+      } else {
+        return
+      }
+    }
+    if showResults && !validateAndCalculateHealthData(showTargetWeightAlert: true, showAlerts: true) {
+      return
+    }
+    HapticsService.shared.success()
+    saveHealthData()
+    isPresented = false
   }
 
   private func saveHealthData() {
