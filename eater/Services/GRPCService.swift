@@ -1185,7 +1185,7 @@ class GRPCService {
   private static func presentFoodTextError(_ response: Eater_FoodTextResponse) {
     let blockedFallback = loc(
       "type_food.blocked",
-      "This doesn't look like food. Please type a meal, like beef steak 100g. Tip: fill half your plate with vegetables."
+      "This doesn't look like food. Please type a meal, like rice and vegetables 200g. Tip: fill half your plate with vegetables."
     )
     let foodFallback = loc(
       "error.food.msg",

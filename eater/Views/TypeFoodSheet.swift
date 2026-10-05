@@ -27,7 +27,7 @@ struct TypeFoodSheet: View {
         VStack(alignment: .leading, spacing: 16) {
           ZStack(alignment: .topLeading) {
             if text.isEmpty {
-              Text(loc("type_food.placeholder", "beef steak 100g"))
+              Text(loc("type_food.placeholder", "rice and vegetables 200g"))
                 .foregroundColor(AppTheme.textSecondary)
                 .font(.body)
                 .padding(.horizontal, 12)

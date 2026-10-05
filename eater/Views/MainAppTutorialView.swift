@@ -63,7 +63,7 @@ struct MainAppTutorialView: View {
             TutorialStep(
                 key: "hasSeenTypeTutorial",
                 title: loc("tutorial.type.title", "Type a meal ✏️"),
-                description: loc("tutorial.type.desc", "Tap Type to write what you ate, like beef steak 100g. Eateria logs it without a photo."),
+                description: loc("tutorial.type.desc", "Tap Type to write what you ate, like rice and vegetables 200g. Eateria logs it without a photo."),
                 iconName: "square.and.pencil",
                 color: AppTheme.accent
             ),
