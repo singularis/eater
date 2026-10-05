@@ -12,7 +12,7 @@
 - **Display Name:** Eateria
 - **Minimum iOS:** 15.0+
 - **Language:** Swift 5.5+, SwiftUI
-- **Current version:** 5.0
+- **Current version:** 5.1
 
 ---
 
