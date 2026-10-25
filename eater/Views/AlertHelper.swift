@@ -1,5 +1,12 @@
 import SwiftUI
 
+struct HealthComponentLine: Identifiable {
+  let id: Int
+  let name: String
+  let note: String
+  let isRisk: Bool
+}
+
 class AlertHelper {
   enum HapticKind {
     case success
@@ -333,7 +340,36 @@ class AlertHelper {
     showAlert(title: title, message: fullMessage, completion: completion)
   }
 
-  static func showHealthLevelInfo(title: String, description: String, healthSummary: String) {
+  static func localizedHealthText(_ text: String) -> String {
+    translateHealthText(text)
+  }
+
+  static func componentLines(healthSummary: String) -> [HealthComponentLine] {
+    guard let data = healthSummary.data(using: .utf8),
+      let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data)
+    else {
+      return []
+    }
+    return items.enumerated().compactMap { index, item in
+      let name = translateHealthText(item.ingredient ?? item.ingredients ?? "")
+      let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
+      let detail = translateHealthText(item.description ?? "")
+      let note = [translateHealthText(impactText), detail]
+        .filter { !$0.isEmpty }
+        .joined(separator: " ")
+      if name.isEmpty && note.isEmpty { return nil }
+      let impact = item.impact?.lowercased() ?? ""
+      let isRisk = impact.contains("risk") || ((item.risk?.isEmpty == false) && impact.isEmpty)
+      return HealthComponentLine(id: index, name: name, note: note, isRisk: isRisk)
+    }
+  }
+
+  static func showHealthLevelInfo(
+    title: String,
+    description: String,
+    healthSummary: String,
+    onExplain: (() -> Void)? = nil
+  ) {
     let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
     let body = loc(
       "rec.disclaimer.text",
@@ -397,12 +433,42 @@ class AlertHelper {
       let disclaimer = "\n" + header + "\n" + body
       fullStr.append(NSAttributedString(string: disclaimer, attributes: [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.secondaryLabel]))
       
-      showAlert(title: displayTitle, attributedMessage: fullStr)
+      showHealthPopup(title: displayTitle, attributedMessage: fullStr, onExplain: onExplain)
       return
     }
-    
+
     let message = displayDescription + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
-    showAlert(title: displayTitle, message: message)
+    showHealthPopup(title: displayTitle, message: message, onExplain: onExplain)
+  }
+
+  private static func showHealthPopup(
+    title: String,
+    message: String? = nil,
+    attributedMessage: NSAttributedString? = nil,
+    onExplain: (() -> Void)? = nil
+  ) {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let window = windowScene.windows.first,
+      let rootViewController = window.rootViewController
+    else { return }
+
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    if let attributedMessage {
+      alert.setValue(attributedMessage, forKey: "attributedMessage")
+    }
+
+    if let onExplain {
+      let explain = UIAlertAction(title: loc("health.score.explain", "Explain"), style: .default) { _ in
+        DispatchQueue.main.async { onExplain() }
+      }
+      explain.setValue(UIColor(AppTheme.primaryButtonFill), forKey: "titleTextColor")
+      alert.addAction(explain)
+    }
+
+    let ok = UIAlertAction(title: loc("common.ok", "OK"), style: .cancel)
+    ok.setValue(UIColor.secondaryLabel, forKey: "titleTextColor")
+    alert.addAction(ok)
+    presentAlert(alert, from: rootViewController)
   }
 
   static func showPortionSelectionAlert(

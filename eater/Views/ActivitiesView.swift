@@ -107,9 +107,11 @@ struct ActivitiesView: View {
       }
       .sheet(isPresented: $showStatistics) {
         ActivityStatisticsView(isPresented: $showStatistics)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showChessWinnerSheet) {
         chessWinnerSheet
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showOpponentPicker) {
         ChessOpponentPickerView(
@@ -122,9 +124,11 @@ struct ActivitiesView: View {
           },
           initialFriends: cachedFriends
         )
+        .appInterfaceScale()
       }
       .sheet(isPresented: $showActivityInputSheet) {
         activityInputSheet
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showChessSheet, onDismiss: { showChessHistory = false }) {
         ZStack {
@@ -157,6 +161,7 @@ struct ActivitiesView: View {
           }
         }
         .animation(.easeInOut(duration: 0.2), value: showChessHistory)
+        .appInterfaceScale()
       }
       .onAppear {
         // Initialize player name if not set

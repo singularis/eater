@@ -2,89 +2,501 @@ import SwiftUI
 
 struct HealthSettingsView: View {
   @Binding var isPresented: Bool
-  @State private var height: String = ""
-  @State private var weight: String = ""
-  @State private var targetWeight: String = ""
-  @State private var age: String = ""
-  @State private var isMale: Bool = true
-  @State private var activityLevel: String = "Sedentary"
-  @State private var showingHealthDataAlert = false
-  @State private var showingTargetWeightAlert = false
-  @State private var invalidHealthDataMessage: String = ""
-  @StateObject private var themeService = ThemeService.shared
+  @ObservedObject private var appleHealth = AppleHealthService.shared
+  @AppStorage("health_units_imperial") private var imperial = false
 
-  // Calculated values
-  @State private var optimalWeight: Double = 0  // Used as suggestion
-  @State private var recommendedCalories: Int = 0
-  @State private var timeToOptimalWeight: String = ""
-  @State private var showResults = false
+  @State private var heightCm = ""
+  @State private var heightFeet = ""
+  @State private var heightInches = ""
+  @State private var weight = ""
+  @State private var targetWeight = ""
+  @State private var age = ""
+  @State private var sex: Calc.Sex = .male
+  @State private var activityLevel = "Sedentary"
+  @State private var goal: Goal = .maintain
+  @State private var selectedMonths = 4
 
-  private enum GoalMode: String, CaseIterable, Identifiable {
-    case lose
-    case maintain
-    case gain
-    case activityOnly
+  @State private var didAttemptSave = false
+  @State private var initialSnapshot: Snapshot?
+  @State private var showDiscardConfirm = false
+  @State private var isImporting = false
+  @State private var importMessage: String?
 
-    var id: String { rawValue }
+  private typealias Goal = HealthPlanCalculator.Goal
+  private typealias Calc = HealthPlanCalculator
+
+  private struct Snapshot: Equatable {
+    let heightCm: Double?
+    let weightKg: Double?
+    let targetKg: Double?
+    let age: String
+    let sex: Calc.Sex
+    let activityLevel: String
+    let goal: Goal
+    let months: Int
   }
 
-  @State private var goalMode: GoalMode = .maintain
-  @State private var selectedMonths: Int = 4
-  @State private var heartBeatScale: CGFloat = 1.0
+  private struct Inputs {
+    let body: Calc.Body
+    let target: Double?
+  }
 
-  let activityLevels = [
-    "Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extremely Active",
-  ]
+  private enum PlanStatus {
+    case incomplete
+    case blocked(String)
+    case ready(Calc.Plan, Calc.Body)
+  }
 
-  // Health-safe limits to avoid harmful or unrealistic values
-  private static let heightMin = 100.0
-  private static let heightMax = 250.0
-  private static let weightMin = 20.0
-  private static let weightMax = 300.0
-  private static let targetWeightMin = 20.0
-  private static let targetWeightMax = 300.0  // fallback; effective max is BMI-based below
-  private static let ageMin = 10
-  private static let ageMax = 120
-  /// Max BMI for target weight: standard healthy range upper bound
-  private static let bmiMaxStandard = 24.9
-  /// Max BMI when goal is weight gain (slightly higher healthy range)
-  private static let bmiMaxGain = 27.0
+  var body: some View {
+    trackingChanges(
+      NavigationStack {
+        navigationContent
+      }
+      .tint(AppTheme.primaryButtonFill)
+      .interactiveDismissDisabled(isDirty)
+      .onAppear {
+        guard initialSnapshot == nil else { return }
+        loadExistingData()
+        alignMonths()
+        initialSnapshot = snapshot
+      }
+    )
+  }
 
-  func localizedActivityLevel(_ level: String) -> String {
-    switch level {
-    case "Sedentary":
-      return loc("health.activity.sedentary", "Sedentary")
-    case "Lightly Active":
-      return loc("health.activity.lightly", "Lightly Active")
-    case "Moderately Active":
-      return loc("health.activity.moderately", "Moderately Active")
-    case "Very Active":
-      return loc("health.activity.very", "Very Active")
-    case "Extremely Active":
-      return loc("health.activity.extremely", "Extremely Active")
-    default:
-      return level
+  private var navigationContent: some View {
+    scrollContent
+      .navigationTitle(loc("nav.health_settings", "Health"))
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbarBackground(AppTheme.surface, for: .navigationBar)
+      .toolbarBackground(.visible, for: .navigationBar)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button(loc("common.cancel", "Cancel")) {
+            HapticsService.shared.select()
+            if isDirty {
+              showDiscardConfirm = true
+            } else {
+              isPresented = false
+            }
+          }
+          .foregroundColor(AppTheme.textPrimary)
+        }
+      }
+      .confirmationDialog(
+        loc("health.discard.title", "Discard changes?"),
+        isPresented: $showDiscardConfirm,
+        titleVisibility: .visible
+      ) {
+        Button(loc("health.discard.confirm", "Discard"), role: .destructive) {
+          isPresented = false
+        }
+        Button(loc("health.discard.keep", "Keep editing"), role: .cancel) {}
+      }
+  }
+
+  private var scrollContent: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 22) {
+        goalGroup
+        bodyGroup
+        activityGroup
+      }
+      .padding(.horizontal, 16)
+      .padding(.top, 8)
+      .padding(.bottom, 12)
     }
+    .scrollDismissesKeyboard(.interactively)
+    .scrollIndicators(.hidden)
+    .background(AppTheme.backgroundGradient.ignoresSafeArea())
+    .safeAreaInset(edge: .bottom, spacing: 0) { saveBar }
   }
 
-  private func themedIcon(_ systemIcon: String) -> String {
-    themeService.currentMascot.icon(for: systemIcon)
+  private func trackingChanges<Content: View>(_ content: Content) -> some View {
+    let tracked = content
+      .onChange(of: imperial) { oldValue, newValue in
+        convertUnits(from: oldValue, to: newValue)
+      }
+      .onChange(of: weight) { _, _ in inputsChanged() }
+      .onChange(of: targetWeight) { _, _ in inputsChanged() }
+      .onChange(of: goal) { _, _ in inputsChanged() }
+    return tracked
+      .onChange(of: heightCm) { _, _ in didAttemptSave = false }
+      .onChange(of: heightFeet) { _, _ in didAttemptSave = false }
+      .onChange(of: heightInches) { _, _ in didAttemptSave = false }
+      .onChange(of: age) { _, _ in didAttemptSave = false }
   }
 
-  private func activityIconName(_ level: String) -> String {
+  // MARK: - Groups
+
+  private var bodyGroup: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      AppLabeledNumberField(
+        label: loc("health.field.weight", "Weight"),
+        unit: HealthUnits.weightUnit(imperial: imperial),
+        text: $weight,
+        keyboard: .decimalPad,
+        placeholder: imperial ? "154" : "70",
+        focusTag: HealthFieldTag.weight
+      )
+
+      if let bmi = currentBMI {
+        Text(String(format: loc("health.bmi.current", "BMI: %.1f"), bmi))
+          .font(.caption)
+          .foregroundColor(AppTheme.textSecondary)
+      }
+
+      VStack(alignment: .leading, spacing: 6) {
+        Text(loc("health.gender", "Sex"))
+          .font(.subheadline.weight(.semibold))
+          .foregroundColor(AppTheme.textPrimary)
+        sexControl
+      }
+
+      AppLabeledNumberField(
+        label: loc("health.field.age", "Age"),
+        unit: loc("health.age.unit", "yr"),
+        text: $age,
+        keyboard: .numberPad,
+        placeholder: "30",
+        focusTag: HealthFieldTag.age
+      )
+
+      HStack {
+        Text(loc("health.units.label", "Units"))
+          .font(.subheadline.weight(.semibold))
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        HealthUnitPicker(imperial: $imperial)
+      }
+
+      HealthHeightField(imperial: imperial, cm: $heightCm, feet: $heightFeet, inches: $heightInches)
+
+      if appleHealth.isAvailable {
+        Divider()
+        Button(action: importFromAppleHealth) {
+          HStack(spacing: 8) {
+            Image(systemName: "heart.fill")
+              .font(.subheadline)
+              .foregroundColor(Color(red: 1.0, green: 0.23, blue: 0.19))
+            Text(loc("health.apple.import", "Fill from Apple Health"))
+              .font(.subheadline)
+              .foregroundColor(AppTheme.textPrimary)
+            Spacer()
+            if isImporting {
+              ProgressView()
+            }
+          }
+        }
+        .buttonStyle(.plain)
+        .disabled(isImporting)
+        if let importMessage {
+          Text(importMessage)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
+    }
+    .padding(16)
+    .appSurface()
+  }
+
+  private var activityGroup: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text(loc("health.section.activity", "Activity"))
+        .font(.subheadline.weight(.semibold))
+        .foregroundColor(AppTheme.textPrimary)
+        .padding(.bottom, 4)
+
+      if !appleHealth.activityEnabled {
+        VStack(spacing: 0) {
+          ForEach(Array(Calc.activityLevels.enumerated()), id: \.element) { index, level in
+            activityRow(level)
+            if index < Calc.activityLevels.count - 1 {
+              Divider().padding(.leading, 2)
+            }
+          }
+        }
+      }
+
+      if appleHealth.isAvailable {
+        if !appleHealth.activityEnabled {
+          Divider().padding(.vertical, 6)
+        }
+        Toggle(isOn: appleHealthToggle) {
+          Text(loc("health.apple.activity.title", "Apple Health"))
+            .font(.subheadline)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        .tint(AppTheme.primaryButtonFill)
+
+        if appleHealth.activityEnabled {
+          shareControl
+          let today = AppleHealthService.todayISO()
+          Text(String(
+            format: loc("health.apple.activity.today", "Today: %d kcal burned, %d kcal added to your limit."),
+            appleHealth.rawKcal(dayISO: today),
+            appleHealth.bonusKcal(dayISO: today)
+          ))
+          .font(.caption)
+          .foregroundColor(AppTheme.textSecondary)
+          .fixedSize(horizontal: false, vertical: true)
+        }
+      }
+    }
+    .padding(16)
+    .appSurface()
+  }
+
+  private var goalGroup: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(loc("health.goal.title", "Goal"))
+        .font(.subheadline.weight(.semibold))
+        .foregroundColor(AppTheme.textPrimary)
+
+      VStack(spacing: 0) {
+        goalRow(loc("health.goal.lose", "Lose"), .lose)
+        Divider()
+        goalRow(loc("health.goal.maintain_mode", "Maintain"), .maintain)
+        Divider()
+        goalRow(loc("health.goal.gain", "Gain"), .gain)
+        Divider()
+        goalRow(loc("health.goal.activity_only", "Activity only"), .activityOnly)
+      }
+
+      AppLabeledNumberField(
+        label: loc("health.field.target", "Target weight"),
+        unit: HealthUnits.weightUnit(imperial: imperial),
+        text: $targetWeight,
+        keyboard: .decimalPad,
+        placeholder: suggestedTargetText ?? (imperial ? "143" : "65"),
+        focusTag: HealthFieldTag.target
+      )
+
+      if let suggestion = suggestedTargetText {
+        Button {
+          HapticsService.shared.select()
+          targetWeight = suggestion
+        } label: {
+          Text("\(suggestion) \(HealthUnits.weightUnit(imperial: imperial))")
+            .font(.subheadline)
+            .foregroundColor(AppTheme.primaryButtonFill)
+        }
+        .buttonStyle(.plain)
+      }
+
+      if let bmi = targetBMI {
+        Text(String(format: loc("health.bmi.target.range", "Target BMI: %.1f (18.5–%.1f)"), bmi, Calc.bmiCap(for: goal)))
+          .font(.caption)
+          .foregroundColor(isTargetBMIValid ? AppTheme.textSecondary : AppTheme.danger)
+      }
+
+      if goal == .lose || goal == .gain {
+        HStack(spacing: 18) {
+          ForEach(monthOptions, id: \.self) { months in
+            let on = effectiveMonths == months
+            Button {
+              HapticsService.shared.select()
+              selectedMonths = months
+            } label: {
+              Text(String(format: loc("health.goal.months", "%d months"), months))
+                .font(.subheadline.weight(on ? .semibold : .regular))
+                .foregroundColor(on ? AppTheme.primaryButtonFill : AppTheme.textSecondary)
+            }
+            .buttonStyle(.plain)
+          }
+          Spacer(minLength: 0)
+        }
+      }
+    }
+    .padding(16)
+    .appSurface()
+  }
+
+  private var saveBar: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Divider()
+      switch planStatus {
+      case .ready(let plan, _):
+        HStack(alignment: .firstTextBaseline) {
+          Text("\(plan.calories)")
+            .font(.title3.weight(.semibold))
+            .foregroundColor(AppTheme.textPrimary)
+          Text(loc("units.kcal", "kcal"))
+            .font(.subheadline)
+            .foregroundColor(AppTheme.textSecondary)
+          Spacer(minLength: 8)
+          Text(plan.timelineText)
+            .font(.subheadline)
+            .foregroundColor(AppTheme.textSecondary)
+            .multilineTextAlignment(.trailing)
+        }
+        .padding(.horizontal, 16)
+      case .blocked(let message):
+        Text(message)
+          .font(.footnote)
+          .foregroundColor(AppTheme.danger)
+          .fixedSize(horizontal: false, vertical: true)
+          .padding(.horizontal, 16)
+      case .incomplete:
+        if didAttemptSave {
+          Text(loc("health.plan.empty", "Add your height, weight, and age to see a calorie target."))
+            .font(.footnote)
+            .foregroundColor(AppTheme.danger)
+            .padding(.horizontal, 16)
+        }
+      }
+      Button(loc("common.save", "Save")) {
+        saveTapped()
+      }
+      .buttonStyle(PrimaryButtonStyle())
+      .padding(.horizontal, 16)
+      .padding(.bottom, 8)
+    }
+    .background(AppTheme.surface.ignoresSafeArea(edges: .bottom))
+  }
+
+  // MARK: - Controls
+
+  private var sexControl: some View {
+    HStack(spacing: 0) {
+      sexButton(.male, loc("health.gender.male", "Male"))
+      sexButton(.female, loc("health.gender.female", "Female"))
+      sexButton(.average, loc("health.sex.average", "Other"))
+    }
+    .padding(2)
+    .background(AppTheme.surfaceAlt)
+    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+  }
+
+  private func sexButton(_ value: Calc.Sex, _ title: String) -> some View {
+    let on = sex == value
+    return Button {
+      HapticsService.shared.select()
+      sex = value
+    } label: {
+      Text(title)
+        .font(.subheadline.weight(on ? .semibold : .regular))
+        .foregroundColor(AppTheme.textPrimary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 7)
+        .background(on ? AppTheme.surface : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+    .buttonStyle(.plain)
+  }
+
+  private var shareControl: some View {
+    HStack(spacing: 0) {
+      ForEach(AppleHealthService.shareOptions, id: \.self) { share in
+        let on = appleHealth.activityShare == share
+        Button {
+          HapticsService.shared.select()
+          appleHealth.activityShare = share
+        } label: {
+          Text("\(share)%")
+            .font(.subheadline.weight(on ? .semibold : .regular))
+            .foregroundColor(AppTheme.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(on ? AppTheme.surface : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        }
+        .buttonStyle(.plain)
+      }
+    }
+    .padding(2)
+    .background(AppTheme.surfaceAlt)
+    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+  }
+
+  private func goalRow(_ title: String, _ value: Goal) -> some View {
+    let on = goal == value
+    return Button {
+      HapticsService.shared.select()
+      goal = value
+    } label: {
+      HStack {
+        Text(title)
+          .font(.body)
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        if on {
+          Image(systemName: "checkmark")
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(AppTheme.primaryButtonFill)
+        }
+      }
+      .padding(.vertical, 10)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+  }
+
+  private func activityRow(_ level: String) -> some View {
+    let on = activityLevel == level
+    return Button {
+      HapticsService.shared.select()
+      activityLevel = level
+    } label: {
+      HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text(localizedActivityLevel(level))
+            .font(.body)
+            .foregroundColor(AppTheme.textPrimary)
+          if on {
+            Text(localizedActivityDescription(level))
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+        }
+        Spacer(minLength: 8)
+        if on {
+          Image(systemName: "checkmark")
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(AppTheme.primaryButtonFill)
+        }
+      }
+      .padding(.vertical, 8)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+  }
+
+  private var appleHealthToggle: Binding<Bool> {
+    Binding(
+      get: { appleHealth.activityEnabled },
+      set: { enabled in
+        HapticsService.shared.select()
+        if enabled {
+          if activityLevel != "Sedentary" {
+            UserDefaults.standard.set(activityLevel, forKey: "userActivityLevelManual")
+          }
+          activityLevel = "Sedentary"
+          Task { await appleHealth.enableActivity() }
+        } else {
+          appleHealth.activityEnabled = false
+          if let saved = UserDefaults.standard.string(forKey: "userActivityLevelManual"), !saved.isEmpty {
+            activityLevel = saved
+          }
+        }
+      }
+    )
+  }
+
+  // MARK: - Labels
+
+  private func localizedActivityLevel(_ level: String) -> String {
     switch level {
-    case "Sedentary":
-      return "chair"
-    case "Lightly Active":
-      return "figure.walk"
-    case "Moderately Active":
-      return "dumbbell"
-    case "Very Active":
-      return "figure.run"
-    case "Extremely Active":
-      return "flag.checkered"
-    default:
-      return "figure.walk"
+    case "Sedentary": return loc("health.activity.sedentary", "Sedentary")
+    case "Lightly Active": return loc("health.activity.lightly", "Lightly Active")
+    case "Moderately Active": return loc("health.activity.moderately", "Moderately Active")
+    case "Very Active": return loc("health.activity.very", "Very Active")
+    case "Extremely Active": return loc("health.activity.extremely", "Extremely Active")
+    default: return level
     }
   }
 
@@ -105,695 +517,235 @@ struct HealthSettingsView: View {
     }
   }
 
-  var body: some View {
-    NavigationView {
-      ZStack {
-        AppTheme.backgroundGradient
-          .edgesIgnoringSafeArea(.all)
+  // MARK: - Values
 
-        ScrollView {
-          VStack(spacing: 20) {
-            if showResults {
-              healthResultsView
-            } else {
-              healthFormView
-            }
-          }
-          .padding()
-        }
-      }
-      .navigationTitle(
-        showResults
-          ? loc("health.plan.title", "Your Plan") : loc("nav.health_settings", "Health Settings")
-      )
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button(loc("common.cancel", "Cancel")) {
-            HapticsService.shared.select()
-            isPresented = false
-          }
-          .foregroundColor(AppTheme.textPrimary)
-        }
-
-        ToolbarItem(placement: .navigationBarTrailing) {
-          if showResults {
-            Button(loc("common.back_to_edit", "Back to Edit")) {
-              HapticsService.shared.select()
-              withAnimation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3)) {
-                showResults = false
-              }
-            }
-            .foregroundColor(AppTheme.textPrimary)
-          } else {
-            Button(loc("common.save", "Save")) {
-              commitHealthPlan()
-            }
-            .foregroundColor(AppTheme.textPrimary)
-            .fontWeight(.semibold)
-          }
-        }
-      }
-    }
-    .onAppear {
-      loadExistingData()
-    }
-    .alert(loc("health.invalid.title", "Invalid Health Data"), isPresented: $showingHealthDataAlert)
-    {
-      Button(loc("common.ok", "OK"), role: .cancel) {}
-    } message: {
-      Text(
-        invalidHealthDataMessage.isEmpty
-          ? loc(
-            "health.invalid.msg",
-            "Check your current weight and target weight. Height and age rarely need changing. An invalid target weight can harm your health. For weight gain, choose the \"Gain\" mode."
-          )
-          : invalidHealthDataMessage
-      )
-    }
-    .alert(loc("health.target_invalid.title", "Invalid Target Weight"), isPresented: $showingTargetWeightAlert) {
-      Button(loc("common.ok", "OK"), role: .cancel) {}
-    } message: {
-      let bmi = targetBMIValue() ?? 0
-      Text(
-        String(
-          format: loc(
-            "health.target_invalid.msg",
-            "Target BMI: %.1f. The entered target weight is not allowed and can harm your health. For weight gain, choose the \"Gain\" mode to allow a higher target."
-          ),
-          bmi
-        )
-      )
-    }
+  private var heightValueCm: Double? {
+    HealthUnits.cm(cmText: heightCm, feetText: heightFeet, inchesText: heightInches, imperial: imperial)
   }
 
-  private var healthFormView: some View {
-    VStack(spacing: 20) {
-      Image(systemName: "heart.fill")
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.danger)
-        .scaleEffect(heartBeatScale)
-        .onAppear {
-          withAnimation(
-            .easeInOut(duration: 0.45)
-            .repeatForever(autoreverses: true)
-          ) {
-            heartBeatScale = 1.12
-          }
-        }
-
-      Text(loc("health.update.title", "Update Your Health Data"))
-        .font(.title)
-        .fontWeight(.bold)
-        .foregroundColor(AppTheme.textPrimary)
-        .multilineTextAlignment(.center)
-
-      VStack(spacing: 16) {
-        HStack {
-          Text(loc("health.height", "Height (cm):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("175", text: $height)
-            .textFieldStyle(.plain)
-            .keyboardType(.numberPad)
-            .appFormField()
-        }
-
-        HStack {
-          Text(loc("health.weight", "Weight (kg):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("70", text: $weight)
-            .textFieldStyle(.plain)
-            .keyboardType(.decimalPad)
-            .appFormField()
-        }
-
-        let currentBmiText = currentBMIText()
-        if !currentBmiText.isEmpty {
-          Text(currentBmiText)
-            .font(.caption)
-            .foregroundColor(AppTheme.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-
-        HStack {
-          Text(loc("health.target_weight", "Target (kg):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("65", text: $targetWeight)
-            .textFieldStyle(.plain)
-            .keyboardType(.decimalPad)
-            .appFormField()
-        }
-
-        HStack {
-          Text(loc("health.age", "Age (years):"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          TextField("25", text: $age)
-            .textFieldStyle(.plain)
-            .keyboardType(.numberPad)
-            .appFormField()
-        }
-
-        HStack {
-          Text(loc("health.gender", "Gender:"))
-            .foregroundColor(AppTheme.textPrimary)
-            .frame(width: 100, alignment: .leading)
-          Picker(loc("health.gender", "Gender:"), selection: $isMale) {
-            Text(loc("health.gender.male", "Male")).tag(true)
-            Text(loc("health.gender.female", "Female")).tag(false)
-          }
-          .pickerStyle(SegmentedPickerStyle())
-        }
-
-        VStack(alignment: .leading, spacing: 8) {
-          Text(loc("health.activity", "Activity Level:"))
-            .foregroundColor(AppTheme.textPrimary)
-          Menu {
-            ForEach(activityLevels, id: \.self) { level in
-              Button {
-                activityLevel = level
-              } label: {
-                Label(localizedActivityLevel(level), systemImage: activityIconName(level))
-              }
-            }
-          } label: {
-            HStack(spacing: 10) {
-              Image(systemName: activityIconName(activityLevel))
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(AppTheme.accent)
-              Text(localizedActivityLevel(activityLevel))
-                .font(.subheadline)
-                .foregroundColor(AppTheme.textPrimary)
-              Spacer()
-              Image(systemName: "chevron.up.chevron.down")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(AppTheme.textSecondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(AppTheme.surface)
-            .cornerRadius(AppTheme.smallRadius)
-          }
-
-          Text(localizedActivityDescription(activityLevel))
-            .font(.caption)
-            .foregroundColor(AppTheme.textSecondary)
-        }
-
-        Button(loc("health.calc_plan", "Calculate My Plan")) {
-          if validateAndCalculateHealthData() {
-            HapticsService.shared.success()
-            withAnimation(AppSettingsService.shared.reduceMotion ? .none : .easeInOut(duration: 0.3)) {
-              showResults = true
-            }
-          } else {
-            HapticsService.shared.error()
-            // validateAndCalculateHealthData already set one alert (health data or target weight)
-          }
-        }
-        .buttonStyle(PrimaryButtonStyle())
-        .padding(.top, 20)
-      }
-      .cardContainer(padding: 16)
-    }
+  private var weightValueKg: Double? {
+    HealthUnits.kg(fromDisplay: weight, imperial: imperial)
   }
 
-  private var healthResultsView: some View {
-    VStack(spacing: 20) {
-      Image(systemName: "target")
-        .font(.system(size: 60))
-        .foregroundColor(AppTheme.success)
-
-      Text(loc("health.updated_plan", "Your Updated Plan"))
-        .font(.title)
-        .fontWeight(.bold)
-        .foregroundColor(AppTheme.textPrimary)
-        .multilineTextAlignment(.center)
-
-      VStack(spacing: 16) {
-        // Goal configuration (editable)
-        VStack(alignment: .leading, spacing: 12) {
-          Text(loc("health.goal.title", "Goal"))
-            .font(.headline)
-            .foregroundColor(AppTheme.textPrimary)
-
-          HStack {
-            Text(loc("health.target_weight", "Target (kg):"))
-              .foregroundColor(AppTheme.textPrimary)
-              .frame(width: 110, alignment: .leading)
-            TextField("65", text: $targetWeight)
-              .textFieldStyle(.plain)
-              .keyboardType(.decimalPad)
-              .appFormField()
-          }
-
-          let targetBmiText = targetBMIText()
-          if !targetBmiText.isEmpty {
-            Text(targetBmiText)
-              .font(.caption)
-              .foregroundColor(isTargetBMIValid() ? AppTheme.textSecondary : AppTheme.danger)
-          }
-
-          Picker(loc("health.goal.mode", "Goal:"), selection: $goalMode) {
-            Text(loc("health.goal.lose", "Lose")).tag(GoalMode.lose)
-            Text(loc("health.goal.maintain_mode", "Maintain")).tag(GoalMode.maintain)
-            Text(loc("health.goal.gain", "Gain")).tag(GoalMode.gain)
-            Text(loc("health.goal.activity_only", "Activity only")).tag(GoalMode.activityOnly)
-          }
-          .pickerStyle(SegmentedPickerStyle())
-
-          if goalMode == .lose || goalMode == .gain {
-            Picker(loc("health.goal.period", "Period:"), selection: $selectedMonths) {
-              ForEach(suggestedMonths(), id: \.self) { m in
-                Text(String(format: loc("health.goal.months", "%d months"), m)).tag(m)
-              }
-            }
-            .pickerStyle(SegmentedPickerStyle())
-          } else if goalMode == .activityOnly {
-            VStack(alignment: .leading, spacing: 6) {
-              Text(loc("health.goal.activity_hint", "Strategy: increase activity without changing calories."))
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-
-              Text("• " + loc("health.goal.activity_tip1", "Run/walk intervals: 15 minutes"))
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-              Text("• " + loc("health.goal.activity_tip2", "8–12k steps per day"))
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-              Text("• " + loc("health.goal.activity_tip3", "Strength training: 20–30 min, 2–3×/week"))
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-              Text("• " + loc("health.goal.activity_tip4", "Choose stairs, add short walks after meals"))
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-            }
-          }
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-        .onChange(of: targetWeight) { recalcFromInputs() }
-        .onChange(of: goalMode) { recalcFromInputs() }
-        .onChange(of: selectedMonths) { recalcFromInputs() }
-
-        VStack(spacing: 8) {
-          HStack(spacing: 8) {
-            Image(systemName: themedIcon("checkmark.circle.fill"))
-              .font(.system(size: 18, weight: .semibold))
-              .foregroundColor(AppTheme.success)
-            Text(loc("health.plan.target_weight_title", "Target weight"))
-              .font(.headline)
-              .foregroundColor(AppTheme.success)
-          }
-          Text("\(currentTargetWeightValue(), specifier: "%.1f") \(loc("units.kg", "kg"))")
-            .font(.title2)
-            .fontWeight(.bold)
-            .foregroundColor(AppTheme.textPrimary)
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-
-        VStack(spacing: 8) {
-          HStack(spacing: 8) {
-            Image(systemName: themedIcon("flame.fill"))
-              .font(.system(size: 18, weight: .semibold))
-              .foregroundColor(AppTheme.warning)
-            Text(loc("health.plan.daily_calorie_title", "Daily calorie target"))
-              .font(.headline)
-              .foregroundColor(AppTheme.warning)
-          }
-          Text("\(recommendedCalories) \(loc("units.kcal", "kcal"))")
-            .font(.title2)
-            .fontWeight(.bold)
-            .foregroundColor(AppTheme.textPrimary)
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-
-        VStack(spacing: 8) {
-          HStack(spacing: 8) {
-            Image(systemName: themedIcon("figure.run"))
-              .font(.system(size: 18, weight: .semibold))
-              .foregroundColor(AppTheme.accent)
-            Text(loc("health.plan.timeline_title", "Estimated timeline"))
-              .font(.headline)
-              .foregroundColor(AppTheme.accent)
-          }
-          Text(timeToOptimalWeight)
-            .font(.title3)
-            .fontWeight(.semibold)
-            .foregroundColor(AppTheme.textPrimary)
-            .multilineTextAlignment(.center)
-        }
-        .padding()
-        .background(AppTheme.surfaceAlt)
-        .cornerRadius(AppTheme.smallRadius)
-
-        Button(loc("common.save", "Save")) {
-          commitHealthPlan()
-        }
-        .buttonStyle(PrimaryButtonStyle())
-        .padding(.top, 10)
-      }
-      .cardContainer(padding: 16)
-    }
+  private var targetValueKg: Double? {
+    HealthUnits.kg(fromDisplay: targetWeight, imperial: imperial)
   }
 
-  // MARK: - Helper Methods
-
-  private func loadExistingData() {
-    let userDefaults = UserDefaults.standard
-    if userDefaults.bool(forKey: "hasUserHealthData") {
-      height = String(format: "%.0f", userDefaults.double(forKey: "userHeight"))
-      weight = String(format: "%.1f", userDefaults.double(forKey: "userWeight"))
-      let storedTarget = userDefaults.double(forKey: "userTargetWeight")
-      if storedTarget > 0 {
-        targetWeight = String(format: "%.1f", storedTarget)
-      }
-      age = String(userDefaults.integer(forKey: "userAge"))
-      isMale = userDefaults.bool(forKey: "userIsMale")
-      activityLevel = userDefaults.string(forKey: "userActivityLevel") ?? "Sedentary"
-      if let mode = userDefaults.string(forKey: "userGoalMode"),
-         let parsed = GoalMode(rawValue: mode) {
-        goalMode = parsed
-      }
-      let months = userDefaults.integer(forKey: "userGoalMonths")
-      if months > 0 { selectedMonths = months }
-    }
+  private var currentBMI: Double? {
+    guard let h = heightValueCm, let w = weightValueKg, h > 0, w > 0 else { return nil }
+    return Calc.bmi(heightCm: h, weightKg: w)
   }
 
-  private enum ValidationOutcome {
-    case success
-    case failureInvalidFields
-    case failureInvalidTargetWeight
+  private var targetBMI: Double? {
+    guard let h = heightValueCm, let t = targetValueKg, h > 0, t > 0 else { return nil }
+    return Calc.bmi(heightCm: h, weightKg: t)
   }
 
-  /// When showTargetWeightAlert is false (e.g. from recalcFromInputs), invalid target BMI is not shown as alert.
-  /// When showAlerts is false (recalcFromInputs), no alert is shown and we don't overwrite the target field so the user can type.
-  private func validateAndCalculateHealthData(showTargetWeightAlert: Bool = true, showAlerts: Bool = true) -> Bool {
-    switch validateAndCalculateHealthDataOutcome(showTargetWeightAlert: showTargetWeightAlert, applyClampingToUI: showAlerts) {
-    case .success: return true
-    case .failureInvalidFields:
-      if showAlerts { showingHealthDataAlert = true }
-      return false
-    case .failureInvalidTargetWeight:
-      if showAlerts { showingTargetWeightAlert = true }
-      return false
-    }
+  private var isTargetBMIValid: Bool {
+    guard let bmi = targetBMI else { return true }
+    return bmi >= Calc.bmiMin && bmi <= Calc.bmiCap(for: goal)
   }
 
-  private func validateAndCalculateHealthDataOutcome(showTargetWeightAlert: Bool = true, applyClampingToUI: Bool = true) -> ValidationOutcome {
-    invalidHealthDataMessage = ""
-
-    let heightValue = parseDoubleFlexible(height)
-    let weightValue = parseDoubleFlexible(weight)
-      var targetValue = targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-      ? nil
-      : parseDoubleFlexible(targetWeight)
-    let ageValue = Int(age.trimmingCharacters(in: .whitespacesAndNewlines))
-
-    var invalidFields: [String] = []
-    if heightValue == nil || (heightValue ?? 0) <= 0 { invalidFields.append(loc("health.height", "Height (cm):")) }
-    if weightValue == nil || (weightValue ?? 0) <= 0 { invalidFields.append(loc("health.weight", "Weight (kg):")) }
-    if ageValue == nil || (ageValue ?? 0) <= 0 { invalidFields.append(loc("health.age", "Age (years):")) }
-    if targetValue == nil && !targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      invalidFields.append(loc("health.target_weight", "Target (kg):"))
-    }
-
-    if !invalidFields.isEmpty {
-      invalidHealthDataMessage = String(
-        format: loc("health.invalid.msg_fields", "Please check: %@"),
-        invalidFields.joined(separator: ", ")
-      )
-      return .failureInvalidFields
-    }
-
-    guard var h = heightValue, var w = weightValue, var a = ageValue else { return .failureInvalidFields }
-
-    // Clamp to health-safe limits (use clamped values for calculation; only update UI when saving/calculating)
-    h = min(max(h, Self.heightMin), Self.heightMax)
-    w = min(max(w, Self.weightMin), Self.weightMax)
-    a = min(max(a, Self.ageMin), Self.ageMax)
-    let heightInMeters = h / 100.0
-    let minTargetByBmi = heightInMeters * heightInMeters * 18.5  // min healthy BMI 18.5
-    if var t = targetValue {
-      let maxAllowed = min(Self.targetWeightMax, maxTargetWeightForCurrentHeight(heightCm: h))
-      t = min(max(t, minTargetByBmi), maxAllowed)
-      targetValue = t
-      if applyClampingToUI {
-        targetWeight = String(format: "%.1f", t)
-      }
-    }
-    if applyClampingToUI {
-      height = String(format: "%.0f", h)
-      weight = String(format: "%.1f", w)
-      age = String(a)
-    }
-    optimalWeight = 21.5 * heightInMeters * heightInMeters
-
-    // Default target weight if empty (suggest optimal) — only when applying to UI
-    if applyClampingToUI && (parseDoubleFlexible(targetWeight) == nil || (parseDoubleFlexible(targetWeight) ?? 0) <= 0) {
-      targetWeight = String(format: "%.1f", optimalWeight)
-    }
-
-    // Validate BMI at target >= 18.5; only show alert when saving/calculating, not during editing
-    if !isTargetBMIValid(heightCm: h) {
-      return showTargetWeightAlert ? .failureInvalidTargetWeight : .success
-    }
-
-    // Calculate BMR using Mifflin-St Jeor Equation
-    let bmr: Double
-    if isMale {
-      bmr = 10 * w + 6.25 * h - 5 * Double(a) + 5
-    } else {
-      bmr = 10 * w + 6.25 * h - 5 * Double(a) - 161
-    }
-
-    // Activity multipliers
-    let activityMultiplier: Double
-    switch activityLevel {
-    case "Sedentary":
-      activityMultiplier = 1.2
-    case "Lightly Active":
-      activityMultiplier = 1.375
-    case "Moderately Active":
-      activityMultiplier = 1.55
-    case "Very Active":
-      activityMultiplier = 1.725
-    case "Extremely Active":
-      activityMultiplier = 1.9
-    default:
-      activityMultiplier = 1.2
-    }
-
-    // Calculate TDEE (Total Daily Energy Expenditure)
-    let tdee = bmr * activityMultiplier
-
-    applyGoalAndCompute(tdee: tdee, currentWeight: w)
-
-    return .success
+  private var suggestedTargetText: String? {
+    guard let h = heightValueCm, Calc.heightRange.contains(h) else { return nil }
+    let suggestion = HealthUnits.displayWeight(Calc.optimalWeight(heightCm: h), imperial: imperial)
+    return suggestion == targetWeight.trimmingCharacters(in: .whitespaces) ? nil : suggestion
   }
 
-  private func recalcFromInputs() {
-    _ = validateAndCalculateHealthData(showTargetWeightAlert: false, showAlerts: false)
+  private var weightChangeKg: Double {
+    guard let w = weightValueKg, let t = targetValueKg else { return 0 }
+    return t - w
   }
 
-  private func currentTargetWeightValue() -> Double {
-    parseDoubleFlexible(targetWeight) ?? optimalWeight
+  private var monthOptions: [Int] {
+    targetValueKg == nil ? [2, 4, 6] : Calc.monthOptions(forChangeKg: weightChangeKg)
   }
 
-  /// Max healthy target weight (kg) from height and goal: heightM² * BMI cap (24.9 standard, 27 for gain).
-  private func maxTargetWeightForCurrentHeight(heightCm: Double? = nil) -> Double {
-    let h = heightCm ?? parseDoubleFlexible(height) ?? 0
-    guard h > 0 else { return Self.targetWeightMax }
-    let hm = h / 100.0
-    let bmiCap = goalMode == .gain ? Self.bmiMaxGain : Self.bmiMaxStandard
-    return (hm * hm) * bmiCap
+  private var effectiveMonths: Int {
+    monthOptions.min(by: { abs($0 - selectedMonths) < abs($1 - selectedMonths) }) ?? selectedMonths
   }
 
-  private func isTargetBMIValid(heightCm: Double? = nil) -> Bool {
-    let h = heightCm ?? parseDoubleFlexible(height) ?? 0
-    let t = parseDoubleFlexible(targetWeight) ?? 0
-    guard h > 0, t > 0 else { return true }
-    let hm = h / 100.0
-    let bmi = t / (hm * hm)
-    let maxBmi = goalMode == .gain ? Self.bmiMaxGain : Self.bmiMaxStandard
-    return bmi >= 18.5 && bmi <= maxBmi
-  }
-
-  private func bmi(heightCm: Double, weightKg: Double) -> Double {
-    let hm = heightCm / 100.0
-    guard hm > 0 else { return 0 }
-    return weightKg / (hm * hm)
-  }
-
-  private func currentBMIValue() -> Double? {
-    guard let h = parseDoubleFlexible(height), let w = parseDoubleFlexible(weight), h > 0, w > 0 else { return nil }
-    return bmi(heightCm: h, weightKg: w)
-  }
-
-  private func targetBMIValue() -> Double? {
-    guard let h = parseDoubleFlexible(height), let t = parseDoubleFlexible(targetWeight), h > 0, t > 0 else { return nil }
-    return bmi(heightCm: h, weightKg: t)
-  }
-
-  private func currentBMIText() -> String {
-    guard let bmi = currentBMIValue() else { return "" }
-    return String(format: loc("health.bmi.current", "BMI: %.1f"), bmi)
-  }
-
-  private func targetBMIText() -> String {
-    guard let bmi = targetBMIValue() else { return "" }
-    let maxBmi = goalMode == .gain ? Self.bmiMaxGain : Self.bmiMaxStandard
-    return String(
-      format: loc("health.bmi.target.range", "Target BMI: %.1f (18.5–%.1f)"),
-      bmi,
-      maxBmi
+  private var snapshot: Snapshot {
+    Snapshot(
+      heightCm: heightValueCm.map { $0.rounded() },
+      weightKg: weightValueKg.map { ($0 * 10).rounded() / 10 },
+      targetKg: targetValueKg.map { ($0 * 10).rounded() / 10 },
+      age: age.trimmingCharacters(in: .whitespaces),
+      sex: sex,
+      activityLevel: activityLevel,
+      goal: goal,
+      months: effectiveMonths
     )
   }
 
-  private func parseDoubleFlexible(_ text: String) -> Double? {
-    let normalized = text
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-      .replacingOccurrences(of: ",", with: ".")
-    return Double(normalized)
+  private var isDirty: Bool {
+    guard let initialSnapshot else { return false }
+    return initialSnapshot != snapshot
   }
 
-  private func suggestedMonths() -> [Int] {
-    // Weight gain: always offer 2, 4, 6 months
-    if goalMode == .gain { return [2, 4, 6] }
-    guard let w = parseDoubleFlexible(weight), let t = parseDoubleFlexible(targetWeight) else { return [2, 4, 6] }
-    let diff = abs(w - t)
-    // Lose: healthy minimum pacing
-    if diff <= 1.0 { return [2] }
-    if diff <= 5.0 { return [2, 4, 6] }
-    if diff <= 10.0 { return [4, 6] }
-    return [6, 9, 12]
+  private var planStatus: PlanStatus {
+    let heightEmpty = imperial
+      ? heightFeet.trimmingCharacters(in: .whitespaces).isEmpty
+      : heightCm.trimmingCharacters(in: .whitespaces).isEmpty
+    if heightEmpty || weight.trimmingCharacters(in: .whitespaces).isEmpty
+      || age.trimmingCharacters(in: .whitespaces).isEmpty {
+      return .incomplete
+    }
+    guard let inputs = strictInputs() else {
+      return .blocked(HealthUnits.invalidRangeMessage(imperial: imperial))
+    }
+    if let issue = targetIssue(inputs) {
+      return .blocked(issue)
+    }
+    let target = inputs.target ?? inputs.body.weightKg
+    let months = (goal == .lose || goal == .gain) ? effectiveMonths : 0
+    let plan = Calc.Plan(
+      calories: Calc.calories(body: inputs.body, goal: goal, targetKg: target, months: months),
+      goal: goal,
+      targetKg: target,
+      months: months
+    )
+    return .ready(plan, inputs.body)
   }
 
-  private func applyGoalAndCompute(tdee: Double, currentWeight: Double) {
-    let target = currentTargetWeightValue()
-    let diffKg = target - currentWeight
+  private func strictInputs() -> Inputs? {
+    guard let h = heightValueCm, Calc.heightRange.contains(h),
+      let w = weightValueKg, Calc.weightRange.contains(w),
+      let a = Int(age.trimmingCharacters(in: .whitespaces)), Calc.ageRange.contains(a)
+    else { return nil }
 
-    // Keep direction consistent with selected goal
-    if diffKg > 0.1, goalMode == .lose { goalMode = .gain }
-    if diffKg < -0.1, goalMode == .gain { goalMode = .lose }
-
-    if goalMode == .maintain || abs(diffKg) < 0.1 {
-      recommendedCalories = Int(tdee)
-      timeToOptimalWeight = loc("health.goal.maintain", "Maintain current weight")
-      return
+    let body = Calc.Body(heightCm: h, weightKg: w, age: a, sex: sex, activityLevel: activityLevel)
+    if targetWeight.trimmingCharacters(in: .whitespaces).isEmpty {
+      return Inputs(body: body, target: nil)
     }
-
-    if goalMode == .activityOnly {
-      recommendedCalories = Int(tdee)
-      timeToOptimalWeight = loc("health.goal.activity_only_timeline", "Increase activity without changing calories")
-      return
-    }
-
-    // Lose / Gain: compute daily deficit/surplus from selected period
-    // Target pace reference: 0.5 kg/week ~ 500 kcal/day. Scale linearly.
-    let absDiff = abs(diffKg)
-    let minMonths: Int
-    if absDiff <= 5.0 {
-      minMonths = 2
-    } else if absDiff <= 10.0 {
-      minMonths = 4
-    } else {
-      minMonths = 6
-    }
-
-    // Enforce healthy minimum pacing
-    let months = max(minMonths, selectedMonths)
-    if months != selectedMonths { selectedMonths = months }
-
-    let weeks = max(1.0, Double(months) * 30.4 / 7.0)
-    let kgPerWeek = absDiff / weeks
-    let dailyDelta = (kgPerWeek / 0.5) * 500.0
-
-    var proposed = tdee
-    if goalMode == .lose {
-      proposed = tdee - dailyDelta
-    } else if goalMode == .gain {
-      proposed = tdee + dailyDelta
-    }
-
-    // Safety floor
-    let minCalories = isMale ? 1500.0 : 1200.0
-    if proposed < minCalories { proposed = minCalories }
-
-    recommendedCalories = Int(proposed.rounded())
-    timeToOptimalWeight = String(format: loc("health.goal.months_to_goal", "%d months to reach your goal"), months)
+    guard let t = targetValueKg, Calc.weightRange.contains(t) else { return nil }
+    return Inputs(body: body, target: t)
   }
 
-  private func commitHealthPlan() {
-    if !showResults {
-      if validateAndCalculateHealthData() {
-        showResults = true
-      } else {
+  private func targetIssue(_ inputs: Inputs) -> String? {
+    if (goal == .lose || goal == .gain) && inputs.target == nil {
+      return loc("health.goal.need_target", "Enter a target weight.")
+    }
+    guard let target = inputs.target else { return nil }
+
+    if goal == .lose && target > inputs.body.weightKg - 0.1 {
+      return loc("health.goal.direction.lose",
+                 "Target must be below your current weight for Lose. Choose Gain, or set a lower target.")
+    }
+    if goal == .gain && target < inputs.body.weightKg + 0.1 {
+      return loc("health.goal.direction.gain",
+                 "Target must be above your current weight for Gain. Choose Lose, or set a higher target.")
+    }
+
+    let bmi = Calc.bmi(heightCm: inputs.body.heightCm, weightKg: target)
+    let cap = Calc.bmiCap(for: goal)
+    if bmi < Calc.bmiMin || bmi > cap {
+      let range = Calc.healthyTargetRange(heightCm: inputs.body.heightCm, goal: goal)
+      return String(
+        format: loc("health.target_bmi.bounds", "Target BMI is %.1f. Keep it between 18.5 and %.1f, about %@."),
+        bmi,
+        cap,
+        HealthUnits.weightRangeText(range, imperial: imperial)
+      )
+    }
+    return nil
+  }
+
+  // MARK: - Actions
+
+  private func inputsChanged() {
+    didAttemptSave = false
+    alignMonths()
+  }
+
+  private func alignMonths() {
+    let nearest = effectiveMonths
+    if nearest != selectedMonths { selectedMonths = nearest }
+  }
+
+  private func convertUnits(from wasImperial: Bool, to nowImperial: Bool) {
+    guard wasImperial != nowImperial else { return }
+    let cm = HealthUnits.cm(cmText: heightCm, feetText: heightFeet, inchesText: heightInches, imperial: wasImperial)
+    let kg = HealthUnits.kg(fromDisplay: weight, imperial: wasImperial)
+    let targetKg = HealthUnits.kg(fromDisplay: targetWeight, imperial: wasImperial)
+    setHeight(cm)
+    weight = kg.map { HealthUnits.displayWeight($0, imperial: nowImperial) } ?? weight
+    targetWeight = targetKg.map { HealthUnits.displayWeight($0, imperial: nowImperial) } ?? targetWeight
+  }
+
+  private func setHeight(_ cm: Double?) {
+    guard let cm, cm > 0 else { return }
+    heightCm = String(format: "%.0f", cm)
+    let parts = HealthUnits.feetAndInches(fromCm: cm)
+    heightFeet = String(parts.feet)
+    heightInches = String(parts.inches)
+  }
+
+  private func importFromAppleHealth() {
+    HapticsService.shared.select()
+    isImporting = true
+    importMessage = nil
+    Task {
+      let profile = await appleHealth.importProfile()
+      isImporting = false
+      if profile.isEmpty {
+        importMessage = loc(
+          "health.apple.import.empty",
+          "No data found. Add it in the Health app, or allow Eateria in Health: Sharing, Apps."
+        )
+        HapticsService.shared.warning()
         return
       }
+      if let cm = profile.heightCm { setHeight(cm) }
+      if let kg = profile.weightKg { weight = HealthUnits.displayWeight(kg, imperial: imperial) }
+      if let years = profile.age { age = String(years) }
+      if let imported = profile.sex { sex = imported }
+      importMessage = loc("health.apple.import.done", "Filled from Apple Health. Check the values before saving.")
+      HapticsService.shared.success()
     }
-    if showResults && !validateAndCalculateHealthData(showTargetWeightAlert: true, showAlerts: true) {
+  }
+
+  private func loadExistingData() {
+    let defaults = UserDefaults.standard
+    guard defaults.bool(forKey: "hasUserHealthData") else { return }
+    let storedHeight = defaults.double(forKey: "userHeight")
+    if storedHeight > 0 { setHeight(storedHeight) }
+    let storedWeight = defaults.double(forKey: "userWeight")
+    if storedWeight > 0 { weight = HealthUnits.displayWeight(storedWeight, imperial: imperial) }
+    let storedTarget = defaults.double(forKey: "userTargetWeight")
+    if storedTarget > 0 { targetWeight = HealthUnits.displayWeight(storedTarget, imperial: imperial) }
+    let storedAge = defaults.integer(forKey: "userAge")
+    if storedAge > 0 { age = String(storedAge) }
+    sex = Calc.storedSex(defaults)
+    activityLevel = defaults.string(forKey: "userActivityLevel") ?? "Sedentary"
+    if appleHealth.activityEnabled, activityLevel != "Sedentary" {
+      if defaults.string(forKey: "userActivityLevelManual") == nil {
+        defaults.set(activityLevel, forKey: "userActivityLevelManual")
+      }
+      activityLevel = "Sedentary"
+    }
+    if let raw = defaults.string(forKey: "userGoalMode"), let parsed = Goal(rawValue: raw) {
+      goal = parsed
+    }
+    let months = defaults.integer(forKey: "userGoalMonths")
+    if months > 0 { selectedMonths = months }
+  }
+
+  private func saveTapped() {
+    guard case .ready(let plan, let body) = planStatus else {
+      didAttemptSave = true
+      HapticsService.shared.error()
       return
     }
     HapticsService.shared.success()
-    saveHealthData()
-    isPresented = false
-  }
-
-  private func saveHealthData() {
-    guard let heightValue = Double(height),
-      let weightValue = Double(weight),
-      let ageValue = Int(age)
-    else { return }
-
-    let userDefaults = UserDefaults.standard
-    let heightStored = heightValue.rounded()
-    let weightStored = (weightValue * 10).rounded() / 10
-    let targetStored = (currentTargetWeightValue() * 10).rounded() / 10
-
-    userDefaults.set(heightStored, forKey: "userHeight")
-    userDefaults.set(weightStored, forKey: "userWeight")
-    userDefaults.set(ageValue, forKey: "userAge")
-    userDefaults.set(isMale, forKey: "userIsMale")
-    userDefaults.set(activityLevel, forKey: "userActivityLevel")
-    let previousTarget = userDefaults.double(forKey: "userTargetWeight")
-    let previousMode = userDefaults.string(forKey: "userGoalMode") ?? ""
-    userDefaults.set(targetStored, forKey: "userTargetWeight")
-    userDefaults.set(goalMode.rawValue, forKey: "userGoalMode")
-    userDefaults.set((goalMode == .lose || goalMode == .gain) ? selectedMonths : 0, forKey: "userGoalMonths")
-    userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
-    userDefaults.set(true, forKey: "hasUserHealthData")
-    if abs(previousTarget - targetStored) > 0.05 || previousMode != goalMode.rawValue {
-      userDefaults.removeObject(forKey: "goalCelebratedTargetKg")
-    }
-
-    // Always apply health-based limits when user saves in Health (new plan = new target)
-    let softLimit = recommendedCalories
-    let hardLimit = Int(Double(recommendedCalories) * 1.15)  // 15% above recommendation
-    userDefaults.set(softLimit, forKey: "softLimit")
-    userDefaults.set(hardLimit, forKey: "hardLimit")
-    userDefaults.set(false, forKey: "hasManualCalorieLimits")
-    // Persist to file storage so ContentView and Set Calorie Limits pick up the new limits
-    CalorieLimitsStorageService.shared.save(
-      .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
-
-    // Best-effort: sync goal to backend so it survives reinstalls / other devices.
+    Calc.save(body: body, plan: plan)
     GRPCService().updateGoal(
-      targetWeight: targetStored,
-      goalMode: goalMode.rawValue,
-      goalMonths: (goalMode == .lose || goalMode == .gain) ? selectedMonths : 0,
-      recommendedCalories: recommendedCalories
-    ) { _ in
-      // Ignore result for now; local state is already updated.
-    }
+      targetWeight: (plan.targetKg * 10).rounded() / 10,
+      goalMode: plan.goal.rawValue,
+      goalMonths: plan.months,
+      recommendedCalories: plan.calories
+    ) { _ in }
+    isPresented = false
   }
 }
 

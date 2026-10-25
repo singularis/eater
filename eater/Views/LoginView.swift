@@ -42,6 +42,7 @@ struct LoginView: View {
     }
     .sheet(isPresented: $showAppInfo) {
       AppInfoView()
+        .appInterfaceScale()
     }
     .alert(
       loc("error.network.title", "Connection Error"),

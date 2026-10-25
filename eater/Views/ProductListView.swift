@@ -190,7 +190,6 @@ struct ProductListView: View {
   let deletingProductTime: Int64?
   let onShareSuccess: () -> Void
 
-  @ObservedObject private var appSettings = AppSettingsService.shared
   private static let swipeOptionsHintKey = "hasSeenSwipeOptionsHint"
   @State private var showSwipeOptionsHintBanner = false
 
@@ -308,7 +307,7 @@ struct ProductListView: View {
                   onDelete: { onDelete(product.time) }
                 )
               }
-              .id("\(product.time)-\(appSettings.fontScale)")
+              .id("\(product.time)")
               .listRowBackground(Color.clear)
               .listRowSeparatorTint(AppTheme.textSecondary.opacity(0.3))
               .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))

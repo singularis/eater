@@ -1,6 +1,6 @@
 # Privacy Policy for Eater App
 
-Last Updated: March 19, 2024
+Last Updated: October 14, 2026
 
 ## Introduction
 Eater ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.
@@ -17,6 +17,19 @@ Eater ("we," "our," or "us") is committed to protecting your privacy. This Priva
 - Camera access for food and weight photos
 - Device type and operating system
 - App usage statistics
+
+### 3. Apple Health (optional)
+If you allow it, the app reads these values from Apple Health:
+- Height, body weight, date of birth and biological sex, to fill in your health profile when you tap "Fill from Apple Health"
+- Active energy burned, to raise your daily calorie limit when "Add Apple Health activity" is on
+
+How we handle Apple Health data:
+- It is read only. The app never writes to Apple Health.
+- Active energy stays on your device. It is not sent to our servers.
+- Profile values are only used after you review and save them in the app. Your saved target weight, goal and daily calorie target are synced to your account so they survive a reinstall.
+- It is never used for advertising or marketing, never sold, and never shared with third parties or data brokers.
+- It is not stored in iCloud by the app.
+- You can turn access off at any time in the Health app: Sharing, Apps, Eateria. You can also switch off "Add Apple Health activity" in the app.
 
 ## How We Use Your Information
 - To provide food tracking and calorie counting services

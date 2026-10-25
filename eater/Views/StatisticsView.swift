@@ -79,9 +79,11 @@ struct StatisticsView: View {
       .onAppear { loadData() }
       .sheet(item: $selectedDay) { day in
         dayDetailSheet(day)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showGraphs) {
         StatisticsGraphsView(isPresented: $showGraphs, initialPeriod: selectedPeriod)
+          .appInterfaceScale()
       }
     }
     .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))

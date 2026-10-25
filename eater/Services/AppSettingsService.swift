@@ -21,6 +21,11 @@ final class AppSettingsService: ObservableObject {
     didSet { objectWillChange.send() }
   }
 
+  /// Pleasant or unpleasant buzz when food quality is known. On by default.
+  @AppStorage("food_vibration_enabled") var vibrationEnabled: Bool = true {
+    didSet { objectWillChange.send() }
+  }
+
   /// Home meal-card scale. Slider 80%…120%, step 1%.
   @Published var fontScale: Double {
     didSet { UserDefaults.standard.set(fontScale, forKey: Self.fontScaleKey) }

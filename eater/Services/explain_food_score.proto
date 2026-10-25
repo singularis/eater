@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package eater;
+
+message ExplainFoodScoreRequest {
+  string user_name = 1;
+  string day = 2;             // Local yyyy-MM-dd. Used when dish_time is 0.
+  string language_code = 3;   // Same injection as recommendation.
+  int64 dish_time = 4;        // 0 explains the day. Otherwise that dish.
+}
+
+message ExplainFoodScoreResponse {
+  string explanation = 1;
+  int64 basis_dish_time = 2;  // Dish time this text was based on.
+}

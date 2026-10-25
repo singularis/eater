@@ -167,6 +167,8 @@ final class LanguageService: ObservableObject {
       "Slovene (Slovenian)": "sl",
       "English (US)": "en-US",
       "English (UK)": "en",
+      "Portuguese (Brazil)": "pt-BR",
+      "Portuguese (Brasil)": "pt-BR",
     ]
     if let c = manual[displayName] { return c }
     // Default to English
@@ -176,10 +178,12 @@ final class LanguageService: ObservableObject {
   private static let displayNames: [String: String] = [
     "en": "English (UK)",
     "en-US": "English (US)",
+    "pt": "Português (Portugal)",
+    "pt-BR": "Português (Brasil)",
   ]
 
   /// Regional packs that have their own `Localization/*.json` file.
-  private static let regionalVariants: Set<String> = ["en-us"]
+  private static let regionalVariants: Set<String> = ["en-us", "pt-br"]
 
   static func baseLanguageCode(of code: String) -> String {
     code.lowercased().replacingOccurrences(of: "_", with: "-")
@@ -205,6 +209,7 @@ final class LanguageService: ObservableObject {
     let norm = LanguageService.normalize(code: code)
     let regionalCountry: [String: String] = [
       "en-US": "US",
+      "pt-BR": "BR",
     ]
     if let country = regionalCountry[norm] {
       return flagEmoji(forRegionCode: country)

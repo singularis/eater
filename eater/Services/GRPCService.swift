@@ -2,6 +2,17 @@ import Foundation
 import SwiftProtobuf
 import UIKit
 
+struct DayFoodScore {
+  var hasScore: Bool
+  var score: Int
+  var dishTime: Int64
+}
+
+struct FoodScoreExplanation {
+  var text: String
+  var basisDishTime: Int64
+}
+
 enum StatisticsRangeFetchResult {
   case days([DailyStatistics])
   /// Token missing, bad, or expired. JSON body, not proto. Re-auth; do not fan out.
@@ -405,6 +416,107 @@ class GRPCService {
       }
     } catch {
       DispatchQueue.main.async { completion("") }
+    }
+  }
+
+  func getFoodScore(userName: String, day: String, completion: @escaping (DayFoodScore?) -> Void) {
+    var scoreRequest = Eater_FoodScoreRequest()
+    scoreRequest.userName = userName
+    scoreRequest.day = day
+
+    let finish: (DayFoodScore?) -> Void = { result in
+      DispatchQueue.main.async { completion(result) }
+    }
+
+    do {
+      let requestBody = try scoreRequest.serializedData()
+      guard
+        var request = createRequest(
+          endpoint: "get_food_score", httpMethod: "POST", body: requestBody)
+      else {
+        finish(nil)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+        if error != nil {
+          finish(nil)
+          return
+        }
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data = data else {
+          finish(nil)
+          return
+        }
+        do {
+          let decoded = try Eater_FoodScoreResponse(serializedBytes: data)
+          finish(
+            DayFoodScore(
+              hasScore: decoded.hasScore_p,
+              score: Int(decoded.score),
+              dishTime: decoded.dishTime
+            )
+          )
+        } catch {
+          finish(nil)
+        }
+      }
+    } catch {
+      finish(nil)
+    }
+  }
+
+  func explainFoodScore(
+    userName: String,
+    day: String,
+    languageCode: String,
+    dishTime: Int64,
+    completion: @escaping (FoodScoreExplanation?) -> Void
+  ) {
+    var explainRequest = Eater_ExplainFoodScoreRequest()
+    explainRequest.userName = userName
+    explainRequest.day = day
+    explainRequest.languageCode = languageCode
+    explainRequest.dishTime = dishTime
+
+    let finish: (FoodScoreExplanation?) -> Void = { result in
+      DispatchQueue.main.async { completion(result) }
+    }
+
+    do {
+      let requestBody = try explainRequest.serializedData()
+      guard
+        var request = createRequest(
+          endpoint: "explain_food_score", httpMethod: "POST", body: requestBody)
+      else {
+        finish(nil)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
+        if error != nil {
+          finish(nil)
+          return
+        }
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data = data else {
+          finish(nil)
+          return
+        }
+        do {
+          let decoded = try Eater_ExplainFoodScoreResponse(serializedBytes: data)
+          let text = decoded.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
+          guard !text.isEmpty else {
+            finish(nil)
+            return
+          }
+          finish(FoodScoreExplanation(text: text, basisDishTime: decoded.basisDishTime))
+        } catch {
+          finish(nil)
+        }
+      }
+    } catch {
+      finish(nil)
     }
   }
 

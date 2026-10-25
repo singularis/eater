@@ -333,6 +333,7 @@ private struct CameraButtonSheets: ViewModifier {
               onPhotoStarted: onPhotoStarted
             )
           }
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showPhotoLibrary) {
         PhotoLibraryView(photoType: "default_prompt", targetDate: isViewingCustomDate ? selectedDate : nil)
@@ -343,6 +344,7 @@ private struct CameraButtonSheets: ViewModifier {
               onPhotoStarted: onPhotoStarted
             )
           }
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showMealPlanner) {
         MealPlannerView(
@@ -351,6 +353,7 @@ private struct CameraButtonSheets: ViewModifier {
           languageCode: languageCode,
           cycleToken: mealPlannerCycle
         )
+        .appInterfaceScale()
       }
   }
 }
@@ -433,6 +436,7 @@ struct CameraView: UIViewControllerRepresentable {
   class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     var parent: CameraView
     var temporaryTimestamp: Int64?
+    var uploadTap = Date()
 
     init(_ parent: CameraView) {
       self.parent = parent
@@ -498,6 +502,7 @@ struct CameraView: UIViewControllerRepresentable {
 
           if success {
             HapticsService.shared.success()
+            self?.uploadTap = Date()
             self?.handlePhotoSuccess()
           } else {
             HapticsService.shared.error()
@@ -547,14 +552,17 @@ struct CameraView: UIViewControllerRepresentable {
             NotificationService.shared.recordFoodSnap()
             let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
             let overLimit = limit > 0 && calories > limit
+            let rating: Int
             if overLimit {
-              ThemeService.shared.playSound(for: "bad_food")
+              rating = 0
             } else if let added = products.first(where: { $0.time == tempTimestamp })
               ?? products.max(by: { $0.time < $1.time }) {
-              ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+              rating = added.healthRating >= 0 ? added.effectiveHealthRating : 70
             } else {
-              ThemeService.shared.playSound(for: "good_food")
+              rating = 100
             }
+            ThemeService.shared.playSoundForFood(
+              healthRating: rating, uploadTap: self?.uploadTap ?? Date())
             CameraCallbackManager.shared.callPhotoSuccess()
 
             self?.temporaryTimestamp = nil
@@ -608,6 +616,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
   class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     var parent: PhotoLibraryView
     var temporaryTimestamp: Int64?
+    var uploadTap = Date()
 
     init(_ parent: PhotoLibraryView) {
       self.parent = parent
@@ -668,6 +677,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
           if success {
             HapticsService.shared.success()
+            self?.uploadTap = Date()
             self?.handlePhotoSuccess()
           } else {
             HapticsService.shared.error()
@@ -717,14 +727,17 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
             NotificationService.shared.recordFoodSnap()
             let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
             let overLimit = limit > 0 && calories > limit
+            let rating: Int
             if overLimit {
-              ThemeService.shared.playSound(for: "bad_food")
+              rating = 0
             } else if let added = products.first(where: { $0.time == tempTimestamp })
               ?? products.max(by: { $0.time < $1.time }) {
-              ThemeService.shared.playSoundForFood(healthRating: added.healthRating >= 0 ? added.healthRating : 70)
+              rating = added.healthRating >= 0 ? added.effectiveHealthRating : 70
             } else {
-              ThemeService.shared.playSound(for: "good_food")
+              rating = 100
             }
+            ThemeService.shared.playSoundForFood(
+              healthRating: rating, uploadTap: self?.uploadTap ?? Date())
             CameraCallbackManager.shared.callPhotoSuccess()
 
             self?.temporaryTimestamp = nil

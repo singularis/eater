@@ -21,7 +21,14 @@ struct ContentView: View {
   @StateObject private var themeService = ThemeService.shared
   @ObservedObject private var profilePhotoStore = ProfilePhotoStore.shared
   @ObservedObject private var nav = AppNavigation.shared
+  @ObservedObject private var appleHealth = AppleHealthService.shared
   @State private var products: [Product] = []
+  @State private var dayFoodScore: Int? = nil
+  @State private var dayFoodScoreTime: Int64 = 0
+  @State private var dayFoodScoreDay: String = ""
+  @State private var dayScoreLoading = false
+  @State private var dayScoreFailed = false
+  @State private var dayScorePollID = UUID()
   @State private var caloriesLeft: Int = 0
   @State private var personWeight: Float = 0
   @State private var date = Date()
@@ -35,6 +42,7 @@ struct ContentView: View {
   @State private var showUserProfile = false
   @State private var showHealthDisclaimer = false
   @State private var showOnboarding = false
+  @State private var showHealthPlan = false
   @State private var onboardingMode: OnboardingView.OnboardingMode = .initial
   @State private var showCalendarPicker = false
   @State private var isViewingCustomDate = false
@@ -190,6 +198,7 @@ struct ContentView: View {
           if w > 0 { personWeight = Float(w) }
         }
         fetchDataWithLoading()
+        refreshDayFoodScore()
         refreshMacrosForCurrentView()
         setupDailyRefreshTimer()
         setupActivityCaloriesObserver()
@@ -199,8 +208,7 @@ struct ContentView: View {
           onboardingMode = .initial
           showOnboarding = true
         } else if AppSettingsService.shared.shouldShowHealthOnboarding(for: authService.userEmail) {
-            onboardingMode = .health
-            showOnboarding = true
+          showHealthPlan = true
         } else if AppSettingsService.shared.shouldShowSocialOnboarding(for: authService.userEmail) {
             onboardingMode = .social
             showOnboarding = true
@@ -208,7 +216,11 @@ struct ContentView: View {
 
         fetchAlcoholStatus()
         syncMealNav()
-      }  
+        appleHealth.startObserving()
+      }
+      .task(id: "\(currentActivitiesDateISO())-\(appleHealth.activityEnabled)") {
+        await appleHealth.refresh(dayISO: currentActivitiesDateISO())
+      }
       .onDisappear {
         stopDailyRefreshTimer()
       }
@@ -237,6 +249,10 @@ struct ContentView: View {
         syncMealNav()
       }
       .onChange(of: scenePhase) { _, newPhase in
+        if newPhase == .active {
+          NotificationService.shared.rescheduleIfEnabled()
+          Task { await appleHealth.refresh(dayISO: currentActivitiesDateISO()) }
+        }
         if newPhase == .inactive || newPhase == .background {
           if isViewingCustomDate {
              returnToToday()
@@ -252,10 +268,12 @@ struct ContentView: View {
           onSave: saveLimits,
           onUseHealth: resetToHealthBasedLimits
         )
+        .appInterfaceScale()
       }
       .sheet(isPresented: $showUserProfile) {
         UserProfileView()
           .environmentObject(authService)
+          .appInterfaceScale()
       }
       .onChange(of: showUserProfile) { _, isVisible in
         if !isVisible {
@@ -265,7 +283,23 @@ struct ContentView: View {
         }
       }
       .sheet(isPresented: $showHealthDisclaimer) {
-        HealthDisclaimerView(todayHealthScore: averageHealthScore)
+        HealthDisclaimerView(
+          todayHealthScore: dayFoodScore.map { ($0, healthScoreColor($0)) },
+          dayISO: scoreDayISO(),
+          newestDishTime: products.map(\.time).max() ?? 0,
+          userEmail: authService.userEmail ?? "",
+          scoreFailed: dayScoreFailed
+        )
+        .appInterfaceScale()
+      }
+      .onChange(of: currentViewingDateString) { _, _ in
+        refreshDayFoodScore()
+      }
+      .onChange(of: isViewingCustomDate) { _, _ in
+        refreshDayFoodScore()
+      }
+      .onChange(of: productTimes) { _, _ in
+        refreshDayFoodScore()
       }
       .sheet(item: $fixFoodNameData) { data in
         FixFoodNameView(
@@ -280,6 +314,7 @@ struct ContentView: View {
             fixFoodNameData = nil
           }
         )
+        .appInterfaceScale()
       }
       // Statistics overlays Home when the user swipes left
       .sheet(isPresented: $showCalendarPicker) {
@@ -290,6 +325,7 @@ struct ContentView: View {
             fetchCustomDateData(dateString: dateString)
           }
         )
+        .appInterfaceScale()
       }
       .sheet(item: $fullScreenPhotoData) { photoData in
         FullScreenPhotoView(
@@ -300,6 +336,16 @@ struct ContentView: View {
           // Custom dismiss action
           fullScreenPhotoData = nil
         }
+        .appInterfaceScale()
+      }
+      .sheet(isPresented: $showHealthPlan, onDismiss: {
+        AppSettingsService.shared.markHealthOnboardingSeen(for: authService.userEmail)
+        if AppSettingsService.shared.progressiveOnboardingLevel < 3 {
+          AppSettingsService.shared.progressiveOnboardingLevel = 3
+        }
+      }) {
+        HealthSettingsView(isPresented: $showHealthPlan)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showProgressiveOnboarding) {
         ProgressiveOnboardingView(step: progressiveStep, isPresented: $showProgressiveOnboarding) {
@@ -307,33 +353,31 @@ struct ContentView: View {
             showProgressiveOnboarding = false
           }
           // Increment level based on step completed
-          if progressiveStep == .demographics { AppSettingsService.shared.progressiveOnboardingLevel = 1 }
-          else if progressiveStep == .measurements { AppSettingsService.shared.progressiveOnboardingLevel = 2 }
-          else if progressiveStep == .activity { AppSettingsService.shared.progressiveOnboardingLevel = 3 }
-          else if progressiveStep == .notifications { AppSettingsService.shared.progressiveOnboardingLevel = 4 }
+          if progressiveStep == .notifications { AppSettingsService.shared.progressiveOnboardingLevel = 4 }
         }
         .environmentObject(languageService)
+        .appInterfaceScale()
       }
-      .overlay(
-        OnboardingView(isPresented: $showOnboarding, mode: onboardingMode)
-          .environmentObject(languageService)
-          .opacity(showOnboarding ? 1 : 0)
-      )
-      .onChange(of: showOnboarding) { _, showing in
-        if !showing {
-          nav.tryPresentAnonymousLoginPrompt()
-        }
-      }
-
       LoadingOverlay(isVisible: isLoadingData, message: loc("loading.food", "Loading food data..."))
       LoadingOverlay(
         isVisible: isLoadingFoodPhoto || nav.isLoadingFoodPhoto,
         message: loc("loading.photo", "Analyzing food photo..."))
     }
-
+    .background {
+      Color.clear
+        .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
+          nav.tryPresentAnonymousLoginPrompt()
+        }) {
+          OnboardingView(isPresented: $showOnboarding, mode: onboardingMode)
+            .environmentObject(languageService)
+            .interactiveDismissDisabled()
+            .appInterfaceScale()
+        }
+    }
     .fullScreenCover(isPresented: $showMainAppTutorial) {
         MainAppTutorialView(isPresented: $showMainAppTutorial)
             .environmentObject(languageService)
+            .appInterfaceScale()
     }
     .sheet(item: $activeTutorialStep, onDismiss: {
         let action = pendingTutorialAction
@@ -348,6 +392,7 @@ struct ContentView: View {
             set: { if !$0 { activeTutorialStep = nil } }
         ), specificStep: step)
             .environmentObject(languageService)
+            .appInterfaceScale()
     }
     .sheet(isPresented: $showTypeFood) {
       TypeFoodSheet(timestampMillis: typeFoodTimestampMillis) {
@@ -357,6 +402,7 @@ struct ContentView: View {
           currentViewingDateString.isEmpty ? nil : currentViewingDateString)
         handlePhotoLogged()
       }
+      .appInterfaceScale()
     }
     .id(languageService.currentCode)
   }
@@ -461,6 +507,7 @@ struct ContentView: View {
     .buttonStyle(PressScaleButtonStyle())
     .sheet(isPresented: $showAlcoholCalendar) {
       AlcoholCalendarView(isPresented: $showAlcoholCalendar)
+        .appInterfaceScale()
     }
   }
 
@@ -502,14 +549,67 @@ struct ContentView: View {
     .appSurface()
   }
 
-  /// Average health score of all tracked food items (today or current view). Nil when no scored items.
-  private var averageHealthScore: (score: Int, color: Color)? {
-    let scored = products.filter { $0.healthRating >= 0 }
-    guard !scored.isEmpty else { return nil }
-    let sum = scored.reduce(0) { $0 + $1.effectiveHealthRating }
-    let avg = (Double(sum) / Double(scored.count)).rounded()
-    let value = max(0, min(100, Int(avg)))
-    return (value, healthScoreColor(value))
+  private var productTimes: [Int64] {
+    products.map(\.time)
+  }
+
+  /// Local yyyy-MM-dd for the day on screen. Today does not use the UTC formatter.
+  private func scoreDayISO() -> String {
+    if isViewingCustomDate, !currentViewingDateString.isEmpty {
+      let parts = currentViewingDateString.split(separator: "-")
+      if parts.count == 3, parts[0].count == 2, parts[1].count == 2, parts[2].count == 4 {
+        return "\(parts[2])-\(parts[1])-\(parts[0])"
+      }
+      return getISODateString(for: selectedDate)
+    }
+    return getISODateString(for: Date())
+  }
+
+  private func refreshDayFoodScore() {
+    let day = scoreDayISO()
+    let pollID = UUID()
+    dayScorePollID = pollID
+    dayScoreFailed = false
+    dayScoreLoading = dayFoodScore == nil || dayFoodScoreDay != day
+    if dayFoodScoreDay != day {
+      dayFoodScore = nil
+      dayFoodScoreTime = 0
+      dayFoodScoreDay = day
+      dayScoreLoading = true
+    }
+    let newest = products.map(\.time).max() ?? 0
+    requestDayFoodScore(day: day, newest: newest, pollID: pollID, delays: [2, 4, 8])
+  }
+
+  private func requestDayFoodScore(day: String, newest: Int64, pollID: UUID, delays: [Double]) {
+    GRPCService().getFoodScore(userName: authService.userEmail ?? "", day: day) { result in
+      guard pollID == self.dayScorePollID, self.scoreDayISO() == day else { return }
+      let newestNow = self.products.map(\.time).max() ?? newest
+      var stored = self.dayFoodScoreTime
+      if let result {
+        if result.hasScore {
+          self.dayFoodScore = result.score
+          self.dayFoodScoreTime = result.dishTime
+          stored = result.dishTime
+        } else {
+          self.dayFoodScore = nil
+          self.dayFoodScoreTime = 0
+          stored = 0
+        }
+      }
+      let stillWaiting = newestNow > stored
+      if stillWaiting, let delay = delays.first {
+        self.dayScoreLoading = self.dayFoodScore == nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+          guard pollID == self.dayScorePollID, self.scoreDayISO() == day else { return }
+          let latest = self.products.map(\.time).max() ?? newestNow
+          self.requestDayFoodScore(day: day, newest: latest, pollID: pollID, delays: Array(delays.dropFirst()))
+        }
+      } else {
+        self.dayScoreLoading = false
+        self.dayScoreFailed = self.dayFoodScore == nil && newestNow > 0
+      }
+    }
   }
 
   private func healthScoreColor(_ rating: Int) -> Color {
@@ -528,24 +628,29 @@ struct ContentView: View {
       checkTutorial(key: "hasSeenHealthScoreTutorial", action: .healthInfo)
     }) {
       ZStack {
-        if let avg = averageHealthScore {
+        if let score = dayFoodScore {
+          let color = healthScoreColor(score)
           ZStack {
             Circle()
-              .stroke(avg.color.opacity(0.25), lineWidth: 3)
+              .stroke(color.opacity(0.25), lineWidth: 3)
             Circle()
-              .trim(from: 0, to: CGFloat(avg.score) / 100.0)
-              .stroke(avg.color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+              .trim(from: 0, to: CGFloat(score) / 100.0)
+              .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
               .rotationEffect(.degrees(-90))
-            Text("\(avg.score)")
+            Text("\(score)")
               .font(.system(size: 14, weight: .bold, design: .rounded))
-              .foregroundColor(avg.color)
+              .foregroundColor(color)
               .minimumScaleFactor(0.7)
           }
           .frame(width: 36, height: 36)
+        } else if dayScoreLoading {
+          ProgressView()
+            .controlSize(.regular)
+            .frame(width: 36, height: 36)
         } else {
-          Image(systemName: "info.circle")
-            .font(.system(size: 18, weight: .semibold))
-            .foregroundColor(AppTheme.primaryButtonFill)
+          Text("-")
+            .font(.system(size: 16, weight: .bold, design: .rounded))
+            .foregroundColor(AppTheme.textSecondary)
         }
       }
       .frame(width: 44, height: 44)
@@ -572,6 +677,7 @@ struct ContentView: View {
     .id("sport-\(todayActivityDate)-\(todaySportCalories)-\(uiRefreshTrigger)")
     .sheet(isPresented: $showActivitiesView) {
       ActivitiesView(dateISO: currentActivitiesDateISO())
+        .appInterfaceScale()
     }
   }
 
@@ -641,6 +747,7 @@ struct ContentView: View {
           isLoadingWeightPhoto = true
         }
       )
+      .appInterfaceScale()
     }
     .alert(loc("weight.enter.title", "Enter Weight"), isPresented: $showManualWeightEntry) {
       TextField(loc("weight.enter.placeholder", "Weight (kg)"), text: $manualWeightInput)
@@ -680,7 +787,7 @@ struct ContentView: View {
 
   private var typeButton: some View {
     Button(action: {
-      checkTutorial(key: "hasSeenTypeTutorial", action: .typeFood)
+      checkTutorial(key: "hasSeenTypeGuide", action: .typeFood)
     }) {
       HStack(spacing: 6) {
         Image(systemName: themeService.icon(for: "square.and.pencil"))
@@ -835,6 +942,7 @@ struct ContentView: View {
           showMacroTargets = false
         }
       )
+      .appInterfaceScale()
     }
   }
 
@@ -926,8 +1034,7 @@ struct ContentView: View {
 
   private func handlePhotoLogged() {
     if AppSettingsService.shared.shouldShowHealthOnboarding(for: authService.userEmail) {
-      onboardingMode = .health
-      showOnboarding = true
+      showHealthPlan = true
     } else if AppSettingsService.shared.shouldShowSocialOnboarding(for: authService.userEmail) {
       onboardingMode = .social
       showOnboarding = true
@@ -1126,41 +1233,25 @@ struct ContentView: View {
   }
 
   func checkProgressiveOnboarding() {
+    guard !showOnboarding, !showHealthPlan else { return }
     let count = AppSettingsService.shared.foodSharedCount
     let level = AppSettingsService.shared.progressiveOnboardingLevel
     let hasHealthData = UserDefaults.standard.bool(forKey: "hasUserHealthData")
-    
-    var nextStep: ProgressiveOnboardingStep = .none
-    var shouldTrigger = false
-    
-    // If user already has health data, skip to notifications at count 5
-    if hasHealthData {
-      if count >= 5 && level < 4 {
-        nextStep = .notifications
-        shouldTrigger = true
+
+    if !hasHealthData && count >= 1 && level < 3 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        guard !self.showOnboarding else { return }
+        self.showHealthPlan = true
       }
-    } else {
-      // Logic: 1->Demographics, 2->Measurements, 3->Activity, 5->Notifications
-      if count >= 1 && level < 1 {
-        nextStep = .demographics
-        shouldTrigger = true
-      } else if count >= 2 && level < 2 {
-        nextStep = .measurements
-        shouldTrigger = true
-      } else if count >= 3 && level < 3 {
-        nextStep = .activity
-        shouldTrigger = true
-      } else if count >= 5 && level < 4 {
-        nextStep = .notifications
-        shouldTrigger = true
-      }
+      return
     }
-    
-    if shouldTrigger {
-       DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-          self.progressiveStep = nextStep
-          self.showProgressiveOnboarding = true
-       }
+
+    if count >= 5 && level < 4 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        guard !self.showOnboarding, !self.showHealthPlan else { return }
+        self.progressiveStep = .notifications
+        self.showProgressiveOnboarding = true
+      }
     }
   }
 
@@ -1710,146 +1801,43 @@ struct ContentView: View {
       return
     }
 
-    let height = userDefaults.double(forKey: "userHeight")
-    var weight = userDefaults.double(forKey: "userWeight")
-    let age = userDefaults.integer(forKey: "userAge")
-    let isMale = userDefaults.bool(forKey: "userIsMale")
-    let activityLevel = userDefaults.string(forKey: "userActivityLevel") ?? "Sedentary"
-    let targetWeight = userDefaults.double(forKey: "userTargetWeight")
-    let goalMode = userDefaults.string(forKey: "userGoalMode") ?? "maintain"
-    let goalMonths = userDefaults.integer(forKey: "userGoalMonths")
-
     // Use current weight from the app if available and different from stored
     if personWeight > 0 {
-      let currentWeight = Double(personWeight)
-      if abs(currentWeight - weight) > 0.1 {  // If weight has changed significantly
-        weight = (currentWeight * 10).rounded() / 10
-        userDefaults.set(weight, forKey: "userWeight")  // Update stored weight
+      let currentWeight = (Double(personWeight) * 10).rounded() / 10
+      if abs(currentWeight - userDefaults.double(forKey: "userWeight")) > 0.1 {
+        userDefaults.set(currentWeight, forKey: "userWeight")
       }
     }
 
-    guard height > 0, weight > 0, age > 0 else {
+    guard let body = HealthPlanCalculator.storedBody(userDefaults) else {
       // Fallback: apply last saved health recommendation if available
       let saved = userDefaults.integer(forKey: "userRecommendedCalories")
       if saved > 0 {
+        HealthPlanCalculator.applyLimits(calories: saved, userDefaults)
         softLimit = saved
-        hardLimit = Int(Double(saved) * 1.15)
-        CalorieLimitsStorageService.shared.save(
-          .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
-        userDefaults.set(softLimit, forKey: "softLimit")
-        userDefaults.set(hardLimit, forKey: "hardLimit")
-        userDefaults.set(saved, forKey: "userRecommendedCalories")
+        hardLimit = Int(Double(saved) * HealthPlanCalculator.hardLimitFactor)
       }
       return
     }
 
-    // Calculate optimal weight using BMI (21.5 - middle of healthy range)
-    let heightInMeters = height / 100.0
-    let optimalWeight = 21.5 * heightInMeters * heightInMeters
-
-    // Calculate BMR using Mifflin-St Jeor Equation
-    let bmr: Double
-    if isMale {
-      bmr = 10 * weight + 6.25 * height - 5 * Double(age) + 5
-    } else {
-      bmr = 10 * weight + 6.25 * height - 5 * Double(age) - 161
-    }
-
-    // Activity multipliers
-    let activityMultiplier: Double
-    switch activityLevel {
-    case "Sedentary":
-      activityMultiplier = 1.2
-    case "Lightly Active":
-      activityMultiplier = 1.375
-    case "Moderately Active":
-      activityMultiplier = 1.55
-    case "Very Active":
-      activityMultiplier = 1.725
-    case "Extremely Active":
-      activityMultiplier = 1.9
-    default:
-      activityMultiplier = 1.2
-    }
-
-    // Calculate TDEE (Total Daily Energy Expenditure)
-    let tdee = bmr * activityMultiplier
-
-    // Adjust calories based on user goal (target weight + period), fallback to optimal weight behavior.
-    var recommendedCalories: Int
-    let minCalories = isMale ? 1500 : 1200
-
-    if targetWeight > 0, (goalMode == "lose" || goalMode == "gain"), goalMonths >= 2 {
-      let diffKg = targetWeight - weight  // negative = lose, positive = gain
-
-      // Enforce healthy minimum pacing (same rules as HealthSettingsView)
-      let absDiff = abs(diffKg)
-      let minMonths: Int
-      if absDiff <= 5.0 {
-        minMonths = 2
-      } else if absDiff <= 10.0 {
-        minMonths = 4
-      } else {
-        minMonths = 6
-      }
-
-      let months = max(goalMonths, minMonths)
-      let days = Double(months) * 30.4
-      let dailyDelta = (diffKg * 7700.0) / days
-      recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
-    } else if goalMode == "activityOnly" || goalMode == "maintain" {
-      recommendedCalories = Int(tdee)
-    } else if targetWeight > 0 {
-      // Target set but no mode/period - default maintain for small diffs, else 4 months
-      let diffKg = targetWeight - weight
-      if abs(diffKg) <= 1.0 {
-        recommendedCalories = Int(tdee)
-      } else {
-        // Use a healthy minimum: 2 months up to 5kg, 4 months up to 10kg, 6 months above.
-        let absDiff = abs(diffKg)
-        let months: Double
-        if absDiff <= 5.0 {
-          months = 2.0
-        } else if absDiff <= 10.0 {
-          months = 4.0
-        } else {
-          months = 6.0
-        }
-        let days = months * 30.4
-        let dailyDelta = (diffKg * 7700.0) / days
-        recommendedCalories = max(Int(tdee + dailyDelta), minCalories)
-      }
-    } else {
-      // Legacy fallback: compare to optimal weight for this calculation only.
-      // Do NOT overwrite userTargetWeight / userGoalMode — they may be set in Health and reset daily otherwise.
-      let weightDifference = weight - optimalWeight
-      let calorieAdjustment: Double
-      if abs(weightDifference) < 2 {
-        calorieAdjustment = 0
-      } else if weightDifference > 0 {
-        calorieAdjustment = -500
-      } else {
-        calorieAdjustment = 300
-      }
-      recommendedCalories = max(Int(tdee + calorieAdjustment), minCalories)
-    }
-
-    // Update the calorie limits
-    softLimit = recommendedCalories
-    hardLimit = Int(Double(recommendedCalories) * 1.15)  // 15% above recommendation
-
-    // Save updated values (file + UserDefaults mirror)
-    CalorieLimitsStorageService.shared.save(
-      .init(softLimit: softLimit, hardLimit: hardLimit, hasManualCalorieLimits: false))
-    userDefaults.set(softLimit, forKey: "softLimit")
-    userDefaults.set(hardLimit, forKey: "hardLimit")
-    userDefaults.set(recommendedCalories, forKey: "userRecommendedCalories")
-    // Keep legacy key for UI compatibility, but prefer userTargetWeight
-    userDefaults.set(userDefaults.double(forKey: "userTargetWeight") > 0 ? userDefaults.double(forKey: "userTargetWeight") : optimalWeight, forKey: "userOptimalWeight")
+    let plan = HealthPlanCalculator.storedPlan(body: body, userDefaults)
+    HealthPlanCalculator.applyLimits(calories: plan.calories, userDefaults)
+    userDefaults.set(plan.calories, forKey: "userRecommendedCalories")
+    softLimit = plan.calories
+    hardLimit = Int(Double(plan.calories) * HealthPlanCalculator.hardLimitFactor)
+    let target = userDefaults.double(forKey: "userTargetWeight")
+    userDefaults.set(
+      target > 0 ? target : HealthPlanCalculator.optimalWeight(heightCm: body.heightCm),
+      forKey: "userOptimalWeight")
   }
 
   /// Activity calories for the currently viewed date (today or custom). Used to add to daily limit.
+  /// Logged activities and Apple Health often describe the same workout, so the larger one wins.
   private func activityCaloriesForViewedDate() -> Int {
+    max(loggedActivityCaloriesForViewedDate(), appleHealth.bonusKcal(dayISO: currentActivitiesDateISO()))
+  }
+
+  private func loggedActivityCaloriesForViewedDate() -> Int {
     if isViewingCustomDate, !currentViewingDateString.isEmpty {
       let parts = currentViewingDateString.split(separator: "-")
       if parts.count == 3, parts[0].count == 2, parts[1].count == 2, parts[2].count == 4 {

@@ -172,6 +172,7 @@ struct RootTabView: View {
             targetDate: nav.isViewingCustomDate ? nav.selectedDate : nil
           )
           .onAppear { bindCameraCallbacks() }
+          .appInterfaceScale()
         }
         .sheet(isPresented: $nav.showPhotoLibrary, onDismiss: {
           nav.tryPresentAnonymousLoginPrompt()
@@ -181,6 +182,7 @@ struct RootTabView: View {
             targetDate: nav.isViewingCustomDate ? nav.selectedDate : nil
           )
           .onAppear { bindCameraCallbacks() }
+          .appInterfaceScale()
         }
         .sheet(isPresented: $nav.showWeightCamera) {
           WeightCameraView(
@@ -196,23 +198,28 @@ struct RootTabView: View {
               nav.isLoadingWeightPhoto = true
             }
           )
+          .appInterfaceScale()
         }
         .sheet(isPresented: $nav.showActivities) {
           ActivitiesView(
             dateISO: nav.activitiesDateISO.isEmpty ? Self.todayISO() : nav.activitiesDateISO
           )
+          .appInterfaceScale()
         }
         .sheet(isPresented: $nav.showAlcohol) {
           AlcoholCalendarView(isPresented: $nav.showAlcohol)
+            .appInterfaceScale()
         }
         .sheet(isPresented: $nav.showInPlaceLogin) {
           SignInSheet()
             .environmentObject(authService)
+            .appInterfaceScale()
         }
         .sheet(isPresented: $nav.showHowItWorks) {
           OnboardingView(isPresented: $nav.showHowItWorks, mode: .howItWorks)
             .environmentObject(languageService)
             .interactiveDismissDisabled()
+            .appInterfaceScale()
         }
         .sheet(
           item: $cameraTutorialStep,
@@ -243,6 +250,7 @@ struct RootTabView: View {
             specificStep: step
           )
           .environmentObject(languageService)
+          .appInterfaceScale()
         }
     }
 
@@ -353,10 +361,8 @@ private struct AppBottomBar: View {
   let onCamera: () -> Void
   let onUpload: () -> Void
 
-  @ObservedObject private var appSettings = AppSettingsService.shared
-
-  /// Follows the app text size setting, same as the meal cards.
-  private var scale: CGFloat { CGFloat(appSettings.fontScale) }
+  /// Base sizes. The text-size slider scales the whole window, so this stays at 1.
+  private var scale: CGFloat { 1 }
 
   /// Camera disc is 1.5x a side item, and pokes above the bar by `lift`.
   private var itemSize: CGFloat { 44 * scale }

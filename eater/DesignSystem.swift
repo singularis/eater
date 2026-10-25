@@ -175,6 +175,28 @@ private struct FilledButtonChrome: ViewModifier {
   }
 }
 
+extension View {
+  /// Scales the whole screen with the text-size slider, including fixed fonts,
+  /// icons, photos, and spacing.
+  func appInterfaceScale() -> some View {
+    modifier(AppInterfaceScaleModifier())
+  }
+}
+
+private struct AppInterfaceScaleModifier: ViewModifier {
+  @ObservedObject private var settings = AppSettingsService.shared
+
+  func body(content: Content) -> some View {
+    let scale = CGFloat(settings.fontScale)
+    GeometryReader { proxy in
+      content
+        .frame(width: proxy.size.width / scale, height: proxy.size.height / scale, alignment: .topLeading)
+        .scaleEffect(scale, anchor: .topLeading)
+        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
+    }
+  }
+}
+
 struct PrimaryButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label.modifier(
@@ -404,6 +426,8 @@ struct AppLabeledNumberField: View {
   @Binding var text: String
   var keyboard: UIKeyboardType = .numberPad
   var placeholder: String = "0"
+  /// Fields with consecutive tags get a Next key that moves to the following one.
+  var focusTag: Int = 0
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -411,7 +435,7 @@ struct AppLabeledNumberField: View {
         .font(.subheadline.weight(.semibold))
         .foregroundColor(AppTheme.textPrimary)
       HStack(spacing: 8) {
-        AppNumberTextField(text: $text, placeholder: placeholder, keyboard: keyboard)
+        AppNumberTextField(text: $text, placeholder: placeholder, keyboard: keyboard, focusTag: focusTag)
           .frame(minHeight: 22)
           .appFormField()
         Text(unit)
@@ -429,6 +453,7 @@ struct AppNumberTextField: UIViewRepresentable {
   @Binding var text: String
   var placeholder: String
   var keyboard: UIKeyboardType
+  var focusTag: Int = 0
 
   func makeCoordinator() -> Coordinator {
     Coordinator(text: $text)
@@ -448,6 +473,7 @@ struct AppNumberTextField: UIViewRepresentable {
     tf.setContentHuggingPriority(.defaultLow, for: .horizontal)
     tf.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     tf.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)
+    tf.tag = focusTag
 
     let toolbar = UIToolbar()
     let flex = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
@@ -457,7 +483,17 @@ struct AppNumberTextField: UIViewRepresentable {
       target: context.coordinator,
       action: #selector(Coordinator.done)
     )
-    toolbar.items = [flex, done]
+    if focusTag > 0 {
+      let next = UIBarButtonItem(
+        title: loc("common.next", "Next"),
+        style: .plain,
+        target: context.coordinator,
+        action: #selector(Coordinator.next)
+      )
+      toolbar.items = [next, flex, done]
+    } else {
+      toolbar.items = [flex, done]
+    }
     toolbar.sizeToFit()
     tf.inputAccessoryView = toolbar
     context.coordinator.field = tf
@@ -492,6 +528,27 @@ struct AppNumberTextField: UIViewRepresentable {
 
     @objc func done() {
       field?.resignFirstResponder()
+    }
+
+    /// Focuses the field tagged one higher in the same window, or closes the keyboard.
+    @objc func next() {
+      guard let field, field.tag > 0, let window = field.window else {
+        field?.resignFirstResponder()
+        return
+      }
+      if let following = Self.textField(tagged: field.tag + 1, in: window) {
+        following.becomeFirstResponder()
+      } else {
+        field.resignFirstResponder()
+      }
+    }
+
+    private static func textField(tagged tag: Int, in view: UIView) -> UITextField? {
+      if let field = view as? UITextField, field.tag == tag, !field.isHidden { return field }
+      for child in view.subviews {
+        if let found = textField(tagged: tag, in: child) { return found }
+      }
+      return nil
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {

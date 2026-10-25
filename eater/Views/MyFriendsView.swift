@@ -86,6 +86,7 @@ struct MyFriendsView: View {
       .sheet(isPresented: $showAddFriends) {
         AddFriendsView(isPresented: $showAddFriends)
           .onDisappear { fetchFriends() }
+          .appInterfaceScale()
       }
     }
     .onAppear { fetchFriends() }

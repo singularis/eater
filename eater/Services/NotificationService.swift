@@ -25,15 +25,13 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
   func initializeOnLaunch() {
     center.delegate = self
-    if isEnabled { scheduleUpcomingReminders(daysAhead: daysAheadToSchedule) }
+    rescheduleIfEnabled()
     // React to app language changes so future notifications use localized quotes
     let obs = NotificationCenter.default.addObserver(
       forName: .appLanguageChanged, object: nil, queue: .main
     ) { [weak self] _ in
       guard let self = self else { return }
-      if self.isEnabled {
-        self.scheduleUpcomingReminders(daysAhead: self.daysAheadToSchedule)
-      }
+      self.rescheduleIfEnabled()
     }
     observers.append(obs)
   }
@@ -46,7 +44,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
   func requestAuthorizationAndEnable(_ enable: Bool, completion: ((Bool) -> Void)? = nil) {
     if !enable {
       isEnabled = false
-      cancelTodayReminders()
+      cancelScheduledReminders()
       completion?(true)
       return
     }
@@ -55,9 +53,9 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
       DispatchQueue.main.async {
         self?.isEnabled = granted
         if granted {
-          self?.scheduleUpcomingReminders(daysAhead: self?.daysAheadToSchedule ?? 14)
+          self?.rescheduleIfEnabled()
         } else {
-          self?.cancelTodayReminders()
+          self?.cancelScheduledReminders()
         }
         completion?(granted)
       }
@@ -76,26 +74,44 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     cancelTodayReminders(on: date)
   }
 
+  /// Rolls the pending batch forward. iOS only keeps a short queue, so this runs
+  /// on launch, when the app becomes active, and when the day changes, for as long
+  /// as the switch stays on.
+  func rescheduleIfEnabled() {
+    guard isEnabled else { return }
+    scheduleUpcomingReminders(daysAhead: daysAheadToSchedule)
+  }
+
   func handleDayChangeIfNeeded() {
-    if isEnabled { scheduleUpcomingReminders(daysAhead: daysAheadToSchedule) }
+    rescheduleIfEnabled()
   }
 
   // MARK: - Scheduling
+
+  func cancelScheduledReminders() {
+    center.removePendingNotificationRequests(
+      withIdentifiers: reminderIdentifiers(daysAhead: daysAheadToSchedule))
+  }
+
+  private func reminderIdentifiers(daysAhead: Int, from now: Date = Date()) -> [String] {
+    let labels = ["breakfast", "lunch", "dinner"]
+    var ids: [String] = []
+    for offset in 0...daysAhead {
+      guard let day = calendar.date(byAdding: .day, value: offset, to: now) else { continue }
+      let dayStart = calendar.startOfDay(for: day)
+      for label in labels {
+        ids.append(id(for: label, date: dayStart))
+      }
+    }
+    return ids
+  }
 
   private func scheduleUpcomingReminders(daysAhead: Int) {
     let now = Date()
     let labels: [(String, Int)] = [("breakfast", 12), ("lunch", 17), ("dinner", 21)]
 
-    // Build identifiers for the whole window and clear them to avoid duplicates
-    var idsToClear: [String] = []
-    for offset in 0...daysAhead {
-      guard let day = calendar.date(byAdding: .day, value: offset, to: now) else { continue }
-      let dayStart = calendar.startOfDay(for: day)
-      for (label, _) in labels {
-        idsToClear.append(id(for: label, date: dayStart))
-      }
-    }
-    center.removePendingNotificationRequests(withIdentifiers: idsToClear)
+    center.removePendingNotificationRequests(
+      withIdentifiers: reminderIdentifiers(daysAhead: daysAhead, from: now))
 
     for offset in 0...daysAhead {
       guard let day = calendar.date(byAdding: .day, value: offset, to: now) else { continue }

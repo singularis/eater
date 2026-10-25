@@ -32,6 +32,7 @@ struct UserProfileView: View {
   @EnvironmentObject var languageService: LanguageService
   @ObservedObject private var appSettings = AppSettingsService.shared
   @State private var showLanguagePicker = false
+  @State private var remindersEnabled = NotificationService.shared.isEnabled
   @State private var showSignIn = false
   @ObservedObject private var themeService = ThemeService.shared
   /// Defer heavy mascot artwork so menu buttons appear immediately.
@@ -47,7 +48,17 @@ struct UserProfileView: View {
           LazyVStack(spacing: 20) {
             profileHeader
 
-            // Statistics at top of menu (before Watch me first)
+            healthSection
+
+            actionButton(
+              icon: "person.2.fill",
+              title: loc("profile.myfriends", "My friends"),
+              accessibilityHint: loc("a11y.open_myfriends", "See your friends list")
+            ) {
+              HapticsService.shared.select()
+              showMyFriends = true
+            }
+
             actionButton(
               icon: "chart.line.uptrend.xyaxis",
               title: loc("profile.viewstats", "View Statistics"),
@@ -56,51 +67,6 @@ struct UserProfileView: View {
               HapticsService.shared.select()
               showStatistics = true
             }
-
-            // Watch me first! Section
-            Button(action: {
-              HapticsService.shared.select()
-              showOnboarding = true
-            }) {
-              HStack(spacing: 12) {
-                if loadMascotArtwork, let catImage = AppMascot.cat.happyImage() {
-                  Image(catImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 44, height: 44)
-                    .clipShape(Circle())
-                } else {
-                  Image(systemName: "pawprint.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundColor(.white.opacity(0.9))
-                    .frame(width: 44, height: 44)
-                }
-
-                HStack {
-                  Image(systemName: "play.circle.fill")
-                  Text(loc("profile.watch_me_first", "Watch me first!"))
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-
-                if loadMascotArtwork, let dogImage = AppMascot.dog.happyImage() {
-                  Image(dogImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 44, height: 44)
-                    .clipShape(Circle())
-                } else {
-                  Image(systemName: "pawprint.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundColor(.white.opacity(0.9))
-                    .frame(width: 44, height: 44)
-                }
-              }
-              .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(MascotCalloutButtonStyle())
-            .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
 
             // Theme Section
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
@@ -180,103 +146,38 @@ struct UserProfileView: View {
               .tint(AppTheme.accent)
               .disabled(themeService.currentMascot == .none)
               .opacity(themeService.currentMascot == .none ? 0.5 : 1.0)
+
+              Divider().padding(.horizontal, 8)
+
+              Toggle(isOn: Binding(
+                get: { appSettings.vibrationEnabled },
+                set: { enabled in
+                  appSettings.vibrationEnabled = enabled
+                  if enabled {
+                    HapticsService.shared.foodQuality(rating: 80)
+                  }
+                }
+              )) {
+                HStack(spacing: 8) {
+                  Image(systemName: appSettings.vibrationEnabled ? "iphone.radiowaves.left.and.right" : "iphone.slash")
+                    .font(.system(size: 16))
+                    .foregroundColor(appSettings.vibrationEnabled ? AppTheme.accent : AppTheme.textSecondary)
+
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(loc("profile.vibration", "Vibration"))
+                      .font(.subheadline)
+                      .foregroundColor(AppTheme.textPrimary)
+                    Text(loc("profile.vibration.desc", "Pleasant or unpleasant buzz based on food quality"))
+                      .font(.caption2)
+                      .foregroundColor(AppTheme.textSecondary)
+                  }
+                }
+              }
+              .padding(.horizontal, 8)
+              .tint(AppTheme.accent)
             }
             .padding(.vertical, 14)
             .cardContainer(padding: 14)
-
-            // Health Section (first)
-            sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
-            
-            if hasHealthData {
-              VStack(spacing: 12) {
-                healthMetricRow(
-                  label: loc("health.height.label", "Height:"),
-                  value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
-                  color: AppTheme.textPrimary
-                )
-
-                let currentBMI: Double = {
-                  let hm = userHeight / 100.0
-                  guard hm > 0, userWeight > 0 else { return 0 }
-                  return userWeight / (hm * hm)
-                }()
-                if currentBMI > 0 {
-                  healthMetricRow(
-                    label: loc("health.bmi.label", "BMI:"),
-                    value: String(format: "%.1f", currentBMI),
-                    color: .blue
-                  )
-                }
-                
-                healthMetricRow(
-                  label: loc("profile.targetweight", "Target Weight:"),
-                  value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
-                  color: AppTheme.success
-                )
-                
-                healthMetricRow(
-                  label: loc("profile.dailycalorie", "Daily Calorie Target:"),
-                  value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
-                  color: AppTheme.warning
-                )
-                
-                Button(action: {
-                  HapticsService.shared.select()
-                  showHealthSettings = true
-                }) {
-                  Text(loc("health.update.title", "Update Health Settings"))
-                    .fontWeight(.semibold)
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .accessibilityHint(loc("a11y.open_health", "Edit health settings for recommendations"))
-              }
-              .cardContainer(padding: 14)
-            } else {
-              VStack(spacing: 12) {
-                Text(loc("profile.personalize", "Personalize Your Experience"))
-                  .font(.headline)
-                  .foregroundColor(AppTheme.textPrimary)
-                
-                Text(loc("profile.setuphealth", "Set up your health profile to get personalized calorie recommendations"))
-                  .font(.subheadline)
-                  .foregroundColor(AppTheme.textSecondary)
-                  .multilineTextAlignment(.center)
-                
-                Button(action: {
-                  HapticsService.shared.select()
-                  showHealthSettings = true
-                }) {
-                  Text(loc("health.update.title", "Setup Health Profile"))
-                    .fontWeight(.semibold)
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .accessibilityHint(loc("a11y.setup_health", "Provide data to personalize plan"))
-              }
-              .cardContainer(padding: 14)
-            }
-
-            // Actions Section
-            sectionHeader(icon: "bolt.fill", title: loc("profile.actions", "Actions"), color: AppTheme.success)
-            
-            VStack(spacing: 10) {
-              actionButton(
-                icon: "message.fill",
-                title: loc("profile.sharefeedback", "Share Feedback"),
-                accessibilityHint: loc("a11y.open_feedback", "Send feedback to the team")
-              ) {
-                HapticsService.shared.select()
-                showFeedback = true
-              }
-              
-              actionButton(
-                icon: "person.2.fill",
-                title: loc("profile.myfriends", "My friends"),
-                accessibilityHint: loc("a11y.open_myfriends", "See your friends list")
-              ) {
-                HapticsService.shared.select()
-                showMyFriends = true
-              }
-            }
 
             // Preferences Section
             sectionHeader(icon: "gearshape.fill", title: loc("profile.preferences", "Preferences"), color: Color.purple)
@@ -302,6 +203,28 @@ struct UserProfileView: View {
                 }
               }
               
+              Divider().padding(.horizontal, 8)
+
+              Toggle(isOn: Binding(
+                get: { remindersEnabled },
+                set: { desired in
+                  NotificationService.shared.requestAuthorizationAndEnable(desired) { _ in
+                    remindersEnabled = NotificationService.shared.isEnabled
+                  }
+                }
+              )) {
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(loc("profile.reminders", "Reminders"))
+                    .font(.subheadline)
+                    .foregroundColor(AppTheme.textPrimary)
+                  Text(loc("profile.reminders.desc", "Breakfast, lunch, and dinner while this is on"))
+                    .font(.caption2)
+                    .foregroundColor(AppTheme.textSecondary)
+                }
+              }
+              .padding(.horizontal, 8)
+              .tint(AppTheme.accent)
+
               Divider().padding(.horizontal, 8)
               
               // Appearance
@@ -448,6 +371,59 @@ struct UserProfileView: View {
             .padding(.vertical, 12)
             .cardContainer(padding: 12)
 
+            Button(action: {
+              HapticsService.shared.select()
+              showOnboarding = true
+            }) {
+              HStack(spacing: 12) {
+                if loadMascotArtwork, let catImage = AppMascot.cat.happyImage() {
+                  Image(catImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                } else {
+                  Image(systemName: "pawprint.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.white.opacity(0.9))
+                    .frame(width: 44, height: 44)
+                }
+
+                HStack {
+                  Image(systemName: "play.circle.fill")
+                  Text(loc("profile.watch_me_first", "Watch me first!"))
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+
+                if loadMascotArtwork, let dogImage = AppMascot.dog.happyImage() {
+                  Image(dogImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+                } else {
+                  Image(systemName: "pawprint.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.white.opacity(0.9))
+                    .frame(width: 44, height: 44)
+                }
+              }
+              .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(MascotCalloutButtonStyle())
+            .accessibilityHint(loc("a11y.open_tutorial", "Revisit onboarding tutorial"))
+
+            actionButton(
+              icon: "message.fill",
+              title: loc("profile.sharefeedback", "Share Feedback"),
+              accessibilityHint: loc("a11y.open_feedback", "Send feedback to the team")
+            ) {
+              HapticsService.shared.select()
+              showFeedback = true
+            }
+
             // Account Section
             sectionHeader(icon: "person.badge.key.fill", title: loc("profile.account", "Account"), color: Color.orange)
             
@@ -531,30 +507,38 @@ struct UserProfileView: View {
       .sheet(isPresented: $showOnboarding) {
         OnboardingView(isPresented: $showOnboarding)
           .interactiveDismissDisabled()
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showHealthSettings) {
         HealthSettingsView(isPresented: $showHealthSettings)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showStatistics) {
         StatisticsView(isPresented: $showStatistics)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showFeedback) {
         FeedbackView(isPresented: $showFeedback)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showMyFriends) {
         MyFriendsView(isPresented: $showMyFriends)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showNicknameSettings) {
         NicknameSettingsView()
           .environmentObject(authService)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showLanguagePicker) {
         LanguageSelectionSheet(isPresented: $showLanguagePicker)
           .environmentObject(languageService)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showSignIn) {
         SignInSheet()
           .environmentObject(authService)
+          .appInterfaceScale()
       }
       .onChange(of: showHealthSettings) { _, newValue in
         if !newValue {  // Sheet was dismissed
@@ -890,6 +874,76 @@ struct UserProfileView: View {
     .accessibilityHint(accessibilityHint)
   }
   
+  private var healthSection: some View {
+    VStack(spacing: 12) {
+      sectionHeader(icon: "heart.fill", title: loc("profile.health", "Health"), color: Color.pink)
+
+      if hasHealthData {
+        VStack(spacing: 12) {
+          healthMetricRow(
+            label: loc("health.height.label", "Height:"),
+            value: String(format: "%.0f", userHeight) + " \(loc("units.cm", "cm"))",
+            color: AppTheme.textPrimary
+          )
+
+          let currentBMI: Double = {
+            let hm = userHeight / 100.0
+            guard hm > 0, userWeight > 0 else { return 0 }
+            return userWeight / (hm * hm)
+          }()
+          if currentBMI > 0 {
+            healthMetricRow(
+              label: loc("health.bmi.label", "BMI:"),
+              value: String(format: "%.1f", currentBMI),
+              color: AppTheme.textPrimary
+            )
+          }
+
+          healthMetricRow(
+            label: loc("profile.targetweight", "Target Weight:"),
+            value: String(format: "%.1f", (userTargetWeight > 0 ? userTargetWeight : userOptimalWeight)) + " \(loc("units.kg", "kg"))",
+            color: AppTheme.textPrimary
+          )
+
+          healthMetricRow(
+            label: loc("profile.dailycalorie", "Daily Calorie Target:"),
+            value: "\(userRecommendedCalories) \(loc("units.kcal", "kcal"))",
+            color: AppTheme.textPrimary
+          )
+
+          healthSettingsRow
+        }
+        .cardContainer(padding: 14)
+      } else {
+        VStack(spacing: 0) {
+          healthSettingsRow
+        }
+        .cardContainer(padding: 14)
+      }
+    }
+  }
+
+  private var healthSettingsRow: some View {
+    Button {
+      HapticsService.shared.select()
+      showHealthSettings = true
+    } label: {
+      HStack {
+        Text(loc("nav.health_settings", "Health Settings"))
+          .font(.subheadline)
+          .foregroundColor(AppTheme.textPrimary)
+        Spacer()
+        Image(systemName: "chevron.right")
+          .font(.caption.weight(.semibold))
+          .foregroundColor(AppTheme.textSecondary)
+      }
+      .padding(.horizontal, 4)
+      .padding(.vertical, 4)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+  }
+
   private func healthMetricRow(label: String, value: String, color: Color) -> some View {
     HStack {
       Text(label)
