@@ -124,19 +124,15 @@ struct HealthDisclaimerView: View {
           .background(AppTheme.surface)
           .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
 
-          Divider()
-            .padding(.vertical, 12)
-
           Text(loc("disc.title", "Health Information Disclaimer"))
-            .font(.title2)
-            .fontWeight(.bold)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption.weight(.semibold))
+            .foregroundColor(AppTheme.textSecondary)
+            .padding(.top, 28)
 
           Group {
             Text(loc("disc.section.notice", "Important Notice"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(
               loc(
@@ -144,15 +140,14 @@ struct HealthDisclaimerView: View {
                 "This app provides general nutritional information and dietary suggestions for educational purposes only. The information is not intended to replace professional medical advice, diagnosis, or treatment."
               )
             )
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Group {
             Text(loc("disc.section.medical", "Medical Disclaimer"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(
               loc(
@@ -160,15 +155,14 @@ struct HealthDisclaimerView: View {
                 "Always consult with a qualified healthcare provider before making any changes to your diet or nutrition plan, especially if you have medical conditions, allergies, or dietary restrictions."
               )
             )
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Group {
             Text(loc("disc.section.sources", "Data Sources & Citations"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 12) {
               CitationView(
@@ -236,9 +230,8 @@ struct HealthDisclaimerView: View {
 
           Group {
             Text(loc("disc.section.accuracy", "Accuracy Disclaimer"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(
               loc(
@@ -246,15 +239,14 @@ struct HealthDisclaimerView: View {
                 "Nutritional estimates are based on visual analysis and may not be completely accurate. Actual nutritional content may vary based on preparation methods, portion sizes, and ingredient variations."
               )
             )
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Group {
             Text(loc("disc.section.features", "App Features & Limitations"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 8) {
               Text(
@@ -284,8 +276,8 @@ struct HealthDisclaimerView: View {
                   "• Personalized Plans: Optional BMR-based calorie recommendations using user health data"
                 ))
             }
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Text(lastUpdatedText)
@@ -297,7 +289,7 @@ struct HealthDisclaimerView: View {
         }
       }
       .onAppear(perform: showCachedExplanation)
-      .navigationTitle(loc("disc.nav", "Health Information"))
+      .navigationTitle(loc("health.score.section.title", "Your Health Score"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
@@ -362,13 +354,12 @@ struct CitationView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(loc(titleKey, titleFallback))
-        .font(.subheadline)
-        .fontWeight(.medium)
-        .foregroundColor(AppTheme.textPrimary)
+        .font(.caption.weight(.medium))
+        .foregroundColor(AppTheme.textSecondary)
 
       Text(loc(sourceKey, sourceFallback))
-        .font(.caption)
-        .foregroundColor(AppTheme.accent)
+        .font(.caption2)
+        .foregroundColor(AppTheme.textSecondary)
         .onTapGesture {
           if let link = URL(string: urlString) {
             UIApplication.shared.open(link)

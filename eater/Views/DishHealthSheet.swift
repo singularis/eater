@@ -35,32 +35,21 @@ struct DishHealthSheet: View {
                 .foregroundColor(AppTheme.textPrimary)
             }
 
-            Divider()
-              .padding(.vertical, 8)
-
-            Text(loc("disc.title", "Health Information Disclaimer"))
-              .font(.title3.weight(.bold))
-              .foregroundColor(AppTheme.textPrimary)
-
-            Text(loc("disc.section.notice", "Important Notice"))
-              .font(.headline.weight(.semibold))
-              .foregroundColor(AppTheme.textPrimary)
-            Text(loc(
-              "disc.notice.text",
-              "This app provides general nutritional information and dietary suggestions for educational purposes only. The information is not intended to replace professional medical advice, diagnosis, or treatment."
-            ))
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
-
-            Text(loc("disc.section.medical", "Medical Disclaimer"))
-              .font(.headline.weight(.semibold))
-              .foregroundColor(AppTheme.textPrimary)
-            Text(loc(
-              "disc.medical.text",
-              "Always consult with a qualified healthcare provider before making any changes to your diet or nutrition plan, especially if you have medical conditions, allergies, or dietary restrictions."
-            ))
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            VStack(alignment: .leading, spacing: 6) {
+              Text(loc("disc.title", "Health Information Disclaimer"))
+                .font(.caption.weight(.semibold))
+              Text(loc(
+                "disc.notice.text",
+                "This app provides general nutritional information and dietary suggestions for educational purposes only. The information is not intended to replace professional medical advice, diagnosis, or treatment."
+              ))
+              Text(loc(
+                "disc.medical.text",
+                "Always consult with a qualified healthcare provider before making any changes to your diet or nutrition plan, especially if you have medical conditions, allergies, or dietary restrictions."
+              ))
+            }
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
+            .padding(.top, 28)
           }
           .padding(16)
           .frame(maxWidth: .infinity, alignment: .leading)

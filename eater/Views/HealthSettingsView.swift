@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HealthSettingsView: View {
   @Binding var isPresented: Bool
+  var onSaved: (() -> Void)? = nil
   @ObservedObject private var appleHealth = AppleHealthService.shared
   @AppStorage("health_units_imperial") private var imperial = false
 
@@ -745,6 +746,7 @@ struct HealthSettingsView: View {
       goalMonths: plan.months,
       recommendedCalories: plan.calories
     ) { _ in }
+    onSaved?()
     isPresented = false
   }
 }

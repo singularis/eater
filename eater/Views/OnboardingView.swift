@@ -53,6 +53,12 @@ struct OnboardingView: View {
   @State private var isApplyingLanguage: Bool = false
   @State private var showFeedback: Bool = false
   @State private var platePageIndex: Int = 0
+  @State private var showPlanSetup = false
+  @State private var continueAfterPlanSetup = false
+  @State private var introTypedText: String = ""
+  @State private var introTypingIndex: Int = 0
+  @State private var introTypingTimer: Timer?
+  @State private var isIntroPulsing: Bool = false
   
   // Nickname State
   @AppStorage("user_nickname") private var savedNickname: String = ""
@@ -325,10 +331,17 @@ struct OnboardingView: View {
     }
   }
 
+  private var introFullText: String {
+    shown(
+      "onboarding.intro.full",
+      "Hello and welcome to Eateria!\nWe’re here to help you build a healthier lifestyle. Balance your meals, track daily activity, and work toward your personal goals step by step.\n\nWe’ll support you along the way.\nLet’s begin your journey to feeling your best!"
+    )
+  }
+
   private var introStepView: some View {
     ScrollView(showsIndicators: false) {
-      VStack(spacing: 20) {
-        Spacer().frame(height: 8)
+      VStack(spacing: 24) {
+        Spacer().frame(height: 24)
 
         Group {
           if UIImage(named: "onboarding_intro_pets") != nil {
@@ -340,44 +353,67 @@ struct OnboardingView: View {
           }
         }
         .scaledToFill()
-        .frame(width: 168, height: 168)
+        .frame(width: 230, height: 230)
         .clipShape(Circle())
-        .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 6)
-
-        stepHeader(
-          shown("onboarding.intro.title", "Welcome to Eateria"),
-          shown("onboarding.intro.lead", "Photograph a meal. We log the calories and a health score.")
+        .shadow(color: Color.black.opacity(0.25), radius: 14, x: 0, y: 8)
+        .scaleEffect(isIntroPulsing ? 1.05 : 0.97)
+        .animation(
+          AppSettingsService.shared.reduceMotion
+            ? .none
+            : .easeInOut(duration: 1.6).repeatForever(autoreverses: true),
+          value: isIntroPulsing
         )
 
-        VStack(alignment: .leading, spacing: 12) {
-          introPoint("camera.fill", shown("onboarding.intro.point.photo", "Snap the plate from the blue camera button."))
-          introPoint("leaf.fill", shown("onboarding.intro.point.score", "A higher score means a more balanced plate."))
-          introPoint("heart.fill", shown("onboarding.intro.point.habit", "Keep logging, even on a less healthy day."))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
-        .padding(.horizontal, 24)
+        Text(introTypedText.isEmpty ? " " : introTypedText)
+          .font(.system(size: 19, weight: .regular, design: .monospaced))
+          .foregroundColor(AppTheme.textPrimary)
+          .multilineTextAlignment(.leading)
+          .lineSpacing(5)
+          .padding(.horizontal, 20)
+          .frame(maxWidth: .infinity, alignment: .leading)
 
-        Spacer().frame(height: 8)
+        Spacer(minLength: 16)
       }
+      .padding(.bottom, 40)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .onAppear {
+      startIntroTyping()
+      isIntroPulsing = !AppSettingsService.shared.reduceMotion
+    }
+    .onDisappear {
+      stopIntroTyping(reset: true)
+      isIntroPulsing = false
     }
   }
 
-  private func introPoint(_ icon: String, _ text: String) -> some View {
-    HStack(alignment: .top, spacing: 12) {
-      Image(systemName: icon)
-        .font(.system(size: 15, weight: .semibold))
-        .foregroundColor(AppTheme.accent)
-        .frame(width: 28, height: 28)
-        .background(AppTheme.accent.opacity(0.12))
-        .clipShape(Circle())
-      Text(text)
-        .font(.subheadline)
-        .foregroundColor(AppTheme.textPrimary)
-        .fixedSize(horizontal: false, vertical: true)
-      Spacer(minLength: 0)
+  private func startIntroTyping() {
+    stopIntroTyping(reset: true)
+    let text = introFullText
+    if AppSettingsService.shared.reduceMotion {
+      introTypedText = text
+      introTypingIndex = text.count
+      return
+    }
+    introTypedText = ""
+    introTypingIndex = 0
+    introTypingTimer = Timer.scheduledTimer(withTimeInterval: 0.06, repeats: true) { timer in
+      guard introTypingIndex < text.count else {
+        timer.invalidate()
+        return
+      }
+      let idx = text.index(text.startIndex, offsetBy: introTypingIndex)
+      introTypedText.append(text[idx])
+      introTypingIndex += 1
+    }
+  }
+
+  private func stopIntroTyping(reset: Bool) {
+    introTypingTimer?.invalidate()
+    introTypingTimer = nil
+    if reset {
+      introTypedText = ""
+      introTypingIndex = 0
     }
   }
 
@@ -447,7 +483,7 @@ struct OnboardingView: View {
       VStack(spacing: 12) {
         stepHeader(
           shown("onboarding.pets.title", "Meet Your Pet Companion"),
-          shown("onboarding.pets.subtitle", "Tap a companion. It reacts when you log food. Or keep the simple look.")
+          shown("onboarding.pets.subtitle", "Pick a furry friend that will motivate you every day!")
         )
 
         mascotChoice(
@@ -550,11 +586,12 @@ struct OnboardingView: View {
                   Divider().padding(.leading, 56)
                 }
                 HStack(alignment: .top, spacing: 12) {
+                  let tint = extraTint(tool.icon)
                   Image(systemName: tool.icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(AppTheme.accent)
+                    .foregroundColor(tint)
                     .frame(width: 32, height: 32)
-                    .background(AppTheme.accent.opacity(0.12))
+                    .background(tint.opacity(0.14))
                     .clipShape(Circle())
                   VStack(alignment: .leading, spacing: 2) {
                     Text(shown(tool.titleKey, tool.title))
@@ -582,12 +619,36 @@ struct OnboardingView: View {
     }
   }
 
+  private func extraTint(_ icon: String) -> Color {
+    switch icon {
+    case "hand.tap.fill": return .orange
+    case "cup.and.saucer.fill": return AppTheme.warning
+    case "calendar": return .red
+    case "camera.viewfinder": return .purple
+    case "figure.run": return .orange
+    case "wineglass.fill": return .pink
+    case "heart.fill": return AppTheme.success
+    case "lightbulb.fill": return AppTheme.warning
+    case "person.2.fill": return .blue
+    case "chart.bar.fill": return AppTheme.accent
+    default: return AppTheme.accent
+    }
+  }
+
   private var planStepView: some View {
     ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {
+        Image(systemName: "target")
+          .font(.system(size: 40, weight: .bold))
+          .foregroundColor(AppTheme.success)
+          .frame(width: 96, height: 96)
+          .background(AppTheme.success.opacity(0.14))
+          .clipShape(Circle())
+          .padding(.top, 8)
+
         stepHeader(
           shown("onboarding.plan.title", "Your Personal Plan"),
-          shown("onboarding.plan.subtitle", "Set a safe goal and let the app build a realistic path for you.")
+          shown("onboarding.plan.subtitle", "Ready to set it up now? Your goal and activity become a safe daily plan.")
         )
 
         VStack(alignment: .leading, spacing: 14) {
@@ -613,13 +674,29 @@ struct OnboardingView: View {
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
         .padding(.horizontal, 24)
 
-        Text(shown("onboarding.plan.hint", "Set this any time in Profile, Health."))
+        Button {
+          HapticsService.shared.select()
+          showPlanSetup = true
+        } label: {
+          Text(shown("onboarding.plan.setup", "Set up now"))
+            .font(.body.weight(.semibold))
+        }
+        .buttonStyle(PrimaryButtonStyle())
+        .padding(.horizontal, 24)
+
+        Text(shown("onboarding.plan.hint", "You can also open it later in Profile, Health."))
           .font(.subheadline)
           .foregroundColor(AppTheme.textSecondary)
           .multilineTextAlignment(.center)
           .padding(.horizontal, 24)
           .padding(.bottom, 12)
       }
+    }
+    .sheet(isPresented: $showPlanSetup, onDismiss: continueOnboardingAfterPlan) {
+      HealthSettingsView(isPresented: $showPlanSetup, onSaved: {
+        continueAfterPlanSetup = true
+      })
+      .appInterfaceScale()
     }
   }
 
@@ -665,12 +742,17 @@ struct OnboardingView: View {
           }
         }
 
-        Text(shown("onboarding.plates.motivation.desc", "When the score goes up, your plate is more balanced. Can you nudge today's score a little higher?"))
-          .font(.subheadline)
-          .foregroundColor(AppTheme.textSecondary)
-          .multilineTextAlignment(.center)
-          .padding(.horizontal, 24)
-          .padding(.bottom, 12)
+        VStack(spacing: 6) {
+          Text(shown("onboarding.plates.motivation.title", "Aim for Your Best Score"))
+            .font(.body.weight(.semibold))
+            .foregroundColor(AppTheme.textPrimary)
+          Text(shown("onboarding.plates.motivation.desc", "When the score goes up, your plate is more balanced. Can you nudge today's score a little higher?"))
+            .font(.subheadline)
+            .foregroundColor(AppTheme.textPrimary)
+            .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 12)
       }
     }
   }
@@ -1067,6 +1149,13 @@ struct OnboardingView: View {
       .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
       .padding(.horizontal, 32)
     }
+  }
+
+  private func continueOnboardingAfterPlan() {
+    guard continueAfterPlanSetup else { return }
+    continueAfterPlanSetup = false
+    guard steps[stepIndex].anchor == "plan", stepIndex < steps.count - 1 else { return }
+    moveToStep(stepIndex + 1)
   }
 
   private func goBack() {
