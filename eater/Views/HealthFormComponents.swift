@@ -202,9 +202,9 @@ struct AppleHealthImportButton: View {
       }
       .padding(12)
       .background(AppTheme.surfaceAlt)
-      .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
       .overlay(
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .stroke(AppTheme.divider, lineWidth: 1)
       )
     }

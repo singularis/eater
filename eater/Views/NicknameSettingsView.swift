@@ -90,9 +90,9 @@ struct NicknameSettingsView: View {
                   .textFieldStyle(.plain)
                   .padding(16)
                   .background(AppTheme.surface)
-                  .cornerRadius(AppTheme.cornerRadius)
+                  .appCorner(AppTheme.cornerRadius)
                   .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
                       .stroke(errorMessage.isEmpty ? AppTheme.divider : AppTheme.danger, lineWidth: 1)
                   )
                   .autocapitalization(.none)
@@ -140,9 +140,9 @@ struct NicknameSettingsView: View {
               .padding(12)
               .frame(maxWidth: .infinity, alignment: .leading)
               .background(AppTheme.warning.opacity(0.1))
-              .cornerRadius(AppTheme.smallRadius)
+              .appCorner(AppTheme.smallRadius)
               .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+                RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
                   .stroke(AppTheme.warning.opacity(0.3), lineWidth: 1)
               )
               .padding(.horizontal, 20)
@@ -184,11 +184,12 @@ struct NicknameSettingsView: View {
         guard let newItem else { return }
         Task { await handlePickedPhoto(newItem) }
       }
-      .alert(alertTitle, isPresented: $showAlert) {
-        Button(loc("common.ok", "OK")) {}
-      } message: {
-        Text(alertMessage)
-      }
+      .scaledNotice(
+        alertTitle,
+        isPresented: $showAlert,
+        message: alertMessage,
+        actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+      )
     }
   }
 
@@ -267,9 +268,9 @@ struct NicknameSettingsView: View {
         .textFieldStyle(.plain)
         .padding(16)
         .background(AppTheme.surface)
-        .cornerRadius(AppTheme.cornerRadius)
+        .appCorner(AppTheme.cornerRadius)
         .overlay(
-          RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+          RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
             .stroke(AppTheme.divider, lineWidth: 1)
         )
         .autocapitalization(capitalizeWords ? .words : .none)

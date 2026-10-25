@@ -6,12 +6,27 @@ struct CalendarDatePickerView: View {
   let onDateSelected: (String) -> Void
 
   var body: some View {
-    VStack(spacing: 20) {
+    ScrollView {
+    VStack(spacing: 16) {
       Text(loc("calendar.selectdate", "Select Date"))
         .font(.title2)
         .fontWeight(.bold)
         .foregroundColor(AppTheme.textPrimary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
         .padding(.top)
+
+      Text(loc(
+        "calendar.explain",
+        "Pick a past day to see the meals you logged. You can also add a meal you forgot."
+      ))
+      .font(.subheadline)
+      .foregroundColor(AppTheme.textSecondary)
+      .fixedSize(horizontal: false, vertical: true)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(16)
+      .appSurface(cornerRadius: AppTheme.cornerRadius)
+      .padding(.horizontal)
 
       DatePicker(
         loc("calendar.selectdate", "Select Date"),
@@ -22,7 +37,7 @@ struct CalendarDatePickerView: View {
       .datePickerStyle(GraphicalDatePickerStyle())
       .frame(height: 400)  // Fixed height to prevent UICalendarView warnings
       .background(AppTheme.surface)
-      .cornerRadius(AppTheme.cornerRadius)
+      .appCorner(AppTheme.cornerRadius)
       .padding()
       .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
       .environment(
@@ -54,6 +69,8 @@ struct CalendarDatePickerView: View {
       }
       .padding(.horizontal)
       .padding(.bottom, 20)
+    }
+    .frame(maxWidth: .infinity)
     }
     .background(AppTheme.backgroundGradient)
     .frame(maxWidth: .infinity, maxHeight: .infinity)

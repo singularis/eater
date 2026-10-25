@@ -35,6 +35,10 @@ struct ContentView: View {
   @State private var selectedDate = Date()
   @State private var showCamera = false
   @State private var showLimitsAlert = false
+  @State private var showCaloriesLeftInfo = false
+  @State private var openLimitsAfterInfo = false
+  @State private var openHealthAfterInfo = false
+  @State private var showHealthSettings = false
   @State private var tempSoftLimit = ""
   @State private var tempHardLimit = ""
   @State private var softLimit = 1900
@@ -95,8 +99,8 @@ struct ContentView: View {
 
   // Weight input states
   @State private var showWeightActionSheet = false
-  @State private var showManualWeightEntry = false
   @State private var manualWeightInput = ""
+  @State private var openWeightCameraAfterPrompt = false
   @State private var pendingWeightPhotoCheck = false  // Flag to check motivation after weight photo
 
   // Daily refresh states
@@ -157,13 +161,12 @@ struct ContentView: View {
 
       // Main screen is not inside a page TabView, so horizontal swipes
       // are ours (Statistics / Camera) instead of a competing pager.
-      VStack(spacing: 2) {
+      VStack(spacing: homeRowGap) {
         topBarView
         if authService.isAnonymous {
           guestLoginInvite
         }
         statsButtonsView
-          .frame(height: 60)
         if hasMacrosData {
           macrosLineView
         }
@@ -260,6 +263,31 @@ struct ContentView: View {
         }
       }
       .padding()
+      .sheet(isPresented: $showCaloriesLeftInfo, onDismiss: {
+        if openLimitsAfterInfo {
+          openLimitsAfterInfo = false
+          tempSoftLimit = String(softLimit)
+          tempHardLimit = String(hardLimit)
+          DispatchQueue.main.async { showLimitsAlert = true }
+        } else if openHealthAfterInfo {
+          openHealthAfterInfo = false
+          DispatchQueue.main.async { showHealthSettings = true }
+        }
+      }) {
+        CaloriesLeftSheet(
+          remaining: caloriesRemaining,
+          onSetLimits: { openLimitsAfterInfo = true },
+          onCalculateLimits: { openHealthAfterInfo = true }
+        )
+      }
+      .sheet(isPresented: $showHealthSettings, onDismiss: {
+        let w = UserDefaults.standard.double(forKey: "userWeight")
+        if w > 0 { personWeight = Float(w) }
+        loadLimitsFromUserDefaults()
+      }) {
+        HealthSettingsView(isPresented: $showHealthSettings)
+          .appInterfaceScale()
+      }
       .sheet(isPresented: $showLimitsAlert) {
         CalorieLimitsEditView(
           softLimitText: $tempSoftLimit,
@@ -407,31 +435,72 @@ struct ContentView: View {
     .id(languageService.currentCode)
   }
 
-  private var topBarView: some View {
-    ZStack {
-      dateDisplayView
+  /// Once text is large, weight and type shrink so calories left can stay full size.
+  private var largeTextLayout: Bool { appSettings.largeTextLayout }
 
-      HStack {
-        HStack(spacing: 24) {
-          profileButton
-          alcoholButton
+  /// Extra large is 160%. Icons shift sideways and sit closer so the date can scale on row 1.
+  private var extraLargeText: Bool { appSettings.extraLargeText }
+
+  /// 0 at 80%, 1 at 160%. Alcohol slides left and the score slides right as this grows.
+  private var scaleTravel: CGFloat {
+    let t = (appSettings.fontScale - 0.80) / 0.80
+    return CGFloat(min(1, max(0, t)))
+  }
+
+  // Home grid tokens. All sizes are before the window scale, so they grow with the slider once.
+  // Every control in the top two rows shares one height, one corner, and one gap.
+
+  /// Height of header circles, the date chip, and the stat tiles.
+  /// Shrinks a little at high scale so four circles and the date still fit one row.
+  private var homeControlHeight: CGFloat { 44 - scaleTravel * 10 }
+  private var homeCornerRadius: CGFloat { AppTheme.smallRadius }
+  /// Vertical gap between home rows.
+  private var homeRowGap: CGFloat { 8 }
+
+  private var headerIconSide: CGFloat { homeControlHeight }
+  /// Pairs pull together as text grows, so alcohol and the score slide toward the edges.
+  private var headerIconSpacing: CGFloat { 24 - scaleTravel * 20 }
+  private var headerSideGap: CGFloat { 4 }
+  private var headerGlyph: CGFloat { headerIconSide * 18 / 44 }
+  private var headerPhoto: CGFloat { headerIconSide * 30 / 44 }
+  private var headerRing: CGFloat { headerIconSide - 8 }
+  private var dateFontSize: CGFloat { 15 }
+
+  private var dateFullText: String {
+    isViewingCustomDate ? currentViewingDate : localizedDateFormatter.string(from: date)
+  }
+
+  private var dateShortText: String {
+    let df = DateFormatter()
+    df.locale = Locale(identifier: languageService.currentCode)
+    df.setLocalizedDateFormatFromTemplate("dMMM")
+    return df.string(from: isViewingCustomDate ? selectedDate : date)
+  }
+
+  private var topBarView: some View {
+    HStack(spacing: 0) {
+      HStack(spacing: headerIconSpacing) {
+        profileButton
+        alcoholButton
+      }
+      Spacer(minLength: headerSideGap)
+      dateDisplayView
+        .layoutPriority(1)
+      Spacer(minLength: headerSideGap)
+      HStack(spacing: headerIconSpacing) {
+        #if DEBUG
+        if useDevEnvironment {
+          Text("DEV")
+            .font(.system(size: 10, weight: .heavy))
+            .foregroundColor(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.red)
+            .cornerRadius(4)
         }
-        Spacer()
-        HStack(spacing: 24) {
-          #if DEBUG
-          if useDevEnvironment {
-            Text("DEV")
-              .font(.system(size: 10, weight: .heavy))
-              .foregroundColor(.white)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 2)
-              .background(Color.red)
-              .cornerRadius(4)
-          }
-          #endif
-          healthInfoButton
-          sportButton
-        }
+        #endif
+        healthInfoButton
+        sportButton
       }
     }
   }
@@ -458,13 +527,11 @@ struct ContentView: View {
           .font(.system(size: 12, weight: .semibold))
           .foregroundColor(AppTheme.textSecondary)
       }
-      .padding(.horizontal, 14)
-      .padding(.vertical, 10)
-      .appSurface()
+      .padding(.horizontal, 12)
+      .padding(.vertical, 8)
+      .appSurface(cornerRadius: homeCornerRadius)
     }
     .buttonStyle(PressScaleButtonStyle())
-    .padding(.top, 6)
-    .padding(.bottom, 4)
     .accessibilityHint(loc("login.scan_prompt_message", "Please login to Google if you are ready or want to recover past food."))
   }
 
@@ -477,14 +544,14 @@ struct ContentView: View {
         ProfileImageView(
           localImage: authService.isAnonymous ? nil : profilePhotoStore.image,
           profilePictureURL: authService.isAnonymous ? nil : authService.userProfilePictureURL,
-          size: 30,
+          size: headerPhoto,
           fallbackIconColor: authService.isAnonymous ? AppTheme.trialUsage : AppTheme.textPrimary,
           userName: authService.isAnonymous ? nil : authService.userName,
           userEmail: authService.isAnonymous ? nil : authService.userEmail
         )
         .clipShape(Circle())
       }
-      .frame(width: 44, height: 44)
+      .frame(width: headerIconSide, height: headerIconSide)
       .appCircleSurface()
       .contentShape(Circle())
     }
@@ -497,10 +564,10 @@ struct ContentView: View {
     }) {
       ZStack {
         Image(systemName: themeService.icon(for: "wineglass"))
-          .font(.system(size: 18, weight: .semibold))
+          .font(.system(size: headerGlyph, weight: .semibold))
           .foregroundColor(alcoholIconColor)
       }
-      .frame(width: 44, height: 44)
+      .frame(width: headerIconSide, height: headerIconSide)
       .appCircleSurface()
       .contentShape(Circle())
     }
@@ -511,42 +578,55 @@ struct ContentView: View {
     }
   }
 
+  /// Full date when it fits, "25 Oct" when it does not, then the short date scaled down.
   private var dateDisplayView: some View {
-    VStack(spacing: 4) {
-      HStack(spacing: 8) {
-        VStack(spacing: 2) {
-          Text(isViewingCustomDate ? currentViewingDate : localizedDateFormatter.string(from: date))
-            .font(.system(size: 15, weight: .bold, design: .rounded))
-            .foregroundColor(AppTheme.textPrimary)
+    ViewThatFits(in: .horizontal) {
+      dateChip(dateFullText, shrink: false)
+      dateChip(dateShortText, shrink: false)
+      dateChip(dateShortText, shrink: true)
+    }
+  }
 
-          if isViewingCustomDate {
-            Text(loc("date.custom", "Custom Date"))
-              .font(.system(size: 10, weight: .medium, design: .rounded))
-              .foregroundColor(AppTheme.warning)
-          }
-        }
-        .onTapGesture {
-          // Prevent opening calendar while loading data
-          guard !isLoadingData else { return }
-          checkTutorial(key: "hasSeenCalendarTutorial", action: .calendar)
-        }
+  private func dateChip(_ title: String, shrink: Bool) -> some View {
+    HStack(spacing: 6) {
+      VStack(spacing: 0) {
+        Text(title)
+          .font(.system(size: dateFontSize, weight: .bold, design: .rounded))
+          .foregroundColor(isViewingCustomDate ? AppTheme.warning : AppTheme.textPrimary)
+          .lineLimit(1)
+          .minimumScaleFactor(shrink ? 0.75 : 1)
 
         if isViewingCustomDate {
-          Button(action: returnToToday) {
-            Text(loc("date.today", "Today"))
-              .font(.system(size: 12, weight: .semibold, design: .rounded))
-              .foregroundColor(Color.black.opacity(0.9))
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(AppTheme.accent.opacity(0.9))
-              .cornerRadius(AppTheme.smallRadius)
-          }
-          .simultaneousGesture(TapGesture().onEnded { HapticsService.shared.select() })
+          Text(loc("date.custom", "Custom Date"))
+            .font(.system(size: 9, weight: .medium, design: .rounded))
+            .foregroundColor(AppTheme.warning)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
         }
       }
+      .onTapGesture {
+        // Prevent opening calendar while loading data
+        guard !isLoadingData else { return }
+        checkTutorial(key: "hasSeenCalendarTutorial", action: .calendar)
+      }
+
+      if isViewingCustomDate {
+        Button(action: returnToToday) {
+          Text(loc("date.today", "Today"))
+            .font(.system(size: 12, weight: .semibold, design: .rounded))
+            .foregroundColor(Color.black.opacity(0.9))
+            .lineLimit(1)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(AppTheme.accent.opacity(0.9))
+            .clipShape(RoundedRectangle(cornerRadius: homeCornerRadius / 2, style: .continuous))
+        }
+        .simultaneousGesture(TapGesture().onEnded { HapticsService.shared.select() })
+      }
     }
-    .padding()
-    .appSurface()
+    .padding(.horizontal, 10)
+    .frame(height: homeControlHeight)
+    .appSurface(cornerRadius: homeCornerRadius)
   }
 
   private var productTimes: [Int64] {
@@ -638,22 +718,22 @@ struct ContentView: View {
               .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
               .rotationEffect(.degrees(-90))
             Text("\(score)")
-              .font(.system(size: 14, weight: .bold, design: .rounded))
+              .font(.system(size: headerRing * 14 / 36, weight: .bold, design: .rounded))
               .foregroundColor(color)
               .minimumScaleFactor(0.7)
           }
-          .frame(width: 36, height: 36)
+          .frame(width: headerRing, height: headerRing)
         } else if dayScoreLoading {
           ProgressView()
             .controlSize(.regular)
-            .frame(width: 36, height: 36)
+            .frame(width: headerRing, height: headerRing)
         } else {
           Text("-")
-            .font(.system(size: 16, weight: .bold, design: .rounded))
+            .font(.system(size: headerGlyph, weight: .bold, design: .rounded))
             .foregroundColor(AppTheme.textSecondary)
         }
       }
-      .frame(width: 44, height: 44)
+      .frame(width: headerIconSide, height: headerIconSide)
       .appCircleSurface()
       .contentShape(Circle())
     }
@@ -666,10 +746,10 @@ struct ContentView: View {
     }) {
       ZStack {
         Image(systemName: themeService.icon(for: "figure.run"))
-          .font(.system(size: 18, weight: .semibold))
+          .font(.system(size: headerGlyph, weight: .semibold))
           .foregroundColor(sportIconColor)
       }
-      .frame(width: 44, height: 44)
+      .frame(width: headerIconSide, height: headerIconSide)
       .appCircleSurface()
       .contentShape(Circle())
     }
@@ -681,12 +761,47 @@ struct ContentView: View {
     }
   }
 
+  private var caloriesRemaining: Int {
+    getAdjustedSoftLimit() - caloriesLeft
+  }
+
+  /// Shared row. Sizes are before the window scale, so text grows with the slider exactly once.
+  private var statNumberSize: CGFloat { 22 }
+  private var statLabelSize: CGFloat { 18 }
+  private var statIconSize: CGFloat { 16 }
+  private var statIconGap: CGFloat { 3 }
+  private var statPadV: CGFloat { 4 }
+  private var statPadH: CGFloat { largeTextLayout ? 3 : 6 }
+  private var statRowHeight: CGFloat { homeControlHeight }
+  private var statGap: CGFloat { largeTextLayout ? 5 : 12 }
+
+  /// Rounded semibold glyphs are about 0.6 em wide.
+  private func statTextWidth(_ text: String, size: CGFloat) -> CGFloat {
+    CGFloat(text.count) * size * 0.6
+  }
+
+  /// Each tile gets the width its text needs plus a thin pad, then the leftover is shared.
+  /// If the row is short, all three shrink together and the text scales down to fit.
   private var statsButtonsView: some View {
-    HStack(spacing: 12) {
-      weightButton
-      caloriesButton
-      typeButton
+    let weightNeed = statTextWidth(String(format: "%.1f", personWeight), size: statNumberSize)
+      + statPadH * 2
+    let caloriesNeed = statTextWidth("\(caloriesRemaining)", size: statNumberSize)
+      + statIconSize + statIconGap + statPadH * 2
+    let typeNeed = statTextWidth(loc("type_food.button", "Type"), size: statLabelSize)
+      + statIconSize + statIconGap + statPadH * 2
+    return GeometryReader { proxy in
+      let available = proxy.size.width - statGap * 2
+      let needed = weightNeed + caloriesNeed + typeNeed
+      let fits = needed <= available
+      let extra = fits ? (available - needed) / 3 : 0
+      let squeeze = fits ? 1 : available / needed
+      HStack(spacing: statGap) {
+        weightButton.frame(width: weightNeed * squeeze + extra, height: statRowHeight)
+        caloriesButton.frame(width: caloriesNeed * squeeze + extra, height: statRowHeight)
+        typeButton.frame(width: typeNeed * squeeze + extra, height: statRowHeight)
+      }
     }
+    .frame(height: statRowHeight)
     .frame(maxWidth: .infinity)
   }
 
@@ -700,30 +815,28 @@ struct ContentView: View {
             .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textPrimary))
         } else {
           Text(String(format: "%.1f", personWeight))
-            .font(.system(size: 22, weight: .semibold, design: .rounded))
+            .font(.system(size: statNumberSize, weight: .semibold, design: .rounded))
             .foregroundColor(AppTheme.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
         }
       }
-      .frame(maxWidth: .infinity)
-      .padding(8)
-      .appSurface()
+      .padding(.horizontal, statPadH)
+      .padding(.vertical, statPadV)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .appSurface(cornerRadius: homeCornerRadius)
     }
-    .confirmationDialog(
-      loc("weight.record.title", "Record Weight"), isPresented: $showWeightActionSheet,
-      titleVisibility: .visible
-    ) {
-      Button(loc("weight.take_photo", "Take scale photo")) {
-        HapticsService.shared.select()
-        showCamera = true
-      }
-      Button(loc("weight.manual_entry", "Manual Entry")) {
-        HapticsService.shared.select()
-        manualWeightInput = ""
-        showManualWeightEntry = true
-      }
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-    } message: {
-      Text(loc("weight.record.msg", "Choose how you'd like to record your weight"))
+    .buttonStyle(.plain)
+    .sheet(isPresented: $showWeightActionSheet, onDismiss: {
+      guard openWeightCameraAfterPrompt else { return }
+      openWeightCameraAfterPrompt = false
+      DispatchQueue.main.async { showCamera = true }
+    }) {
+      WeightPromptSheet(
+        weightText: $manualWeightInput,
+        onPhoto: { openWeightCameraAfterPrompt = true },
+        onSubmit: submitManualWeight
+      )
     }
     .sheet(isPresented: $showCamera) {
       WeightCameraView(
@@ -749,59 +862,63 @@ struct ContentView: View {
       )
       .appInterfaceScale()
     }
-    .alert(loc("weight.enter.title", "Enter Weight"), isPresented: $showManualWeightEntry) {
-      TextField(loc("weight.enter.placeholder", "Weight (kg)"), text: $manualWeightInput)
-        .keyboardType(.decimalPad)
-      Button(loc("common.save", "Submit")) {
-        submitManualWeight()
-      }
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-    } message: {
-      Text(loc("weight.enter.msg", "Enter your weight in kilograms"))
-    }
   }
 
   private var caloriesButton: some View {
-    let adjustedSoftLimit = getAdjustedSoftLimit()
-    let remaining = adjustedSoftLimit - caloriesLeft
+    let remaining = caloriesRemaining
     let calorieColor: Color =
       remaining <= -1
       ? AppTheme.danger
-      : getColor(for: caloriesLeft, adjustedSoftLimit: adjustedSoftLimit)
+      : getColor(for: caloriesLeft, adjustedSoftLimit: getAdjustedSoftLimit())
     return Button(action: {
       checkTutorial(key: "hasSeenCaloriesTutorial", action: .calories)
     }) {
-      HStack(spacing: 4) {
-        Image(systemName: themeService.icon(for: "flame.fill"))
-          .font(.system(size: 20))
-        Text("\(remaining)")
-          .font(.system(size: 22, weight: .semibold, design: .rounded))
-      }
-      .foregroundColor(calorieColor)
-      .frame(maxWidth: .infinity)
-      .padding(8)
-      .appSurface()
+      calorieLabel(remaining)
+        .foregroundColor(calorieColor)
+        .padding(.horizontal, statPadH)
+        .padding(.vertical, statPadV)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .appSurface(cornerRadius: homeCornerRadius)
     }
+    .buttonStyle(.plain)
     .id("calories-\(todaySportCalories)-\(todaySportCaloriesDate)-\(uiRefreshTrigger)")
+  }
+
+  /// Flame and number stay on one line, centered in the shared row.
+  private func calorieLabel(_ remaining: Int) -> some View {
+    HStack(spacing: statIconGap) {
+      Spacer(minLength: 0)
+      Image(systemName: themeService.icon(for: "flame.fill"))
+        .font(.system(size: statIconSize))
+      Text("\(remaining)")
+        .font(.system(size: statNumberSize, weight: .semibold, design: .rounded))
+        .lineLimit(1)
+        .minimumScaleFactor(0.65)
+      Spacer(minLength: 0)
+    }
   }
 
   private var typeButton: some View {
     Button(action: {
       checkTutorial(key: "hasSeenTypeGuide", action: .typeFood)
     }) {
-      HStack(spacing: 6) {
+      HStack(spacing: statIconGap) {
+        Spacer(minLength: 0)
         Image(systemName: themeService.icon(for: "square.and.pencil"))
-          .font(.system(size: 18, weight: .semibold))
+          .font(.system(size: statIconSize, weight: .semibold))
         Text(loc("type_food.button", "Type"))
-          .font(.system(size: 18, weight: .semibold, design: .rounded))
+          .font(.system(size: statLabelSize, weight: .semibold, design: .rounded))
           .lineLimit(1)
-          .minimumScaleFactor(0.6)
+          .minimumScaleFactor(0.65)
+        Spacer(minLength: 0)
       }
       .foregroundColor(AppTheme.textPrimary)
-      .frame(maxWidth: .infinity)
-      .padding(8)
-      .appSurface()
+      .padding(.horizontal, statPadH)
+      .padding(.vertical, statPadV)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .appSurface(cornerRadius: homeCornerRadius)
     }
+    .buttonStyle(.plain)
   }
 
   /// Daily macro targets (g) from calorie target: protein 20%, fat 30%, carbs 50%, sugar max 40g.
@@ -886,16 +1003,29 @@ struct ContentView: View {
       sugar >= sugarUpper ? AppTheme.danger
       : (sugar >= sugarLower ? AppTheme.warning : AppTheme.success)
 
-    func column(_ percent: String, _ text: String, _ color: Color) -> some View {
+    func column(_ percent: String, _ label: String, _ amount: String, _ color: Color) -> some View {
       VStack(spacing: 1) {
-        Text(percent)
-          .font(.system(size: 11, weight: .semibold, design: .rounded))
-          .foregroundColor(color.opacity(0.9))
-        Text(text)
-          .font(.system(size: 16, weight: .semibold, design: .rounded))
-          .foregroundColor(color)
-          .lineLimit(1)
-          .minimumScaleFactor(0.8)
+        if largeTextLayout {
+          Text(label + " " + percent)
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .foregroundColor(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+          Text(amount)
+            .font(.system(size: 16, weight: .semibold, design: .rounded))
+            .foregroundColor(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+        } else {
+          Text(percent)
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundColor(color.opacity(0.9))
+          Text(label + " " + amount)
+            .font(.system(size: 16, weight: .semibold, design: .rounded))
+            .foregroundColor(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
       }
     }
 
@@ -905,22 +1035,20 @@ struct ContentView: View {
     }) {
       HStack(alignment: .bottom, spacing: 6) {
         Spacer(minLength: 0)
-        column(pct(proteins, targets.protein), proLabel + " " + fmt(proteins) + grams, proColor)
+        column(pct(proteins, targets.protein), proLabel, fmt(proteins) + grams, proColor)
         Text("•").foregroundColor(AppTheme.textSecondary)
-        column(pct(fats, targets.fat), fatLabel + " " + fmt(fats) + grams, fatColor)
+        column(pct(fats, targets.fat), fatLabel, fmt(fats) + grams, fatColor)
         Text("•").foregroundColor(AppTheme.textSecondary)
-        column(pct(carbs, targets.carbs), carLabel + " " + fmt(carbs) + grams, carColor)
+        column(pct(carbs, targets.carbs), carLabel, fmt(carbs) + grams, carColor)
         Text("•").foregroundColor(AppTheme.textSecondary)
-        column(pct(sugar, targets.sugarMax), sugLabel + " " + fmt(sugar) + grams, sugColor)
+        column(pct(sugar, targets.sugarMax), sugLabel, fmt(sugar) + grams, sugColor)
         Spacer(minLength: 0)
       }
       .font(.system(size: 16, weight: .semibold, design: .rounded))
       .frame(maxWidth: .infinity)
-      .padding(.horizontal, 16)
+      .padding(.horizontal, largeTextLayout ? 6 : 12)
       .padding(.vertical, 6)
-      .appSurface()
-      .padding(.horizontal, -6)
-      .padding(.top, 6)
+      .appSurface(cornerRadius: homeCornerRadius)
     }
     .id(
       "macros-\(Int(targets.protein))-\(Int(targets.fat))-\(Int(targets.carbs))-\(uiRefreshTrigger)"
@@ -996,9 +1124,7 @@ struct ContentView: View {
           showWeightActionSheet = true
       case .calories:
           HapticsService.shared.select()
-          tempSoftLimit = String(softLimit)
-          tempHardLimit = String(hardLimit)
-          showLimitsAlert = true
+          showCaloriesLeftInfo = true
       case .typeFood:
           HapticsService.shared.select()
           typeFoodTimestampMillis = typedFoodTimestampMillis()
@@ -1599,7 +1725,8 @@ struct ContentView: View {
     fullScreenPhotoData = FullScreenPhotoData(image: image, foodName: foodName)
   }
 
-  func submitManualWeight() {
+  @discardableResult
+  func submitManualWeight() -> Bool {
     // Normalize decimal separator (replace comma with dot for proper Float parsing)
     let normalizedInput = manualWeightInput.replacingOccurrences(of: ",", with: ".")
 
@@ -1608,7 +1735,7 @@ struct ContentView: View {
         title: loc("weight.invalid.title", "Invalid Weight"),
         message: loc("weight.invalid.msg", "Please enter a valid weight in kilograms."),
         haptic: .error)
-      return
+      return false
     }
 
     guard let userEmail = authService.userEmail else {
@@ -1616,7 +1743,7 @@ struct ContentView: View {
         title: loc("common.error", "Error"),
         message: loc("weight.need_login", "Unable to submit weight. Please sign in again."),
         haptic: .error)
-      return
+      return false
     }
 
     isLoadingWeightPhoto = true
@@ -1660,6 +1787,7 @@ struct ContentView: View {
         }
       }
     }
+    return true
   }
 
 

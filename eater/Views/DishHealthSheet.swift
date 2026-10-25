@@ -55,8 +55,7 @@ struct DishHealthSheet: View {
           .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
-      .navigationTitle(loc("health.score.explain", "Explain"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("health.score.explain", "Explain"))
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(action: { dismiss() }) {

@@ -86,8 +86,7 @@ struct TypeFoodSheet: View {
           .background(AppTheme.surface)
         }
       }
-      .navigationTitle(loc("type_food.title", "Type food"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("type_food.title", "Type food"))
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button(loc("common.cancel", "Cancel")) {
@@ -127,9 +126,9 @@ struct TypeFoodSheet: View {
       }
       .frame(minHeight: 120)
       .background(AppTheme.surface)
-      .cornerRadius(AppTheme.smallRadius)
+      .appCorner(AppTheme.smallRadius)
       .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .stroke(AppTheme.divider, lineWidth: 1)
       )
 
@@ -172,9 +171,9 @@ struct TypeFoodSheet: View {
       .padding(.horizontal, 14)
       .padding(.vertical, 12)
       .background(AppTheme.surface)
-      .cornerRadius(AppTheme.smallRadius)
+      .appCorner(AppTheme.smallRadius)
       .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .stroke(selected ? AppTheme.primaryButtonFill : AppTheme.divider, lineWidth: selected ? 1.5 : 1)
       )
     }

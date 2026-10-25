@@ -125,13 +125,14 @@ struct RootTabView: View {
     )
   }
 
-  private func submitManualWeight() {
+  @discardableResult
+  private func submitManualWeight() -> Bool {
     let normalized = manualWeightInput.replacingOccurrences(of: ",", with: ".")
     guard let value = Float(normalized), value > 0 else {
       HapticsService.shared.error()
-      return
+      return false
     }
-    guard let email = authService.userEmail else { return }
+    guard let email = authService.userEmail else { return false }
     nav.isLoadingWeightPhoto = true
     GRPCService().sendManualWeight(weight: value, userEmail: email) { success in
       DispatchQueue.main.async {
@@ -146,6 +147,7 @@ struct RootTabView: View {
         }
       }
     }
+    return true
   }
 
   private func todayISO() -> String {
@@ -266,78 +268,71 @@ struct RootTabView: View {
     @ObservedObject var nav: AppNavigation
     @Binding var cameraTutorialStep: MainAppTutorialView.TutorialStep?
     @Binding var manualWeightInput: String
-    let submitManualWeight: () -> Void
+    let submitManualWeight: () -> Bool
+    @State private var openWeightCamera = false
 
     func body(content: Content) -> some View {
       content
-        .confirmationDialog(
-          loc("weight.record.title", "Record Weight"),
-          isPresented: $nav.showWeightMenu,
-          titleVisibility: .visible
-        ) {
-          Button(loc("weight.take_photo", "Take scale photo")) {
-            HapticsService.shared.select()
-            nav.showWeightCamera = true
-          }
-          Button(loc("weight.manual_entry", "Manual Entry")) {
-            HapticsService.shared.select()
-            manualWeightInput = ""
-            nav.showManualWeight = true
-          }
-          Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-        } message: {
-          Text(loc("weight.record.msg", "Choose how you'd like to record your weight"))
+        .sheet(isPresented: $nav.showWeightMenu, onDismiss: {
+          guard openWeightCamera else { return }
+          openWeightCamera = false
+          DispatchQueue.main.async { nav.showWeightCamera = true }
+        }) {
+          WeightPromptSheet(
+            weightText: $manualWeightInput,
+            onPhoto: { openWeightCamera = true },
+            onSubmit: submitManualWeight
+          )
         }
-        .alert(loc("weight.enter.title", "Enter Weight"), isPresented: $nav.showManualWeight) {
-          TextField(loc("weight.enter.placeholder", "Weight (kg)"), text: $manualWeightInput)
-            .keyboardType(.decimalPad)
-          Button(loc("common.save", "Submit")) { submitManualWeight() }
-          Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-        } message: {
-          Text(loc("weight.enter.msg", "Enter your weight in kilograms"))
+        .sheet(isPresented: $nav.showManualWeight) {
+          WeightPromptSheet(
+            weightText: $manualWeightInput,
+            onPhoto: { nav.showWeightCamera = true },
+            onSubmit: submitManualWeight,
+            startsOnManual: true
+          )
         }
-        .alert(
+        .scaledNotice(
           loc("login.scan_prompt_title", "Unlock All Features"),
-          isPresented: $nav.showAnonymousLoginPrompt
-        ) {
-          Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
-          Button(loc("login.prompt.confirm", "Login Now")) { nav.showInPlaceLogin = true }
-        } message: {
-          Text(
-            loc(
-              "login.scan_prompt_message",
-              "Please login to Google if you are ready or want to recover past food."
-            ))
-        }
-        .alert(
+          isPresented: $nav.showAnonymousLoginPrompt,
+          message: loc(
+            "login.scan_prompt_message",
+            "Please login to Google if you are ready or want to recover past food."
+          ),
+          actions: [
+            ScaledNoticeAction(title: loc("login.prompt.confirm", "Login Now")) {
+              nav.showInPlaceLogin = true
+            },
+            ScaledNoticeAction(title: loc("common.not_yet", "Not Yet"), kind: .secondary),
+          ]
+        )
+        .scaledNotice(
           loc("camera.unavailable.title", "Camera Unavailable"),
-          isPresented: $nav.cameraUnavailableAlert
-        ) {
-          Button(loc("common.ok", "OK")) {}
-        } message: {
-          Text(loc("camera.unavailable.msg", "Your device does not have a camera."))
-        }
-        .alert(
+          isPresented: $nav.cameraUnavailableAlert,
+          message: loc("camera.unavailable.msg", "Your device does not have a camera."),
+          actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+        )
+        .scaledNotice(
           loc("library.unavailable.title", "Photo Library Unavailable"),
-          isPresented: $nav.photoLibraryUnavailableAlert
-        ) {
-          Button(loc("common.ok", "OK")) {}
-        } message: {
-          Text(loc("library.unavailable.msg", "Photo library is not available."))
-        }
-        .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $nav.showBackdatingAlert) {
-          Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) {}
-          Button(loc("backdating.alert.confirm", "Confirm")) {
-            nav.confirmPastDateCapture()
-          }
-          Button(loc("backdating.alert.log_today", "Log Today's Food")) {
-            nav.captureForTodayInstead()
-          }
-        } message: {
-          Text(
-            nav.backdatingStatusEmoji + " " + nav.backdatingMessage + "\n\n"
-              + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
-        }
+          isPresented: $nav.photoLibraryUnavailableAlert,
+          message: loc("library.unavailable.msg", "Photo library is not available."),
+          actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+        )
+        .scaledNotice(
+          loc("backdating.alert.title", "Confirm Past Date"),
+          isPresented: $nav.showBackdatingAlert,
+          message: nav.backdatingStatusEmoji + " " + nav.backdatingMessage + "\n\n"
+            + loc("backdating.alert.tip", "Tip: You can log today's food instead."),
+          actions: [
+            ScaledNoticeAction(title: loc("backdating.alert.confirm", "Confirm")) {
+              nav.confirmPastDateCapture()
+            },
+            ScaledNoticeAction(title: loc("backdating.alert.log_today", "Log Today's Food"), kind: .secondary) {
+              nav.captureForTodayInstead()
+            },
+            ScaledNoticeAction(title: loc("backdating.alert.cancel", "Cancel"), kind: .secondary),
+          ]
+        )
         .onChange(of: nav.cameraTutorialRequested) { _, requested in
           guard requested else { return }
           nav.cameraTutorialRequested = false

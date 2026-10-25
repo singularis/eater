@@ -180,8 +180,7 @@ struct ActivityStatisticsView: View {
     NavigationView {
       statsRootStack
     }
-    .navigationTitle(Localization.shared.tr("activities.stats.title", default: "Activity Statistics"))
-    .navigationBarTitleDisplayMode(.inline)
+    .scaledNavTitle(Localization.shared.tr("activities.stats.title", default: "Activity Statistics"))
     .toolbar {
       ToolbarItem(placement: .navigationBarTrailing) {
         Button(Localization.shared.tr("common.done", default: "Done")) {
@@ -295,7 +294,7 @@ struct ActivityStatisticsView: View {
     .padding()
     .frame(maxWidth: .infinity)
     .background(AppTheme.surface)
-    .cornerRadius(12)
+    .appCorner(AppTheme.smallRadius)
     .onTapGesture {
       withAnimation(.easeInOut(duration: 0.28)) { showDogRecommendation = false }
     }
@@ -368,7 +367,7 @@ struct ActivityStatisticsView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding()
     .background(AppTheme.surface)
-    .cornerRadius(12)
+    .appCorner(AppTheme.smallRadius)
   }
   
   private var emptyView: some View {

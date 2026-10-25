@@ -56,9 +56,10 @@ enum AppTheme {
       : Color.white.opacity(0.15)
   }
 
-  // Layout
+  // Layout. Three corners only: cards and full-width buttons, controls and tiles, small chips.
   static let cornerRadius: CGFloat = 16
   static let smallRadius: CGFloat = 12
+  static let tinyRadius: CGFloat = 8
   static let cardPadding: CGFloat = 16
 
   // Shadows - same weight on tiles, cards, and header circles
@@ -180,6 +181,20 @@ extension View {
   /// icons, photos, and spacing.
   func appInterfaceScale() -> some View {
     modifier(AppInterfaceScaleModifier())
+  }
+
+  /// One-line title that shrinks to fit beside the bar buttons at large text sizes.
+  func scaledNavTitle(_ title: String) -> some View {
+    navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .principal) {
+          Text(title)
+            .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+      }
   }
 }
 
@@ -344,6 +359,11 @@ extension View {
       .clipShape(Circle())
       .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
       .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+  }
+
+  /// Continuous corner, matching cards and buttons. Plain `.cornerRadius` draws a harder curve.
+  func appCorner(_ radius: CGFloat) -> some View {
+    clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
   }
 
   func appCardShadow() -> some View {

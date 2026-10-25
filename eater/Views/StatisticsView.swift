@@ -64,8 +64,7 @@ struct StatisticsView: View {
           .reportScrollAtTop($isScrollAtTop)
         }
       }
-      .navigationTitle(loc("nav.statistics", "Statistics"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("nav.statistics", "Statistics"))
       .toolbar {
         if showsCloseButton {
           ToolbarItem(placement: .navigationBarLeading) {

@@ -34,8 +34,7 @@ struct IdeasTabView: View {
         .reportScrollAtTop($isScrollAtTop)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .navigationTitle(loc("tab.ideas", "Ideas"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("tab.ideas", "Ideas"))
       .onAppear { if isActive { fetchRecommendationIfNeeded() } }
       .onChange(of: nav.selectedTab) { _, tab in
         if tab == .ideas { fetchRecommendationIfNeeded() }

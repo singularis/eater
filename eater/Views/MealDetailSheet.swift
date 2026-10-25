@@ -39,28 +39,27 @@ struct MealDetailSheet: View {
           .padding(16)
         }
       }
-      .navigationTitle(loc("meal.detail.title", "Meal"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("meal.detail.title", "Meal"))
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button(loc("common.done", "Done")) { dismiss() }
         }
       }
       .onAppear { loadHealth() }
-      .alert(
+      .scaledNotice(
         loc("share.login_required.title", "Login Required"),
-        isPresented: $showShareLoginPrompt
-      ) {
-        Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
-        Button(loc("login.prompt.confirm", "Login Now")) {
-          AppNavigation.shared.showInPlaceLogin = true
-        }
-      } message: {
-        Text(
-          loc(
-            "share.login_required.message",
-            "Create an account or log in to share food with friends."))
-      }
+        isPresented: $showShareLoginPrompt,
+        message: loc(
+          "share.login_required.message",
+          "Create an account or log in to share food with friends."
+        ),
+        actions: [
+          ScaledNoticeAction(title: loc("login.prompt.confirm", "Login Now")) {
+            AppNavigation.shared.showInPlaceLogin = true
+          },
+          ScaledNoticeAction(title: loc("common.not_yet", "Not Yet"), kind: .secondary),
+        ]
+      )
     }
   }
 
@@ -68,7 +67,7 @@ struct MealDetailSheet: View {
     HStack(alignment: .top, spacing: 14) {
       Group {
         if product.imageId.isEmpty {
-          RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
             .fill(AppTheme.surfaceAlt)
             .overlay(
               Image(systemName: "fork.knife")
@@ -80,7 +79,7 @@ struct MealDetailSheet: View {
             .resizable()
             .aspectRatio(contentMode: .fill)
         } else {
-          RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+          RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
             .fill(AppTheme.surfaceAlt)
             .overlay(Image(systemName: "photo").foregroundColor(AppTheme.textSecondary))
         }

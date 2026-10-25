@@ -44,22 +44,20 @@ struct LoginView: View {
       AppInfoView()
         .appInterfaceScale()
     }
-    .alert(
+    .scaledNotice(
       loc("error.network.title", "Connection Error"),
       isPresented: Binding(
         get: { authService.lastAuthError != nil },
         set: { if !$0 { authService.lastAuthError = nil } }
-      )
-    ) {
-      Button(loc("common.ok", "OK"), role: .cancel) {
-        authService.lastAuthError = nil
-      }
-    } message: {
-      Text(
-        authService.lastAuthError
-          ?? loc("error.network.generic", "We are sorry. Network connection. Please try later.")
-      )
-    }
+      ),
+      message: authService.lastAuthError
+        ?? loc("error.network.generic", "We are sorry. Network connection. Please try later."),
+      actions: [
+        ScaledNoticeAction(title: loc("common.ok", "OK")) {
+          authService.lastAuthError = nil
+        }
+      ]
+    )
     .onAppear {
       if AppSettingsService.shared.reduceMotion {
         appeared = true

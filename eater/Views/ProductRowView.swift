@@ -14,11 +14,14 @@ struct ProductRowView: View {
   var onDelete: (() -> Void)? = nil
 
   @EnvironmentObject private var authService: AuthenticationService
+  @ObservedObject private var appSettings = AppSettingsService.shared
   @State private var remoteImage: UIImage? = nil
   @State private var isLoadingImage: Bool = false
   @State private var showShareLoginPrompt = false
   @State private var showDeleteConfirmation = false
   @State private var showHealthSheet = false
+  @State private var healthPopup: FoodHealthPopupModel?
+  @State private var openExplainAfterPopup = false
   @State private var imageResolveID = 0
 
   private var displayImage: UIImage? {
@@ -29,7 +32,8 @@ struct ProductRowView: View {
     "\(product.totalCalories) \(loc("units.kcal", "kcal")) • \(product.totalWeight)\(loc("units.gram_suffix", "g"))"
   }
 
-  private var photoSize: CGFloat { 101 }
+  /// Photo shrinks as text grows, from 101 pt at 80% to 68 pt at 160%.
+  private var photoSize: CGFloat { 101 - CGFloat(appSettings.interfaceTravel) * 33 }
   private var ratingStickerSize: CGFloat { 36 }
   private var actionIconFrame: CGFloat { 30 * 1.15 * 1.20 }
   private var actionGlyphSize: CGFloat { actionIconFrame * 0.48 }
@@ -104,7 +108,7 @@ struct ProductRowView: View {
           .aspectRatio(contentMode: .fill)
           .frame(width: photoSize, height: photoSize)
           .clipped()
-          .cornerRadius(AppTheme.smallRadius)
+          .appCorner(AppTheme.smallRadius)
           .onTapGesture {
             if deletingProductTime != product.time {
               HapticsService.shared.select()
@@ -112,7 +116,7 @@ struct ProductRowView: View {
             }
           }
       } else if isLoadingImage {
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .fill(AppTheme.surfaceAlt)
           .frame(width: photoSize, height: photoSize)
           .overlay(
@@ -120,7 +124,7 @@ struct ProductRowView: View {
               .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textSecondary))
           )
       } else {
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .fill(AppTheme.surfaceAlt)
           .frame(width: photoSize, height: photoSize)
           .overlay(
@@ -233,6 +237,18 @@ struct ProductRowView: View {
     .onChange(of: product.imageId) { _, _ in
       fetchRemoteImageIfNeeded()
     }
+    .sheet(item: $healthPopup, onDismiss: {
+      guard openExplainAfterPopup else { return }
+      openExplainAfterPopup = false
+      DispatchQueue.main.async { showHealthSheet = true }
+    }) { popup in
+      FoodHealthPopup(
+        title: popup.title,
+        description: popup.description,
+        lines: AlertHelper.componentLines(healthSummary: popup.summary),
+        onExplain: { openExplainAfterPopup = true }
+      )
+    }
     .sheet(isPresented: $showHealthSheet) {
       DishHealthSheet(product: product)
         .environmentObject(authService)
@@ -258,19 +274,20 @@ struct ProductRowView: View {
       )
     }
     .buttonStyle(.plain)
-    .alert(
-      loc("share.login_required.title", "Login Required"), isPresented: $showShareLoginPrompt
-    ) {
-      Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
-      Button(loc("login.prompt.confirm", "Login Now")) {
-        AppNavigation.shared.showInPlaceLogin = true
-      }
-    } message: {
-      Text(
-        loc(
-          "share.login_required.message",
-          "Create an account or log in to share food with friends."))
-    }
+    .scaledNotice(
+      loc("share.login_required.title", "Login Required"),
+      isPresented: $showShareLoginPrompt,
+      message: loc(
+        "share.login_required.message",
+        "Create an account or log in to share food with friends."
+      ),
+      actions: [
+        ScaledNoticeAction(title: loc("login.prompt.confirm", "Login Now")) {
+          AppNavigation.shared.showInPlaceLogin = true
+        },
+        ScaledNoticeAction(title: loc("common.not_yet", "Not Yet"), kind: .secondary),
+      ]
+    )
   }
 
   private var moreOptionsIconButton: some View {
@@ -299,19 +316,20 @@ struct ProductRowView: View {
     }
     .buttonStyle(.plain)
     .disabled(onDelete == nil)
-    .alert(
-      loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
-    ) {
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-      Button(loc("common.remove", "Remove"), role: .destructive) {
-        onDelete?()
-      }
-    } message: {
-      Text(
-        loc(
-          "list.delete.confirm.message",
-          "Are you sure you want to delete this food entry? This action cannot be undone."))
-    }
+    .scaledNotice(
+      loc("list.delete.confirm.title", "Delete Food?"),
+      isPresented: $showDeleteConfirmation,
+      message: loc(
+        "list.delete.confirm.message",
+        "Are you sure you want to delete this food entry? This action cannot be undone."
+      ),
+      actions: [
+        ScaledNoticeAction(title: loc("common.remove", "Remove"), kind: .destructive) {
+          onDelete?()
+        },
+        ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary),
+      ]
+    )
   }
 
   private func actionCircle(
@@ -325,9 +343,7 @@ struct ProductRowView: View {
       .foregroundColor(color)
       .offset(y: glyphOffsetY)
       .frame(width: actionIconFrame, height: actionIconFrame, alignment: .center)
-      .background(fill)
-      .clipShape(Circle())
-      .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
+      .appCircleSurface()
   }
 
   private func openPortionMenu() {
@@ -375,13 +391,11 @@ struct ProductRowView: View {
       HapticsService.shared.select()
     }
 
-    let openExplain = { showHealthSheet = true }
     if let cached = ProductStorageService.shared.getHealthLevel(time: product.time) {
-      AlertHelper.showHealthLevelInfo(
+      healthPopup = FoodHealthPopupModel(
         title: cached.title,
         description: cached.description,
-        healthSummary: cached.healthSummary,
-        onExplain: openExplain
+        summary: cached.healthSummary
       )
       return
     }
@@ -395,11 +409,10 @@ struct ProductRowView: View {
             description: response.description_p,
             healthSummary: response.healthSummary
           )
-          AlertHelper.showHealthLevelInfo(
+          self.healthPopup = FoodHealthPopupModel(
             title: response.title,
             description: response.description_p,
-            healthSummary: response.healthSummary,
-            onExplain: openExplain
+            summary: response.healthSummary
           )
         }
       }

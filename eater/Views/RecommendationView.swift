@@ -209,8 +209,7 @@ struct RecommendationView: View {
               recommendationStack
             }
           }
-          .navigationTitle(loc("rec.title", "Health Recommendation"))
-          .navigationBarTitleDisplayMode(.inline)
+          .scaledNavTitle(loc("rec.title", "Health Recommendation"))
           .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
               Button(loc("common.done", "Done")) {

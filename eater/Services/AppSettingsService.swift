@@ -26,22 +26,74 @@ final class AppSettingsService: ObservableObject {
     didSet { objectWillChange.send() }
   }
 
-  /// Home meal-card scale. Slider 80%…120%, step 1%.
+  /// When on, text scale is 160%. The slider itself stays 80%…150%.
+  @Published var extraLargeText: Bool {
+    didSet { UserDefaults.standard.set(extraLargeText, forKey: Self.extraLargeKey) }
+  }
+
+  /// Whole-app scale. Slider is 80%…150%. Extra large sets 160%.
   @Published var fontScale: Double {
-    didSet { UserDefaults.standard.set(fontScale, forKey: Self.fontScaleKey) }
+    didSet {
+      let clamped = min(fontScaleCeiling, max(Self.fontScaleMin, fontScale))
+      if clamped != fontScale {
+        fontScale = clamped
+        return
+      }
+      UserDefaults.standard.set(fontScale, forKey: Self.fontScaleKey)
+    }
   }
 
   static let fontScaleMin = 0.80
-  static let fontScaleMax = 1.20
+  static let fontScaleMax = 1.50
+  static let fontScaleExtra = 1.60
   static let fontScaleStep = 0.01
 
+  /// Past this, the home header and carb line reflow so numbers are not clipped.
+  static let largeTextLayoutThreshold = 1.15
+
   private static let fontScaleKey = "app_dish_card_scale_v4"
+  private static let extraLargeKey = "app_font_scale_extra_large"
   private static let fontScaleDefault = 1.0
 
   private init() {
-    let stored = UserDefaults.standard.object(forKey: Self.fontScaleKey) as? Double
-    let raw = stored ?? Self.fontScaleDefault
-    fontScale = min(Self.fontScaleMax, max(Self.fontScaleMin, raw))
+    let extra = UserDefaults.standard.bool(forKey: Self.extraLargeKey)
+    extraLargeText = extra
+    if extra {
+      fontScale = Self.fontScaleExtra
+    } else {
+      let stored = UserDefaults.standard.object(forKey: Self.fontScaleKey) as? Double
+      let raw = stored ?? Self.fontScaleDefault
+      fontScale = min(Self.fontScaleMax, max(Self.fontScaleMin, raw))
+    }
+  }
+
+  /// Slider range. Extra large does not change this.
+  var fontScaleRangeLower: Double { Self.fontScaleMin }
+  var fontScaleRangeUpper: Double { Self.fontScaleMax }
+
+  private var fontScaleCeiling: Double {
+    extraLargeText ? Self.fontScaleExtra : Self.fontScaleMax
+  }
+
+  /// Header icons move aside and the carb line wraps once text is this large.
+  var largeTextLayout: Bool { fontScale >= Self.largeTextLayoutThreshold }
+
+  /// 0 at 80%, 1 at 160%. Layout that must follow the slider uses this, not a jump at 160%.
+  var interfaceTravel: Double {
+    let span = Self.fontScaleExtra - Self.fontScaleMin
+    return min(1, max(0, (fontScale - Self.fontScaleMin) / span))
+  }
+
+  /// Graphs and other tall screens no longer fit from the top once text is this large.
+  var centersTallContent: Bool { fontScale >= 1.25 }
+
+  func setExtraLargeText(_ enabled: Bool) {
+    extraLargeText = enabled
+    if enabled {
+      fontScale = Self.fontScaleExtra
+    } else if fontScale > Self.fontScaleMax {
+      fontScale = Self.fontScaleMax
+    }
   }
 
   var dynamicTypeSize: DynamicTypeSize {
@@ -52,7 +104,9 @@ final class AppSettingsService: ObservableObject {
     case ..<1.15: return .xLarge
     case ..<1.25: return .xxLarge
     case ..<1.35: return .xxxLarge
-    default: return .accessibility1
+    case ..<1.60: return .accessibility1
+    case ..<1.80: return .accessibility2
+    default: return .accessibility3
     }
   }
 

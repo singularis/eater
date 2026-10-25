@@ -289,8 +289,7 @@ struct HealthDisclaimerView: View {
         }
       }
       .onAppear(perform: showCachedExplanation)
-      .navigationTitle(loc("health.score.section.title", "Your Health Score"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("health.score.section.title", "Your Health Score"))
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(loc("common.done", "Done")) {

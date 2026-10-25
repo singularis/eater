@@ -66,8 +66,7 @@ struct HealthSettingsView: View {
 
   private var navigationContent: some View {
     scrollContent
-      .navigationTitle(loc("nav.health_settings", "Health"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("nav.health_settings", "Health"))
       .toolbarBackground(AppTheme.surface, for: .navigationBar)
       .toolbarBackground(.visible, for: .navigationBar)
       .toolbar {
@@ -83,16 +82,17 @@ struct HealthSettingsView: View {
           .foregroundColor(AppTheme.textPrimary)
         }
       }
-      .confirmationDialog(
+      .scaledNotice(
         loc("health.discard.title", "Discard changes?"),
         isPresented: $showDiscardConfirm,
-        titleVisibility: .visible
-      ) {
-        Button(loc("health.discard.confirm", "Discard"), role: .destructive) {
-          isPresented = false
-        }
-        Button(loc("health.discard.keep", "Keep editing"), role: .cancel) {}
-      }
+        message: "",
+        actions: [
+          ScaledNoticeAction(title: loc("health.discard.confirm", "Discard"), kind: .destructive) {
+            isPresented = false
+          },
+          ScaledNoticeAction(title: loc("health.discard.keep", "Keep editing"), kind: .secondary),
+        ]
+      )
   }
 
   private var scrollContent: some View {
@@ -367,7 +367,7 @@ struct HealthSettingsView: View {
     }
     .padding(2)
     .background(AppTheme.surfaceAlt)
-    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .clipShape(RoundedRectangle(cornerRadius: AppTheme.tinyRadius, style: .continuous))
   }
 
   private func sexButton(_ value: Calc.Sex, _ title: String) -> some View {
@@ -410,7 +410,7 @@ struct HealthSettingsView: View {
     }
     .padding(2)
     .background(AppTheme.surfaceAlt)
-    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .clipShape(RoundedRectangle(cornerRadius: AppTheme.tinyRadius, style: .continuous))
   }
 
   private func goalRow(_ title: String, _ value: Goal) -> some View {

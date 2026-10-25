@@ -247,7 +247,7 @@ struct OnboardingView: View {
           .frame(width: 80, height: 80)
           .padding(6)
           .background(AppTheme.surfaceAlt)
-          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+          .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
 
         VStack(alignment: .leading, spacing: 6) {
           Text(shown("onboarding.tools.scales.title", "Kitchen Scales"))
@@ -264,7 +264,7 @@ struct OnboardingView: View {
       .padding(14)
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(AppTheme.surface)
-      .cornerRadius(18)
+      .appCorner(AppTheme.cornerRadius)
       .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
       .padding(.horizontal, 24)
 
@@ -276,7 +276,7 @@ struct OnboardingView: View {
           .frame(width: 80, height: 80)
           .padding(6)
           .background(AppTheme.surfaceAlt)
-          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+          .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
 
         VStack(alignment: .leading, spacing: 6) {
           Text(shown("onboarding.tools.containers.title", "Food Containers"))
@@ -293,7 +293,7 @@ struct OnboardingView: View {
       .padding(14)
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(AppTheme.surface)
-      .cornerRadius(18)
+      .appCorner(AppTheme.cornerRadius)
       .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
       .padding(.horizontal, 24)
 
@@ -319,9 +319,9 @@ struct OnboardingView: View {
       .padding(14)
       .frame(maxWidth: .infinity)
       .background(Color.green.opacity(0.06))
-      .cornerRadius(16)
+      .appCorner(AppTheme.cornerRadius)
       .overlay(
-        RoundedRectangle(cornerRadius: 16)
+        RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
           .stroke(Color.green.opacity(0.2), lineWidth: 1)
       )
       .padding(.horizontal, 24)
@@ -937,7 +937,7 @@ struct OnboardingView: View {
       }
       .padding()
       .background(AppTheme.surface)
-      .cornerRadius(12)
+      .appCorner(AppTheme.smallRadius)
     }
   }
   
@@ -970,7 +970,7 @@ struct OnboardingView: View {
         }
         .padding()
         .background(AppTheme.surface)
-        .cornerRadius(16)
+        .appCorner(AppTheme.cornerRadius)
         .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
     }
   }
@@ -1145,7 +1145,7 @@ struct OnboardingView: View {
       }
       .padding(24)
       .background(AppTheme.surface)
-      .cornerRadius(20)
+      .appCorner(AppTheme.cornerRadius)
       .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
       .padding(.horizontal, 32)
     }
@@ -1281,9 +1281,9 @@ struct OnboardingView: View {
            .font(.system(size: 18))
            .padding(16)
            .background(AppTheme.surface)
-           .cornerRadius(AppTheme.cornerRadius)
+           .appCorner(AppTheme.cornerRadius)
            .overlay(
-             RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+             RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
                .stroke(nicknameError != nil ? AppTheme.danger : AppTheme.divider, lineWidth: 1)
            )
            .autocapitalization(.none)
@@ -1370,10 +1370,10 @@ struct OnboardingView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
                         .background(
-                            RoundedRectangle(cornerRadius: 20)
+                            RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
                                 .fill(item.code == selectedLanguageCode ? Color.blue.opacity(0.1) : AppTheme.surface)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
+                                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
                                         .stroke(item.code == selectedLanguageCode ? Color.blue : Color.clear, lineWidth: 2)
                                 )
                                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
@@ -1691,7 +1691,7 @@ struct BalancedPlateCard: View {
             .resizable()
             .scaledToFit()
         } else {
-          RoundedRectangle(cornerRadius: 18, style: .continuous)
+          RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
             .fill(AppTheme.textSecondary.opacity(0.12))
             .overlay(
               Image(systemName: "leaf.circle.fill")
@@ -1702,7 +1702,7 @@ struct BalancedPlateCard: View {
       }
       .frame(maxWidth: .infinity)
       .frame(minHeight: 160)
-      .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
       .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
       
       HStack {
@@ -1723,7 +1723,7 @@ struct BalancedPlateCard: View {
     .padding(14)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(AppTheme.surface)
-    .cornerRadius(20)
+    .appCorner(AppTheme.cornerRadius)
     .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
   }
 }
@@ -1820,13 +1820,13 @@ struct TeamMemberCard: View {
     .frame(minHeight: 108)
     .padding(.vertical, 13)
     .background(backgroundImageName == nil ? cardBackground : nil)
-    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
     .overlay(
-      RoundedRectangle(cornerRadius: 14, style: .continuous)
+      RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
         .stroke(AppTheme.surface.opacity(0.5), lineWidth: 1)
     )
     .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 3)
-    .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .contentShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
     .onTapGesture {
       if backgroundImageName != nil, let urlString = linkURL, let url = URL(string: urlString) {
         UIApplication.shared.open(url)

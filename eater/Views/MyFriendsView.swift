@@ -38,7 +38,7 @@ struct MyFriendsView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(AppTheme.accent)
-                .cornerRadius(10)
+                .appCorner(AppTheme.smallRadius)
             }
           }
         } else {
@@ -66,8 +66,7 @@ struct MyFriendsView: View {
           }
         }
       }
-      .navigationTitle(loc("friends.list.title", "My friends"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("friends.list.title", "My friends"))
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
           Button(action: { showAddFriends = true }) {
@@ -114,7 +113,7 @@ struct MyFriendsView: View {
     }
     .padding()
     .background(AppTheme.surface)
-    .cornerRadius(12)
+    .appCorner(AppTheme.smallRadius)
   }
 
   private func fetchFriends() {

@@ -6,6 +6,7 @@ import SwiftUI
 struct StatisticsGraphsView: View {
   @Binding var isPresented: Bool
   var initialPeriod: StatisticsPeriod = .week
+  @ObservedObject private var appSettings = AppSettingsService.shared
 
   @State private var selectedPeriod: StatisticsPeriod = .week
   @State private var statistics: [DailyStatistics] = []
@@ -56,6 +57,8 @@ struct StatisticsGraphsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 24)
               Spacer()
+            } else if appSettings.centersTallContent {
+              centeredGraphScroll
             } else {
               chartTypeSelectionView
                 .padding(.vertical, 8)
@@ -75,8 +78,7 @@ struct StatisticsGraphsView: View {
           }
         }
       }
-      .navigationTitle(loc("stats.graphs.title", "Graphs"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("stats.graphs.title", "Graphs"))
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Button(loc("common.done", "Done")) {
@@ -106,12 +108,55 @@ struct StatisticsGraphsView: View {
     }
   }
 
+  /// Short one-line chips. The long names truncate to "W…" and "2 mon…" on the graph bar.
   private func localizedPeriod(_ period: StatisticsPeriod) -> String {
     switch period {
-    case .week: return loc("stats.period.week", "This week")
-    case .month: return loc("stats.period.month", "30 days")
-    case .twoMonths: return loc("stats.period.two_months", "2 months")
-    case .threeMonths: return loc("stats.period.three_months", "3 months")
+    case .week: return loc("stats.period.week.short", "Week")
+    case .month: return loc("stats.period.month.short", "30d")
+    case .twoMonths: return loc("stats.period.two_months.short", "2mo")
+    case .threeMonths: return loc("stats.period.three_months.short", "3mo")
+    }
+  }
+
+  /// At 160% the graph opens in the middle. Scroll up for the controls, down for the rest.
+  private var centeredGraphScroll: some View {
+    ScrollViewReader { proxy in
+      ScrollView {
+        VStack(spacing: 0) {
+          chartTypeSelectionView
+            .padding(.vertical, 8)
+
+          chartView
+            .id("center-graph")
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+
+          if selectedChart != .insights && selectedChart != .trends {
+            summaryStatsView
+              .padding(.horizontal, 16)
+              .padding(.bottom, 24)
+          }
+        }
+      }
+      .onAppear { centerGraph(proxy) }
+      .onChange(of: selectedChart) { _, _ in centerGraph(proxy) }
+      .onChange(of: selectedPeriod) { _, _ in centerGraph(proxy) }
+      .onChange(of: isLoading) { _, loading in
+        if !loading { centerGraph(proxy) }
+      }
+    }
+  }
+
+  private func centerGraph(_ proxy: ScrollViewProxy) {
+    guard appSettings.centersTallContent else { return }
+    DispatchQueue.main.async {
+      if appSettings.reduceMotion {
+        proxy.scrollTo("center-graph", anchor: .center)
+      } else {
+        withAnimation(.easeOut(duration: 0.2)) {
+          proxy.scrollTo("center-graph", anchor: .center)
+        }
+      }
     }
   }
 
@@ -440,7 +485,7 @@ struct StatisticsGraphsView: View {
     }
     .padding()
     .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
+    .appCorner(AppTheme.smallRadius)
   }
 
   private var insightsView: some View {
@@ -487,7 +532,7 @@ struct StatisticsGraphsView: View {
     .padding(.horizontal, 12)
     .padding(.vertical, 10)
     .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
+    .appCorner(AppTheme.smallRadius)
   }
 
   private var summaryStatsView: some View {
@@ -544,7 +589,7 @@ struct StatisticsGraphsView: View {
     .padding(.horizontal, 8)
     .padding(.vertical, 6)
     .background(AppTheme.surface)
-    .cornerRadius(AppTheme.smallRadius)
+    .appCorner(AppTheme.smallRadius)
     .frame(maxWidth: .infinity)
   }
 
@@ -700,7 +745,7 @@ struct MacroPlotPoint: Identifiable {
 private struct ControlGlass: ViewModifier {
   func body(content: Content) -> some View {
     if #available(iOS 26.0, *) {
-      content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 10))
+      content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: AppTheme.smallRadius))
     } else {
       content
         .background(AppTheme.surface)
@@ -752,7 +797,7 @@ private struct ChartCardGlass: ViewModifier {
 private struct SelectionPopoverGlass: ViewModifier {
   func body(content: Content) -> some View {
     if #available(iOS 26.0, *) {
-      content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
+      content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: AppTheme.smallRadius))
     } else {
       content.background(
         AppTheme.surface,

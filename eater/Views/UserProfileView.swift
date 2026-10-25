@@ -71,7 +71,7 @@ struct UserProfileView: View {
             // Theme Section
             sectionHeader(icon: "paintpalette.fill", title: loc("profile.theme", "Theme"), color: Color.purple)
             
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
               // Preview of current mascot (deferred until menu is interactive)
               if loadMascotArtwork, themeService.currentMascot != .none {
                 let previews = themeService.getUniquePreviewImageNames(count: 5)
@@ -176,7 +176,6 @@ struct UserProfileView: View {
               .padding(.horizontal, 8)
               .tint(AppTheme.accent)
             }
-            .padding(.vertical, 14)
             .cardContainer(padding: 14)
 
             // Preferences Section
@@ -230,9 +229,8 @@ struct UserProfileView: View {
               // Appearance
               VStack(alignment: .leading, spacing: 8) {
                 Text(loc("profile.appearance", "Appearance"))
-                  .font(.caption)
-                  .fontWeight(.medium)
-                  .foregroundColor(AppTheme.textSecondary)
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textPrimary)
                 
                 Picker("Appearance", selection: Binding<String>(
                   get: { AppSettingsService.shared.appearance.rawValue },
@@ -250,12 +248,11 @@ struct UserProfileView: View {
               VStack(alignment: .leading, spacing: 8) {
                 HStack {
                   Text(loc("profile.font_size", "Text size"))
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(AppTheme.textSecondary)
+                    .font(.subheadline)
+                    .foregroundColor(AppTheme.textPrimary)
                   Spacer()
                   Text("\(Int((appSettings.fontScale * 100).rounded()))%")
-                    .font(.caption.monospacedDigit())
+                    .font(.subheadline.weight(.medium).monospacedDigit())
                     .foregroundColor(AppTheme.textSecondary)
                 }
 
@@ -266,8 +263,18 @@ struct UserProfileView: View {
                     .accessibilityHidden(true)
                   Slider(
                     value: Binding(
-                      get: { appSettings.fontScale },
-                      set: { appSettings.fontScale = $0 }
+                      get: {
+                        min(
+                          AppSettingsService.fontScaleMax,
+                          max(AppSettingsService.fontScaleMin, appSettings.fontScale)
+                        )
+                      },
+                      set: { newValue in
+                        if appSettings.extraLargeText {
+                          appSettings.extraLargeText = false
+                        }
+                        appSettings.fontScale = newValue
+                      }
                     ),
                     in: AppSettingsService.fontScaleMin...AppSettingsService.fontScaleMax,
                     step: AppSettingsService.fontScaleStep
@@ -275,7 +282,7 @@ struct UserProfileView: View {
                   .tint(AppTheme.accent)
                   .accessibilityLabel(loc("profile.font_size", "Text size"))
                   Text("A")
-                    .font(.title3)
+                    .font(appSettings.extraLargeText ? .title : .title3)
                     .foregroundColor(AppTheme.textSecondary)
                     .accessibilityHidden(true)
                 }
@@ -283,6 +290,26 @@ struct UserProfileView: View {
                 Text(loc("profile.font_size.desc", "Make text smaller or larger for your eyes"))
                   .font(.caption2)
                   .foregroundColor(AppTheme.textSecondary)
+
+                Divider()
+
+                Toggle(isOn: Binding(
+                  get: { appSettings.extraLargeText },
+                  set: { enabled in
+                    HapticsService.shared.select()
+                    appSettings.setExtraLargeText(enabled)
+                  }
+                )) {
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(loc("profile.font_size.extra", "Extra large"))
+                      .font(.subheadline)
+                      .foregroundColor(AppTheme.textPrimary)
+                    Text(loc("profile.font_size.extra.desc", "Sets text to 160%"))
+                      .font(.caption2)
+                      .foregroundColor(AppTheme.textSecondary)
+                  }
+                }
+                .tint(AppTheme.accent)
               }
               .padding(.horizontal, 8)
               
@@ -292,9 +319,8 @@ struct UserProfileView: View {
               // Dev Environment
               VStack(alignment: .leading, spacing: 8) {
                 Text(loc("profile.dev_environment", "Dev Environment"))
-                  .font(.caption)
-                  .fontWeight(.medium)
-                  .foregroundColor(AppTheme.textSecondary)
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textPrimary)
                 
                 Picker("Dev Environment", selection: $useDevEnvironment) {
                   Text(loc("env.production", "Production")).tag(false)
@@ -302,7 +328,7 @@ struct UserProfileView: View {
                 }
                 .pickerStyle(.segmented)
                 .background(useDevEnvironment ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
-                .cornerRadius(8)
+                .appCorner(AppTheme.tinyRadius)
                 .onChange(of: useDevEnvironment) { _, newValue in
                   print("Environment changed to \(newValue ? "DEV" : "PROD")")
                   
@@ -330,22 +356,16 @@ struct UserProfileView: View {
               #endif
               
               // Save Photos to Library
-              HStack(spacing: 12) {
-                Image(systemName: "photo.on.rectangle.angled")
-                  .font(.system(size: 20, weight: .semibold))
-                  .foregroundStyle(
-                    LinearGradient(
-                      colors: [Color.purple, Color.blue],
-                      startPoint: .topLeading,
-                      endPoint: .bottomTrailing
-                    )
-                  )
-                  .frame(width: 28)
-                
-                Toggle(isOn: Binding<Bool>(
-                  get: { AppSettingsService.shared.savePhotosToLibrary },
-                  set: { AppSettingsService.shared.savePhotosToLibrary = $0 }
-                )) {
+              Toggle(isOn: Binding<Bool>(
+                get: { appSettings.savePhotosToLibrary },
+                set: { appSettings.savePhotosToLibrary = $0 }
+              )) {
+                HStack(spacing: 8) {
+                  Image(systemName: "photo.on.rectangle.angled")
+                    .font(.system(size: 16))
+                    .foregroundColor(
+                      appSettings.savePhotosToLibrary ? AppTheme.accent : AppTheme.textSecondary)
+
                   VStack(alignment: .leading, spacing: 2) {
                     Text(loc("profile.save_photos", "Save to Photo Library"))
                       .font(.subheadline)
@@ -355,21 +375,11 @@ struct UserProfileView: View {
                       .foregroundColor(AppTheme.textSecondary)
                   }
                 }
-                .tint(
-                  LinearGradient(
-                    colors: [Color.purple, Color.blue],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                  )
-                )
               }
               .padding(.horizontal, 8)
-              .padding(.vertical, 6)
-              .appSurface(cornerRadius: AppTheme.smallRadius)
-              .padding(.horizontal, 4)
+              .tint(AppTheme.accent)
             }
-            .padding(.vertical, 12)
-            .cardContainer(padding: 12)
+            .cardContainer(padding: 14)
 
             Button(action: {
               HapticsService.shared.select()
@@ -446,17 +456,8 @@ struct UserProfileView: View {
                 .font(.subheadline)
                 .foregroundColor(AppTheme.danger)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                  RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
-                    .fill(AppTheme.surface)
-                )
-                .overlay(
-                  RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
-                    .stroke(AppTheme.divider, lineWidth: 1)
-                )
               }
-              .buttonStyle(PressScaleButtonStyle())
+              .buttonStyle(SecondaryButtonStyle())
               .accessibilityHint(loc("a11y.logout", "Signs you out of the app"))
 
               Button(action: {
@@ -480,8 +481,7 @@ struct UserProfileView: View {
           .padding(.vertical, 12)
         }
       }
-      .navigationTitle(loc("nav.profile", "Profile"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("nav.profile", "Profile"))
       .toolbar {
         if !embeddedInTab {
           ToolbarItem(placement: .navigationBarTrailing) {
@@ -492,18 +492,20 @@ struct UserProfileView: View {
           }
         }
       }
-      .alert(loc("alert.delete.title", "Delete Account"), isPresented: $showDeleteConfirmation) {
-        Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-        Button(loc("profile.delete", "Delete"), role: .destructive) {
-          deleteAccount()
-        }
-      } message: {
-        Text(
-          loc(
-            "alert.delete.message",
-            "Are you sure you want to delete your account? This will immediately remove all your data and preferences from this device and sign you out."
-          ))
-      }
+      .scaledNotice(
+        loc("alert.delete.title", "Delete Account"),
+        isPresented: $showDeleteConfirmation,
+        message: loc(
+          "alert.delete.message",
+          "Are you sure you want to delete your account? This will immediately remove all your data and preferences from this device and sign you out."
+        ),
+        actions: [
+          ScaledNoticeAction(title: loc("profile.delete", "Delete"), kind: .destructive) {
+            deleteAccount()
+          },
+          ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary),
+        ]
+      )
       .sheet(isPresented: $showOnboarding) {
         OnboardingView(isPresented: $showOnboarding)
           .interactiveDismissDisabled()
@@ -937,11 +939,11 @@ struct UserProfileView: View {
           .font(.caption.weight(.semibold))
           .foregroundColor(AppTheme.textSecondary)
       }
-      .padding(.horizontal, 4)
-      .padding(.vertical, 4)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 6)
       .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
+    .buttonStyle(PressScaleButtonStyle())
   }
 
   private func healthMetricRow(label: String, value: String, color: Color) -> some View {
@@ -955,7 +957,7 @@ struct UserProfileView: View {
         .fontWeight(.bold)
         .foregroundColor(color)
     }
-    .padding(.horizontal, 4)
+    .padding(.horizontal, 8)
   }
   
   private func preferenceRow<Content: View>(label: String, action: @escaping () -> Void, @ViewBuilder trailing: () -> Content) -> some View {
@@ -968,7 +970,7 @@ struct UserProfileView: View {
         trailing()
       }
       .padding(.horizontal, 8)
-      .padding(.vertical, 12)
+      .padding(.vertical, 6)
       .contentShape(Rectangle())
     }
     .buttonStyle(PressScaleButtonStyle())
@@ -986,10 +988,10 @@ struct MascotButton: View {
     Button(action: action) {
       VStack(spacing: 8) {
         ZStack {
-          RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+          RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
             .fill(isSelected ? AppTheme.primaryButtonFill : AppTheme.surface)
             .overlay(
-              RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+              RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
                 .stroke(isSelected ? AppTheme.primaryButtonFill : AppTheme.divider, lineWidth: 1)
             )
           

@@ -370,37 +370,36 @@ private struct CameraButtonAlerts: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .alert(
-        loc("camera.unavailable.title", "Camera Unavailable"), isPresented: $cameraUnavailableAlert
-      ) {
-        Button(loc("common.ok", "OK")) {}
-      } message: {
-        Text(loc("camera.unavailable.msg", "Your device does not have a camera."))
-      }
-      .alert(
+      .scaledNotice(
+        loc("camera.unavailable.title", "Camera Unavailable"),
+        isPresented: $cameraUnavailableAlert,
+        message: loc("camera.unavailable.msg", "Your device does not have a camera."),
+        actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+      )
+      .scaledNotice(
         loc("library.unavailable.title", "Photo Library Unavailable"),
-        isPresented: $photoLibraryUnavailableAlert
-      ) {
-        Button(loc("common.ok", "OK")) {}
-      } message: {
-        Text(loc("library.unavailable.msg", "Photo library is not available."))
-      }
-      .alert(loc("backdating.alert.title", "Confirm Past Date"), isPresented: $showBackdatingAlert) {
-        Button(loc("backdating.alert.cancel", "Cancel"), role: .cancel) {
-          pendingSourceType = nil
-        }
-        Button(loc("backdating.alert.confirm", "Confirm")) {
-          onConfirmBackdate()
-        }
-        Button(loc("backdating.alert.log_today", "Log Today's Food")) {
-          pendingSourceType = nil
-          onReturnToToday?()
-        }
-      } message: {
-        Text(
-          backdatingStatusEmoji + " " + backdatingMessage + "\n\n"
-            + loc("backdating.alert.tip", "Tip: You can log today's food instead."))
-      }
+        isPresented: $photoLibraryUnavailableAlert,
+        message: loc("library.unavailable.msg", "Photo library is not available."),
+        actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+      )
+      .scaledNotice(
+        loc("backdating.alert.title", "Confirm Past Date"),
+        isPresented: $showBackdatingAlert,
+        message: backdatingStatusEmoji + " " + backdatingMessage + "\n\n"
+          + loc("backdating.alert.tip", "Tip: You can log today's food instead."),
+        actions: [
+          ScaledNoticeAction(title: loc("backdating.alert.confirm", "Confirm")) {
+            onConfirmBackdate()
+          },
+          ScaledNoticeAction(title: loc("backdating.alert.log_today", "Log Today's Food"), kind: .secondary) {
+            pendingSourceType = nil
+            onReturnToToday?()
+          },
+          ScaledNoticeAction(title: loc("backdating.alert.cancel", "Cancel"), kind: .secondary) {
+            pendingSourceType = nil
+          },
+        ]
+      )
   }
 }
 

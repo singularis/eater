@@ -32,6 +32,7 @@ enum ActivityType: CaseIterable {
 
 struct ActivitiesView: View {
   @Environment(\.dismiss) private var dismiss
+  @ObservedObject private var appSettings = AppSettingsService.shared
   @AppStorage("chessTotalWins") private var chessTotalWins = 0
   @AppStorage("chessOpponents") private var chessOpponents = "{}" // JSON: {"opponent@email.com": "3:2"}
   @AppStorage("lastChessDate") private var lastChessDate = ""
@@ -77,8 +78,13 @@ struct ActivitiesView: View {
             Divider()
               .padding(.vertical, 10)
             
-            // Activities as honeycomb: filled = tracked, outline = not yet
-            honeycombActivitiesView
+            // Activities as honeycomb: filled = tracked, outline = not yet.
+            // At 160% the wide honeycomb clips, so the cells become squares, two in a row.
+            if appSettings.fontScale >= 1.15 && activityGridWidth < honeycombSpan {
+              compactActivityGrid
+            } else {
+              honeycombActivitiesView
+            }
           }
           .padding()
         }
@@ -93,8 +99,7 @@ struct ActivitiesView: View {
           }
         }
       }
-      .navigationTitle(Localization.shared.tr("activities.title", default: "Activities"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(Localization.shared.tr("activities.title", default: "Activities"))
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(action: {
@@ -138,8 +143,7 @@ struct ActivitiesView: View {
                 .padding(.bottom, 24)
             }
             .background(AppTheme.backgroundGradient.ignoresSafeArea())
-            .navigationTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
-            .navigationBarTitleDisplayMode(.inline)
+            .scaledNavTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
             .toolbar {
               ToolbarItem(placement: .navigationBarTrailing) {
                 Button(Localization.shared.tr("common.done", default: "Done")) {
@@ -270,7 +274,7 @@ struct ActivitiesView: View {
           .padding(.vertical, 8)
           .padding(.horizontal, 16)
           .background(Color.red.opacity(0.15))
-          .cornerRadius(10)
+          .appCorner(AppTheme.smallRadius)
         }
         .padding(.top, 5)
         
@@ -315,7 +319,80 @@ struct ActivitiesView: View {
   // +20% size (88→106, 76→91)
   private static let hexWidth: CGFloat = 106
   private static let hexHeight: CGFloat = 91
+  /// Full honeycomb width. Below this, cells become squares, two in a row.
+  private var honeycombSpan: CGFloat {
+    let gap: CGFloat = 18
+    let stepX = Self.hexWidth + gap
+    return 2 * stepX + Self.hexWidth * 1.05
+  }
   
+  /// Width left for the activity grid inside the scaled layout, minus this screen's padding.
+  private var activityGridWidth: CGFloat {
+    let scale = CGFloat(max(appSettings.fontScale, 0.8))
+    return max(160, UIScreen.main.bounds.width / scale - 48)
+  }
+
+  private var compactCellSide: CGFloat {
+    let gap: CGFloat = 10
+    return max(72, floor((activityGridWidth - gap) / 2))
+  }
+
+  private var compactActivityGrid: some View {
+    let gap: CGFloat = 10
+    let side = compactCellSide
+    return VStack(spacing: gap) {
+      HStack(spacing: gap) {
+        squareActivity(honeycombCellStatistics(), side: side)
+        squareActivity(
+          honeycombCell(
+            type: .elliptical,
+            title: Localization.shared.tr("activities.elliptical", default: "Elliptical"),
+            icon: "figure.elliptical",
+            color: .purple
+          ),
+          side: side
+        )
+      }
+      HStack(spacing: gap) {
+        squareActivity(
+          honeycombCell(type: .gym, title: Localization.shared.tr("activities.gym", default: "Gym"), icon: "dumbbell.fill", color: .orange),
+          side: side
+        )
+        squareActivity(
+          honeycombCell(type: .steps, title: Localization.shared.tr("activities.steps", default: "Steps"), icon: "figure.walk", color: .green),
+          side: side
+        )
+      }
+      HStack(spacing: gap) {
+        squareActivity(
+          honeycombCell(type: .treadmill, title: Localization.shared.tr("activities.treadmill", default: "Treadmill"), icon: "figure.run", color: .blue),
+          side: side
+        )
+        squareActivity(
+          honeycombCell(
+            type: .yoga,
+            title: Localization.shared.tr("activities.yoga", default: "Yoga"),
+            icon: "figure.mind.and.body",
+            color: Color(red: 0.4, green: 0.6, blue: 0.5)
+          ),
+          side: side
+        )
+      }
+      HStack(spacing: gap) {
+        squareActivity(honeycombCellChess(), side: side)
+        Color.clear.frame(width: side, height: side)
+      }
+    }
+    .frame(maxWidth: .infinity)
+    .frame(height: 4 * side + 3 * gap)
+  }
+
+  private func squareActivity<Content: View>(_ content: Content, side: CGFloat) -> some View {
+    content
+      .frame(width: side, height: side)
+      .clipped()
+  }
+
   private var honeycombActivitiesView: some View {
     let w = Self.hexWidth
     let h = Self.hexHeight
@@ -504,7 +581,7 @@ struct ActivitiesView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(Color.blue.opacity(0.1))
-        .cornerRadius(8)
+        .appCorner(AppTheme.tinyRadius)
         .foregroundColor(.blue)
         
         Spacer()
@@ -545,7 +622,7 @@ struct ActivitiesView: View {
           .padding(.horizontal, 16)
           .padding(.vertical, 6)
           .background(getLeagueColor().opacity(0.15))
-          .cornerRadius(12)
+          .appCorner(AppTheme.smallRadius)
       }
       
       // Current / Last Opponent Score (clearer W-L format)
@@ -599,13 +676,13 @@ struct ActivitiesView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 6)
             .background(Color.purple.opacity(0.12))
-            .cornerRadius(10)
+            .appCorner(AppTheme.smallRadius)
           }
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 12)
         .background(AppTheme.surface.opacity(0.5))
-        .cornerRadius(12)
+        .appCorner(AppTheme.smallRadius)
       }
       
       if !lastChessDate.isEmpty {
@@ -898,7 +975,7 @@ struct ActivitiesView: View {
               .padding(.vertical, 12)
               .padding(.horizontal, 20)
               .background(Color.orange.opacity(0.15))
-              .cornerRadius(12)
+              .appCorner(AppTheme.smallRadius)
             }
             .padding(.bottom, 10)
           }
