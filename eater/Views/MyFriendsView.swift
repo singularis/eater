@@ -31,6 +31,8 @@ struct MyFriendsView: View {
               .multilineTextAlignment(.center)
               .padding(.horizontal, 40)
 
+            friendsExplanation
+
             Button(action: { showAddFriends = true }) {
               Text(loc("friends.add", "Add Friend"))
                 .font(.headline)
@@ -44,6 +46,9 @@ struct MyFriendsView: View {
         } else {
           ScrollView {
             VStack(spacing: 12) {
+              friendsExplanation
+                .padding(.horizontal)
+
               ForEach(friends, id: \.email) { friend in
                 friendRow(friend)
               }
@@ -89,6 +94,19 @@ struct MyFriendsView: View {
       }
     }
     .onAppear { fetchFriends() }
+  }
+
+  private var friendsExplanation: some View {
+    Text(loc(
+      "friends.list.explain",
+      "Tap Add Friend to add someone. You can share food with them later."
+    ))
+    .font(.subheadline)
+    .foregroundColor(AppTheme.textSecondary)
+    .fixedSize(horizontal: false, vertical: true)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .appSurface(cornerRadius: AppTheme.cornerRadius)
   }
 
   private func friendRow(_ friend: (email: String, nickname: String)) -> some View {
