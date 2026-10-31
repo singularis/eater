@@ -7,7 +7,6 @@ struct UserProfileView: View {
   @State private var showDeleteConfirmation = false
   @State private var showOnboarding = false
   @State private var showHealthSettings = false
-  @State private var showHealthDataAlert = false
   @State private var hasHealthData = false
   @State private var userHeight: Double = 0
   @State private var userWeight: Double = 0

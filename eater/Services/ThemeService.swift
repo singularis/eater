@@ -305,17 +305,6 @@ class ThemeService: ObservableObject {
   func getMascotImage(for state: MascotState) -> String? {
     return currentMascot.image(for: state)
   }
-  
-  // Get mascot image based on action
-  func getMascotImageForAction(_ action: String) -> String? {
-    switch action {
-    case "gym", "activity_recorded": return getMascotImage(for: .gym)
-    case "alcohol": return getMascotImage(for: .alcohol)
-    case "bad_food": return getMascotImage(for: .badFood)
-    case "sugar", "loss", "error", "angry": return getMascotImage(for: .angry)
-    default: return getMascotImage(for: .happy)
-    }
-  }
 
   /// Returns `count` unique preview images for the current mascot.
   /// Used in Profile → Theme to avoid showing repeated photos.

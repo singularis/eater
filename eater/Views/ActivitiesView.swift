@@ -711,59 +711,7 @@ struct ActivitiesView: View {
     .appSurface()
     .padding(.horizontal)
   }
-  
-  // MARK: - Chess Activity Button (opens sheet)
-  
-  private var chessActivityButton: some View {
-    let tracked = isTrackedForViewedDate(.chess)
-    return Button(action: {
-      HapticsService.shared.select()
-      showChessSheet = true
-    }) {
-      HStack {
-        Image(systemName: ThemeService.shared.icon(for: "square.grid.3x3.fill"))
-          .font(.title2)
-          .foregroundColor(tracked ? .white : .purple)
-          .frame(width: 40)
-        
-        VStack(alignment: .leading, spacing: 2) {
-          Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
-            .font(.headline)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
-          Text(Localization.shared.tr("activities.chess.subtitle", default: "Record games, view wins"))
-            .font(.caption)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-        
-        Image(systemName: "chevron.right")
-          .font(.caption)
-          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
-      }
-      .padding()
-      .background(
-        Group {
-          if tracked {
-            AppTheme.success
-          } else {
-            AppTheme.surface
-          }
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .appCardShadow()
-    }
-    .buttonStyle(.plain)
-  }
-  
+
   // MARK: - Tracked Today Helpers
   
   private func activityTypeKey(_ type: ActivityType) -> String {
@@ -788,14 +736,7 @@ struct ActivitiesView: View {
     default: return nil
     }
   }
-  
-  private func isTrackedToday(_ type: ActivityType) -> Bool {
-    if type == .chess {
-      return lastChessDate == getCurrentUTCDateString()
-    }
-    return todayTrackedActivityTypes.contains(activityTypeKey(type))
-  }
-  
+
   /// Highlight (green-purple) only activities tracked for the currently viewed date, not other dates.
   private func isTrackedForViewedDate(_ type: ActivityType) -> Bool {
     if type == .chess {
@@ -803,12 +744,6 @@ struct ActivitiesView: View {
         || summaryActivityTypes.contains("chess")
     }
     return summaryActivityTypes.contains(activityTypeKey(type))
-  }
-
-  private func trackedActivitiesToday() -> [ActivityType] {
-    todayTrackedActivityTypes
-      .split(separator: ",")
-      .compactMap { activityTypeFromKey(String($0)) }
   }
 
   private func activityDisplayName(_ type: ActivityType) -> String {
@@ -829,60 +764,7 @@ struct ActivitiesView: View {
   }
   
   // MARK: - Activity Button
-  
-  private func activityButton(type: ActivityType, title: String, subtitle: String, icon: String, color: Color) -> some View {
-    let tracked = isTrackedForViewedDate(type)
-    return Button(action: {
-      HapticsService.shared.select()
-      selectedActivityType = type
-      inputValue = ""
-      showActivityInputSheet = true
-    }) {
-      HStack {
-        // Theme-aware icon
-        Image(systemName: ThemeService.shared.icon(for: icon))
-          .font(.title2)
-          .foregroundColor(tracked ? .white : color)
-          .frame(width: 40)
-        
-        VStack(alignment: .leading, spacing: 2) {
-          Text(title)
-            .font(.headline)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
-          Text(subtitle)
-            .font(.caption)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-        
-        Image(systemName: "chevron.right")
-          .font(.caption)
-          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
-      }
-      .padding()
-      .background(
-        Group {
-          if tracked {
-            AppTheme.success
-          } else {
-            AppTheme.surface
-          }
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .appCardShadow()
-    }
-    .buttonStyle(.plain)
-  }
-  
+
   // MARK: - Chess Winner Sheet
   
   private var chessWinnerSheet: some View {

@@ -3,7 +3,7 @@ EATERIA 5.3 - APP STORE CONNECT TEXT
 Paste each block into the matching language in App Store Connect.
 Promotional Text: 170 characters max, can change any time without review.
 Description: 4000 max. What's New: shown on the update page.
-Keywords: keep the 5.0 keywords (docs/archive/AppStore_Listing_5.0.md).
+Keywords: 100 characters max, comma separated, no spaces after commas. Same as 5.0.
 Plain text, no emojis. Lists use the • character, which App Store shows as typed. No Markdown or HTML.
 
 ==================================================
@@ -23,6 +23,9 @@ Eateria shows what is on your plate. Take a photo or type a meal, and in seconds
 • Try it without an account, 36 languages, light and dark theme
 
 Free, no ads, no subscription. Eateria gives estimates to help you learn about food. It is not medical advice.
+
+KEYWORDS
+calorie counter,food tracker,macros,nutrition,diet,weight loss,healthy eating,food scanner,calories
 
 WHAT'S NEW
 Eateria 5.3 brings a fresh look
@@ -51,6 +54,9 @@ Eateria يُظهر لك ما في طبقك. التقط صورة أو اكتب و
 
 مجاني، بلا إعلانات ولا اشتراك. يقدّم Eateria تقديرات لمساعدتك على فهم طعامك، وهو ليس نصيحة طبية.
 
+KEYWORDS
+عداد السعرات,تتبع الطعام,ماكرو,تغذية,دايت,إنقاص الوزن,أكل صحي,سعرات,وجبات
+
 WHAT'S NEW
 Eateria 5.3 بمظهر جديد
 • تصميم زجاجي جديد على iOS 26
@@ -77,6 +83,9 @@ Eateria দেখায় আপনার প্লেটে কী আছে�
 • অ্যাকাউন্ট ছাড়াই ব্যবহার করুন, ৩৬টি ভাষা, লাইট ও ডার্ক থিম
 
 ফ্রি, বিজ্ঞাপন ও সাবস্ক্রিপশন ছাড়া। Eateria খাবার সম্পর্কে জানতে আনুমানিক তথ্য দেয়। এটি চিকিৎসা পরামর্শ নয়।
+
+KEYWORDS
+ক্যালোরি,খাবার ট্র্যাকার,ম্যাক্রো,পুষ্টি,ডায়েট,ওজন কমানো,স্বাস্থ্যকর খাবার,ফুড স্ক্যানার
 
 WHAT'S NEW
 Eateria 5.3 এসেছে নতুন রূপে
@@ -105,6 +114,9 @@ Eateria et mostra què hi ha al teu plat. Fes una foto o escriu un àpat i en se
 
 Gratis, sense anuncis ni subscripció. Eateria dona estimacions per ajudar-te a conèixer el que menges. No és consell mèdic.
 
+KEYWORDS
+comptador calories,diari menjar,macros,nutrició,dieta,perdre pes,menjar sa,escàner menjar
+
 WHAT'S NEW
 Eateria 5.3 estrena aspecte
 • Nou disseny de vidre a iOS 26
@@ -131,6 +143,9 @@ Eateria 告诉你盘中有什么。拍照或输入餐食，几秒内即可看到
 • 无需账号即可试用，支持 36 种语言，浅色和深色主题
 
 免费，无广告，无订阅。Eateria 提供估算值，帮助你了解食物，不构成医疗建议。
+
+KEYWORDS
+卡路里,热量计算,饮食记录,营养,减肥,健康饮食,食物识别,宏量营养素,减脂,拍照记录
 
 WHAT'S NEW
 Eateria 5.3 焕然一新
@@ -159,6 +174,9 @@ Eateria 告訴你盤中有什麼。拍照或輸入餐點，幾秒內即可看到
 
 免費，無廣告，無訂閱。Eateria 提供估算值，幫助你了解食物，不構成醫療建議。
 
+KEYWORDS
+卡路里,熱量計算,飲食記錄,營養,減重,健康飲食,食物辨識,巨量營養素,減脂,拍照記錄
+
 WHAT'S NEW
 Eateria 5.3 煥然一新
 • iOS 26 上的全新玻璃設計
@@ -185,6 +203,9 @@ Eateria vam pokazuje što je na tanjuru. Fotografirajte ili upišite obrok i za 
 • Isprobajte bez računa, 36 jezika, svijetla i tamna tema
 
 Besplatno, bez oglasa i pretplate. Eateria daje procjene koje vam pomažu upoznati hranu. To nije liječnički savjet.
+
+KEYWORDS
+brojač kalorija,dnevnik prehrane,makronutrijenti,prehrana,dijeta,mršavljenje,zdrava hrana,kalorije
 
 WHAT'S NEW
 Eateria 5.3 donosi novi izgled
@@ -213,6 +234,9 @@ Eateria vám ukáže, co máte na talíři. Vyfoťte nebo napište jídlo a za p
 
 Zdarma, bez reklam a předplatného. Eateria poskytuje odhady, které vám pomohou poznat jídlo. Nejde o lékařskou radu.
 
+KEYWORDS
+počítadlo kalorií,deník jídla,makra,výživa,dieta,hubnutí,zdravé jídlo,kalorie,jídelníček
+
 WHAT'S NEW
 Eateria 5.3 přináší nový vzhled
 • Nový skleněný design v iOS 26
@@ -239,6 +263,9 @@ Eateria viser, hvad der er på din tallerken. Tag et billede eller skriv et mål
 • Prøv uden konto, 36 sprog, lyst og mørkt tema
 
 Gratis, uden reklamer og abonnement. Eateria giver skøn, der hjælper dig med at lære om mad. Det er ikke lægelig rådgivning.
+
+KEYWORDS
+kalorietæller,maddagbog,makroer,ernæring,kost,vægttab,sund mad,kalorier,madscanner
 
 WHAT'S NEW
 Eateria 5.3 har fået nyt look
@@ -267,6 +294,9 @@ Eateria laat zien wat er op je bord ligt. Maak een foto of typ een maaltijd en z
 
 Gratis, zonder advertenties of abonnement. Eateria geeft schattingen om je te helpen meer over eten te leren. Het is geen medisch advies.
 
+KEYWORDS
+calorieteller,eetdagboek,macros,voeding,dieet,afvallen,gezond eten,calorieën,voedselscanner
+
 WHAT'S NEW
 Eateria 5.3 heeft een frisse look
 • Nieuw glasontwerp op iOS 26
@@ -293,6 +323,9 @@ Eateria näyttää, mitä lautasellasi on. Ota kuva tai kirjoita ateria, niin n�
 • Kokeile ilman tiliä, 36 kieltä, vaalea ja tumma teema
 
 Ilmainen, ei mainoksia eikä tilausta. Eateria antaa arvioita, jotka auttavat tuntemaan ruokaa. Se ei ole lääketieteellinen neuvo.
+
+KEYWORDS
+kalorilaskuri,ruokapäiväkirja,makrot,ravitsemus,ruokavalio,laihdutus,terveellinen ruoka,kalorit
 
 WHAT'S NEW
 Eateria 5.3 sai uuden ilmeen
@@ -321,6 +354,9 @@ Eateria vous montre ce qu'il y a dans votre assiette. Prenez une photo ou écriv
 
 Gratuit, sans pub ni abonnement. Eateria donne des estimations pour vous aider à mieux connaître votre alimentation. Ce n'est pas un avis médical.
 
+KEYWORDS
+compteur calories,journal alimentaire,macros,nutrition,régime,perte de poids,manger sain,calories
+
 WHAT'S NEW
 Eateria 5.3 fait peau neuve
 • Nouveau design en verre sur iOS 26
@@ -347,6 +383,9 @@ Eateria zeigt dir, was auf deinem Teller ist. Mach ein Foto oder tippe eine Mahl
 • Teste ohne Konto, 36 Sprachen, helles und dunkles Design
 
 Kostenlos, ohne Werbung und Abo. Eateria liefert Schätzungen, damit du dein Essen besser kennenlernst. Es ist keine medizinische Beratung.
+
+KEYWORDS
+kalorienzähler,ernährungstagebuch,makros,ernährung,diät,abnehmen,gesund essen,kalorien,essen
 
 WHAT'S NEW
 Eateria 5.3 im neuen Look
@@ -375,6 +414,9 @@ DESCRIPTION
 
 Δωρεάν, χωρίς διαφημίσεις και συνδρομή. Το Eateria δίνει εκτιμήσεις για να γνωρίσεις καλύτερα το φαγητό σου. Δεν αποτελεί ιατρική συμβουλή.
 
+KEYWORDS
+μετρητής θερμίδων,ημερολόγιο διατροφής,μακρο,διατροφή,δίαιτα,απώλεια βάρους,υγιεινή διατροφή
+
 WHAT'S NEW
 Το Eateria 5.3 έχει νέα εμφάνιση
 • Νέος γυάλινος σχεδιασμός στο iOS 26
@@ -401,6 +443,9 @@ Eateria מראה לכם מה יש בצלחת. צלמו או הקלידו ארו�
 • נסו בלי חשבון, 36 שפות, ערכת נושא בהירה וכהה
 
 חינם, בלי פרסומות ובלי מנוי. Eateria נותנת הערכות שעוזרות להכיר את האוכל שלכם. זו אינה עצה רפואית.
+
+KEYWORDS
+מונה קלוריות,יומן אוכל,מאקרו,תזונה,דיאטה,ירידה במשקל,אכילה בריאה,קלוריות,סורק אוכל
 
 WHAT'S NEW
 Eateria 5.3 במראה חדש
@@ -429,6 +474,9 @@ Eateria दिखाता है कि आपकी थाली में क
 
 मुफ़्त, बिना विज्ञापन और सब्सक्रिप्शन। Eateria खाने के बारे में जानने के लिए अनुमान देता है। यह चिकित्सा सलाह नहीं है।
 
+KEYWORDS
+कैलोरी काउंटर,फूड ट्रैकर,मैक्रो,पोषण,डाइट,वजन घटाना,सेहतमंद खाना,कैलोरी,फूड स्कैनर
+
 WHAT'S NEW
 Eateria 5.3 नए रूप में
 • iOS 26 पर नया ग्लास डिज़ाइन
@@ -455,6 +503,9 @@ Az Eateria megmutatja, mi van a tányérodon. Fotózz vagy írj be egy ételt, �
 • Próbáld ki fiók nélkül, 36 nyelv, világos és sötét téma
 
 Ingyenes, reklám és előfizetés nélkül. Az Eateria becsléseket ad, hogy jobban megismerd az ételeidet. Nem orvosi tanács.
+
+KEYWORDS
+kalóriaszámláló,étkezési napló,makró,táplálkozás,diéta,fogyás,egészséges étkezés,kalória
 
 WHAT'S NEW
 Az Eateria 5.3 új külsőt kapott
@@ -483,6 +534,9 @@ Eateria menunjukkan apa yang ada di piringmu. Foto atau ketik makananmu, dan dal
 
 Gratis, tanpa iklan dan langganan. Eateria memberi perkiraan untuk membantumu mengenal makananmu. Ini bukan saran medis.
 
+KEYWORDS
+penghitung kalori,catatan makan,makro,nutrisi,diet,turun berat badan,makan sehat,kalori,gizi
+
 WHAT'S NEW
 Eateria 5.3 tampil baru
 • Desain kaca baru di iOS 26
@@ -509,6 +563,9 @@ Eateria ti mostra cosa c'è nel tuo piatto. Scatta una foto o scrivi un pasto e 
 • Provala senza account, 36 lingue, tema chiaro e scuro
 
 Gratis, senza pubblicità né abbonamento. Eateria fornisce stime per aiutarti a conoscere il cibo. Non è un consiglio medico.
+
+KEYWORDS
+contacalorie,diario alimentare,macro,nutrizione,dieta,perdere peso,mangiare sano,calorie,cibo
 
 WHAT'S NEW
 Eateria 5.3 si rinnova
@@ -537,6 +594,9 @@ Eateria はお皿の中身を教えてくれます。写真を撮るか食事を
 
 無料、広告なし、サブスクなし。Eateria は食事を知るための目安を表示します。医療アドバイスではありません。
 
+KEYWORDS
+カロリー計算,食事記録,ダイエット,栄養,PFC,体重管理,健康的な食事,食事管理,カロリー,食べ物
+
 WHAT'S NEW
 Eateria 5.3 は見た目を一新
 • iOS 26 で新しいガラスデザイン
@@ -563,6 +623,9 @@ Eateria는 접시에 무엇이 있는지 보여줘요. 사진을 찍거나 식�
 • 계정 없이 사용 가능, 36개 언어, 라이트 및 다크 테마
 
 무료, 광고와 구독 없음. Eateria는 음식에 대해 알 수 있도록 추정치를 제공합니다. 의료 조언이 아닙니다.
+
+KEYWORDS
+칼로리 계산,식단 기록,매크로,영양,다이어트,체중 감량,건강한 식사,칼로리,식단 관리,음식 사진
 
 WHAT'S NEW
 Eateria 5.3이 새롭게 바뀌었어요
@@ -591,6 +654,9 @@ Eateria menunjukkan isi pinggan anda. Ambil gambar atau taip hidangan, dan dalam
 
 Percuma, tanpa iklan dan langganan. Eateria memberi anggaran untuk membantu anda mengenali makanan. Ini bukan nasihat perubatan.
 
+KEYWORDS
+pengira kalori,log makanan,makro,nutrisi,diet,turun berat,makan sihat,kalori,pemakanan
+
 WHAT'S NEW
 Eateria 5.3 tampil baharu
 • Reka bentuk kaca baharu pada iOS 26
@@ -617,6 +683,9 @@ Eateria viser hva som er på tallerkenen din. Ta et bilde eller skriv inn et må
 • Prøv uten konto, 36 språk, lyst og mørkt tema
 
 Gratis, uten reklame og abonnement. Eateria gir anslag som hjelper deg å lære om mat. Det er ikke medisinske råd.
+
+KEYWORDS
+kaloriteller,matdagbok,makroer,ernæring,kosthold,vekttap,sunn mat,kalorier,matskanner
 
 WHAT'S NEW
 Eateria 5.3 har fått nytt utseende
@@ -645,6 +714,9 @@ Eateria pokazuje, co masz na talerzu. Zrób zdjęcie lub wpisz posiłek, a w kil
 
 Za darmo, bez reklam i subskrypcji. Eateria podaje szacunki, które pomagają lepiej poznać jedzenie. To nie jest porada medyczna.
 
+KEYWORDS
+licznik kalorii,dziennik jedzenia,makro,odżywianie,dieta,odchudzanie,zdrowe jedzenie,kalorie
+
 WHAT'S NEW
 Eateria 5.3 w nowym wyglądzie
 • Nowy szklany wygląd w iOS 26
@@ -671,6 +743,9 @@ O Eateria mostra o que há no seu prato. Tire uma foto ou escreva uma refeição
 • Experimente sem conta, 36 idiomas, tema claro e escuro
 
 Grátis, sem anúncios nem assinatura. O Eateria dá estimativas para ajudar você a conhecer melhor a comida. Não é conselho médico.
+
+KEYWORDS
+contador calorias,diário alimentar,macros,nutrição,dieta,perder peso,comer saudável,calorias
 
 WHAT'S NEW
 Eateria 5.3 com visual novo
@@ -699,6 +774,9 @@ Eateria îți arată ce ai în farfurie. Fă o poză sau scrie o masă și în c
 
 Gratuit, fără reclame și abonament. Eateria oferă estimări ca să înțelegi mai bine ce mănânci. Nu este un sfat medical.
 
+KEYWORDS
+contor calorii,jurnal alimentar,macro,nutriție,dietă,slăbit,mâncare sănătoasă,calorii,alimentație
+
 WHAT'S NEW
 Eateria 5.3 are un aspect nou
 • Design nou de sticlă pe iOS 26
@@ -725,6 +803,9 @@ Eateria vám ukáže, čo máte na tanieri. Odfoťte alebo napíšte jedlo a za 
 • Vyskúšajte bez účtu, 36 jazykov, svetlý a tmavý motív
 
 Zadarmo, bez reklám a predplatného. Eateria poskytuje odhady, ktoré vám pomôžu spoznať jedlo. Nejde o lekársku radu.
+
+KEYWORDS
+počítadlo kalórií,denník jedla,makrá,výživa,diéta,chudnutie,zdravé jedlo,kalórie,jedálniček
 
 WHAT'S NEW
 Eateria 5.3 prináša nový vzhľad
@@ -753,6 +834,9 @@ Eateria vam pokaže, kaj imate na krožniku. Fotografirajte ali vpišite obrok i
 
 Brezplačno, brez oglasov in naročnine. Eateria daje ocene, ki vam pomagajo bolje spoznati hrano. To ni zdravniški nasvet.
 
+KEYWORDS
+števec kalorij,dnevnik prehrane,makro,prehrana,dieta,hujšanje,zdrava hrana,kalorije,obroki
+
 WHAT'S NEW
 Eateria 5.3 ima nov videz
 • Nov stekleni videz v iOS 26
@@ -779,6 +863,9 @@ Eateria te muestra qué hay en tu plato. Haz una foto o escribe una comida y en 
 • Pruébala sin cuenta, 36 idiomas, tema claro y oscuro
 
 Gratis, sin anuncios ni suscripción. Eateria da estimaciones para ayudarte a conocer lo que comes. No es consejo médico.
+
+KEYWORDS
+contador calorías,diario comida,macros,nutrición,dieta,bajar de peso,comer sano,calorías,alimentos
 
 WHAT'S NEW
 Eateria 5.3 estrena look
@@ -807,6 +894,9 @@ Eateria visar vad som finns på din tallrik. Ta en bild eller skriv in en målti
 
 Gratis, utan reklam och prenumeration. Eateria ger uppskattningar som hjälper dig att lära känna din mat. Det är inte medicinsk rådgivning.
 
+KEYWORDS
+kaloriräknare,matdagbok,makron,näring,kost,viktminskning,hälsosam mat,kalorier,matskanner
+
 WHAT'S NEW
 Eateria 5.3 har fått nytt utseende
 • Ny glasdesign i iOS 26
@@ -833,6 +923,9 @@ Eateria บอกคุณว่าในจานมีอะไร ถ่า�
 • ลองใช้ได้โดยไม่ต้องมีบัญชี 36 ภาษา ธีมสว่างและมืด
 
 ใช้ฟรี ไม่มีโฆษณา ไม่ต้องสมัครสมาชิก Eateria ให้ค่าประมาณเพื่อช่วยให้คุณรู้จักอาหารมากขึ้น ไม่ใช่คำแนะนำทางการแพทย์
+
+KEYWORDS
+นับแคลอรี,บันทึกอาหาร,มาโคร,โภชนาการ,ไดเอท,ลดน้ำหนัก,กินคลีน,แคลอรี,อาหารสุขภาพ
 
 WHAT'S NEW
 Eateria 5.3 โฉมใหม่
@@ -861,6 +954,9 @@ Eateria tabağında ne olduğunu gösterir. Fotoğraf çek ya da yemeğini yaz, 
 
 Ücretsiz, reklamsız ve abonesiz. Eateria yemeklerini tanıman için tahmini değerler verir. Tıbbi tavsiye değildir.
 
+KEYWORDS
+kalori sayacı,yemek günlüğü,makro,beslenme,diyet,kilo verme,sağlıklı beslenme,kalori,yemek
+
 WHAT'S NEW
 Eateria 5.3 yenilendi
 • iOS 26'da yeni cam tasarım
@@ -887,6 +983,9 @@ Eateria показує, що у вашій тарілці. Сфотографу�
 • Спробуйте без акаунта, 36 мов, світла й темна тема
 
 Безкоштовно, без реклами й підписки. Eateria дає оцінки, щоб ви краще знали свою їжу. Це не медична порада.
+
+KEYWORDS
+лічильник калорій,щоденник харчування,макро,харчування,дієта,схуднення,здорова їжа,калорії
 
 WHAT'S NEW
 Eateria 5.3 має новий вигляд
@@ -915,6 +1014,9 @@ Eateria دکھاتا ہے کہ آپ کی پلیٹ میں کیا ہے۔ تصوی�
 
 مفت، بغیر اشتہار اور سبسکرپشن۔ Eateria کھانے کو سمجھنے کے لیے اندازے دیتا ہے۔ یہ طبی مشورہ نہیں ہے۔
 
+KEYWORDS
+کیلوری کاؤنٹر,کھانے کا لاگ,میکرو,غذائیت,ڈائٹ,وزن کم کرنا,صحت مند کھانا,کیلوریز,فوڈ اسکینر
+
 WHAT'S NEW
 Eateria 5.3 نئے انداز میں
 • iOS 26 پر نیا گلاس ڈیزائن
@@ -941,6 +1043,9 @@ Eateria cho bạn biết trong đĩa có gì. Chụp ảnh hoặc nhập món ă
 • Dùng thử không cần tài khoản, 36 ngôn ngữ, giao diện sáng và tối
 
 Miễn phí, không quảng cáo, không thuê bao. Eateria đưa ra ước tính để giúp bạn hiểu hơn về thức ăn. Đây không phải lời khuyên y tế.
+
+KEYWORDS
+đếm calo,nhật ký ăn uống,macro,dinh dưỡng,ăn kiêng,giảm cân,ăn lành mạnh,calo,thực đơn
 
 WHAT'S NEW
 Eateria 5.3 có giao diện mới

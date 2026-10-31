@@ -1903,58 +1903,7 @@ class GRPCService {
       }
     }
   }
-  
-  /// Get chess statistics for current user
-  func getChessStats(
-    userEmail: String,
-    opponentEmail: String? = nil,
-    completion: @escaping (Bool, String?, String?, String?) -> Void
-  ) {
-    var requestDict: [String: Any] = ["user_email": userEmail]
-    if let opponent = opponentEmail {
-      requestDict["opponent_email"] = opponent
-    }
-    
-    guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
-      completion(false, nil, nil, nil)
-      return
-    }
-    
-    guard var urlRequest = createRequest(endpoint: "autocomplete/get_chess_stats", httpMethod: "POST", body: body) else {
-      completion(false, nil, nil, nil)
-      return
-    }
-    
-    urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    
-    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
-      if error != nil {
-        completion(false, nil, nil, nil)
-        return
-      }
-      
-      guard let data = data else {
-        completion(false, nil, nil, nil)
-        return
-      }
-      
-      do {
-        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-          completion(false, nil, nil, nil)
-          return
-        }
-        
-        let score = responseDict["score"] as? String ?? "0:0"
-        let opponentName = responseDict["opponent_name"] as? String
-        let lastGameDate = responseDict["last_game_date"] as? String
-        
-        completion(true, score, opponentName, lastGameDate)
-      } catch {
-        completion(false, nil, nil, nil)
-      }
-    }
-  }
-  
+
   /// Get chess history (list of past games)
   /// - Parameters:
   ///   - limit: Number of games to fetch (default 50)

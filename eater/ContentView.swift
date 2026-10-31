@@ -1253,35 +1253,6 @@ struct ContentView: View {
     }
   }
 
-  func fetchData() {
-    // Prevent multiple simultaneous data fetches
-    guard !isFetchingData else { return }
-
-    isFetchingData = true
-    // For background updates, always try cache first
-    ProductStorageService.shared.fetchAndProcessProducts { fetchedProducts, calories, weight, success in
-      DispatchQueue.main.async {
-        self.isFetchingData = false
-        guard success else { return }
-
-        let previousWeight = self.personWeight
-        FoodExtrasStore.shared.clearSugar(for: fetchedProducts.map(\.time))
-        self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
-        self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
-        self.personWeight = weight
-        if weight > 0 {
-          UserDefaults.standard.set(Double(weight), forKey: "userWeight")
-        }
-
-        let userDefaults = UserDefaults.standard
-        if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-          self.recalculateCalorieLimitsFromHealthData()
-        }
-        self.refreshMacrosForCurrentView()
-      }
-    }
-  }
-
   @discardableResult
   private func checkWeightGoalReached(newWeight: Float) -> Bool {
     let userDefaults = UserDefaults.standard
@@ -1332,18 +1303,6 @@ struct ContentView: View {
       secondaryAction: nil
     )
     return true
-  }
-
-  func deleteProduct(time: Int64) {
-    GRPCService().deleteFood(time: Int64(time)) { success in
-      DispatchQueue.main.async {
-        if success {
-          self.fetchData()
-        } else {
-          // Failed to delete product
-        }
-      }
-    }
   }
 
   func checkProgressiveOnboarding() {
@@ -1785,7 +1744,6 @@ struct ContentView: View {
     }
     return true
   }
-
 
   func setupActivityCaloriesObserver() {
     NotificationCenter.default.addObserver(

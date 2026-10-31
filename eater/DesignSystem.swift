@@ -60,7 +60,6 @@ enum AppTheme {
   static let cornerRadius: CGFloat = 16
   static let smallRadius: CGFloat = 12
   static let tinyRadius: CGFloat = 8
-  static let cardPadding: CGFloat = 16
 
   // Shadows - same weight on tiles, cards, and header circles
   static var cardShadow: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) {
@@ -92,15 +91,6 @@ enum AppTheme {
     }
   }
 
-  /// Kept as a solid so leftover gradient callers stay flat.
-  static var primaryButtonGradient: LinearGradient {
-    LinearGradient(
-      colors: [primaryButtonFill, primaryButtonFill],
-      startPoint: .top,
-      endPoint: .bottom
-    )
-  }
-
   /// Mascot callout: action blue into the theme violet, left to right.
   /// Both stops stay dark enough for white text (system purple is too light).
   static var mascotCalloutGradient: LinearGradient {
@@ -121,19 +111,6 @@ enum AppTheme {
       ],
       startPoint: .leading,
       endPoint: .trailing
-    )
-  }
-
-  // Liquid Glass Styles
-  static var liquidGlassStroke: LinearGradient {
-    LinearGradient(
-      colors: [
-        .white.opacity(0.6),
-        .white.opacity(0.1),
-        .white.opacity(0.05)
-      ],
-      startPoint: .topLeading,
-      endPoint: .bottomTrailing
     )
   }
 
@@ -278,14 +255,6 @@ struct MascotCalloutButtonStyle: ButtonStyle {
   }
 }
 
-struct GreenToPurpleButtonStyle: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label.modifier(
-      FilledButtonChrome(fill: AppTheme.primaryButtonFill, isPressed: configuration.isPressed)
-    )
-  }
-}
-
 struct GreenButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label.modifier(
@@ -319,29 +288,9 @@ struct CardModifier: ViewModifier {
   }
 }
 
-struct LiquidGlassModifier: ViewModifier {
-  let paddingValue: CGFloat
-  let cornerRadius: CGFloat
-  
-  init(paddingValue: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) {
-    self.paddingValue = paddingValue
-    self.cornerRadius = cornerRadius
-  }
-
-  func body(content: Content) -> some View {
-    content
-      .padding(paddingValue)
-      .appSurface(cornerRadius: cornerRadius)
-  }
-}
-
 extension View {
   func cardContainer(padding: CGFloat = 12) -> some View {
     modifier(CardModifier(paddingValue: padding))
-  }
-  
-  func liquidGlass(padding: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
-    modifier(LiquidGlassModifier(paddingValue: padding, cornerRadius: cornerRadius))
   }
 
   /// Panel used by Home tiles, date chip, and cards. Liquid Glass on iOS 26, flat before.

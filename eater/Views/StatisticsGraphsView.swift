@@ -793,23 +793,6 @@ private struct ChartCardGlass: ViewModifier {
   }
 }
 
-private struct SelectionPopoverGlass: ViewModifier {
-  func body(content: Content) -> some View {
-    if #available(iOS 26.0, *) {
-      content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: AppTheme.smallRadius))
-    } else {
-      content.background(
-        AppTheme.surface,
-        in: RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-      )
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-    }
-  }
-}
-
 #Preview {
   StatisticsGraphsView(isPresented: .constant(true))
 }

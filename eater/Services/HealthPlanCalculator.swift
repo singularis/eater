@@ -274,10 +274,6 @@ enum HealthUnits {
     imperial ? loc("units.lb", "lb") : loc("units.kg", "kg")
   }
 
-  static func formatWeight(_ kg: Double, imperial: Bool) -> String {
-    "\(displayWeight(kg, imperial: imperial)) \(weightUnit(imperial: imperial))"
-  }
-
   static func formatHeight(_ cm: Double, imperial: Bool) -> String {
     if imperial {
       let parts = feetAndInches(fromCm: cm)

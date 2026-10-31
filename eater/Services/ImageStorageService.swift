@@ -20,22 +20,6 @@ class ImageStorageService {
     }
   }
 
-  func saveImage(_ image: UIImage, forTime time: Int64) -> Bool {
-    guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-      return false
-    }
-
-    let filename = "\(time).jpg"
-    let fileURL = imagesDirectory.appendingPathComponent(filename)
-
-    do {
-      try imageData.write(to: fileURL)
-      return true
-    } catch {
-      return false
-    }
-  }
-
   func saveTemporaryImage(_ image: UIImage, forTime time: Int64) -> Bool {
     guard let imageData = image.jpegData(compressionQuality: 0.8) else {
       return false
@@ -137,29 +121,6 @@ class ImageStorageService {
     return image
   }
 
-  func saveImageByName(_ image: UIImage, name: String) -> Bool {
-    guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-      return false
-    }
-
-    // Clean the name to make it a valid filename
-    let cleanName = name.replacingOccurrences(
-      of: "[^a-zA-Z0-9\\s]", with: "", options: .regularExpression
-    )
-    .replacingOccurrences(of: " ", with: "_")
-    .lowercased()
-
-    let filename = "\(cleanName).jpg"
-    let fileURL = imagesDirectory.appendingPathComponent(filename)
-
-    do {
-      try imageData.write(to: fileURL)
-      return true
-    } catch {
-      return false
-    }
-  }
-
   // MARK: - Cached Remote Images (from backend)
 
   /// Convert an imageId to a safe filename
@@ -220,20 +181,4 @@ class ImageStorageService {
     return FileManager.default.fileExists(atPath: fileURL.path)
   }
 
-  /// Delete a cached image
-  func deleteCachedImage(forImageId imageId: String) -> Bool {
-    guard !imageId.isEmpty else {
-      return false
-    }
-
-    let filename = cacheFilename(forImageId: imageId)
-    let fileURL = cachedImagesDirectory.appendingPathComponent(filename)
-
-    do {
-      try FileManager.default.removeItem(at: fileURL)
-      return true
-    } catch {
-      return false
-    }
-  }
 }

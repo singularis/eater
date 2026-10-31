@@ -50,7 +50,6 @@ final class AppSettingsService: ObservableObject {
   static let fontScaleMin = 0.80
   static let fontScaleMax = 1.50
   static let fontScaleExtra = 1.60
-  static let fontScaleStep = 0.05
 
   /// Past this, the home header and carb line reflow so numbers are not clipped.
   static let largeTextLayoutThreshold = 1.15

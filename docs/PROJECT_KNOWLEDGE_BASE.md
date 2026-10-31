@@ -24,26 +24,24 @@
 │   ├── eaterApp.swift        ← @main entry point
 │   ├── ContentView.swift     ← Main screen (~2100 lines, the heart of the UI)
 │   ├── DesignSystem.swift    ← Design tokens, colors, button styles
-│   ├── Views/                ← 32 SwiftUI view files
-│   ├── Services/             ← 53 files: business logic, networking, proto files
+│   ├── Views/                ← 50 SwiftUI view files
+│   ├── Services/             ← 71 files: business logic, networking, proto files
 │   ├── Models/               ← Product.swift, DailyStatistics.swift
-│   ├── Localization/         ← 36 language JSON files + quotes/
+│   ├── Localization/         ← 38 JSON files (36 languages + en-US, pt-BR) + quotes/
 │   ├── Assets.xcassets/      ← Images, colors, app icon
 │   ├── .docs/                ← BACKEND_AUTH_IMPLEMENTATION.md, BACKEND_MIGRATION_GUIDE.md
 │   ├── config.plist          ← Currently empty dict (placeholder)
 │   └── eater.entitlements    ← Apple Sign-In capability
 ├── eater.xcodeproj/          ← Xcode project (primary)
-├── 1eater.xcodeproj/         ← Secondary/old Xcode project (ignore)
 ├── Info.plist                ← App config: Google Client ID, camera/photo permissions, ATS
-├── scripts/                  ← apple_submission.md, image resize scripts
-├── src/                      ← Empty placeholder dirs (components, models, screens, services)
+├── scripts/                  ← sync-localization.py, image resize scripts
 ├── privacy-policy/           ← Privacy policy content
-├── docs/archive/             ← App Store listing and release notes for 4.0 and 5.0
+├── docs/AppStore_5.3.txt     ← App Store text for the current release (all store languages)
 └── README.md                 ← High-level project description
 ```
 
 > [!IMPORTANT]
-> The `src/` directory is empty — all source code lives under `eater/`. The `eater 2025-*` directories are Xcode archive snapshots (ignore them).
+> All source code lives under `eater/`. The Xcode project uses synchronized folders, so any file added there is compiled into the app.
 
 ---
 
@@ -106,7 +104,7 @@ ContentView.onAppear → fetchDataWithLoading()
 | `HealthSettingsView.swift` | ~29K bytes | Health data input and calorie calculations |
 | `ProductListView.swift` | ~5K | Scrollable list of today's food items |
 | `ProductRowView.swift` | ~13K | Individual food item card |
-| `CameraButtonView.swift` | ~21K | Camera capture + multi-photo + food entry |
+| `CameraView.swift` | ~350 lines | Camera and photo library pickers used by the bottom bar |
 
 ### Services
 | File | Purpose |
@@ -200,9 +198,10 @@ Defined in `DesignSystem.swift`:
 - **Theme:** Supports light and dark mode (controlled by `AppSettingsService.appearance`)
 - **Key colors:** `AppTheme.accent` (cyan), `.success` (green), `.warning` (orange), `.danger` (red)
 - **Surfaces:** `AppTheme.surface`, `.surfaceAlt` — glassmorphism style
-- **Layout:** `cornerRadius: 16`, `smallRadius: 12`, `cardPadding: 16`
-- **Button styles:** `PrimaryButtonStyle`, `GreenButtonStyle`, `GreenToPurpleButtonStyle`, `SecondaryButtonStyle`, `DestructiveButtonStyle`, `PressScaleButtonStyle`
-- **Modifiers:** `.cardContainer()`, `.liquidGlass()` — unified card/glass appearance
+- **Layout:** `cornerRadius: 16`, `smallRadius: 12`, `tinyRadius: 8`
+- **Button styles:** `PrimaryButtonStyle`, `GreenButtonStyle`, `SecondaryButtonStyle`, `DestructiveButtonStyle`, `MascotCalloutButtonStyle`, `PressScaleButtonStyle`. On iOS 26 they are Liquid Glass capsules (`glassEffect`), flat before.
+- **Modifiers:** `.appSurface()`, `.cardContainer()`, `.appCircleSurface()`, `.appTintedGlass()`, `.appGlassGroup()`, `.appSheetBackground()` — Liquid Glass on iOS 26, flat or blurred fallback before
+- **Sheets:** menus and confirmations open at half height (medium detent), swipe up for full height, swipe down to close
 - **Animations:** Spring-based with `reduceMotion` accessibility support
 
 ### Mascot/Theme System (`ThemeService`)
@@ -348,9 +347,7 @@ Most services use `static let shared` pattern:
 
 1. **ContentView is massive** (~2100 lines, 78KB). Most UI logic lives here. Consider this when planning changes.
 2. **"GRPCService" is not gRPC** — it's HTTP REST with protobuf bodies. The name is historical.
-3. **`src/` directory is empty** — all code is in `eater/`. Don't create files there.
-4. **Dev environment uses local IPs** (192.168.0.x) — won't work outside the developer's network.
-5. **Multiple Xcode projects exist** — use `eater.xcodeproj` (not `1eater.xcodeproj`).
-6. **Protobuf files are checked in** — both `.proto` and generated `.pb.swift` files are in `Services/`.
-7. **The app's struct is `AppNameApp`** not `EaterApp` — defined in `eaterApp.swift`.
-8. **Date format is `dd-MM-yyyy`** not `yyyy-MM-dd` for backend communication.
+3. **Dev environment uses local IPs** (192.168.0.x) — won't work outside the developer's network.
+4. **Protobuf files are checked in** — both `.proto` and generated `.pb.swift` files are in `Services/`.
+5. **The app's struct is `AppNameApp`** not `EaterApp` — defined in `eaterApp.swift`.
+6. **Date format is `dd-MM-yyyy`** not `yyyy-MM-dd` for backend communication.

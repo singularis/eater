@@ -44,13 +44,10 @@ struct OnboardingView: View {
   /// used to land past the end of those shorter flows.
   @State private var flowStep = 0
   @State private var showingSkipConfirmation = false
-  @State private var notificationsEnabledLocal: Bool = UserDefaults.standard.bool(
-    forKey: "notificationsEnabled")
   @EnvironmentObject var languageService: LanguageService
   @StateObject private var themeService = ThemeService.shared
   @State private var selectedLanguageDisplay: String = ""
   @State private var selectedLanguageCode: String = ""
-  @State private var isApplyingLanguage: Bool = false
   @State private var showFeedback: Bool = false
   @State private var platePageIndex: Int = 0
   @State private var showPlanSetup = false
@@ -1553,67 +1550,6 @@ private struct HiddenPageControl: UIViewRepresentable {
   }
 }
 
-// Simple star shape for clipping intro image
-struct StarShape: Shape {
-  let corners: Int
-  let smoothness: CGFloat
-
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let center = CGPoint(x: rect.width / 2, y: rect.height / 2)
-    var angle: CGFloat = -.pi / 2
-    let angleIncrement = .pi * 2 / CGFloat(corners * 2)
-    let radius = min(rect.width, rect.height) / 2
-    let innerRadius = radius * smoothness
-
-    for i in 0..<(corners * 2) {
-      let r = (i % 2 == 0) ? radius : innerRadius
-      let x = center.x + cos(angle) * r
-      let y = center.y + sin(angle) * r
-      if i == 0 {
-        path.move(to: CGPoint(x: x, y: y))
-      } else {
-        path.addLine(to: CGPoint(x: x, y: y))
-      }
-      angle += angleIncrement
-    }
-    path.closeSubpath()
-    return path
-  }
-}
-
-/// Softer, rounded star / blob shape so the intro image is not clipped too aggressively.
-struct WavyStarShape: Shape {
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let center = CGPoint(x: rect.midX, y: rect.midY)
-    let maxRadius = min(rect.width, rect.height) / 2
-
-    // Approximate a rounded 5‑point "starfish" using a smooth sinusoidal radius.
-    let steps = 180
-    for i in 0...steps {
-      let progress = Double(i) / Double(steps)
-      let theta = progress * 2 * Double.pi
-
-      // 5 gentle bumps around the circle.
-      let wave = 0.25 * sin(5 * theta)
-      let radius = maxRadius * CGFloat(0.75 + wave)
-
-      let x = center.x + cos(CGFloat(theta)) * radius
-      let y = center.y + sin(CGFloat(theta)) * radius
-
-      if i == 0 {
-        path.move(to: CGPoint(x: x, y: y))
-      } else {
-        path.addLine(to: CGPoint(x: x, y: y))
-      }
-    }
-
-    path.closeSubpath()
-    return path
-  }
-}
-
 // MARK: - Pet Theme Helpers
 
 struct PetMoodBubble: View {
@@ -1631,25 +1567,6 @@ struct PetMoodBubble: View {
       Text(label)
         .font(.system(size: 11, weight: .medium, design: .rounded))
         .foregroundColor(AppTheme.textSecondary)
-    }
-  }
-}
-
-struct PetFeatureRow: View {
-  let icon: String
-  let color: Color
-  let text: String
-
-  var body: some View {
-    HStack(spacing: 10) {
-      Image(systemName: icon)
-        .font(.system(size: 16))
-        .foregroundColor(color)
-        .frame(width: 28)
-      Text(text)
-        .font(.system(size: 14, weight: .regular, design: .rounded))
-        .foregroundColor(AppTheme.textSecondary)
-        .fixedSize(horizontal: false, vertical: true)
     }
   }
 }

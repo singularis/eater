@@ -212,12 +212,6 @@ class AlertHelper {
     presentController(vc, from: rootViewController)
   }
 
-  private static func presentAlert(
-    _ alert: UIAlertController, from viewController: UIViewController, retryCount: Int = 0
-  ) {
-    presentController(alert, from: viewController, retryCount: retryCount)
-  }
-
   private static func presentController(
     _ controller: UIViewController, from viewController: UIViewController, retryCount: Int = 0
   ) {
@@ -303,24 +297,6 @@ class AlertHelper {
       foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
   }
 
-  static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
-    let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
-    let body = loc(
-      "rec.disclaimer.text",
-      "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
-    )
-    let sourcesLabel = loc("alert.health.sources.label", "Sources:")
-    let sourceUSDA = loc("alert.health.sources.usda", "USDA FoodData Central")
-    let sourceGuidelines = loc(
-      "alert.health.sources.guidelines", "Dietary Guidelines for Americans")
-    let disclaimerText =
-      "\n\n" + header + "\n" + body + "\n\n" + sourcesLabel + " " + sourceUSDA + ", "
-      + sourceGuidelines
-    let fullMessage = recommendation + disclaimerText
-    let title = loc("health.recommendation.title", "Health Recommendation")
-    showAlert(title: title, message: fullMessage, completion: completion)
-  }
-
   static func localizedHealthText(_ text: String) -> String {
     translateHealthText(text)
   }
@@ -343,113 +319,6 @@ class AlertHelper {
       let isRisk = impact.contains("risk") || ((item.risk?.isEmpty == false) && impact.isEmpty)
       return HealthComponentLine(id: index, name: name, note: note, isRisk: isRisk)
     }
-  }
-
-  static func showHealthLevelInfo(
-    title: String,
-    description: String,
-    healthSummary: String,
-    onExplain: (() -> Void)? = nil
-  ) {
-    let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
-    let body = loc(
-      "rec.disclaimer.text",
-      "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
-    )
-    let displayTitle = translateHealthText(title)
-    let displayDescription = translateHealthText(description)
-
-    // Attempt to parse JSON healthSummary
-    if let data = healthSummary.data(using: .utf8),
-       let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data) {
-      
-      let fullStr = NSMutableAttributedString()
-      
-      fullStr.append(NSAttributedString(string: displayDescription + "\n\n", attributes: [
-        .font: UIFont.systemFont(ofSize: 17),
-        .foregroundColor: UIColor.secondaryLabel
-      ]))
-      
-      for (index, item) in items.enumerated() {
-        if index > 0 {
-          fullStr.append(NSAttributedString(string: "\n"))
-        }
-
-        let name = item.ingredient ?? item.ingredients ?? ""
-        if !name.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(name) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
-            .foregroundColor: UIColor.label
-          ]))
-        }
-        
-        let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
-        if !impactText.isEmpty {
-          let isRisk = (item.impact?.lowercased().contains("risk") ?? true) || item.risk != nil
-          let color = isRisk ? UIColor.systemOrange : UIColor.systemGreen
-          fullStr.append(NSAttributedString(string: translateHealthText(impactText) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-            .foregroundColor: color
-          ]))
-        } else if let risk = item.risk, !risk.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(risk) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-            .foregroundColor: UIColor.systemOrange
-          ]))
-        } else if let benefit = item.benefit, !benefit.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(benefit) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-            .foregroundColor: UIColor.systemGreen
-          ]))
-        }
-        
-        if let desc = item.description, !desc.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(desc) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16),
-            .foregroundColor: UIColor.label
-          ]))
-        }
-      }
-      
-      let disclaimer = "\n" + header + "\n" + body
-      fullStr.append(NSAttributedString(string: disclaimer, attributes: [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.secondaryLabel]))
-      
-      showHealthPopup(title: displayTitle, attributedMessage: fullStr, onExplain: onExplain)
-      return
-    }
-
-    let message = displayDescription + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
-    showHealthPopup(title: displayTitle, message: message, onExplain: onExplain)
-  }
-
-  private static func showHealthPopup(
-    title: String,
-    message: String? = nil,
-    attributedMessage: NSAttributedString? = nil,
-    onExplain: (() -> Void)? = nil
-  ) {
-    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let window = windowScene.windows.first,
-      let rootViewController = window.rootViewController
-    else { return }
-
-    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    if let attributedMessage {
-      alert.setValue(attributedMessage, forKey: "attributedMessage")
-    }
-
-    if let onExplain {
-      let explain = UIAlertAction(title: loc("health.score.explain", "Explain"), style: .default) { _ in
-        DispatchQueue.main.async { onExplain() }
-      }
-      explain.setValue(UIColor(AppTheme.primaryButtonFill), forKey: "titleTextColor")
-      alert.addAction(explain)
-    }
-
-    let ok = UIAlertAction(title: loc("common.ok", "OK"), style: .cancel)
-    ok.setValue(UIColor.secondaryLabel, forKey: "titleTextColor")
-    alert.addAction(ok)
-    presentAlert(alert, from: rootViewController)
   }
 
   static func showPortionSelectionAlert(
@@ -616,45 +485,6 @@ class AlertHelper {
     rootViewController.present(controller, animated: true)
   }
 
-  /// Generic text input alert helper (single text field)
-  static func showTextInputAlert(
-    title: String,
-    message: String? = nil,
-    placeholder: String,
-    initialText: String = "",
-    confirmTitle: String = "OK",
-    keyboardType: UIKeyboardType = .default,
-    onSubmit: @escaping (String) -> Void
-  ) {
-    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let window = windowScene.windows.first,
-      let rootViewController = window.rootViewController
-    else {
-      return
-    }
-
-    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    alert.addTextField { textField in
-      textField.placeholder = placeholder
-      textField.text = initialText
-      textField.keyboardType = keyboardType
-    }
-
-    let submitAction = UIAlertAction(title: confirmTitle, style: .default) { _ in
-      let text =
-        alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-      guard !text.isEmpty else { return }
-      onSubmit(text)
-    }
-
-    let cancelAction = UIAlertAction(
-      title: loc("common.cancel", "Cancel"), style: .cancel, handler: nil)
-
-    alert.addAction(submitAction)
-    alert.addAction(cancelAction)
-
-    presentAlert(alert, from: rootViewController)
-  }
 }
 
 private final class CelebrationViewController: UIViewController {

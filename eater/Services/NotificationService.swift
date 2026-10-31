@@ -171,14 +171,6 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     return stored == todayString
   }
 
-  private func todayAtHour(_ hour: Int, reference: Date) -> Date? {
-    var comps = calendar.dateComponents([.year, .month, .day], from: reference)
-    comps.hour = hour
-    comps.minute = 0
-    comps.second = 0
-    return calendar.date(from: comps)
-  }
-
   // MARK: - UNUserNotificationCenterDelegate
 
   func userNotificationCenter(

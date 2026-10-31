@@ -10,11 +10,8 @@ class ProductStorageService {
   private let caloriesKey = "cached_calories"
   private let weightKey = "cached_weight"
   private let lastUpdateKey = "last_update_timestamp"
-  private let healthLevelCacheKey = "health_level_cache"
 
   // MARK: - Health Level Cache Structure
-  
-
 
   private let healthLevelKey = "cached_health_levels"
 
@@ -82,7 +79,7 @@ class ProductStorageService {
        let date = Date(timeIntervalSince1970: TimeInterval(tempTime) / 1000)
        let formatter = DateFormatter()
        formatter.dateFormat = "dd-MM-yyyy"
-       // Ensure we use the same timezone/calendar logic as CameraButtonView (essentially UTC date)
+       // Ensure we use the same timezone/calendar logic as photo backdating (essentially UTC date)
        formatter.timeZone = TimeZone(abbreviation: "UTC") 
        let dateStr = formatter.string(from: date)
        
@@ -163,28 +160,6 @@ class ProductStorageService {
     return ageMinutes > maxAgeMinutes
   }
 
-  // Fast method to get cached data if available and fresh
-  func getCachedDataIfFresh() -> ([Product], Int, Float)? {
-    guard !isDataStale() else { return nil }
-    let (products, calories, weight) = loadProducts()
-    // Only return if we have actual data
-    if !products.isEmpty || calories > 0 || weight > 0 {
-      return (products, calories, weight)
-    }
-    return nil
-  }
-
-  // Fallback method to get cached data even if slightly stale (for better UX when network is slow)
-  func getCachedDataAsFallback(maxStaleHours: Double = 12) -> ([Product], Int, Float)? {
-    let maxStaleMinutes = maxStaleHours * 60
-    guard !isDataStale(maxAgeMinutes: maxStaleMinutes) else { return nil }
-    let (products, calories, weight) = loadProducts()
-    // Only return if we have actual data
-    if !products.isEmpty || calories > 0 || weight > 0 {
-      return (products, calories, weight)
-    }
-    return nil
-  }
   // MARK: - Health Level Cache implementation
 
   func saveHealthLevel(time: Int64, title: String, description: String, healthSummary: String) {

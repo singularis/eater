@@ -190,12 +190,6 @@ final class AppNavigation: ObservableObject {
     }
   }
 
-  func requestReturnToToday() {
-    isViewingCustomDate = false
-    selectedDate = Date()
-    returnToTodayToken += 1
-  }
-
   private func presentBackdatingPrompt() {
     let diff = Date().timeIntervalSince(selectedDate)
     let days = diff / 86400
@@ -257,10 +251,6 @@ final class AppNavigation: ObservableObject {
   func notePhotoFailure() {
     clearPendingMeal()
     photoFailureToken += 1
-  }
-
-  func requestTodayRefresh() {
-    todayRefreshToken += 1
   }
 
   func noteWeightSuccess() {

@@ -37,8 +37,6 @@ struct ErrorResponse: Codable {
 
 // MARK: - JWT helpers (client-side: structure & expiration checks only)
 
-private enum JWTError: Error { case malformed, expired }
-
 private enum JWT {
   static func b64urlDecode(_ str: String) -> Data? {
     var s = str.replacingOccurrences(of: "-", with: "+")
@@ -46,24 +44,6 @@ private enum JWT {
     let padding = 4 - s.count % 4
     if padding < 4 { s.append(String(repeating: "=", count: padding)) }
     return Data(base64Encoded: s)
-  }
-
-  /// Client-side validation: checks JWT structure and expiration only.
-  /// Signature verification is done exclusively on the backend.
-  static func validateToken(token: String) throws -> [String: Any] {
-    let parts = token.split(separator: ".", omittingEmptySubsequences: false)
-    guard parts.count == 3 else { throw JWTError.malformed }
-
-    guard let payloadData = b64urlDecode(String(parts[1])),
-      let obj = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
-    else { throw JWTError.malformed }
-
-    if let exp = obj["exp"] as? TimeInterval,
-      Date(timeIntervalSince1970: exp) < Date()
-    {
-      throw JWTError.expired
-    }
-    return obj
   }
 
   /// Lenient check: returns payload if structurally valid, ignoring expiration.
@@ -509,37 +489,6 @@ final class AuthenticationService: NSObject, ObservableObject {
     userProfilePictureURL = profilePictureURL
   }
 
-  func getAuthToken() -> String? {
-    return KeychainHelper.shared.read("auth_token")
-  }
-
-  func isTokenValidForSecureOperations() -> Bool {
-    guard let token = KeychainHelper.shared.read("auth_token"), !token.isEmpty else {
-      return false
-    }
-
-    // Client only checks structure + expiration. Signature is verified by the backend.
-    do {
-      _ = try JWT.validateToken(token: token)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  func requiresFreshAuthentication() -> Bool {
-    return !isTokenValidForSecureOperations()
-  }
-
-  func getGreeting() -> String {
-    let name = AnonymousUserIdentity.menuDisplayName(
-      nickname: UserDefaults.standard.string(forKey: "user_nickname")
-        ?? UserDefaults.standard.string(forKey: "nickname"),
-      userName: userName
-    )
-    return "Hello \(name)"
-  }
-
   private func validateStoredToken(_ token: String) {
     // Client-side: only check structure and expiration.
     // Signature verification is the backend's responsibility.
@@ -565,26 +514,6 @@ final class AuthenticationService: NSObject, ObservableObject {
 
   // MARK: - Debug Methods
 
-  func getTokenStatus() -> String {
-    guard let token = KeychainHelper.shared.read("auth_token"), !token.isEmpty else {
-      return "No token stored"
-    }
-
-    if let obj = JWT.validateTokenStructure(token: token) {
-      if let exp = obj["exp"] as? TimeInterval {
-        let expirationDate = Date(timeIntervalSince1970: exp)
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        let isExpired = expirationDate < Date()
-        let expStatus = isExpired ? "expired on" : "valid until"
-        return "Token \(expStatus): \(formatter.string(from: expirationDate))"
-      }
-      return "Token valid (no expiration claim)"
-    }
-
-    return "Token is malformed"
-  }
 }
 
 // MARK: - Apple Sign-In Delegates
@@ -614,7 +543,6 @@ extension AuthenticationService: ASAuthorizationControllerDelegate,
         self.isLoading = false
         return
       }
-
 
       let email = appleIDCredential.email ?? extractEmailFromAppleToken(tokenString)
       guard let finalEmail = email else {
