@@ -72,7 +72,7 @@ struct WeightPromptSheet: View {
         }
         .padding(20)
       }
-      .background(AppTheme.backgroundGradient.ignoresSafeArea())
+      .appSheetBackground()
       .scaledNavTitle(
         manual
           ? loc("weight.enter.title", "Enter Weight")

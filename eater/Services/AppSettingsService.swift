@@ -26,12 +26,13 @@ final class AppSettingsService: ObservableObject {
     didSet { objectWillChange.send() }
   }
 
-  /// When on, text scale is 160%. The slider itself stays 80%…150%.
+  /// When on, text scale is 160%. The A buttons step 5% from 80% to 160%.
   @Published var extraLargeText: Bool {
     didSet { UserDefaults.standard.set(extraLargeText, forKey: Self.extraLargeKey) }
   }
 
-  /// Whole-app scale. Slider is 80%…150%. Extra large sets 160%.
+  /// Whole-app scale. 80%…160% in 5% steps. Extra large sets 160%.
+  /// Follows the phone's text size until the user picks a size in the app.
   @Published var fontScale: Double {
     didSet {
       let clamped = min(fontScaleCeiling, max(Self.fontScaleMin, fontScale))
@@ -39,14 +40,17 @@ final class AppSettingsService: ObservableObject {
         fontScale = clamped
         return
       }
+      guard !applyingSystemScale else { return }
       UserDefaults.standard.set(fontScale, forKey: Self.fontScaleKey)
     }
   }
 
+  private var applyingSystemScale = false
+
   static let fontScaleMin = 0.80
   static let fontScaleMax = 1.50
   static let fontScaleExtra = 1.60
-  static let fontScaleStep = 0.01
+  static let fontScaleStep = 0.05
 
   /// Past this, the home header and carb line reflow so numbers are not clipped.
   static let largeTextLayoutThreshold = 1.15
@@ -60,20 +64,62 @@ final class AppSettingsService: ObservableObject {
     extraLargeText = extra
     if extra {
       fontScale = Self.fontScaleExtra
+    } else if let stored = UserDefaults.standard.object(forKey: Self.fontScaleKey) as? Double {
+      fontScale = min(Self.fontScaleExtra, max(Self.fontScaleMin, stored))
     } else {
-      let stored = UserDefaults.standard.object(forKey: Self.fontScaleKey) as? Double
-      let raw = stored ?? Self.fontScaleDefault
-      fontScale = min(Self.fontScaleMax, max(Self.fontScaleMin, raw))
+      fontScale = Self.systemFontScale()
+    }
+    NotificationCenter.default.addObserver(
+      forName: UIContentSizeCategory.didChangeNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      self?.followSystemTextSize()
     }
   }
 
-  /// Slider range. Extra large does not change this.
-  var fontScaleRangeLower: Double { Self.fontScaleMin }
-  var fontScaleRangeUpper: Double { Self.fontScaleMax }
-
-  private var fontScaleCeiling: Double {
-    extraLargeText ? Self.fontScaleExtra : Self.fontScaleMax
+  /// True while the user has not picked a size in the app.
+  var followsSystemTextSize: Bool {
+    !extraLargeText && UserDefaults.standard.object(forKey: Self.fontScaleKey) == nil
   }
+
+  func followSystemTextSize() {
+    guard followsSystemTextSize else { return }
+    let target = Self.systemFontScale()
+    guard abs(target - fontScale) > 0.001 else { return }
+    applyingSystemScale = true
+    fontScale = target
+    applyingSystemScale = false
+  }
+
+  /// Phone text size (Settings > Display > Text Size) on the app's 5% grid.
+  /// Narrow phones stop lower so the home header still fits on one row.
+  static func systemFontScale() -> Double {
+    let scale: Double
+    switch UIApplication.shared.preferredContentSizeCategory {
+    case .extraSmall: scale = 0.80
+    case .small: scale = 0.85
+    case .medium: scale = 0.90
+    case .large: scale = 1.00
+    case .extraLarge: scale = 1.10
+    case .extraExtraLarge: scale = 1.20
+    case .extraExtraExtraLarge: scale = 1.30
+    case .accessibilityMedium: scale = 1.40
+    case .accessibilityLarge, .accessibilityExtraLarge,
+      .accessibilityExtraExtraLarge, .accessibilityExtraExtraExtraLarge:
+      scale = fontScaleMax
+    default: scale = fontScaleDefault
+    }
+    let screenWidth = UIApplication.shared.connectedScenes
+      .compactMap { ($0 as? UIWindowScene)?.screen.bounds.width }
+      .first ?? 390
+    let narrowPhone = screenWidth < 375
+    return min(narrowPhone ? 1.30 : fontScaleMax, max(fontScaleMin, scale))
+  }
+
+  var fontScaleRangeLower: Double { Self.fontScaleMin }
+  var fontScaleRangeUpper: Double { Self.fontScaleExtra }
+
+  /// 160% is always allowed. The A buttons step through 155% on the way to extra large.
+  private var fontScaleCeiling: Double { Self.fontScaleExtra }
 
   /// Header icons move aside and the carb line wraps once text is this large.
   var largeTextLayout: Bool { fontScale >= Self.largeTextLayoutThreshold }
@@ -94,6 +140,28 @@ final class AppSettingsService: ObservableObject {
     } else if fontScale > Self.fontScaleMax {
       fontScale = Self.fontScaleMax
     }
+  }
+
+  /// One tap on the small or large A. Snaps onto the 5% grid, then moves one step.
+  func stepFontScale(_ direction: Int) {
+    let percent = fontScale * 100
+    let next: Double
+    if direction > 0 {
+      next = min(160, floor(percent / 5 + 0.000001) * 5 + 5)
+    } else {
+      next = max(80, ceil(percent / 5 - 0.000001) * 5 - 5)
+    }
+    extraLargeText = next >= 159.5
+    fontScale = next / 100
+  }
+
+  /// Back to the phone's text size.
+  func resetFontScale() {
+    extraLargeText = false
+    UserDefaults.standard.removeObject(forKey: Self.fontScaleKey)
+    applyingSystemScale = true
+    fontScale = Self.systemFontScale()
+    applyingSystemScale = false
   }
 
   var dynamicTypeSize: DynamicTypeSize {
@@ -139,12 +207,32 @@ final class AppSettingsService: ObservableObject {
     if defaults.bool(forKey: accountKey(base, email: email)) {
       return true
     }
+    // Each guest session is a brand-new anon_<uuid> account, so the old device-wide
+    // flag must not count for it, or a guest on a used phone never sees onboarding.
+    let resolvedEmail = email ?? defaults.string(forKey: "user_email")
+    if AnonymousUserIdentity.isAnonymousEmail(resolvedEmail) {
+      return false
+    }
     // One-time migrate old device-wide flag so existing users are not shown again
     if defaults.bool(forKey: base) {
       defaults.set(true, forKey: accountKey(base, email: email))
       return true
     }
     return false
+  }
+
+  private static let perAccountFlags = [
+    "hasSeenOnboarding", "health_onboarding_shown", "social_onboarding_shown",
+  ]
+
+  /// Guest upgraded to a real account: what the guest already saw counts for the account.
+  func carryOnboardingFlags(from oldEmail: String?, to newEmail: String?) {
+    guard let oldEmail, let newEmail, oldEmail.lowercased() != newEmail.lowercased() else { return }
+    let defaults = UserDefaults.standard
+    for base in Self.perAccountFlags where defaults.bool(forKey: accountKey(base, email: oldEmail)) {
+      defaults.set(true, forKey: accountKey(base, email: newEmail))
+    }
+    objectWillChange.send()
   }
 
   func hasCompletedInitialOnboarding(for email: String?) -> Bool {

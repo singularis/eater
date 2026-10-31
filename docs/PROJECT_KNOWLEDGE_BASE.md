@@ -12,7 +12,7 @@
 - **Display Name:** Eateria
 - **Minimum iOS:** 15.0+
 - **Language:** Swift 5.5+, SwiftUI
-- **Current version:** 5.2. Release branch KAN-71-eater-5.1.
+- **Current version:** 5.3. Release branch KAN-71-eater-5.1.
 
 ---
 

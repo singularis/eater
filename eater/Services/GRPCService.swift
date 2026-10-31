@@ -117,7 +117,8 @@ class GRPCService {
             proteins: dish.contains.proteins,
             fats: dish.contains.fats,
             carbohydrates: dish.contains.carbohydrates,
-            sugar: dish.contains.sugar
+            sugar: dish.contains.sugar,
+            alternativeNames: dish.alternativeNames
           )
         }
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
@@ -252,9 +253,11 @@ class GRPCService {
     }
   }
 
+  /// Completes with success and the dish name the server saved ("" when the server does not send it).
   func sendFoodText(
-    text: String, timestampMillis: Int64? = nil, completion: @escaping (Bool) -> Void
+    text: String, timestampMillis: Int64? = nil, completion finish: @escaping (Bool, String) -> Void
   ) {
+    let completion: (Bool) -> Void = { finish($0, "") }
     let timestamp: String
     if let timestampMillis = timestampMillis {
       let date = Date(timeIntervalSince1970: TimeInterval(timestampMillis) / 1000)
@@ -306,7 +309,7 @@ class GRPCService {
 
         if let data = data, let parsed = try? Eater_FoodTextResponse(serializedBytes: data) {
           if parsed.success {
-            completion(true)
+            finish(true, parsed.dishName)
             return
           }
           DispatchQueue.main.async {
@@ -639,14 +642,14 @@ class GRPCService {
     }
 
     guard var request = createRequest(
-      endpoint: "suggest_dish_names", httpMethod: "POST", body: body)
+      endpoint: "suggest_dish_names", httpMethod: "POST", body: body, timeout: 20)
     else {
       completion([])
       return
     }
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+    sendRequest(request: request, retriesLeft: 0) { data, response, error in
       guard error == nil,
         let response = response as? HTTPURLResponse,
         response.statusCode >= 200, response.statusCode < 300,
@@ -756,7 +759,8 @@ class GRPCService {
               proteins: dish.contains.proteins,
               fats: dish.contains.fats,
               carbohydrates: dish.contains.carbohydrates,
-              sugar: dish.contains.sugar
+              sugar: dish.contains.sugar,
+              alternativeNames: dish.alternativeNames
             )
           }
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)

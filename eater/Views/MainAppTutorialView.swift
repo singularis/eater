@@ -165,7 +165,7 @@ struct MainAppTutorialView: View {
       .padding(.top, 8)
       .padding(.bottom, 12)
     }
-    .background(AppTheme.backgroundGradient.ignoresSafeArea())
+    .modifier(TutorialBackground(isSheet: specificStep != nil))
     .presentationDragIndicator(.visible)
     .presentationDetents(specificStep == nil ? [.large] : [.medium, .large])
   }
@@ -199,6 +199,20 @@ struct MainAppTutorialView: View {
       KeychainHelper.shared.setBool(true, for: "hasSeenMainAppTutorial")
     }
     isPresented = false
+  }
+}
+
+/// Single-step sheets sit on glass. The full tutorial is a full-screen cover, so it keeps the opaque gradient.
+private struct TutorialBackground: ViewModifier {
+  let isSheet: Bool
+
+  @ViewBuilder
+  func body(content: Content) -> some View {
+    if isSheet {
+      content.appSheetBackground()
+    } else {
+      content.background(AppTheme.backgroundGradient.ignoresSafeArea())
+    }
   }
 }
 

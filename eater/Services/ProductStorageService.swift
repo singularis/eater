@@ -252,10 +252,11 @@ private struct ProductData: Codable {
   let fats: Double
   let carbohydrates: Double
   let sugar: Double
+  let alternativeNames: [String]
 
   enum CodingKeys: String, CodingKey {
     case time, name, calories, weight, ingredients, healthRating, imageId, addedSugarTsp, extras
-    case proteins, fats, carbohydrates, sugar
+    case proteins, fats, carbohydrates, sugar, alternativeNames
   }
 
   init(from product: Product) {
@@ -272,6 +273,7 @@ private struct ProductData: Codable {
     fats = product.fats
     carbohydrates = product.carbohydrates
     sugar = product.sugar
+    alternativeNames = product.alternativeNames
   }
 
   init(from decoder: Decoder) throws {
@@ -289,6 +291,7 @@ private struct ProductData: Codable {
     fats = try c.decodeIfPresent(Double.self, forKey: .fats) ?? 0
     carbohydrates = try c.decodeIfPresent(Double.self, forKey: .carbohydrates) ?? 0
     sugar = try c.decodeIfPresent(Double.self, forKey: .sugar) ?? 0
+    alternativeNames = try c.decodeIfPresent([String].self, forKey: .alternativeNames) ?? []
   }
 
   func toProduct() -> Product {
@@ -305,7 +308,8 @@ private struct ProductData: Codable {
       proteins: proteins,
       fats: fats,
       carbohydrates: carbohydrates,
-      sugar: sugar
+      sugar: sugar,
+      alternativeNames: alternativeNames
     )
   }
 }

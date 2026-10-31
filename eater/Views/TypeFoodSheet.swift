@@ -2,7 +2,9 @@ import SwiftUI
 
 struct TypeFoodSheet: View {
   let timestampMillis: Int64?
-  let onSuccess: () -> Void
+  var dayLabel: String? = nil
+  /// Gets the dish name the server saved, or "" from an older server.
+  let onSuccess: (String) -> Void
 
   @Environment(\.dismiss) private var dismiss
   @State private var text = ""
@@ -11,7 +13,7 @@ struct TypeFoodSheet: View {
   private let characterLimit = 200
 
   private var trimmedText: String {
-    text.trimmingCharacters(in: .whitespacesAndNewlines)
+    DishNameNormalizer.mealText(text)
   }
 
   private var canSubmit: Bool {
@@ -34,6 +36,10 @@ struct TypeFoodSheet: View {
 
         ScrollView {
           VStack(alignment: .leading, spacing: 20) {
+            if let dayLabel {
+              pastDayBanner(dayLabel)
+            }
+
             Text(loc("type_food.intro", "Write one meal in your own words. No photo needed."))
               .font(.body)
               .foregroundColor(AppTheme.textPrimary)
@@ -138,6 +144,23 @@ struct TypeFoodSheet: View {
     }
   }
 
+  private func pastDayBanner(_ label: String) -> some View {
+    HStack(spacing: 10) {
+      Image(systemName: "calendar")
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundColor(AppTheme.warning)
+      Text(String(format: loc("type_food.for_day", "Logging for %@"), label))
+        .font(.subheadline.weight(.semibold))
+        .foregroundColor(AppTheme.textPrimary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.horizontal, 14)
+    .padding(.vertical, 10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(AppTheme.warning.opacity(0.12))
+    .appCorner(AppTheme.smallRadius)
+  }
+
   private func hint(icon: String, text: String) -> some View {
     HStack(alignment: .top, spacing: 10) {
       Image(systemName: icon)
@@ -185,11 +208,11 @@ struct TypeFoodSheet: View {
     guard canSubmit else { return }
     HapticsService.shared.mediumImpact()
     isSubmitting = true
-    GRPCService().sendFoodText(text: trimmedText, timestampMillis: timestampMillis) { success in
+    GRPCService().sendFoodText(text: trimmedText, timestampMillis: timestampMillis) { success, dishName in
       DispatchQueue.main.async {
         isSubmitting = false
         if success {
-          onSuccess()
+          onSuccess(dishName)
         }
       }
     }

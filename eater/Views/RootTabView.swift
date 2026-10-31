@@ -186,6 +186,16 @@ struct RootTabView: View {
           .onAppear { bindCameraCallbacks() }
           .appInterfaceScale()
         }
+        .sheet(item: $nav.typeFoodRequest) { request in
+          TypeFoodSheet(
+            timestampMillis: request.timestampMillis,
+            dayLabel: request.dayLabel
+          ) { dishName in
+            ProductStorageService.shared.clearCache()
+            nav.noteTypedFoodSuccess(dishName: dishName)
+          }
+          .appInterfaceScale()
+        }
         .sheet(isPresented: $nav.showWeightCamera) {
           WeightCameraView(
             onPhotoSuccess: {
@@ -330,7 +340,9 @@ struct RootTabView: View {
             ScaledNoticeAction(title: loc("backdating.alert.log_today", "Log Today's Food"), kind: .secondary) {
               nav.captureForTodayInstead()
             },
-            ScaledNoticeAction(title: loc("backdating.alert.cancel", "Cancel"), kind: .secondary),
+            ScaledNoticeAction(title: loc("backdating.alert.cancel", "Cancel"), kind: .secondary) {
+              nav.cancelBackdating()
+            },
           ]
         )
         .onChange(of: nav.cameraTutorialRequested) { _, requested in
@@ -373,6 +385,7 @@ private struct AppBottomBar: View {
       items.padding(.top, lift)
       cameraButton
     }
+    .appGlassGroup()
     .padding(.horizontal, 16)
     .padding(.bottom, 2)
   }
@@ -392,7 +405,20 @@ private struct AppBottomBar: View {
       }
     }
     .frame(height: barHeight)
-    .background(barSurface)
+    .modifier(BarGlass(fallback: barSurface))
+  }
+
+  private struct BarGlass<Fallback: View>: ViewModifier {
+    let fallback: Fallback
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+      if #available(iOS 26.0, *) {
+        content.glassEffect(.regular.interactive(), in: .capsule)
+      } else {
+        content.background(fallback)
+      }
+    }
   }
 
   private var barSurface: some View {
@@ -427,6 +453,21 @@ private struct AppBottomBar: View {
 
   private var cameraButton: some View {
     Button(action: onCamera) {
+      cameraDisc
+    }
+    .buttonStyle(PressScaleButtonStyle())
+    .accessibilityLabel(loc("tab.photo", "Photo"))
+  }
+
+  @ViewBuilder
+  private var cameraDisc: some View {
+    if #available(iOS 26.0, *) {
+      Image(systemName: "camera.fill")
+        .font(.system(size: cameraGlyphSize, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(width: cameraSize, height: cameraSize)
+        .glassEffect(.regular.tint(AppTheme.primaryButtonFill).interactive(), in: .circle)
+    } else {
       Circle()
         .fill(AppTheme.primaryButtonFill)
         .frame(width: cameraSize, height: cameraSize)
@@ -438,7 +479,5 @@ private struct AppBottomBar: View {
         )
         .shadow(color: AppTheme.primaryButtonFill.opacity(0.4), radius: 12, x: 0, y: 6)
     }
-    .buttonStyle(PressScaleButtonStyle())
-    .accessibilityLabel(loc("tab.photo", "Photo"))
   }
 }

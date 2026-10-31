@@ -11,6 +11,8 @@ struct FixFoodNameData: Identifiable {
   let time: Int64
   let imageId: String
   let currentName: String
+  var alternativeNames: [String] = []
+  var photo: UIImage? = nil
 }
 
 struct ContentView: View {
@@ -58,8 +60,6 @@ struct ContentView: View {
   @State private var lastAlcoholEventDate: Date? = nil
   @State private var showMainAppTutorial = false
   @State private var activeTutorialStep: MainAppTutorialView.TutorialStep? = nil
-  @State private var showTypeFood = false
-  @State private var typeFoodTimestampMillis: Int64? = nil
   #if DEBUG
   @AppStorage("use_dev_environment") private var useDevEnvironment: Bool = true
   #else
@@ -242,6 +242,10 @@ struct ContentView: View {
       .onChange(of: nav.photoSuccessToken) { _, _ in
         handlePhotoLogged()
       }
+      .onChange(of: nav.accountMergedToken) { _, _ in
+        returnToToday()
+        refreshDayFoodScore()
+      }
       .onChange(of: products) { _, _ in
         syncMealNav()
       }
@@ -253,6 +257,7 @@ struct ContentView: View {
       }
       .onChange(of: scenePhase) { _, newPhase in
         if newPhase == .active {
+          AppSettingsService.shared.followSystemTextSize()
           NotificationService.shared.rescheduleIfEnabled()
           Task { await appleHealth.refresh(dayISO: currentActivitiesDateISO()) }
         }
@@ -333,6 +338,8 @@ struct ContentView: View {
         FixFoodNameView(
           currentName: data.currentName,
           imageId: data.imageId,
+          alternativeNames: data.alternativeNames,
+          photo: data.photo,
           languageCode: languageService.currentCode,
           onSave: { newName in
             fixFoodNameData = nil
@@ -422,16 +429,6 @@ struct ContentView: View {
             .environmentObject(languageService)
             .appInterfaceScale()
     }
-    .sheet(isPresented: $showTypeFood) {
-      TypeFoodSheet(timestampMillis: typeFoodTimestampMillis) {
-        showTypeFood = false
-        ProductStorageService.shared.clearCache()
-        StatisticsService.shared.invalidateDay(
-          currentViewingDateString.isEmpty ? nil : currentViewingDateString)
-        handlePhotoLogged()
-      }
-      .appInterfaceScale()
-    }
     .id(languageService.currentCode)
   }
 
@@ -477,16 +474,16 @@ struct ContentView: View {
     return df.string(from: isViewingCustomDate ? selectedDate : date)
   }
 
+  /// Both icon groups get equal-width sides, so the date stays centered at any scale.
   private var topBarView: some View {
-    HStack(spacing: 0) {
+    HStack(spacing: headerSideGap) {
       HStack(spacing: headerIconSpacing) {
         profileButton
         alcoholButton
       }
-      Spacer(minLength: headerSideGap)
+      .frame(maxWidth: .infinity, alignment: .leading)
       dateDisplayView
         .layoutPriority(1)
-      Spacer(minLength: headerSideGap)
       HStack(spacing: headerIconSpacing) {
         #if DEBUG
         if useDevEnvironment {
@@ -502,6 +499,7 @@ struct ContentView: View {
         healthInfoButton
         sportButton
       }
+      .frame(maxWidth: .infinity, alignment: .trailing)
     }
   }
 
@@ -616,6 +614,7 @@ struct ContentView: View {
             .font(.system(size: 12, weight: .semibold, design: .rounded))
             .foregroundColor(Color.black.opacity(0.9))
             .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
             .background(AppTheme.accent.opacity(0.9))
@@ -780,7 +779,8 @@ struct ContentView: View {
     CGFloat(text.count) * size * 0.6
   }
 
-  /// Each tile gets the width its text needs plus a thin pad, then the leftover is shared.
+  /// Weight and Type share one width so calories always sits in the exact center.
+  /// Each width comes from its text plus a thin pad, then the leftover is shared.
   /// If the row is short, all three shrink together and the text scales down to fit.
   private var statsButtonsView: some View {
     let weightNeed = statTextWidth(String(format: "%.1f", personWeight), size: statNumberSize)
@@ -789,17 +789,20 @@ struct ContentView: View {
       + statIconSize + statIconGap + statPadH * 2
     let typeNeed = statTextWidth(loc("type_food.button", "Type"), size: statLabelSize)
       + statIconSize + statIconGap + statPadH * 2
+    let sideNeed = max(weightNeed, typeNeed)
     return GeometryReader { proxy in
       let available = proxy.size.width - statGap * 2
-      let needed = weightNeed + caloriesNeed + typeNeed
+      let needed = sideNeed * 2 + caloriesNeed
       let fits = needed <= available
       let extra = fits ? (available - needed) / 3 : 0
       let squeeze = fits ? 1 : available / needed
+      let side = sideNeed * squeeze + extra
       HStack(spacing: statGap) {
-        weightButton.frame(width: weightNeed * squeeze + extra, height: statRowHeight)
+        weightButton.frame(width: side, height: statRowHeight)
         caloriesButton.frame(width: caloriesNeed * squeeze + extra, height: statRowHeight)
-        typeButton.frame(width: typeNeed * squeeze + extra, height: statRowHeight)
+        typeButton.frame(width: side, height: statRowHeight)
       }
+      .frame(width: proxy.size.width)
     }
     .frame(height: statRowHeight)
     .frame(maxWidth: .infinity)
@@ -1127,8 +1130,8 @@ struct ContentView: View {
           showCaloriesLeftInfo = true
       case .typeFood:
           HapticsService.shared.select()
-          typeFoodTimestampMillis = typedFoodTimestampMillis()
-          showTypeFood = true
+          syncMealNav()
+          nav.openTypeFood()
       case .none:
           break
       }
@@ -1141,21 +1144,6 @@ struct ContentView: View {
     nav.mealRemaining = mealPlannerRemaining
     nav.selectedDate = selectedDate
     nav.isViewingCustomDate = isViewingCustomDate
-  }
-
-  private func typedFoodTimestampMillis() -> Int64? {
-    guard isViewingCustomDate else { return nil }
-    let components = Calendar.current.dateComponents([.year, .month, .day], from: selectedDate)
-    var utcComponents = DateComponents()
-    utcComponents.year = components.year
-    utcComponents.month = components.month
-    utcComponents.day = components.day
-    utcComponents.hour = 12
-    utcComponents.minute = 0
-    utcComponents.second = 0
-    utcComponents.timeZone = TimeZone(abbreviation: "UTC")
-    let dateToUse = Calendar(identifier: .gregorian).date(from: utcComponents) ?? selectedDate
-    return Int64(dateToUse.timeIntervalSince1970 * 1000)
   }
 
   private func handlePhotoLogged() {
@@ -1406,10 +1394,10 @@ struct ContentView: View {
           title: loc("backdating.return_today.title", "Food Logged"),
           message: loc("backdating.return_today.msg", "Your food was recorded for the selected past date. Would you like to return to Today?"),
           actions: [
-            UIAlertAction(title: loc("backdating.return_today.stay", "Stay Here"), style: .cancel),
-            UIAlertAction(title: loc("backdating.return_today.return", "Return to Today"), style: .default) { _ in
+            ScaledNoticeAction(title: loc("backdating.return_today.return", "Return to Today")) {
               self.returnToToday()
-            }
+            },
+            ScaledNoticeAction(title: loc("backdating.return_today.stay", "Stay Here"), kind: .secondary),
           ]
         )
       }
@@ -1438,7 +1426,14 @@ struct ContentView: View {
       return
     }
 
-    fixFoodNameData = FixFoodNameData(time: time, imageId: imageId, currentName: product.name)
+    fixFoodNameData = FixFoodNameData(
+      time: time,
+      imageId: imageId,
+      currentName: product.name,
+      alternativeNames: product.alternativeNames,
+      photo: imageId.isEmpty || imageId.hasPrefix(FixFoodNameView.stockPhotoPrefix)
+        ? nil : product.image
+    )
   }
 
   private func submitManualFoodName(time: Int64, imageId: String, newName: String) {
@@ -1562,7 +1557,8 @@ struct ContentView: View {
         proteins: item.proteins,
         fats: item.fats,
         carbohydrates: item.carbohydrates,
-        sugar: item.sugar
+        sugar: item.sugar,
+        alternativeNames: item.alternativeNames
       )
     }
 

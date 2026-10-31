@@ -256,35 +256,38 @@ struct UserProfileView: View {
                     .foregroundColor(AppTheme.textSecondary)
                 }
 
-                HStack(spacing: 10) {
-                  Text("A")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
-                    .accessibilityHidden(true)
-                  Slider(
-                    value: Binding(
-                      get: {
-                        min(
-                          AppSettingsService.fontScaleMax,
-                          max(AppSettingsService.fontScaleMin, appSettings.fontScale)
-                        )
-                      },
-                      set: { newValue in
-                        if appSettings.extraLargeText {
-                          appSettings.extraLargeText = false
-                        }
-                        appSettings.fontScale = newValue
-                      }
-                    ),
-                    in: AppSettingsService.fontScaleMin...AppSettingsService.fontScaleMax,
-                    step: AppSettingsService.fontScaleStep
-                  )
-                  .tint(AppTheme.accent)
-                  .accessibilityLabel(loc("profile.font_size", "Text size"))
-                  Text("A")
-                    .font(appSettings.extraLargeText ? .title : .title3)
-                    .foregroundColor(AppTheme.textSecondary)
-                    .accessibilityHidden(true)
+                HStack(spacing: 12) {
+                  fontScaleButton(
+                    title: "A",
+                    font: .subheadline.weight(.semibold),
+                    label: loc("profile.font_size.smaller", "Smaller text"),
+                    enabled: appSettings.fontScale > AppSettingsService.fontScaleMin + 0.001
+                  ) {
+                    appSettings.stepFontScale(-1)
+                  }
+                  Spacer(minLength: 0)
+                  Button {
+                    HapticsService.shared.select()
+                    appSettings.resetFontScale()
+                  } label: {
+                    Text(loc("profile.font_size.match_phone", "Use phone size"))
+                      .font(.subheadline.weight(.medium))
+                      .lineLimit(1)
+                      .minimumScaleFactor(0.7)
+                  }
+                  .buttonStyle(.plain)
+                  .foregroundColor(AppTheme.accent)
+                  .disabled(appSettings.followsSystemTextSize)
+                  .opacity(appSettings.followsSystemTextSize ? 0.4 : 1)
+                  Spacer(minLength: 0)
+                  fontScaleButton(
+                    title: "A",
+                    font: .title2.weight(.semibold),
+                    label: loc("profile.font_size.larger", "Larger text"),
+                    enabled: appSettings.fontScale < AppSettingsService.fontScaleExtra - 0.001
+                  ) {
+                    appSettings.stepFontScale(1)
+                  }
                 }
 
                 Text(loc("profile.font_size.desc", "Make text smaller or larger for your eyes"))
@@ -841,6 +844,29 @@ struct UserProfileView: View {
   
   // MARK: - Helper Views
   
+  private func fontScaleButton(
+    title: String,
+    font: Font,
+    label: String,
+    enabled: Bool,
+    action: @escaping () -> Void
+  ) -> some View {
+    Button {
+      HapticsService.shared.select()
+      action()
+    } label: {
+      Text(title)
+        .font(font)
+        .foregroundColor(enabled ? AppTheme.textPrimary : AppTheme.textSecondary)
+        .frame(width: 44, height: 44)
+        .appCircleSurface()
+    }
+    .buttonStyle(PressScaleButtonStyle())
+    .disabled(!enabled)
+    .opacity(enabled ? 1 : 0.4)
+    .accessibilityLabel(label)
+  }
+
   private func sectionHeader(icon: String, title: String, color: Color) -> some View {
     HStack(spacing: 10) {
       Image(systemName: icon)

@@ -1,27 +1,51 @@
 import SwiftUI
 
-/// Corrects a dish name. Photo meals also offer names suggested from the picture.
+/// Corrects a dish name. Names come with the dish from the photo analysis, so they show at once.
 struct FixFoodNameView: View {
   @Environment(\.colorScheme) private var environmentColorScheme
 
   let currentName: String
   let imageId: String
+  var alternativeNames: [String] = []
+  var photo: UIImage? = nil
   let languageCode: String
   let onSave: (String) -> Void
   let onCancel: () -> Void
 
   @State private var nameText: String = ""
   @State private var suggestions: [String] = []
-  @State private var isLoadingSuggestions: Bool = true
+  @State private var isLoadingSuggestions: Bool = false
 
   private var trimmedName: String {
-    nameText.trimmingCharacters(in: .whitespacesAndNewlines)
+    DishNameNormalizer.dishName(nameText)
+  }
+
+  /// Typed meals point at a shared stock photo, which says nothing about this meal.
+  private var hasOwnPhoto: Bool {
+    !imageId.isEmpty && !imageId.hasPrefix(Self.stockPhotoPrefix)
+  }
+
+  static let stockPhotoPrefix = "normalized_items/"
+
+  private var showsSuggestions: Bool {
+    hasOwnPhoto || !suggestions.isEmpty
   }
 
   var body: some View {
     NavigationView {
       ScrollView {
         VStack(alignment: .leading, spacing: 20) {
+          if let photo {
+            Image(uiImage: photo)
+              .resizable()
+              .scaledToFill()
+              .frame(maxWidth: .infinity)
+              .frame(height: 150)
+              .clipped()
+              .appCorner(AppTheme.smallRadius)
+              .accessibilityHidden(true)
+          }
+
           VStack(alignment: .leading, spacing: 8) {
             Text(loc("manual_food.title", "Fix food name"))
               .font(.title3.weight(.semibold))
@@ -36,10 +60,16 @@ struct FixFoodNameView: View {
 
           TextField(currentName, text: $nameText)
             .textFieldStyle(RoundedBorderTextFieldStyle())
-            .autocapitalization(.words)
+            .autocapitalization(.sentences)
             .disableAutocorrection(false)
+            .submitLabel(.done)
+            .onChange(of: nameText) { _, newValue in
+              if newValue.count > DishNameNormalizer.maxLength {
+                nameText = String(newValue.prefix(DishNameNormalizer.maxLength))
+              }
+            }
 
-          if !imageId.isEmpty {
+          if showsSuggestions {
             suggestionsSection
           }
         }
@@ -63,7 +93,8 @@ struct FixFoodNameView: View {
     }
     .onAppear {
       nameText = currentName
-      if !imageId.isEmpty {
+      suggestions = DishNameNormalizer.suggestions(alternativeNames, excluding: currentName)
+      if suggestions.isEmpty, hasOwnPhoto {
         fetchSuggestions()
       }
     }
@@ -116,15 +147,14 @@ struct FixFoodNameView: View {
     }
   }
 
+  /// Older dishes have no stored names, so ask the server once.
   private func fetchSuggestions() {
     isLoadingSuggestions = true
     GRPCService().suggestDishNames(
       imageId: imageId, currentName: currentName, languageCode: languageCode
     ) { result in
       DispatchQueue.main.async {
-        self.suggestions = result.filter {
-          $0.caseInsensitiveCompare(currentName) != .orderedSame
-        }
+        self.suggestions = DishNameNormalizer.suggestions(result, excluding: currentName)
         self.isLoadingSuggestions = false
       }
     }

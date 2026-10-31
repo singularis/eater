@@ -232,7 +232,7 @@ class ThemeService: ObservableObject {
     // Session changes and playback stay off the main thread. The sync
     // setCategory/setActive/play calls were hanging the UI.
     Task.detached {
-      guard let player = await ThemeService.makePlayer(named: soundName) else { return }
+      guard let player = ThemeService.makePlayer(named: soundName) else { return }
       await MainActor.run { [weak self] in
         self?.audioPlayer = player
       }
@@ -254,12 +254,13 @@ class ThemeService: ObservableObject {
     }
   }
 
-  nonisolated private static func makePlayer(named soundName: String) async -> AVAudioPlayer? {
+  nonisolated private static func makePlayer(named soundName: String) -> AVAudioPlayer? {
     let session = AVAudioSession.sharedInstance()
     do {
       // Ambient mixes with other audio and leaves the food buzz alone.
+      // This runs off the main thread, so the sync session calls do not hang the UI.
       try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-      try await session.setActive(true)
+      try session.setActive(true)
     } catch {
       print("Failed to activate audio session: \(error)")
       return nil

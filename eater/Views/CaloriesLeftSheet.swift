@@ -46,7 +46,7 @@ struct CaloriesLeftSheet: View {
         .padding(24)
         .frame(maxWidth: .infinity)
       }
-      .background(AppTheme.backgroundGradient.ignoresSafeArea())
+      .appSheetBackground()
       .scaledNavTitle(loc("calories.left.title", "Calories left"))
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {

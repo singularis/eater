@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FE8070872CD81998001318C0 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = FE8070862CD81998001318C0 /* GRPC */; };
+		FE8070872CD81998001318C0 /* GRPCCore in Frameworks */ = {isa = PBXBuildFile; productRef = FE8070862CD81998001318C0 /* GRPCCore */; };
+		FE8070912CD81998001318C0 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = FE8070922CD81998001318C0 /* SwiftProtobuf */; };
 		FEA995E62DC963F500033042 /* JWTKit in Frameworks */ = {isa = PBXBuildFile; productRef = FEA995E52DC963F500033042 /* JWTKit */; };
 		FEA995E92DC9640F00033042 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = FEA995E82DC9640F00033042 /* GoogleSignIn */; };
 		FEA995EB2DC9640F00033042 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FEA995EA2DC9640F00033042 /* GoogleSignInSwift */; };
@@ -66,10 +67,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FE8070872CD81998001318C0 /* GRPC in Frameworks */,
+				FE8070872CD81998001318C0 /* GRPCCore in Frameworks */,
 				FEA995E62DC963F500033042 /* JWTKit in Frameworks */,
 				FEA995E92DC9640F00033042 /* GoogleSignIn in Frameworks */,
 				FEA995EB2DC9640F00033042 /* GoogleSignInSwift in Frameworks */,
+				FE8070912CD81998001318C0 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,10 +135,11 @@
 			);
 			name = eater;
 			packageProductDependencies = (
-				FE8070862CD81998001318C0 /* GRPC */,
+				FE8070862CD81998001318C0 /* GRPCCore */,
 				FEA995E52DC963F500033042 /* JWTKit */,
 				FEA995E82DC9640F00033042 /* GoogleSignIn */,
 				FEA995EA2DC9640F00033042 /* GoogleSignInSwift */,
+				FE8070922CD81998001318C0 /* SwiftProtobuf */,
 			);
 			productName = eater;
 			productReference = FE0505772CD03A3A00E3EF2F /* eater.app */;
@@ -225,6 +228,7 @@
 				FE8070852CD81833001318C0 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 				FEA995E42DC963F500033042 /* XCRemoteSwiftPackageReference "jwt-kit" */,
 				FEA995E72DC9640F00033042 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				FE8070932CD81833001318C0 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FE0505782CD03A3A00E3EF2F /* Products */;
@@ -448,7 +452,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 5.2;
+				MARKETING_VERSION = 5.3;
 				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eater;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -485,7 +489,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 5.2;
+				MARKETING_VERSION = 5.3;
 				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eater;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -504,7 +508,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
-				MARKETING_VERSION = 5.2;
+				MARKETING_VERSION = 5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -522,7 +526,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
-				MARKETING_VERSION = 5.2;
+				MARKETING_VERSION = 5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -538,7 +542,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 5.2;
+				MARKETING_VERSION = 5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -554,7 +558,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 5.2;
+				MARKETING_VERSION = 5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = racoon.eaterUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -611,7 +615,7 @@
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				minimumVersion = 1.2.1;
 			};
 		};
 		FE8070852CD81833001318C0 /* XCRemoteSwiftPackageReference "grpc-swift" */ = {
@@ -619,7 +623,15 @@
 			repositoryURL = "https://github.com/grpc/grpc-swift";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.24.1;
+				minimumVersion = 2.2.3;
+			};
+		};
+		FE8070932CD81833001318C0 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-protobuf.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.39.0;
 			};
 		};
 		FEA995E42DC963F500033042 /* XCRemoteSwiftPackageReference "jwt-kit" */ = {
@@ -627,7 +639,7 @@
 			repositoryURL = "https://github.com/vapor/jwt-kit.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.1.2;
+				minimumVersion = 5.7.1;
 			};
 		};
 		FEA995E72DC9640F00033042 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
@@ -635,16 +647,21 @@
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 8.0.0;
+				minimumVersion = 10.1.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		FE8070862CD81998001318C0 /* GRPC */ = {
+		FE8070862CD81998001318C0 /* GRPCCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FE8070852CD81833001318C0 /* XCRemoteSwiftPackageReference "grpc-swift" */;
-			productName = GRPC;
+			productName = GRPCCore;
+		};
+		FE8070922CD81998001318C0 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FE8070932CD81833001318C0 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
 		};
 		FEA995E52DC963F500033042 /* JWTKit */ = {
 			isa = XCSwiftPackageProductDependency;

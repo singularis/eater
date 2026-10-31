@@ -231,6 +231,7 @@ struct CameraButtonView: View {
           .font(.system(size: 15, weight: .medium, design: .rounded))
           .multilineTextAlignment(.center)
           .lineLimit(1)
+          .minimumScaleFactor(0.7)
       }
       .foregroundColor(AppTheme.textPrimary)
       .frame(width: width, height: height)

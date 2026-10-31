@@ -150,9 +150,22 @@ private struct FilledButtonChrome: ViewModifier {
   let fill: Color
   let isPressed: Bool
 
+  @ViewBuilder
   func body(content: Content) -> some View {
+    if #available(iOS 26.0, *) {
+      content
+        .padding()
+        .frame(maxWidth: .infinity)
+        .foregroundColor(.white)
+        .glassEffect(.regular.tint(fill).interactive(), in: .capsule)
+    } else {
+      flat(content)
+    }
+  }
+
+  private func flat(_ content: Content) -> some View {
     let shadow = AppTheme.cardShadow
-    content
+    return content
       .padding()
       .frame(maxWidth: .infinity)
       .background(fill)
@@ -224,13 +237,20 @@ private struct GradientButtonChrome: ViewModifier {
   let fill: LinearGradient
   let isPressed: Bool
 
+  private var shape: AnyShape {
+    if #available(iOS 26.0, *) {
+      return AnyShape(Capsule())
+    }
+    return AnyShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+  }
+
   func body(content: Content) -> some View {
     let shadow = AppTheme.cardShadow
     content
       .padding()
       .frame(maxWidth: .infinity)
       .background(fill)
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+      .clipShape(shape)
       .foregroundColor(.white)
       .shadow(
         color: isPressed ? shadow.color.opacity(0.3) : shadow.color,
@@ -293,16 +313,9 @@ struct CardModifier: ViewModifier {
   let paddingValue: CGFloat
 
   func body(content: Content) -> some View {
-    let shadow = AppTheme.cardShadow
-    return content
+    content
       .padding(paddingValue)
-      .background(AppTheme.surface)
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+      .appSurface()
   }
 }
 
@@ -316,16 +329,9 @@ struct LiquidGlassModifier: ViewModifier {
   }
 
   func body(content: Content) -> some View {
-    let shadow = AppTheme.cardShadow
     content
       .padding(paddingValue)
-      .background(AppTheme.surface)
-      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+      .appSurface(cornerRadius: cornerRadius)
   }
 }
 
@@ -338,27 +344,71 @@ extension View {
     modifier(LiquidGlassModifier(paddingValue: padding, cornerRadius: cornerRadius))
   }
 
-  /// Flat panel used by Home tiles, date chip, and cards.
+  /// Panel used by Home tiles, date chip, and cards. Liquid Glass on iOS 26, flat before.
+  @ViewBuilder
   func appSurface(cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
-    let shadow = AppTheme.cardShadow
-    return self
-      .background(AppTheme.surface)
-      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    if #available(iOS 26.0, *) {
+      glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+    } else {
+      let shadow = AppTheme.cardShadow
+      self
+        .background(AppTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .stroke(AppTheme.divider, lineWidth: 1)
+        )
+        .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    }
   }
 
-  /// Same fill, stroke, and shadow as `appSurface`, for circular header chips.
+  /// Circular header chips and card action buttons. Interactive Liquid Glass on iOS 26.
+  @ViewBuilder
   func appCircleSurface() -> some View {
-    let shadow = AppTheme.cardShadow
-    return self
-      .background(AppTheme.surface)
-      .clipShape(Circle())
-      .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    if #available(iOS 26.0, *) {
+      glassEffect(.regular.interactive(), in: .circle)
+    } else {
+      let shadow = AppTheme.cardShadow
+      self
+        .background(AppTheme.surface)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
+        .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    }
+  }
+
+  /// Colored control, such as swipe chips. Tinted Liquid Glass on iOS 26, solid fill before.
+  @ViewBuilder
+  func appTintedGlass(_ tint: Color, cornerRadius: CGFloat = AppTheme.smallRadius) -> some View {
+    if #available(iOS 26.0, *) {
+      glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: cornerRadius))
+    } else {
+      self
+        .background(tint)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+  }
+
+  /// Sheet backdrop. iOS 26 draws the system Liquid Glass behind clear content; older systems get a blur.
+  @ViewBuilder
+  func appSheetBackground() -> some View {
+    if #available(iOS 26.0, *) {
+      self
+    } else {
+      self
+        .background(.regularMaterial, ignoresSafeAreaEdges: .all)
+        .presentationBackground(.clear)
+    }
+  }
+
+  /// Merges neighbouring glass controls into one Liquid Glass group on iOS 26.
+  @ViewBuilder
+  func appGlassGroup(spacing: CGFloat? = nil) -> some View {
+    if #available(iOS 26.0, *) {
+      GlassEffectContainer(spacing: spacing) { self }
+    } else {
+      self
+    }
   }
 
   /// Continuous corner, matching cards and buttons. Plain `.cornerRadius` draws a harder curve.
@@ -408,7 +458,20 @@ private struct AppFormFieldModifier: ViewModifier {
 
 // Secondary (neutral) button style
 struct SecondaryButtonStyle: ButtonStyle {
+  @ViewBuilder
   func makeBody(configuration: Configuration) -> some View {
+    if #available(iOS 26.0, *) {
+      configuration.label
+        .padding()
+        .frame(maxWidth: .infinity)
+        .foregroundColor(AppTheme.textPrimary)
+        .glassEffect(.regular.interactive(), in: .capsule)
+    } else {
+      flat(configuration)
+    }
+  }
+
+  private func flat(_ configuration: Configuration) -> some View {
     configuration.label
       .padding()
       .frame(maxWidth: .infinity)

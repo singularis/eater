@@ -49,6 +49,9 @@ struct Eater_FoodTextResponse: Sendable {
   /// localized server text, empty on success and on blocked
   var message: String = String()
 
+  /// normalized dish name that was saved, set on success
+  var dishName: String = String()
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -95,7 +98,7 @@ extension Eater_FoodTextMessage: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
 
 extension Eater_FoodTextResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".FoodTextResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}error_code\0\u{1}message\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}error_code\0\u{1}message\0\u{3}dish_name\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -106,6 +109,7 @@ extension Eater_FoodTextResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.errorCode) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.message) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.dishName) }()
       default: break
       }
     }
@@ -121,6 +125,9 @@ extension Eater_FoodTextResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if !self.message.isEmpty {
       try visitor.visitSingularStringField(value: self.message, fieldNumber: 3)
     }
+    if !self.dishName.isEmpty {
+      try visitor.visitSingularStringField(value: self.dishName, fieldNumber: 4)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -128,6 +135,7 @@ extension Eater_FoodTextResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.success != rhs.success {return false}
     if lhs.errorCode != rhs.errorCode {return false}
     if lhs.message != rhs.message {return false}
+    if lhs.dishName != rhs.dishName {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

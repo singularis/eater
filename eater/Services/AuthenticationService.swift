@@ -289,7 +289,8 @@ final class AuthenticationService: NSObject, ObservableObject {
     GIDSignIn.sharedInstance.configuration = config
 
     // Delay presentation explicitly to allow SwiftUI interactions (like Button press animations) to conclude
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
       guard let topVC = UIApplication.topMostViewController else {
         self.debugLog("🔴 [AuthService] Could not find topMostViewController to present GIDSignIn")
         return
@@ -351,6 +352,10 @@ final class AuthenticationService: NSObject, ObservableObject {
       let wasAnonymous = isAnonymous
       let previousUUID = wasAnonymous
         ? UserDefaults.standard.string(forKey: Self.anonymousUUIDKey) : nil
+      let guestEmail = wasAnonymous ? userEmail : nil
+      if wasAnonymous {
+        debugLog("🔵 [AuthService] Upgrading guest \(guestEmail ?? "-") uuid=\(previousUUID ?? "MISSING") to \(provider)")
+      }
 
       let tokenRequest = TokenRequest(
         provider: provider,
@@ -366,6 +371,12 @@ final class AuthenticationService: NSObject, ObservableObject {
 
       if wasAnonymous {
         clearAnonymousState()
+        AppSettingsService.shared.carryOnboardingFlags(from: guestEmail, to: tokenResponse.userEmail)
+        // Guest meals move to the account in the background, so drop the guest
+        // cache and fetch again once the server had time to move them.
+        ProductStorageService.shared.clearCache()
+        StatisticsService.shared.clearCache()
+        AppNavigation.shared.noteAccountMerged()
       }
 
     } catch {

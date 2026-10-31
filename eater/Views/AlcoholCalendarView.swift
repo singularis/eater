@@ -211,6 +211,7 @@ struct AlcoholCalendarView: View {
         .font(.caption)
         .foregroundColor(AppTheme.textSecondary)
         .lineLimit(1)
+        .minimumScaleFactor(0.7)
     }
   }
 

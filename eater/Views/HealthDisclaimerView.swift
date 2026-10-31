@@ -21,6 +21,19 @@ struct HealthDisclaimerView: View {
     return loc("disc.updated", "Last Updated:") + " " + df.string(from: Date())
   }
 
+  /// "Today", or the weekday and date when a past day is open.
+  private var scoreDayText: String {
+    let f = DateFormatter()
+    f.locale = Locale(identifier: "en_US_POSIX")
+    f.calendar = Calendar.current
+    f.timeZone = TimeZone.current
+    f.dateFormat = "yyyy-MM-dd"
+    guard let day = f.date(from: dayISO), !Calendar.current.isDateInToday(day) else {
+      return loc("health.score.today_label", "Today")
+    }
+    return AppNavigation.dayLabel(for: day)
+  }
+
   private func scoreBandLabel(_ score: Int) -> String {
     switch score {
     case 0..<40: return loc("health.score.band.poor", "Needs Improvement")
@@ -38,7 +51,7 @@ struct HealthDisclaimerView: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 20) {
           VStack(alignment: .leading, spacing: 16) {
-            Text(loc("health.score.section.title", "Your Health Score"))
+            Text(loc("health.score.day_title", "Daily food score"))
               .font(.headline)
               .fontWeight(.semibold)
               .foregroundColor(AppTheme.textPrimary)
@@ -59,7 +72,7 @@ struct HealthDisclaimerView: View {
                 .frame(width: 56, height: 56)
 
                 VStack(alignment: .leading, spacing: 2) {
-                  Text(loc("health.score.value.label", "Today's Score"))
+                  Text(scoreDayText)
                     .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                   Text(scoreBandLabel(today.score))

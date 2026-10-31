@@ -72,7 +72,7 @@ struct FoodHealthPopup: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
       }
-      .background(AppTheme.backgroundGradient.ignoresSafeArea())
+      .appSheetBackground()
       .scaledNavTitle(loc("health.score.section.title", "Health"))
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {

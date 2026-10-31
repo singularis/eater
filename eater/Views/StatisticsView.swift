@@ -730,7 +730,7 @@ struct StatisticsView: View {
       }
       .padding(20)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .background(AppTheme.backgroundGradient.ignoresSafeArea())
+      .appSheetBackground()
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
