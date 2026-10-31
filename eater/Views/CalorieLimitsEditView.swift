@@ -60,7 +60,7 @@ struct CalorieLimitsEditView: View {
               HapticsService.shared.warning()
               errorMessage = loc(
                 "limits.invalid_input_msg",
-                "Please enter valid positive numbers. Soft limit must be less than or equal to hard limit."
+                "Enter a daily limit from 1 to 20000. Soft limit must be less than or equal to hard limit."
               )
             }
           }

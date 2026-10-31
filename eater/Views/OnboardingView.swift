@@ -1274,7 +1274,7 @@ struct OnboardingView: View {
       
       // Input Field
       VStack(alignment: .leading, spacing: 12) {
-         TextField(shown("nickname.placeholder", "Enter your nickname"), text: $nickname)
+         TextField(shown("nickname.placeholder", "Healthy Eater"), text: $nickname)
            .font(.system(size: 18))
            .padding(16)
            .background(AppTheme.surface)

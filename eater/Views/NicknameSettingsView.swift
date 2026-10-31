@@ -86,7 +86,7 @@ struct NicknameSettingsView: View {
                   .font(.system(size: 14, weight: .medium))
                   .foregroundColor(AppTheme.textSecondary)
 
-                TextField(loc("nickname.placeholder", "Enter your nickname"), text: $nickname)
+                TextField(loc("nickname.placeholder", "Healthy Eater"), text: $nickname)
                   .textFieldStyle(.plain)
                   .padding(16)
                   .background(AppTheme.surface)

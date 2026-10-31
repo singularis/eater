@@ -10,6 +10,9 @@ class ProductStorageService {
   private let caloriesKey = "cached_calories"
   private let weightKey = "cached_weight"
   private let lastUpdateKey = "last_update_timestamp"
+  private let caloriesTotalKey = "cached_calories_total"
+  private let caloriesLeftServerKey = "cached_calories_left_server"
+  private let caloriesEatenServerKey = "cached_calories_eaten_server"
 
   // MARK: - Health Level Cache Structure
 
@@ -39,6 +42,21 @@ class ProductStorageService {
     }
   }
 
+  func saveCalorieBudget(eaten: Int, total: Int, left: Int) {
+    userDefaults.set(eaten, forKey: caloriesEatenServerKey)
+    userDefaults.set(total, forKey: caloriesTotalKey)
+    userDefaults.set(left, forKey: caloriesLeftServerKey)
+  }
+
+  /// Server fields from the last today fetch. Zeros mean the budget was never stored.
+  func loadCalorieBudget() -> (eaten: Int, total: Int, left: Int) {
+    (
+      userDefaults.integer(forKey: caloriesEatenServerKey),
+      userDefaults.integer(forKey: caloriesTotalKey),
+      userDefaults.integer(forKey: caloriesLeftServerKey)
+    )
+  }
+
   func loadProducts() -> ([Product], Int, Float) {
     guard let productsData = userDefaults.data(forKey: productsKey) else {
       return ([], 0, 0)
@@ -61,7 +79,7 @@ class ProductStorageService {
 
   func fetchAndProcessProducts(
     tempImageTime: Int64? = nil, forceRefresh: Bool = false,
-    completion: @escaping ([Product], Int, Float, Bool) -> Void
+    completion: @escaping ([Product], Int, Float, Bool, Int, Int) -> Void
   ) {
     let shouldForceRefresh = forceRefresh || (tempImageTime != nil)
 
@@ -69,7 +87,8 @@ class ProductStorageService {
     if !shouldForceRefresh, !isDataStale() {
       let (cachedProducts, cachedCalories, cachedWeight) = loadProducts()
       if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
-        completion(cachedProducts, cachedCalories, cachedWeight, true)
+        let budget = loadCalorieBudget()
+        completion(cachedProducts, cachedCalories, cachedWeight, true, budget.total, budget.left)
         return
       }
     }
@@ -86,27 +105,29 @@ class ProductStorageService {
        let isToday = Calendar.current.isDateInToday(date)
 
        // Always fetch using the specific date from the timestamp to ensure we get the list where this food belongs
-       GRPCService().fetchCustomDateFood(date: dateStr) { [weak self] products, calories, weight, success in
+       GRPCService().fetchCustomDateFood(date: dateStr) { [weak self] products, calories, weight, success, caloriesTotal, caloriesLeft in
          DispatchQueue.main.async {
            if success {
              self?.mapTemporaryImage(products: products, tempTime: tempTime)
              if isToday {
                self?.saveProducts(products, calories: calories, weight: weight)
+               self?.saveCalorieBudget(eaten: calories, total: caloriesTotal, left: caloriesLeft)
              }
            }
-           completion(products, calories, weight, success)
+           completion(products, calories, weight, success, caloriesTotal, caloriesLeft)
          }
        }
        return
     }
 
     // Default: Fetch today's data (no temp time provided)
-    GRPCService().fetchProducts { [weak self] products, calories, weight, success in
+    GRPCService().fetchProducts { [weak self] products, calories, weight, success, caloriesTotal, caloriesLeft in
       DispatchQueue.main.async {
         if success {
           self?.saveProducts(products, calories: calories, weight: weight)
+          self?.saveCalorieBudget(eaten: calories, total: caloriesTotal, left: caloriesLeft)
         }
-        completion(products, calories, weight, success)
+        completion(products, calories, weight, success, caloriesTotal, caloriesLeft)
       }
     }
   }
@@ -135,11 +156,11 @@ class ProductStorageService {
   }
 
   func fetchAndProcessCustomDateProducts(
-    date: String, completion: @escaping ([Product], Int, Float, Bool) -> Void
+    date: String, completion: @escaping ([Product], Int, Float, Bool, Int, Int) -> Void
   ) {
-    GRPCService().fetchCustomDateFood(date: date) { products, calories, weight, success in
+    GRPCService().fetchCustomDateFood(date: date) { products, calories, weight, success, caloriesTotal, caloriesLeft in
       DispatchQueue.main.async {
-        completion(products, calories, weight, success)
+        completion(products, calories, weight, success, caloriesTotal, caloriesLeft)
       }
     }
   }
@@ -151,6 +172,9 @@ class ProductStorageService {
     userDefaults.removeObject(forKey: caloriesKey)
     userDefaults.removeObject(forKey: weightKey)
     userDefaults.removeObject(forKey: lastUpdateKey)
+    userDefaults.removeObject(forKey: caloriesTotalKey)
+    userDefaults.removeObject(forKey: caloriesLeftServerKey)
+    userDefaults.removeObject(forKey: caloriesEatenServerKey)
   }
 
   func isDataStale(maxAgeMinutes: Double = 60) -> Bool {

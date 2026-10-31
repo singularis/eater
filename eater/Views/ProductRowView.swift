@@ -469,11 +469,11 @@ struct ProductRowView: View {
       }
     }
     if Calendar.current.isDateInToday(Date(timeIntervalSince1970: TimeInterval(product.time) / 1000.0)) {
-      GRPCService().fetchProducts { products, _, _, ok in
+      GRPCService().fetchProducts { products, _, _, ok, _, _ in
         apply(products, ok)
       }
     } else {
-      GRPCService().fetchCustomDateFood(date: dishDayString()) { products, _, _, ok in
+      GRPCService().fetchCustomDateFood(date: dishDayString()) { products, _, _, ok, _, _ in
         apply(products, ok)
       }
     }

@@ -85,21 +85,22 @@ class GRPCService {
     task.resume()
   }
 
-  func fetchProducts(completion: @escaping ([Product], Int, Float, Bool) -> Void) {
+  /// products, eaten (`total_calories`), weight, success, saved limit (`calories_total`), left (`calories_left`).
+  func fetchProducts(completion: @escaping ([Product], Int, Float, Bool, Int, Int) -> Void) {
     // Use 5-second timeout for initial load to speed up app startup
     guard let request = createRequest(endpoint: "eater_get_today", httpMethod: "GET", timeout: 5.0) else {
-      completion([], 0, 0, false)
+      completion([], 0, 0, false, 0, 0)
       return
     }
 
     sendRequest(request: request, retriesLeft: 0) { data, _, error in
       if error != nil {
-        completion([], 0, 0, false)
+        completion([], 0, 0, false, 0, 0)
         return
       }
 
       guard let data = data else {
-        completion([], 0, 0, false)
+        completion([], 0, 0, false, 0, 0)
         return
       }
 
@@ -121,12 +122,14 @@ class GRPCService {
             alternativeNames: dish.alternativeNames
           )
         }
-        let remainingCalories = Int(todayFood.totalForDay.totalCalories)
+        let eaten = Int(todayFood.totalForDay.totalCalories)
+        let caloriesTotal = Int(todayFood.totalForDay.caloriesTotal)
+        let caloriesLeft = Int(todayFood.totalForDay.caloriesLeft)
         let persohWeight = Float(todayFood.personWeight)
 
-        completion(products, remainingCalories, persohWeight, true)
+        completion(products, eaten, persohWeight, true, caloriesTotal, caloriesLeft)
       } catch {
-        completion([], 0, 0, false)
+        completion([], 0, 0, false, 0, 0)
       }
     }
   }
@@ -718,7 +721,8 @@ class GRPCService {
     }
   }
 
-  func fetchCustomDateFood(date: String, completion: @escaping ([Product], Int, Float, Bool) -> Void) {
+  /// Same calorie fields as `fetchProducts`: eaten, then `calories_total`, then `calories_left`.
+  func fetchCustomDateFood(date: String, completion: @escaping ([Product], Int, Float, Bool, Int, Int) -> Void) {
     var customDateRequest = Eater_CustomDateFoodRequest()
     customDateRequest.date = date
 
@@ -729,19 +733,19 @@ class GRPCService {
         var request = createRequest(
           endpoint: "get_food_custom_date", httpMethod: "POST", body: requestBody)
       else {
-        completion([], 0, 0, false)
+        completion([], 0, 0, false, 0, 0)
         return
       }
       request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
 
       sendRequest(request: request, retriesLeft: maxRetries) { data, _, error in
         if error != nil {
-          completion([], 0, 0, false)
+          completion([], 0, 0, false, 0, 0)
           return
         }
 
         guard let data = data else {
-          completion([], 0, 0, false)
+          completion([], 0, 0, false, 0, 0)
           return
         }
 
@@ -763,16 +767,18 @@ class GRPCService {
               alternativeNames: dish.alternativeNames
             )
           }
-          let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
+          let eaten = Int(customDateFood.totalForDay.totalCalories)
+          let caloriesTotal = Int(customDateFood.totalForDay.caloriesTotal)
+          let caloriesLeft = Int(customDateFood.totalForDay.caloriesLeft)
           let personWeight = Float(customDateFood.personWeight)
 
-          completion(products, remainingCalories, personWeight, true)
+          completion(products, eaten, personWeight, true, caloriesTotal, caloriesLeft)
         } catch {
-          completion([], 0, 0, false)
+          completion([], 0, 0, false, 0, 0)
         }
       }
     } catch {
-      completion([], 0, 0, false)
+      completion([], 0, 0, false, 0, 0)
     }
   }
 
@@ -1708,6 +1714,48 @@ class GRPCService {
     }
   }
 
+  /// Writes only the daily calorie limit. Weight and macro goals stay as they are.
+  func setCalorieLimit(_ calorieLimit: Int, completion: @escaping (Bool) -> Void) {
+    guard (1...20000).contains(calorieLimit) else {
+      completion(false)
+      return
+    }
+    guard let url = URL(string: "\(AppEnvironment.baseURL)/user_set_calorie_limit") else {
+      completion(false)
+      return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    if let token = KeychainHelper.shared.read("auth_token") {
+      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let body: [String: Any] = ["calorie_limit": calorieLimit]
+
+    do {
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+    } catch {
+      completion(false)
+      return
+    }
+
+    sendRequest(request: request, retriesLeft: 0) { _, response, error in
+      if error != nil {
+        completion(false)
+        return
+      }
+      guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200
+      else {
+        completion(false)
+        return
+      }
+      completion(true)
+    }
+  }
+
   func updateMacroGoals(
     proteinTargetGrams: Double,
     fatTargetGrams: Double,
@@ -1850,14 +1898,20 @@ class GRPCService {
     playerEmail: String,
     opponentEmail: String,
     result: String,
+    color: String,
+    opponentColor: String? = nil,
     completion: @escaping (Bool, String?, String?) -> Void
   ) {
-    let requestDict: [String: Any] = [
+    var requestDict: [String: Any] = [
       "player_email": playerEmail,
       "opponent_email": opponentEmail,
       "result": result,
-      "timestamp": Int64(Date().timeIntervalSince1970 * 1000)
+      "timestamp": Int64(Date().timeIntervalSince1970 * 1000),
+      "color": color
     ]
+    if let opponentColor {
+      requestDict["opponent_color"] = opponentColor
+    }
     
     guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
       completion(false, nil, nil)
@@ -1912,64 +1966,78 @@ class GRPCService {
   func getChessHistory(
     limit: Int = 50,
     offset: Int = 0,
-    completion: @escaping (Bool, Int, [[String: Any]]) -> Void
+    completion: @escaping (Bool, Int, [[String: Any]], [String: Int], [String: Int]) -> Void
   ) {
     let endpoint = "autocomplete/get_chess_history?limit=\(limit)&offset=\(offset)"
     guard let urlRequest = createRequest(endpoint: endpoint, httpMethod: "GET") else {
-      completion(false, 0, [])
+      completion(false, 0, [], [:], [:])
       return
     }
     
     sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
       if error != nil {
-        completion(false, 0, [])
+        completion(false, 0, [], [:], [:])
         return
       }
       
       guard let data = data else {
-        completion(false, 0, [])
+        completion(false, 0, [], [:], [:])
         return
       }
       
       do {
         guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-          completion(false, 0, [])
+          completion(false, 0, [], [:], [:])
           return
         }
         
         let total = responseDict["total"] as? Int ?? 0
         let games = responseDict["games"] as? [[String: Any]] ?? []
+        let pieceCounts = Self.countMap(responseDict["piece_counts"])
+        let gameKinds = Self.countMap(responseDict["game_kinds"])
         
-        completion(true, total, games)
+        completion(true, total, games, pieceCounts, gameKinds)
       } catch {
-        completion(false, 0, [])
+        completion(false, 0, [], [:], [:])
       }
     }
   }
 
+  /// Whole numbers from `piece_counts` / `game_kinds`. JSON numbers arrive as NSNumber.
+  private static func countMap(_ value: Any?) -> [String: Int] {
+    guard let raw = value as? [String: Any] else { return [:] }
+    var counts: [String: Int] = [:]
+    for (key, item) in raw {
+      if let number = item as? NSNumber {
+        counts[key] = number.intValue
+      }
+    }
+    return counts
+  }
+
   /// Get all chess data (total wins + all opponent scores)
   func getAllChessData(
-    completion: @escaping (Bool, Int, [String: String]) -> Void
+    completion: @escaping (Bool, Int, [String: String], [String: Int], [String: Int]) -> Void
   ) {
     guard let urlRequest = createRequest(endpoint: "autocomplete/get_all_chess_data", httpMethod: "GET") else {
-      completion(false, 0, [:])
+      completion(false, 0, [:], [:], [:])
       return
     }
     
     sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
       if error != nil {
-        completion(false, 0, [:])
+        completion(false, 0, [:], [:], [:])
         return
       }
       
       guard let data = data else {
-        completion(false, 0, [:])
+        completion(false, 0, [:], [:], [:])
         return
       }
       
       do {
         guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-          completion(false, 0, [:])
+          completion(false, 0, [:], [:], [:])
           return
         }
         
@@ -1989,9 +2057,9 @@ class GRPCService {
           }
         }
         
-        completion(true, totalWins, simpleOpponents)
+        completion(true, totalWins, simpleOpponents, Self.countMap(responseDict["piece_counts"]), Self.countMap(responseDict["game_kinds"]))
       } catch {
-        completion(false, 0, [:])
+        completion(false, 0, [:], [:], [:])
       }
     }
   }

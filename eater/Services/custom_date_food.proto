@@ -36,4 +36,6 @@ message TotalForDay {
   Contains contains = 1;
   int32 total_avg_weight = 2;
   int32 total_calories = 3;
-} 
+  int32 calories_total = 4;
+  int32 calories_left = 5;
+}

@@ -32,6 +32,12 @@ struct ContentView: View {
   @State private var dayScoreFailed = false
   @State private var dayScorePollID = UUID()
   @State private var caloriesLeft: Int = 0
+  /// Saved daily limit from today/custom-date food. 0 means the server has no limit yet.
+  @State private var serverCaloriesTotal: Int = 0
+  /// Limit minus eaten, from the server. Negative means over the limit.
+  @State private var serverCaloriesLeft: Int = 0
+  /// Food eaten that day (`total_calories`). Separate from `caloriesLeft`, which also includes local extras.
+  @State private var serverEaten: Int = 0
   @State private var personWeight: Float = 0
   @State private var date = Date()
   @State private var selectedDate = Date()
@@ -79,6 +85,7 @@ struct ContentView: View {
   @State private var isLoadingFoodPhoto = false
   @State private var deletingProductTime: Int64? = nil
   @State private var isFetchingData = false  // Flag to prevent multiple simultaneous data fetches
+  @State private var pendingLimitRefresh = false
 
   // Tutorial pending action
   enum PendingTutorialAction {
@@ -193,6 +200,13 @@ struct ContentView: View {
       }
       .contentShape(Rectangle())
       .simultaneousGesture(homeSwipeGesture)
+      .onReceive(NotificationCenter.default.publisher(for: Notification.Name("CalorieLimitSaved"))) { _ in
+        if isFetchingData {
+          pendingLimitRefresh = true
+        } else {
+          fetchDataWithLoading()
+        }
+      }
       .onAppear {
         loadLimitsFromUserDefaults()
         loadTodaySportCalories()
@@ -280,7 +294,10 @@ struct ContentView: View {
         }
       }) {
         CaloriesLeftSheet(
-          remaining: caloriesRemaining,
+          caloriesTotal: serverCaloriesTotal,
+          eaten: serverEaten,
+          caloriesLeft: serverCaloriesLeft,
+          tone: calorieDisplayColor,
           onSetLimits: { openLimitsAfterInfo = true },
           onCalculateLimits: { openHealthAfterInfo = true }
         )
@@ -760,8 +777,29 @@ struct ContentView: View {
     }
   }
 
-  private var caloriesRemaining: Int {
-    getAdjustedSoftLimit() - caloriesLeft
+  /// Flame number. A saved server limit wins. Until then, keep the phone formula (limit + sport - eaten).
+  private var flameCalories: Int {
+    if serverCaloriesTotal > 0 {
+      return serverCaloriesLeft
+    }
+    return getAdjustedSoftLimit() - caloriesLeft
+  }
+
+  /// Green when plenty is left, amber as it runs down, red once calories left are negative.
+  /// The same color is passed into the sheet opened from this button.
+  private var calorieDisplayColor: Color {
+    let limit = serverCaloriesTotal > 0 ? serverCaloriesTotal : getAdjustedSoftLimit()
+    let left = flameCalories
+    if left < 0 { return AppTheme.danger }
+    guard limit > 0 else { return Color(red: 0.2, green: 0.7, blue: 0.3) }
+    let remaining = Double(left) / Double(limit)
+    if remaining > 0.5 {
+      return Color(red: 0.2, green: 0.7, blue: 0.3)
+    }
+    if remaining > 0.2 {
+      return Color(red: 0.9, green: 0.6, blue: 0.1)
+    }
+    return Color(red: 0.8, green: 0.4, blue: 0.2)
   }
 
   /// Shared row. Sizes are before the window scale, so text grows with the slider exactly once.
@@ -785,7 +823,7 @@ struct ContentView: View {
   private var statsButtonsView: some View {
     let weightNeed = statTextWidth(String(format: "%.1f", personWeight), size: statNumberSize)
       + statPadH * 2
-    let caloriesNeed = statTextWidth("\(caloriesRemaining)", size: statNumberSize)
+    let caloriesNeed = statTextWidth("\(flameCalories)", size: statNumberSize)
       + statIconSize + statIconGap + statPadH * 2
     let typeNeed = statTextWidth(loc("type_food.button", "Type"), size: statLabelSize)
       + statIconSize + statIconGap + statPadH * 2
@@ -868,11 +906,8 @@ struct ContentView: View {
   }
 
   private var caloriesButton: some View {
-    let remaining = caloriesRemaining
-    let calorieColor: Color =
-      remaining <= -1
-      ? AppTheme.danger
-      : getColor(for: caloriesLeft, adjustedSoftLimit: getAdjustedSoftLimit())
+    let remaining = flameCalories
+    let calorieColor = calorieDisplayColor
     return Button(action: {
       checkTutorial(key: "hasSeenCaloriesTutorial", action: .calories)
     }) {
@@ -1156,6 +1191,14 @@ struct ContentView: View {
     fetchDataAfterFoodPhoto()
   }
 
+  private func endDataFetch() {
+    isLoadingData = false
+    isFetchingData = false
+    guard pendingLimitRefresh else { return }
+    pendingLimitRefresh = false
+    fetchDataWithLoading()
+  }
+
   func fetchDataWithLoading() {
     // Prevent multiple simultaneous data fetches
     guard !isFetchingData else { return }
@@ -1169,6 +1212,10 @@ struct ContentView: View {
     if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
       products = FoodExtrasStore.shared.apply(to: cachedProducts)
       caloriesLeft = cachedCalories + FoodExtrasStore.shared.totalExtrasCalories(for: products)
+      let budget = ProductStorageService.shared.loadCalorieBudget()
+      serverCaloriesTotal = budget.total
+      serverCaloriesLeft = budget.left
+      serverEaten = (budget.total > 0 || budget.eaten > 0) ? budget.eaten : cachedCalories
       personWeight = cachedWeight
       if cachedWeight > 0 {
         UserDefaults.standard.set(Double(cachedWeight), forKey: "userWeight")
@@ -1179,10 +1226,9 @@ struct ContentView: View {
     // Check if we're viewing a custom date - if so, fetch that specific date
     if isViewingCustomDate && !currentViewingDateString.isEmpty {
       ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: currentViewingDateString) { 
-        (fetchedProducts, calories, weight, success) in
+        (fetchedProducts, calories, weight, success, caloriesTotal, caloriesLeftServer) in
         DispatchQueue.main.async {
-          self.isLoadingData = false
-          self.isFetchingData = false
+          self.endDataFetch()
           guard success else { return }
 
           let previousWeight = self.personWeight
@@ -1190,13 +1236,16 @@ struct ContentView: View {
           self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
           FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
           self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
+          self.serverEaten = calories
+          self.serverCaloriesTotal = caloriesTotal
+          self.serverCaloriesLeft = caloriesLeftServer
           self.personWeight = weight
           // Custom date: do not overwrite userWeight (current weight is for today)
 
           // Recalculate calories if weight changed and user has health data
           let userDefaults = UserDefaults.standard
           if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-            self.recalculateCalorieLimitsFromHealthData()
+            self.recalculateCalorieLimitsFromHealthData(announce: true)
           }
           self.refreshMacrosForCurrentView()
         }
@@ -1206,10 +1255,9 @@ struct ContentView: View {
 
     // Fetch fresh data from network (for today)
     // FORCE refresh so we actually use the network and show the loading state
-    ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) { (fetchedProducts, calories, weight, success) in
+    ProductStorageService.shared.fetchAndProcessProducts(forceRefresh: true) { (fetchedProducts, calories, weight, success, caloriesTotal, caloriesLeftServer) in
       DispatchQueue.main.async {
-        self.isLoadingData = false
-        self.isFetchingData = false
+        self.endDataFetch()
         guard success else { return }
 
         let previousWeight = self.personWeight
@@ -1217,6 +1265,9 @@ struct ContentView: View {
         self.products = FoodExtrasStore.shared.apply(to: fetchedProducts)
         FoodPhotoService.shared.prefetchPhotos(for: fetchedProducts)
         self.caloriesLeft = calories + FoodExtrasStore.shared.totalExtrasCalories(for: self.products)
+        self.serverEaten = calories
+        self.serverCaloriesTotal = caloriesTotal
+        self.serverCaloriesLeft = caloriesLeftServer
         self.personWeight = weight
         if weight > 0 {
           UserDefaults.standard.set(Double(weight), forKey: "userWeight")
@@ -1246,7 +1297,7 @@ struct ContentView: View {
 
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-          self.recalculateCalorieLimitsFromHealthData()
+          self.recalculateCalorieLimitsFromHealthData(announce: true)
         }
         self.refreshMacrosForCurrentView()
       }
@@ -1277,7 +1328,7 @@ struct ContentView: View {
       userDefaults.set("maintain", forKey: "userGoalMode")
       userDefaults.set(0, forKey: "userGoalMonths")
       userDefaults.set(today, forKey: "goalMilestoneLastShownDate")
-      self.recalculateCalorieLimitsFromHealthData()
+      self.recalculateCalorieLimitsFromHealthData(announce: true)
       let calories = userDefaults.integer(forKey: "userRecommendedCalories")
       GRPCService().updateGoal(
         targetWeight: target,
@@ -1641,7 +1692,7 @@ struct ContentView: View {
     syncMealNav()
 
     ProductStorageService.shared.fetchAndProcessCustomDateProducts(date: dateString) {
-      fetchedProducts, calories, weight, success in
+      fetchedProducts, calories, weight, success, caloriesTotal, caloriesLeftServer in
       DispatchQueue.main.async {
         self.isLoadingData = false
         guard success else { return }
@@ -1649,12 +1700,15 @@ struct ContentView: View {
         let previousWeight = self.personWeight
         self.products = fetchedProducts
         self.caloriesLeft = calories
+        self.serverEaten = calories
+        self.serverCaloriesTotal = caloriesTotal
+        self.serverCaloriesLeft = caloriesLeftServer
         self.personWeight = weight
 
         // Recalculate calories if weight changed and user has health data
         let userDefaults = UserDefaults.standard
         if userDefaults.bool(forKey: "hasUserHealthData"), abs(previousWeight - weight) > 0.1 {
-          self.recalculateCalorieLimitsFromHealthData()
+          self.recalculateCalorieLimitsFromHealthData(announce: true)
         }
         self.refreshMacrosForCurrentView()
       }
@@ -1798,16 +1852,6 @@ struct ContentView: View {
 
   // MARK: - Helper Methods
 
-  private func getColor(for value: Int, adjustedSoftLimit: Int) -> Color {
-    if value < adjustedSoftLimit {
-      return Color(red: 0.2, green: 0.7, blue: 0.3)  // Softer, more pleasant green
-    } else if value < hardLimit {
-      return Color(red: 0.9, green: 0.6, blue: 0.1)  // Warm amber instead of bright yellow
-    } else {
-      return Color(red: 0.8, green: 0.4, blue: 0.2)  // Warm orange-red instead of harsh red
-    }
-  }
-
   private func loadLimitsFromUserDefaults() {
     // Prefer file-backed storage for persistence across sessions independent of memory pressure
     if let stored = CalorieLimitsStorageService.shared.load() {
@@ -1837,7 +1881,7 @@ struct ContentView: View {
   private func saveLimits() -> Bool {
     guard let newSoftLimit = Int(tempSoftLimit),
       let newHardLimit = Int(tempHardLimit),
-      newSoftLimit > 0,
+      (1...20000).contains(newSoftLimit),
       newHardLimit > 0,
       newSoftLimit <= newHardLimit
     else {
@@ -1855,6 +1899,22 @@ struct ContentView: View {
     userDefaults.set(softLimit, forKey: "softLimit")
     userDefaults.set(hardLimit, forKey: "hardLimit")
     userDefaults.set(true, forKey: "hasManualCalorieLimits")
+    GRPCService().setCalorieLimit(softLimit) { ok in
+      DispatchQueue.main.async {
+        guard ok else {
+          AlertHelper.showAlert(
+            title: loc("common.error", "Error"),
+            message: loc(
+              "limits.server_failed",
+              "Saved on this phone. The server did not store the daily limit. Try again."
+            ),
+            haptic: .error
+          )
+          return
+        }
+        NotificationCenter.default.post(name: Notification.Name("CalorieLimitSaved"), object: nil)
+      }
+    }
     return true
   }
 
@@ -1869,11 +1929,20 @@ struct ContentView: View {
       hasManualCalorieLimits: false
     )
     CalorieLimitsStorageService.shared.save(limits)
-    recalculateCalorieLimitsFromHealthData()  // Recalculate from health data
+    recalculateCalorieLimitsFromHealthData(announce: true)  // Recalculate from health data
     uiRefreshTrigger.toggle()  // Force UI to reflect new limits
   }
 
-  private func recalculateCalorieLimitsFromHealthData() {
+  private func pushCalorieLimit(_ kcal: Int, announce: Bool) {
+    GRPCService().setCalorieLimit(kcal) { ok in
+      guard ok, announce else { return }
+      DispatchQueue.main.async {
+        NotificationCenter.default.post(name: Notification.Name("CalorieLimitSaved"), object: nil)
+      }
+    }
+  }
+
+  private func recalculateCalorieLimitsFromHealthData(announce: Bool = false) {
     let userDefaults = UserDefaults.standard
 
     // Don't override manually set calorie limits
@@ -1898,6 +1967,7 @@ struct ContentView: View {
         HealthPlanCalculator.applyLimits(calories: saved, userDefaults)
         softLimit = saved
         hardLimit = Int(Double(saved) * HealthPlanCalculator.hardLimitFactor)
+        self.pushCalorieLimit(saved, announce: announce)
       }
       return
     }
@@ -1905,6 +1975,7 @@ struct ContentView: View {
     let plan = HealthPlanCalculator.storedPlan(body: body, userDefaults)
     HealthPlanCalculator.applyLimits(calories: plan.calories, userDefaults)
     userDefaults.set(plan.calories, forKey: "userRecommendedCalories")
+    pushCalorieLimit(plan.calories, announce: announce)
     softLimit = plan.calories
     hardLimit = Int(Double(plan.calories) * HealthPlanCalculator.hardLimitFactor)
     let target = userDefaults.double(forKey: "userTargetWeight")

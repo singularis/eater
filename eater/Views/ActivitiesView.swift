@@ -50,6 +50,8 @@ struct ActivitiesView: View {
   let dateISO: String
   
   @State private var showChessWinnerSheet = false
+  @State private var showChessColorSheet = false
+  @State private var showChessOpponentColorSheet = false
   @State private var showOpponentPicker = false
   @State private var showActivityInputSheet = false
   @State private var showStatistics = false
@@ -118,6 +120,14 @@ struct ActivitiesView: View {
         chessWinnerSheet
           .appInterfaceScale()
       }
+      .sheet(isPresented: $showChessColorSheet) {
+        chessColorSheet
+          .appInterfaceScale()
+      }
+      .sheet(isPresented: $showChessOpponentColorSheet) {
+        chessOpponentColorSheet
+          .appInterfaceScale()
+      }
       .sheet(isPresented: $showOpponentPicker) {
         ChessOpponentPickerView(
           playerName: $chessPlayerName,
@@ -125,7 +135,9 @@ struct ActivitiesView: View {
           onOpponentSelected: { opponentNickname, opponentEmail in
             chessOpponentEmail = opponentEmail
             showOpponentPicker = false
-            recordChessGame(winner: pendingGameResult)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+              showChessColorSheet = true
+            }
           },
           initialFriends: cachedFriends
         )
@@ -765,6 +777,143 @@ struct ActivitiesView: View {
   
   // MARK: - Activity Button
 
+  // MARK: - Chess Color
+
+  private var chessColorSheet: some View {
+    NavigationView {
+      ZStack {
+        AppTheme.backgroundGradient.ignoresSafeArea()
+        VStack(spacing: 16) {
+          Text(Localization.shared.tr("activities.chess.your_color", default: "Which side did you play?"))
+            .font(.title2.bold())
+            .foregroundColor(AppTheme.textPrimary)
+            .multilineTextAlignment(.center)
+            .padding(.top, 30)
+            .padding(.horizontal, 24)
+
+          Spacer()
+
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.black", default: "Black"),
+            swatch: .black,
+            bordered: false
+          ) {
+            chooseChessColor("black")
+          }
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.white", default: "White"),
+            swatch: .white,
+            bordered: true
+          ) {
+            chooseChessColor("white")
+          }
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.red", default: "Red"),
+            subtitle: Localization.shared.tr("activities.chess.color.xiangqi", default: "Xiangqi"),
+            swatch: .red,
+            bordered: false
+          ) {
+            chooseChessColor("red")
+          }
+
+          Spacer()
+        }
+        .padding(.horizontal, 24)
+      }
+    }
+  }
+
+  private var chessOpponentColorSheet: some View {
+    NavigationView {
+      ZStack {
+        AppTheme.backgroundGradient.ignoresSafeArea()
+        VStack(spacing: 16) {
+          Text(Localization.shared.tr("activities.chess.opponent_color", default: "Opponent side"))
+            .font(.title2.bold())
+            .foregroundColor(AppTheme.textPrimary)
+            .multilineTextAlignment(.center)
+            .padding(.top, 30)
+            .padding(.horizontal, 24)
+
+          Spacer()
+
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.white", default: "White"),
+            swatch: .white,
+            bordered: true
+          ) {
+            chooseOpponentColor(nil)
+          }
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.red", default: "Red"),
+            subtitle: Localization.shared.tr("activities.chess.color.xiangqi", default: "Xiangqi"),
+            swatch: .red,
+            bordered: false
+          ) {
+            chooseOpponentColor("red")
+          }
+
+          Spacer()
+        }
+        .padding(.horizontal, 24)
+      }
+    }
+  }
+
+  private func chessSideButton(
+    title: String,
+    subtitle: String? = nil,
+    swatch: Color,
+    bordered: Bool,
+    action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      HStack(spacing: 14) {
+        PlayedPawnMark(
+          fill: swatch,
+          outline: bordered
+            ? Color.black.opacity(0.45)
+            : (swatch == .black ? Color.white.opacity(0.55) : Color.black.opacity(0.25))
+        )
+        .frame(width: 22, height: 30)
+        VStack(alignment: .leading, spacing: 2) {
+          Text(title)
+            .font(.title3.bold())
+            .foregroundColor(AppTheme.textPrimary)
+          if let subtitle {
+            Text(subtitle)
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
+          }
+        }
+        Spacer()
+      }
+      .padding(.horizontal, 20)
+      .frame(maxWidth: .infinity)
+      .frame(height: subtitle == nil ? 72 : 84)
+      .appSurface()
+    }
+    .buttonStyle(.plain)
+  }
+
+  private func chooseChessColor(_ color: String) {
+    HapticsService.shared.select()
+    showChessColorSheet = false
+    if color == "black" {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        showChessOpponentColorSheet = true
+      }
+      return
+    }
+    recordChessGame(winner: pendingGameResult, color: color, opponentColor: nil)
+  }
+
+  private func chooseOpponentColor(_ opponentColor: String?) {
+    HapticsService.shared.select()
+    showChessOpponentColorSheet = false
+    recordChessGame(winner: pendingGameResult, color: "black", opponentColor: opponentColor)
+  }
+
   // MARK: - Chess Winner Sheet
   
   private var chessWinnerSheet: some View {
@@ -1024,7 +1173,7 @@ struct ActivitiesView: View {
     }
   }
   
-  private func recordChessGame(winner: String) {
+  private func recordChessGame(winner: String, color: String, opponentColor: String?) {
     let today = getCurrentUTCDateString()
     
     // If this is the first game today, save current state as "start of day"
@@ -1097,7 +1246,9 @@ struct ActivitiesView: View {
       GRPCService().recordChessGame(
         playerEmail: playerEmail,
         opponentEmail: chessOpponentEmail,
-        result: backendResult
+        result: backendResult,
+        color: color,
+        opponentColor: opponentColor
       ) { _, _, _ in }
     }
     
@@ -1222,7 +1373,7 @@ struct ActivitiesView: View {
     guard !isSyncingChess else { return }
     isSyncingChess = true
     
-    GRPCService().getAllChessData { success, totalWins, opponents in
+    GRPCService().getAllChessData { success, totalWins, opponents, _, _ in
       DispatchQueue.main.async {
         self.isSyncingChess = false
         

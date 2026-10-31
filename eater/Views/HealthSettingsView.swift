@@ -746,6 +746,22 @@ struct HealthSettingsView: View {
       goalMonths: plan.months,
       recommendedCalories: plan.calories
     ) { _ in }
+    GRPCService().setCalorieLimit(plan.calories) { ok in
+      DispatchQueue.main.async {
+        guard ok else {
+          AlertHelper.showAlert(
+            title: loc("common.error", "Error"),
+            message: loc(
+              "limits.server_failed",
+              "Saved on this phone. The server did not store the daily limit. Try again."
+            ),
+            haptic: .error
+          )
+          return
+        }
+        NotificationCenter.default.post(name: Notification.Name("CalorieLimitSaved"), object: nil)
+      }
+    }
     onSaved?()
     isPresented = false
   }

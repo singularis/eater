@@ -96,6 +96,10 @@ struct TotalForDay: Sendable {
 
   var totalCalories: Int32 = 0
 
+  var caloriesTotal: Int32 = 0
+
+  var caloriesLeft: Int32 = 0
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -251,7 +255,7 @@ extension Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase,
 
 extension TotalForDay: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = "TotalForDay"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}contains\0\u{3}total_avg_weight\0\u{3}total_calories\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}contains\0\u{3}total_avg_weight\0\u{3}total_calories\0\u{3}calories_total\0\u{3}calories_left\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -262,6 +266,8 @@ extension TotalForDay: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
       case 1: try { try decoder.decodeSingularMessageField(value: &self._contains) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.totalAvgWeight) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.totalCalories) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.caloriesTotal) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.caloriesLeft) }()
       default: break
       }
     }
@@ -281,6 +287,12 @@ extension TotalForDay: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
     if self.totalCalories != 0 {
       try visitor.visitSingularInt32Field(value: self.totalCalories, fieldNumber: 3)
     }
+    if self.caloriesTotal != 0 {
+      try visitor.visitSingularInt32Field(value: self.caloriesTotal, fieldNumber: 4)
+    }
+    if self.caloriesLeft != 0 {
+      try visitor.visitSingularInt32Field(value: self.caloriesLeft, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -288,6 +300,8 @@ extension TotalForDay: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
     if lhs._contains != rhs._contains {return false}
     if lhs.totalAvgWeight != rhs.totalAvgWeight {return false}
     if lhs.totalCalories != rhs.totalCalories {return false}
+    if lhs.caloriesTotal != rhs.caloriesTotal {return false}
+    if lhs.caloriesLeft != rhs.caloriesLeft {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

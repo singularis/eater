@@ -579,7 +579,7 @@ struct UserProfileView: View {
 
   private var greetingFirstName: String {
     // Prefer a short first name when the user actually provided one; never show
-    // anon_* / Guest / private-relay fragments (KAN-57: Health Eater fallback).
+    // anon_* / Guest / private-relay fragments (KAN-57: Healthy Eater fallback).
     if authService.isAnonymous {
       return AnonymousUserIdentity.defaultDisplayName
     }

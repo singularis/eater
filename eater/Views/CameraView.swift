@@ -145,7 +145,7 @@ struct CameraView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] products, calories, weight, _ in
+        [weak self] products, calories, weight, _, _, _ in
         DispatchQueue.main.async {
             NotificationService.shared.recordFoodSnap()
             let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")
@@ -320,7 +320,7 @@ struct PhotoLibraryView: UIViewControllerRepresentable {
 
       // Use the new unified approach: fetch + map + store + callback
       ProductStorageService.shared.fetchAndProcessProducts(tempImageTime: tempTimestamp) {
-        [weak self] products, calories, weight, _ in
+        [weak self] products, calories, weight, _, _, _ in
         DispatchQueue.main.async {
             NotificationService.shared.recordFoodSnap()
             let limit = CalorieLimitsStorageService.shared.load()?.softLimit ?? UserDefaults.standard.integer(forKey: "softLimit")

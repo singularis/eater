@@ -229,12 +229,17 @@ class ThemeService: ObservableObject {
     guard soundEnabled else { return }
     guard let soundName = Self.soundFileName(mascot: currentMascot, action: action) else { return }
 
-    // Session changes and playback stay off the main thread. The sync
-    // setCategory/setActive/play calls were hanging the UI.
-    Task.detached {
+    // Session setup stays off the main thread. The sync setCategory/setActive
+    // calls were hanging the UI. Play only after the player is retained.
+    Task.detached { [weak self] in
       guard let player = ThemeService.makePlayer(named: soundName) else { return }
-      await MainActor.run { [weak self] in
-        self?.audioPlayer = player
+      await MainActor.run {
+        guard let self else { return }
+        self.audioPlayer?.stop()
+        self.audioPlayer = player
+        if !player.play() {
+          print("⚠️ Sound did not start: \(soundName)")
+        }
       }
     }
   }
@@ -257,9 +262,9 @@ class ThemeService: ObservableObject {
   nonisolated private static func makePlayer(named soundName: String) -> AVAudioPlayer? {
     let session = AVAudioSession.sharedInstance()
     do {
-      // Ambient mixes with other audio and leaves the food buzz alone.
-      // This runs off the main thread, so the sync session calls do not hang the UI.
-      try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+      // Playback still plays when the phone mute switch is on. mixWithOthers
+      // keeps music going. Ambient was silent whenever the ringer was muted.
+      try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
       try session.setActive(true)
     } catch {
       print("Failed to activate audio session: \(error)")
@@ -270,9 +275,8 @@ class ThemeService: ObservableObject {
       guard let soundURL = Bundle.main.url(forResource: soundName, withExtension: ext) else { continue }
       do {
         let player = try AVAudioPlayer(contentsOf: soundURL)
-        player.volume = 0.5
+        player.volume = 1
         player.prepareToPlay()
-        player.play()
         return player
       } catch {
         print("Failed to play sound \(soundName).\(ext): \(error)")
