@@ -4,7 +4,7 @@ Paste each block into the matching language in App Store Connect.
 Promotional Text: 170 characters max, can change any time without review.
 Description: 4000 max. What's New: shown on the update page.
 Keywords: keep the 5.0 keywords (docs/archive/AppStore_Listing_5.0.md).
-Plain text, no emojis.
+Plain text, no emojis. Lists use the • character, which App Store shows as typed. No Markdown or HTML.
 
 ==================================================
 English (U.K. / U.S. / Australia / Canada)
@@ -15,23 +15,23 @@ Snap your meal and see calories, protein, fat and carbs in seconds. Now with a f
 DESCRIPTION
 Eateria shows what is on your plate. Take a photo or type a meal, and in seconds see calories, protein, fat, carbs and a simple health score.
 
-- Photo or text food log, fix a name in one tap
-- Daily calorie and macro goals made for you
-- Healthy meal ideas based on your week
-- Weekly and monthly stats, weight and activities
-- Share a meal with a friend
-- Try it without an account, 36 languages, light and dark theme
+• Photo or text food log, fix a name in one tap
+• Daily calorie and macro goals made for you
+• Healthy meal ideas based on your week
+• Weekly and monthly stats, weight and activities
+• Share a meal with a friend
+• Try it without an account, 36 languages, light and dark theme
 
 Free, no ads, no subscription. Eateria gives estimates to help you learn about food. It is not medical advice.
 
 WHAT'S NEW
 Eateria 5.3 brings a fresh look
-- New glass design on iOS 26
-- Menus open in the middle, swipe up for more, swipe down to close
-- Text size follows your phone and the whole app scales with it
-- Type a meal for any past day
-- Try manually shows name ideas right away
-- More screens in your language
+• New glass design on iOS 26
+• Menus open in the middle, swipe up for more, swipe down to close
+• Text size follows your phone and the whole app scales with it
+• Type a meal for any past day
+• Try manually shows name ideas right away
+• More screens in your language
 
 ==================================================
 Arabic
@@ -42,23 +42,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria يُظهر لك ما في طبقك. التقط صورة أو اكتب وجبتك، وخلال ثوانٍ ترى السعرات والبروتين والدهون والكربوهيدرات وتقييمًا صحيًا بسيطًا.
 
-- سجل طعام بالصور أو بالنص، وصحّح الاسم بلمسة واحدة
-- أهداف يومية للسعرات والعناصر الغذائية مصممة لك
-- أفكار وجبات صحية بناءً على أسبوعك
-- إحصاءات أسبوعية وشهرية، والوزن والأنشطة
-- شارك وجبة مع صديق
-- جرّبه دون حساب، 36 لغة، مظهر فاتح وداكن
+• سجل طعام بالصور أو بالنص، وصحّح الاسم بلمسة واحدة
+• أهداف يومية للسعرات والعناصر الغذائية مصممة لك
+• أفكار وجبات صحية بناءً على أسبوعك
+• إحصاءات أسبوعية وشهرية، والوزن والأنشطة
+• شارك وجبة مع صديق
+• جرّبه دون حساب، 36 لغة، مظهر فاتح وداكن
 
 مجاني، بلا إعلانات ولا اشتراك. يقدّم Eateria تقديرات لمساعدتك على فهم طعامك، وهو ليس نصيحة طبية.
 
 WHAT'S NEW
 Eateria 5.3 بمظهر جديد
-- تصميم زجاجي جديد على iOS 26
-- القوائم تظهر في منتصف الشاشة، اسحب للأعلى للمزيد وللأسفل للإغلاق
-- حجم النص يتبع هاتفك ويتكيّف معه التطبيق بالكامل
-- أضف وجبة مكتوبة لأي يوم سابق
-- «جرب يدوياً» يعرض اقتراحات للأسماء فورًا
-- شاشات أكثر بلغتك
+• تصميم زجاجي جديد على iOS 26
+• القوائم تظهر في منتصف الشاشة، اسحب للأعلى للمزيد وللأسفل للإغلاق
+• حجم النص يتبع هاتفك ويتكيّف معه التطبيق بالكامل
+• أضف وجبة مكتوبة لأي يوم سابق
+• «جرب يدوياً» يعرض اقتراحات للأسماء فورًا
+• شاشات أكثر بلغتك
 
 ==================================================
 Bangla
@@ -69,23 +69,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria দেখায় আপনার প্লেটে কী আছে। ছবি তুলুন বা খাবারের নাম লিখুন, কয়েক সেকেন্ডে দেখুন ক্যালোরি, প্রোটিন, চর্বি, কার্বোহাইড্রেট আর সহজ স্বাস্থ্য স্কোর।
 
-- ছবি বা লেখা দিয়ে খাবারের লগ, এক ট্যাপে নাম ঠিক করুন
-- আপনার জন্য তৈরি দৈনিক ক্যালোরি ও ম্যাক্রো লক্ষ্য
-- আপনার সপ্তাহ অনুযায়ী স্বাস্থ্যকর খাবারের আইডিয়া
-- সাপ্তাহিক ও মাসিক পরিসংখ্যান, ওজন ও কার্যকলাপ
-- বন্ধুর সাথে খাবার শেয়ার করুন
-- অ্যাকাউন্ট ছাড়াই ব্যবহার করুন, ৩৬টি ভাষা, লাইট ও ডার্ক থিম
+• ছবি বা লেখা দিয়ে খাবারের লগ, এক ট্যাপে নাম ঠিক করুন
+• আপনার জন্য তৈরি দৈনিক ক্যালোরি ও ম্যাক্রো লক্ষ্য
+• আপনার সপ্তাহ অনুযায়ী স্বাস্থ্যকর খাবারের আইডিয়া
+• সাপ্তাহিক ও মাসিক পরিসংখ্যান, ওজন ও কার্যকলাপ
+• বন্ধুর সাথে খাবার শেয়ার করুন
+• অ্যাকাউন্ট ছাড়াই ব্যবহার করুন, ৩৬টি ভাষা, লাইট ও ডার্ক থিম
 
 ফ্রি, বিজ্ঞাপন ও সাবস্ক্রিপশন ছাড়া। Eateria খাবার সম্পর্কে জানতে আনুমানিক তথ্য দেয়। এটি চিকিৎসা পরামর্শ নয়।
 
 WHAT'S NEW
 Eateria 5.3 এসেছে নতুন রূপে
-- iOS 26-এ নতুন গ্লাস ডিজাইন
-- মেনু খোলে স্ক্রিনের মাঝখানে, আরও দেখতে উপরে সোয়াইপ, বন্ধ করতে নিচে
-- লেখার আকার ফোনের সাথে মিলে যায়, পুরো অ্যাপ সেই অনুযায়ী বড় হয়
-- আগের যেকোনো দিনের খাবার লিখে যোগ করুন
-- "ম্যানুয়ালি চেষ্টা করুন" সাথে সাথে নামের পরামর্শ দেখায়
-- আপনার ভাষায় আরও স্ক্রিন
+• iOS 26-এ নতুন গ্লাস ডিজাইন
+• মেনু খোলে স্ক্রিনের মাঝখানে, আরও দেখতে উপরে সোয়াইপ, বন্ধ করতে নিচে
+• লেখার আকার ফোনের সাথে মিলে যায়, পুরো অ্যাপ সেই অনুযায়ী বড় হয়
+• আগের যেকোনো দিনের খাবার লিখে যোগ করুন
+• "ম্যানুয়ালি চেষ্টা করুন" সাথে সাথে নামের পরামর্শ দেখায়
+• আপনার ভাষায় আরও স্ক্রিন
 
 ==================================================
 Catalan
@@ -96,23 +96,23 @@ Fes una foto del teu àpat i mira calories, proteïnes, greixos i hidrats en seg
 DESCRIPTION
 Eateria et mostra què hi ha al teu plat. Fes una foto o escriu un àpat i en segons veuràs calories, proteïnes, greixos, hidrats i una puntuació de salut senzilla.
 
-- Registre d'àpats amb foto o text, corregeix el nom amb un toc
-- Objectius diaris de calories i macros fets per a tu
-- Idees d'àpats saludables segons la teva setmana
-- Estadístiques setmanals i mensuals, pes i activitats
-- Comparteix un àpat amb un amic
-- Prova-la sense compte, 36 idiomes, tema clar i fosc
+• Registre d'àpats amb foto o text, corregeix el nom amb un toc
+• Objectius diaris de calories i macros fets per a tu
+• Idees d'àpats saludables segons la teva setmana
+• Estadístiques setmanals i mensuals, pes i activitats
+• Comparteix un àpat amb un amic
+• Prova-la sense compte, 36 idiomes, tema clar i fosc
 
 Gratis, sense anuncis ni subscripció. Eateria dona estimacions per ajudar-te a conèixer el que menges. No és consell mèdic.
 
 WHAT'S NEW
 Eateria 5.3 estrena aspecte
-- Nou disseny de vidre a iOS 26
-- Els menús s'obren al mig, llisca amunt per veure'n més i avall per tancar
-- La mida del text segueix la del telèfon i tota l'app s'hi adapta
-- Escriu un àpat per a qualsevol dia passat
-- Prova manualment mostra suggeriments de nom a l'instant
-- Més pantalles en el teu idioma
+• Nou disseny de vidre a iOS 26
+• Els menús s'obren al mig, llisca amunt per veure'n més i avall per tancar
+• La mida del text segueix la del telèfon i tota l'app s'hi adapta
+• Escriu un àpat per a qualsevol dia passat
+• Prova manualment mostra suggeriments de nom a l'instant
+• Més pantalles en el teu idioma
 
 ==================================================
 Chinese (Simplified)
@@ -123,23 +123,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria 告诉你盘中有什么。拍照或输入餐食，几秒内即可看到热量、蛋白质、脂肪、碳水和简单的健康评分。
 
-- 拍照或文字记录饮食，一点即可修改名称
-- 为你定制的每日热量和营养目标
-- 根据你这一周的饮食推荐健康餐食
-- 每周和每月统计，还有体重和运动记录
-- 与朋友分享一份餐食
-- 无需账号即可试用，支持 36 种语言，浅色和深色主题
+• 拍照或文字记录饮食，一点即可修改名称
+• 为你定制的每日热量和营养目标
+• 根据你这一周的饮食推荐健康餐食
+• 每周和每月统计，还有体重和运动记录
+• 与朋友分享一份餐食
+• 无需账号即可试用，支持 36 种语言，浅色和深色主题
 
 免费，无广告，无订阅。Eateria 提供估算值，帮助你了解食物，不构成医疗建议。
 
 WHAT'S NEW
 Eateria 5.3 焕然一新
-- iOS 26 上的全新玻璃设计
-- 菜单从屏幕中间弹出，上滑查看更多，下滑关闭
-- 文字大小跟随手机设置，整个应用同步缩放
-- 可为过去任意一天输入餐食
-- "手动尝试"立即显示名称建议
-- 更多界面支持你的语言
+• iOS 26 上的全新玻璃设计
+• 菜单从屏幕中间弹出，上滑查看更多，下滑关闭
+• 文字大小跟随手机设置，整个应用同步缩放
+• 可为过去任意一天输入餐食
+• "手动尝试"立即显示名称建议
+• 更多界面支持你的语言
 
 ==================================================
 Chinese (Traditional)
@@ -150,23 +150,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria 告訴你盤中有什麼。拍照或輸入餐點，幾秒內即可看到熱量、蛋白質、脂肪、碳水和簡單的健康評分。
 
-- 拍照或文字記錄飲食，一點即可修改名稱
-- 為你量身打造的每日熱量和營養目標
-- 根據你這一週的飲食推薦健康餐點
-- 每週和每月統計，還有體重和運動紀錄
-- 與朋友分享一份餐點
-- 無需帳號即可試用，支援 36 種語言，淺色和深色主題
+• 拍照或文字記錄飲食，一點即可修改名稱
+• 為你量身打造的每日熱量和營養目標
+• 根據你這一週的飲食推薦健康餐點
+• 每週和每月統計，還有體重和運動紀錄
+• 與朋友分享一份餐點
+• 無需帳號即可試用，支援 36 種語言，淺色和深色主題
 
 免費，無廣告，無訂閱。Eateria 提供估算值，幫助你了解食物，不構成醫療建議。
 
 WHAT'S NEW
 Eateria 5.3 煥然一新
-- iOS 26 上的全新玻璃設計
-- 選單從螢幕中間彈出，上滑查看更多，下滑關閉
-- 文字大小跟隨手機設定，整個 App 同步縮放
-- 可為過去任一天輸入餐點
-- 「手動嘗試」立即顯示名稱建議
-- 更多畫面支援你的語言
+• iOS 26 上的全新玻璃設計
+• 選單從螢幕中間彈出，上滑查看更多，下滑關閉
+• 文字大小跟隨手機設定，整個 App 同步縮放
+• 可為過去任一天輸入餐點
+• 「手動嘗試」立即顯示名稱建議
+• 更多畫面支援你的語言
 
 ==================================================
 Croatian
@@ -177,23 +177,23 @@ Fotografirajte obrok i za par sekundi vidite kalorije, bjelančevine, masti i ug
 DESCRIPTION
 Eateria vam pokazuje što je na tanjuru. Fotografirajte ili upišite obrok i za par sekundi vidite kalorije, bjelančevine, masti, ugljikohidrate i jednostavnu ocjenu zdravlja.
 
-- Dnevnik prehrane fotografijom ili tekstom, naziv ispravite jednim dodirom
-- Dnevni ciljevi kalorija i makronutrijenata za vas
-- Ideje za zdrave obroke prema vašem tjednu
-- Tjedna i mjesečna statistika, težina i aktivnosti
-- Podijelite obrok s prijateljem
-- Isprobajte bez računa, 36 jezika, svijetla i tamna tema
+• Dnevnik prehrane fotografijom ili tekstom, naziv ispravite jednim dodirom
+• Dnevni ciljevi kalorija i makronutrijenata za vas
+• Ideje za zdrave obroke prema vašem tjednu
+• Tjedna i mjesečna statistika, težina i aktivnosti
+• Podijelite obrok s prijateljem
+• Isprobajte bez računa, 36 jezika, svijetla i tamna tema
 
 Besplatno, bez oglasa i pretplate. Eateria daje procjene koje vam pomažu upoznati hranu. To nije liječnički savjet.
 
 WHAT'S NEW
 Eateria 5.3 donosi novi izgled
-- Novi stakleni dizajn na iOS 26
-- Izbornici se otvaraju na sredini, povucite gore za više, dolje za zatvaranje
-- Veličina teksta prati telefon i cijela se aplikacija prilagođava
-- Upišite obrok za bilo koji prošli dan
-- Pokušaj ručno odmah nudi prijedloge naziva
-- Više zaslona na vašem jeziku
+• Novi stakleni dizajn na iOS 26
+• Izbornici se otvaraju na sredini, povucite gore za više, dolje za zatvaranje
+• Veličina teksta prati telefon i cijela se aplikacija prilagođava
+• Upišite obrok za bilo koji prošli dan
+• Pokušaj ručno odmah nudi prijedloge naziva
+• Više zaslona na vašem jeziku
 
 ==================================================
 Czech
@@ -204,23 +204,23 @@ Vyfoťte jídlo a za pár sekund uvidíte kalorie, bílkoviny, tuky a sacharidy.
 DESCRIPTION
 Eateria vám ukáže, co máte na talíři. Vyfoťte nebo napište jídlo a za pár sekund uvidíte kalorie, bílkoviny, tuky, sacharidy a jednoduché hodnocení zdraví.
 
-- Záznam jídla fotkou nebo textem, název opravíte jedním klepnutím
-- Denní cíle kalorií a makroživin připravené pro vás
-- Nápady na zdravá jídla podle vašeho týdne
-- Týdenní a měsíční statistiky, váha a aktivity
-- Sdílejte jídlo s přítelem
-- Vyzkoušejte bez účtu, 36 jazyků, světlý a tmavý motiv
+• Záznam jídla fotkou nebo textem, název opravíte jedním klepnutím
+• Denní cíle kalorií a makroživin připravené pro vás
+• Nápady na zdravá jídla podle vašeho týdne
+• Týdenní a měsíční statistiky, váha a aktivity
+• Sdílejte jídlo s přítelem
+• Vyzkoušejte bez účtu, 36 jazyků, světlý a tmavý motiv
 
 Zdarma, bez reklam a předplatného. Eateria poskytuje odhady, které vám pomohou poznat jídlo. Nejde o lékařskou radu.
 
 WHAT'S NEW
 Eateria 5.3 přináší nový vzhled
-- Nový skleněný design v iOS 26
-- Nabídky se otevírají uprostřed, přejeďte nahoru pro víc, dolů pro zavření
-- Velikost textu se řídí telefonem a celá aplikace se přizpůsobí
-- Zapište jídlo pro jakýkoli minulý den
-- Zkusit ručně hned nabídne návrhy názvu
-- Více obrazovek ve vašem jazyce
+• Nový skleněný design v iOS 26
+• Nabídky se otevírají uprostřed, přejeďte nahoru pro víc, dolů pro zavření
+• Velikost textu se řídí telefonem a celá aplikace se přizpůsobí
+• Zapište jídlo pro jakýkoli minulý den
+• Zkusit ručně hned nabídne návrhy názvu
+• Více obrazovek ve vašem jazyce
 
 ==================================================
 Danish
@@ -231,23 +231,23 @@ Tag et billede af dit måltid og se kalorier, protein, fedt og kulhydrater på f
 DESCRIPTION
 Eateria viser, hvad der er på din tallerken. Tag et billede eller skriv et måltid, og se på få sekunder kalorier, protein, fedt, kulhydrater og en enkel sundhedsscore.
 
-- Madlog med foto eller tekst, ret navnet med ét tryk
-- Daglige mål for kalorier og makroer lavet til dig
-- Idéer til sunde måltider ud fra din uge
-- Ugentlig og månedlig statistik, vægt og aktiviteter
-- Del et måltid med en ven
-- Prøv uden konto, 36 sprog, lyst og mørkt tema
+• Madlog med foto eller tekst, ret navnet med ét tryk
+• Daglige mål for kalorier og makroer lavet til dig
+• Idéer til sunde måltider ud fra din uge
+• Ugentlig og månedlig statistik, vægt og aktiviteter
+• Del et måltid med en ven
+• Prøv uden konto, 36 sprog, lyst og mørkt tema
 
 Gratis, uden reklamer og abonnement. Eateria giver skøn, der hjælper dig med at lære om mad. Det er ikke lægelig rådgivning.
 
 WHAT'S NEW
 Eateria 5.3 har fået nyt look
-- Nyt glasdesign på iOS 26
-- Menuer åbner i midten, stryg op for mere og ned for at lukke
-- Tekststørrelsen følger din telefon, og hele appen skalerer med
-- Skriv et måltid for en hvilken som helst tidligere dag
-- Prøv manuelt viser navneforslag med det samme
-- Flere skærme på dit sprog
+• Nyt glasdesign på iOS 26
+• Menuer åbner i midten, stryg op for mere og ned for at lukke
+• Tekststørrelsen følger din telefon, og hele appen skalerer med
+• Skriv et måltid for en hvilken som helst tidligere dag
+• Prøv manuelt viser navneforslag med det samme
+• Flere skærme på dit sprog
 
 ==================================================
 Dutch
@@ -258,23 +258,23 @@ Maak een foto van je maaltijd en zie binnen seconden calorieën, eiwit, vet en k
 DESCRIPTION
 Eateria laat zien wat er op je bord ligt. Maak een foto of typ een maaltijd en zie binnen seconden calorieën, eiwit, vet, koolhydraten en een eenvoudige gezondheidsscore.
 
-- Eetlog met foto of tekst, pas de naam aan met één tik
-- Dagelijkse doelen voor calorieën en macro's, voor jou gemaakt
-- Gezonde maaltijdideeën op basis van je week
-- Week- en maandstatistieken, gewicht en activiteiten
-- Deel een maaltijd met een vriend
-- Probeer zonder account, 36 talen, licht en donker thema
+• Eetlog met foto of tekst, pas de naam aan met één tik
+• Dagelijkse doelen voor calorieën en macro's, voor jou gemaakt
+• Gezonde maaltijdideeën op basis van je week
+• Week- en maandstatistieken, gewicht en activiteiten
+• Deel een maaltijd met een vriend
+• Probeer zonder account, 36 talen, licht en donker thema
 
 Gratis, zonder advertenties of abonnement. Eateria geeft schattingen om je te helpen meer over eten te leren. Het is geen medisch advies.
 
 WHAT'S NEW
 Eateria 5.3 heeft een frisse look
-- Nieuw glasontwerp op iOS 26
-- Menu's openen in het midden, veeg omhoog voor meer en omlaag om te sluiten
-- Tekstgrootte volgt je telefoon en de hele app schaalt mee
-- Typ een maaltijd voor elke eerdere dag
-- Probeer handmatig toont meteen naamsuggesties
-- Meer schermen in jouw taal
+• Nieuw glasontwerp op iOS 26
+• Menu's openen in het midden, veeg omhoog voor meer en omlaag om te sluiten
+• Tekstgrootte volgt je telefoon en de hele app schaalt mee
+• Typ een maaltijd voor elke eerdere dag
+• Probeer handmatig toont meteen naamsuggesties
+• Meer schermen in jouw taal
 
 ==================================================
 Finnish
@@ -285,23 +285,23 @@ Kuvaa ateriasi ja näe kalorit, proteiini, rasva ja hiilihydraatit sekunneissa. 
 DESCRIPTION
 Eateria näyttää, mitä lautasellasi on. Ota kuva tai kirjoita ateria, niin näet sekunneissa kalorit, proteiinin, rasvan, hiilihydraatit ja helpon terveyspisteen.
 
-- Ruokapäiväkirja kuvalla tai tekstillä, korjaa nimi yhdellä napautuksella
-- Sinulle tehdyt päivittäiset kalori- ja makrotavoitteet
-- Terveellisiä ateriaideoita viikkosi perusteella
-- Viikko- ja kuukausitilastot, paino ja liikunta
-- Jaa ateria ystävän kanssa
-- Kokeile ilman tiliä, 36 kieltä, vaalea ja tumma teema
+• Ruokapäiväkirja kuvalla tai tekstillä, korjaa nimi yhdellä napautuksella
+• Sinulle tehdyt päivittäiset kalori- ja makrotavoitteet
+• Terveellisiä ateriaideoita viikkosi perusteella
+• Viikko- ja kuukausitilastot, paino ja liikunta
+• Jaa ateria ystävän kanssa
+• Kokeile ilman tiliä, 36 kieltä, vaalea ja tumma teema
 
 Ilmainen, ei mainoksia eikä tilausta. Eateria antaa arvioita, jotka auttavat tuntemaan ruokaa. Se ei ole lääketieteellinen neuvo.
 
 WHAT'S NEW
 Eateria 5.3 sai uuden ilmeen
-- Uusi lasiulkoasu iOS 26:ssa
-- Valikot avautuvat keskelle, pyyhkäise ylös nähdäksesi lisää ja alas sulkeaksesi
-- Tekstikoko seuraa puhelintasi ja koko sovellus skaalautuu sen mukaan
-- Kirjoita ateria mille tahansa menneelle päivälle
-- Yritä manuaalisesti näyttää nimiehdotukset heti
-- Lisää näkymiä omalla kielelläsi
+• Uusi lasiulkoasu iOS 26:ssa
+• Valikot avautuvat keskelle, pyyhkäise ylös nähdäksesi lisää ja alas sulkeaksesi
+• Tekstikoko seuraa puhelintasi ja koko sovellus skaalautuu sen mukaan
+• Kirjoita ateria mille tahansa menneelle päivälle
+• Yritä manuaalisesti näyttää nimiehdotukset heti
+• Lisää näkymiä omalla kielelläsi
 
 ==================================================
 French (France / Canada)
@@ -312,23 +312,23 @@ Photographiez votre repas et voyez calories, protéines, lipides et glucides en 
 DESCRIPTION
 Eateria vous montre ce qu'il y a dans votre assiette. Prenez une photo ou écrivez un repas, et voyez en quelques secondes calories, protéines, lipides, glucides et un score santé simple.
 
-- Journal des repas par photo ou par texte, corrigez le nom d'un geste
-- Objectifs quotidiens de calories et de macros faits pour vous
-- Idées de repas sains selon votre semaine
-- Statistiques par semaine et par mois, poids et activités
-- Partagez un repas avec un ami
-- Essayez sans compte, 36 langues, thème clair et sombre
+• Journal des repas par photo ou par texte, corrigez le nom d'un geste
+• Objectifs quotidiens de calories et de macros faits pour vous
+• Idées de repas sains selon votre semaine
+• Statistiques par semaine et par mois, poids et activités
+• Partagez un repas avec un ami
+• Essayez sans compte, 36 langues, thème clair et sombre
 
 Gratuit, sans pub ni abonnement. Eateria donne des estimations pour vous aider à mieux connaître votre alimentation. Ce n'est pas un avis médical.
 
 WHAT'S NEW
 Eateria 5.3 fait peau neuve
-- Nouveau design en verre sur iOS 26
-- Les menus s'ouvrent au milieu, glissez vers le haut pour plus, vers le bas pour fermer
-- La taille du texte suit votre téléphone et toute l'app s'adapte
-- Écrivez un repas pour n'importe quel jour passé
-- Essayer manuellement propose des noms tout de suite
-- Plus d'écrans dans votre langue
+• Nouveau design en verre sur iOS 26
+• Les menus s'ouvrent au milieu, glissez vers le haut pour plus, vers le bas pour fermer
+• La taille du texte suit votre téléphone et toute l'app s'adapte
+• Écrivez un repas pour n'importe quel jour passé
+• Essayer manuellement propose des noms tout de suite
+• Plus d'écrans dans votre langue
 
 ==================================================
 German
@@ -339,23 +339,23 @@ Fotografiere dein Essen und sieh Kalorien, Eiweiß, Fett und Kohlenhydrate in Se
 DESCRIPTION
 Eateria zeigt dir, was auf deinem Teller ist. Mach ein Foto oder tippe eine Mahlzeit ein und sieh in Sekunden Kalorien, Eiweiß, Fett, Kohlenhydrate und einen einfachen Gesundheitswert.
 
-- Ernährungstagebuch per Foto oder Text, Namen mit einem Tipp korrigieren
-- Tägliche Kalorien- und Makroziele, passend für dich
-- Gesunde Essensideen passend zu deiner Woche
-- Wochen- und Monatsstatistik, Gewicht und Aktivitäten
-- Teile eine Mahlzeit mit Freunden
-- Teste ohne Konto, 36 Sprachen, helles und dunkles Design
+• Ernährungstagebuch per Foto oder Text, Namen mit einem Tipp korrigieren
+• Tägliche Kalorien- und Makroziele, passend für dich
+• Gesunde Essensideen passend zu deiner Woche
+• Wochen- und Monatsstatistik, Gewicht und Aktivitäten
+• Teile eine Mahlzeit mit Freunden
+• Teste ohne Konto, 36 Sprachen, helles und dunkles Design
 
 Kostenlos, ohne Werbung und Abo. Eateria liefert Schätzungen, damit du dein Essen besser kennenlernst. Es ist keine medizinische Beratung.
 
 WHAT'S NEW
 Eateria 5.3 im neuen Look
-- Neues Glas-Design unter iOS 26
-- Menüs öffnen sich in der Mitte, nach oben wischen für mehr, nach unten zum Schließen
-- Die Textgröße folgt deinem iPhone und die ganze App passt sich an
-- Trage eine Mahlzeit für jeden vergangenen Tag ein
-- Manuell versuchen zeigt sofort Namensvorschläge
-- Mehr Bildschirme in deiner Sprache
+• Neues Glas-Design unter iOS 26
+• Menüs öffnen sich in der Mitte, nach oben wischen für mehr, nach unten zum Schließen
+• Die Textgröße folgt deinem iPhone und die ganze App passt sich an
+• Trage eine Mahlzeit für jeden vergangenen Tag ein
+• Manuell versuchen zeigt sofort Namensvorschläge
+• Mehr Bildschirme in deiner Sprache
 
 ==================================================
 Greek
@@ -366,23 +366,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Το Eateria σου δείχνει τι έχει το πιάτο σου. Τράβηξε μια φωτογραφία ή γράψε ένα γεύμα και δες σε δευτερόλεπτα θερμίδες, πρωτεΐνη, λίπος, υδατάνθρακες και μια απλή βαθμολογία υγείας.
 
-- Ημερολόγιο φαγητού με φωτογραφία ή κείμενο, διόρθωσε το όνομα με ένα πάτημα
-- Ημερήσιοι στόχοι θερμίδων και μακροθρεπτικών φτιαγμένοι για σένα
-- Ιδέες για υγιεινά γεύματα με βάση την εβδομάδα σου
-- Εβδομαδιαία και μηνιαία στατιστικά, βάρος και δραστηριότητες
-- Μοιράσου ένα γεύμα με έναν φίλο
-- Δοκίμασε χωρίς λογαριασμό, 36 γλώσσες, φωτεινό και σκοτεινό θέμα
+• Ημερολόγιο φαγητού με φωτογραφία ή κείμενο, διόρθωσε το όνομα με ένα πάτημα
+• Ημερήσιοι στόχοι θερμίδων και μακροθρεπτικών φτιαγμένοι για σένα
+• Ιδέες για υγιεινά γεύματα με βάση την εβδομάδα σου
+• Εβδομαδιαία και μηνιαία στατιστικά, βάρος και δραστηριότητες
+• Μοιράσου ένα γεύμα με έναν φίλο
+• Δοκίμασε χωρίς λογαριασμό, 36 γλώσσες, φωτεινό και σκοτεινό θέμα
 
 Δωρεάν, χωρίς διαφημίσεις και συνδρομή. Το Eateria δίνει εκτιμήσεις για να γνωρίσεις καλύτερα το φαγητό σου. Δεν αποτελεί ιατρική συμβουλή.
 
 WHAT'S NEW
 Το Eateria 5.3 έχει νέα εμφάνιση
-- Νέος γυάλινος σχεδιασμός στο iOS 26
-- Τα μενού ανοίγουν στη μέση, σύρε πάνω για περισσότερα και κάτω για κλείσιμο
-- Το μέγεθος κειμένου ακολουθεί το τηλέφωνό σου και όλη η εφαρμογή προσαρμόζεται
-- Γράψε ένα γεύμα για οποιαδήποτε προηγούμενη μέρα
-- Η Δοκιμή χειροκίνητα δείχνει αμέσως προτάσεις ονομάτων
-- Περισσότερες οθόνες στη γλώσσα σου
+• Νέος γυάλινος σχεδιασμός στο iOS 26
+• Τα μενού ανοίγουν στη μέση, σύρε πάνω για περισσότερα και κάτω για κλείσιμο
+• Το μέγεθος κειμένου ακολουθεί το τηλέφωνό σου και όλη η εφαρμογή προσαρμόζεται
+• Γράψε ένα γεύμα για οποιαδήποτε προηγούμενη μέρα
+• Η Δοκιμή χειροκίνητα δείχνει αμέσως προτάσεις ονομάτων
+• Περισσότερες οθόνες στη γλώσσα σου
 
 ==================================================
 Hebrew
@@ -393,23 +393,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria מראה לכם מה יש בצלחת. צלמו או הקלידו ארוחה, ותוך שניות תראו קלוריות, חלבון, שומן, פחמימות וציון בריאות פשוט.
 
-- יומן אוכל בתמונה או בטקסט, תיקון שם בהקשה אחת
-- יעדי קלוריות ומאקרו יומיים שמותאמים לכם
-- רעיונות לארוחות בריאות לפי השבוע שלכם
-- סטטיסטיקה שבועית וחודשית, משקל ופעילויות
-- שתפו ארוחה עם חבר
-- נסו בלי חשבון, 36 שפות, ערכת נושא בהירה וכהה
+• יומן אוכל בתמונה או בטקסט, תיקון שם בהקשה אחת
+• יעדי קלוריות ומאקרו יומיים שמותאמים לכם
+• רעיונות לארוחות בריאות לפי השבוע שלכם
+• סטטיסטיקה שבועית וחודשית, משקל ופעילויות
+• שתפו ארוחה עם חבר
+• נסו בלי חשבון, 36 שפות, ערכת נושא בהירה וכהה
 
 חינם, בלי פרסומות ובלי מנוי. Eateria נותנת הערכות שעוזרות להכיר את האוכל שלכם. זו אינה עצה רפואית.
 
 WHAT'S NEW
 Eateria 5.3 במראה חדש
-- עיצוב זכוכית חדש ב-iOS 26
-- תפריטים נפתחים באמצע המסך, החליקו למעלה לעוד ולמטה לסגירה
-- גודל הטקסט עוקב אחרי הטלפון וכל האפליקציה מתאימה את עצמה
-- הקלידו ארוחה לכל יום שעבר
-- נסו ידנית מציג הצעות לשם מיד
-- יותר מסכים בשפה שלכם
+• עיצוב זכוכית חדש ב-iOS 26
+• תפריטים נפתחים באמצע המסך, החליקו למעלה לעוד ולמטה לסגירה
+• גודל הטקסט עוקב אחרי הטלפון וכל האפליקציה מתאימה את עצמה
+• הקלידו ארוחה לכל יום שעבר
+• נסו ידנית מציג הצעות לשם מיד
+• יותר מסכים בשפה שלכם
 
 ==================================================
 Hindi
@@ -420,23 +420,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria दिखाता है कि आपकी थाली में क्या है। फ़ोटो लें या खाना लिखें, और कुछ ही सेकंड में कैलोरी, प्रोटीन, वसा, कार्ब्स और आसान हेल्थ स्कोर देखें।
 
-- फ़ोटो या टेक्स्ट से फ़ूड लॉग, एक टैप में नाम ठीक करें
-- आपके लिए बने रोज़ के कैलोरी और मैक्रो लक्ष्य
-- आपके हफ़्ते के हिसाब से सेहतमंद खाने के सुझाव
-- साप्ताहिक और मासिक आँकड़े, वज़न और गतिविधियाँ
-- दोस्त के साथ खाना शेयर करें
-- बिना अकाउंट आज़माएँ, 36 भाषाएँ, लाइट और डार्क थीम
+• फ़ोटो या टेक्स्ट से फ़ूड लॉग, एक टैप में नाम ठीक करें
+• आपके लिए बने रोज़ के कैलोरी और मैक्रो लक्ष्य
+• आपके हफ़्ते के हिसाब से सेहतमंद खाने के सुझाव
+• साप्ताहिक और मासिक आँकड़े, वज़न और गतिविधियाँ
+• दोस्त के साथ खाना शेयर करें
+• बिना अकाउंट आज़माएँ, 36 भाषाएँ, लाइट और डार्क थीम
 
 मुफ़्त, बिना विज्ञापन और सब्सक्रिप्शन। Eateria खाने के बारे में जानने के लिए अनुमान देता है। यह चिकित्सा सलाह नहीं है।
 
 WHAT'S NEW
 Eateria 5.3 नए रूप में
-- iOS 26 पर नया ग्लास डिज़ाइन
-- मेन्यू स्क्रीन के बीच में खुलते हैं, ज़्यादा देखने के लिए ऊपर और बंद करने के लिए नीचे स्वाइप करें
-- टेक्स्ट का आकार फ़ोन के हिसाब से, पूरा ऐप उसी तरह बदलता है
-- पिछले किसी भी दिन का खाना लिखकर जोड़ें
-- "मैन्युअल रूप से प्रयास करें" तुरंत नाम सुझाता है
-- आपकी भाषा में और स्क्रीन
+• iOS 26 पर नया ग्लास डिज़ाइन
+• मेन्यू स्क्रीन के बीच में खुलते हैं, ज़्यादा देखने के लिए ऊपर और बंद करने के लिए नीचे स्वाइप करें
+• टेक्स्ट का आकार फ़ोन के हिसाब से, पूरा ऐप उसी तरह बदलता है
+• पिछले किसी भी दिन का खाना लिखकर जोड़ें
+• "मैन्युअल रूप से प्रयास करें" तुरंत नाम सुझाता है
+• आपकी भाषा में और स्क्रीन
 
 ==================================================
 Hungarian
@@ -447,23 +447,23 @@ Fotózd le az ételed, és pár másodperc alatt lásd a kalóriát, fehérjét,
 DESCRIPTION
 Az Eateria megmutatja, mi van a tányérodon. Fotózz vagy írj be egy ételt, és pár másodperc alatt látod a kalóriát, fehérjét, zsírt, szénhidrátot és egy egyszerű egészségpontszámot.
 
-- Étkezési napló fotóval vagy szöveggel, a nevet egy koppintással javíthatod
-- Neked szabott napi kalória- és makrocélok
-- Egészséges ételötletek a heted alapján
-- Heti és havi statisztika, testsúly és aktivitás
-- Ossz meg egy ételt egy barátoddal
-- Próbáld ki fiók nélkül, 36 nyelv, világos és sötét téma
+• Étkezési napló fotóval vagy szöveggel, a nevet egy koppintással javíthatod
+• Neked szabott napi kalória- és makrocélok
+• Egészséges ételötletek a heted alapján
+• Heti és havi statisztika, testsúly és aktivitás
+• Ossz meg egy ételt egy barátoddal
+• Próbáld ki fiók nélkül, 36 nyelv, világos és sötét téma
 
 Ingyenes, reklám és előfizetés nélkül. Az Eateria becsléseket ad, hogy jobban megismerd az ételeidet. Nem orvosi tanács.
 
 WHAT'S NEW
 Az Eateria 5.3 új külsőt kapott
-- Új üveghatású dizájn iOS 26-on
-- A menük középen nyílnak meg, húzd felfelé a továbbiakért, lefelé a bezáráshoz
-- A szövegméret követi a telefonod, és az egész app igazodik hozzá
-- Írj be ételt bármelyik korábbi napra
-- A Próbálja meg manuálisan azonnal névjavaslatokat mutat
-- Több képernyő a saját nyelveden
+• Új üveghatású dizájn iOS 26-on
+• A menük középen nyílnak meg, húzd felfelé a továbbiakért, lefelé a bezáráshoz
+• A szövegméret követi a telefonod, és az egész app igazodik hozzá
+• Írj be ételt bármelyik korábbi napra
+• A Próbálja meg manuálisan azonnal névjavaslatokat mutat
+• Több képernyő a saját nyelveden
 
 ==================================================
 Indonesian
@@ -474,23 +474,23 @@ Foto makananmu dan lihat kalori, protein, lemak, dan karbohidrat dalam hitungan 
 DESCRIPTION
 Eateria menunjukkan apa yang ada di piringmu. Foto atau ketik makananmu, dan dalam hitungan detik lihat kalori, protein, lemak, karbohidrat, dan skor kesehatan yang sederhana.
 
-- Catatan makan lewat foto atau teks, ubah nama dengan sekali ketuk
-- Target kalori dan makro harian yang dibuat untukmu
-- Ide makanan sehat berdasarkan minggumu
-- Statistik mingguan dan bulanan, berat badan dan aktivitas
-- Bagikan makanan dengan teman
-- Coba tanpa akun, 36 bahasa, tema terang dan gelap
+• Catatan makan lewat foto atau teks, ubah nama dengan sekali ketuk
+• Target kalori dan makro harian yang dibuat untukmu
+• Ide makanan sehat berdasarkan minggumu
+• Statistik mingguan dan bulanan, berat badan dan aktivitas
+• Bagikan makanan dengan teman
+• Coba tanpa akun, 36 bahasa, tema terang dan gelap
 
 Gratis, tanpa iklan dan langganan. Eateria memberi perkiraan untuk membantumu mengenal makananmu. Ini bukan saran medis.
 
 WHAT'S NEW
 Eateria 5.3 tampil baru
-- Desain kaca baru di iOS 26
-- Menu terbuka di tengah, geser ke atas untuk lebih banyak, ke bawah untuk menutup
-- Ukuran teks mengikuti ponselmu dan seluruh aplikasi menyesuaikan
-- Ketik makanan untuk hari mana pun yang sudah lewat
-- Coba manual langsung menampilkan saran nama
-- Lebih banyak layar dalam bahasamu
+• Desain kaca baru di iOS 26
+• Menu terbuka di tengah, geser ke atas untuk lebih banyak, ke bawah untuk menutup
+• Ukuran teks mengikuti ponselmu dan seluruh aplikasi menyesuaikan
+• Ketik makanan untuk hari mana pun yang sudah lewat
+• Coba manual langsung menampilkan saran nama
+• Lebih banyak layar dalam bahasamu
 
 ==================================================
 Italian
@@ -501,23 +501,23 @@ Fotografa il tuo pasto e vedi calorie, proteine, grassi e carboidrati in pochi s
 DESCRIPTION
 Eateria ti mostra cosa c'è nel tuo piatto. Scatta una foto o scrivi un pasto e in pochi secondi vedi calorie, proteine, grassi, carboidrati e un semplice punteggio di salute.
 
-- Diario dei pasti con foto o testo, correggi il nome con un tocco
-- Obiettivi giornalieri di calorie e macro pensati per te
-- Idee per pasti sani in base alla tua settimana
-- Statistiche settimanali e mensili, peso e attività
-- Condividi un pasto con un amico
-- Provala senza account, 36 lingue, tema chiaro e scuro
+• Diario dei pasti con foto o testo, correggi il nome con un tocco
+• Obiettivi giornalieri di calorie e macro pensati per te
+• Idee per pasti sani in base alla tua settimana
+• Statistiche settimanali e mensili, peso e attività
+• Condividi un pasto con un amico
+• Provala senza account, 36 lingue, tema chiaro e scuro
 
 Gratis, senza pubblicità né abbonamento. Eateria fornisce stime per aiutarti a conoscere il cibo. Non è un consiglio medico.
 
 WHAT'S NEW
 Eateria 5.3 si rinnova
-- Nuovo design in vetro su iOS 26
-- I menu si aprono al centro, scorri in su per vedere di più e in giù per chiudere
-- La dimensione del testo segue il telefono e tutta l'app si adatta
-- Scrivi un pasto per qualsiasi giorno passato
-- Prova manualmente mostra subito i suggerimenti per il nome
-- Più schermate nella tua lingua
+• Nuovo design in vetro su iOS 26
+• I menu si aprono al centro, scorri in su per vedere di più e in giù per chiudere
+• La dimensione del testo segue il telefono e tutta l'app si adatta
+• Scrivi un pasto per qualsiasi giorno passato
+• Prova manualmente mostra subito i suggerimenti per il nome
+• Più schermate nella tua lingua
 
 ==================================================
 Japanese
@@ -528,23 +528,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria はお皿の中身を教えてくれます。写真を撮るか食事を入力するだけで、カロリー、タンパク質、脂質、炭水化物とシンプルな健康スコアを数秒で表示します。
 
-- 写真や文字で食事を記録、名前はワンタップで修正
-- あなたに合わせた1日のカロリーとPFC目標
-- 1週間の食事にもとづくヘルシーな献立アイデア
-- 週ごと・月ごとの統計、体重と運動の記録
-- 友だちと食事をシェア
-- アカウントなしで試せる、36言語、ライトとダークテーマ
+• 写真や文字で食事を記録、名前はワンタップで修正
+• あなたに合わせた1日のカロリーとPFC目標
+• 1週間の食事にもとづくヘルシーな献立アイデア
+• 週ごと・月ごとの統計、体重と運動の記録
+• 友だちと食事をシェア
+• アカウントなしで試せる、36言語、ライトとダークテーマ
 
 無料、広告なし、サブスクなし。Eateria は食事を知るための目安を表示します。医療アドバイスではありません。
 
 WHAT'S NEW
 Eateria 5.3 は見た目を一新
-- iOS 26 で新しいガラスデザイン
-- メニューは画面の中央に開き、上にスワイプで拡大、下にスワイプで閉じる
-- 文字サイズは iPhone の設定に合わせ、アプリ全体が拡大縮小
-- 過去の日の食事も文字で入力できます
-- 「手動で試す」で名前の候補をすぐ表示
-- あなたの言語で表示される画面が増えました
+• iOS 26 で新しいガラスデザイン
+• メニューは画面の中央に開き、上にスワイプで拡大、下にスワイプで閉じる
+• 文字サイズは iPhone の設定に合わせ、アプリ全体が拡大縮小
+• 過去の日の食事も文字で入力できます
+• 「手動で試す」で名前の候補をすぐ表示
+• あなたの言語で表示される画面が増えました
 
 ==================================================
 Korean
@@ -555,23 +555,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria는 접시에 무엇이 있는지 보여줘요. 사진을 찍거나 식사를 입력하면 몇 초 만에 칼로리, 단백질, 지방, 탄수화물과 간단한 건강 점수를 확인할 수 있어요.
 
-- 사진이나 텍스트로 식단 기록, 이름은 한 번의 탭으로 수정
-- 나에게 맞춘 하루 칼로리와 영양소 목표
-- 한 주 식단에 맞춘 건강한 식사 아이디어
-- 주간 및 월간 통계, 체중과 활동 기록
-- 친구와 식사 공유
-- 계정 없이 사용 가능, 36개 언어, 라이트 및 다크 테마
+• 사진이나 텍스트로 식단 기록, 이름은 한 번의 탭으로 수정
+• 나에게 맞춘 하루 칼로리와 영양소 목표
+• 한 주 식단에 맞춘 건강한 식사 아이디어
+• 주간 및 월간 통계, 체중과 활동 기록
+• 친구와 식사 공유
+• 계정 없이 사용 가능, 36개 언어, 라이트 및 다크 테마
 
 무료, 광고와 구독 없음. Eateria는 음식에 대해 알 수 있도록 추정치를 제공합니다. 의료 조언이 아닙니다.
 
 WHAT'S NEW
 Eateria 5.3이 새롭게 바뀌었어요
-- iOS 26의 새로운 글래스 디자인
-- 메뉴가 화면 가운데에서 열리고, 위로 쓸어 더 보고 아래로 쓸어 닫기
-- 글자 크기가 휴대폰 설정을 따르고 앱 전체가 함께 조절돼요
-- 지난 날의 식사도 입력할 수 있어요
-- 수동으로 시도에서 이름 추천을 바로 보여줘요
-- 내 언어로 보이는 화면이 더 많아졌어요
+• iOS 26의 새로운 글래스 디자인
+• 메뉴가 화면 가운데에서 열리고, 위로 쓸어 더 보고 아래로 쓸어 닫기
+• 글자 크기가 휴대폰 설정을 따르고 앱 전체가 함께 조절돼요
+• 지난 날의 식사도 입력할 수 있어요
+• 수동으로 시도에서 이름 추천을 바로 보여줘요
+• 내 언어로 보이는 화면이 더 많아졌어요
 
 ==================================================
 Malay
@@ -582,23 +582,23 @@ Ambil gambar hidangan anda dan lihat kalori, protein, lemak dan karbohidrat dala
 DESCRIPTION
 Eateria menunjukkan isi pinggan anda. Ambil gambar atau taip hidangan, dan dalam beberapa saat lihat kalori, protein, lemak, karbohidrat serta skor kesihatan yang ringkas.
 
-- Log makanan melalui foto atau teks, betulkan nama dengan satu ketikan
-- Sasaran kalori dan makro harian yang dibuat untuk anda
-- Idea hidangan sihat berdasarkan minggu anda
-- Statistik mingguan dan bulanan, berat badan dan aktiviti
-- Kongsi hidangan dengan rakan
-- Cuba tanpa akaun, 36 bahasa, tema cerah dan gelap
+• Log makanan melalui foto atau teks, betulkan nama dengan satu ketikan
+• Sasaran kalori dan makro harian yang dibuat untuk anda
+• Idea hidangan sihat berdasarkan minggu anda
+• Statistik mingguan dan bulanan, berat badan dan aktiviti
+• Kongsi hidangan dengan rakan
+• Cuba tanpa akaun, 36 bahasa, tema cerah dan gelap
 
 Percuma, tanpa iklan dan langganan. Eateria memberi anggaran untuk membantu anda mengenali makanan. Ini bukan nasihat perubatan.
 
 WHAT'S NEW
 Eateria 5.3 tampil baharu
-- Reka bentuk kaca baharu pada iOS 26
-- Menu dibuka di tengah, leret ke atas untuk lagi dan ke bawah untuk tutup
-- Saiz teks mengikut telefon anda dan seluruh apl turut menyesuaikan
-- Taip hidangan untuk mana-mana hari yang lalu
-- Cuba secara manual terus menunjukkan cadangan nama
-- Lebih banyak skrin dalam bahasa anda
+• Reka bentuk kaca baharu pada iOS 26
+• Menu dibuka di tengah, leret ke atas untuk lagi dan ke bawah untuk tutup
+• Saiz teks mengikut telefon anda dan seluruh apl turut menyesuaikan
+• Taip hidangan untuk mana-mana hari yang lalu
+• Cuba secara manual terus menunjukkan cadangan nama
+• Lebih banyak skrin dalam bahasa anda
 
 ==================================================
 Norwegian
@@ -609,23 +609,23 @@ Ta bilde av måltidet og se kalorier, protein, fett og karbohydrater på sekunde
 DESCRIPTION
 Eateria viser hva som er på tallerkenen din. Ta et bilde eller skriv inn et måltid, og se på sekunder kalorier, protein, fett, karbohydrater og en enkel helsescore.
 
-- Matlogg med bilde eller tekst, rett navnet med ett trykk
-- Daglige mål for kalorier og makroer laget for deg
-- Ideer til sunne måltider basert på uken din
-- Ukes- og månedsstatistikk, vekt og aktiviteter
-- Del et måltid med en venn
-- Prøv uten konto, 36 språk, lyst og mørkt tema
+• Matlogg med bilde eller tekst, rett navnet med ett trykk
+• Daglige mål for kalorier og makroer laget for deg
+• Ideer til sunne måltider basert på uken din
+• Ukes- og månedsstatistikk, vekt og aktiviteter
+• Del et måltid med en venn
+• Prøv uten konto, 36 språk, lyst og mørkt tema
 
 Gratis, uten reklame og abonnement. Eateria gir anslag som hjelper deg å lære om mat. Det er ikke medisinske råd.
 
 WHAT'S NEW
 Eateria 5.3 har fått nytt utseende
-- Nytt glassdesign på iOS 26
-- Menyer åpnes på midten, sveip opp for mer og ned for å lukke
-- Tekststørrelsen følger telefonen, og hele appen skalerer med
-- Skriv inn et måltid for en hvilken som helst tidligere dag
-- Prøv manuelt viser navneforslag med en gang
-- Flere skjermer på ditt språk
+• Nytt glassdesign på iOS 26
+• Menyer åpnes på midten, sveip opp for mer og ned for å lukke
+• Tekststørrelsen følger telefonen, og hele appen skalerer med
+• Skriv inn et måltid for en hvilken som helst tidligere dag
+• Prøv manuelt viser navneforslag med en gang
+• Flere skjermer på ditt språk
 
 ==================================================
 Polish
@@ -636,23 +636,23 @@ Zrób zdjęcie posiłku i w kilka sekund zobacz kalorie, białko, tłuszcz i wę
 DESCRIPTION
 Eateria pokazuje, co masz na talerzu. Zrób zdjęcie lub wpisz posiłek, a w kilka sekund zobaczysz kalorie, białko, tłuszcz, węglowodany i prostą ocenę zdrowia.
 
-- Dziennik posiłków ze zdjęcia lub tekstu, nazwę poprawisz jednym stuknięciem
-- Dzienne cele kalorii i makroskładników dopasowane do Ciebie
-- Pomysły na zdrowe posiłki na podstawie Twojego tygodnia
-- Statystyki tygodniowe i miesięczne, waga i aktywności
-- Udostępnij posiłek znajomemu
-- Wypróbuj bez konta, 36 języków, jasny i ciemny motyw
+• Dziennik posiłków ze zdjęcia lub tekstu, nazwę poprawisz jednym stuknięciem
+• Dzienne cele kalorii i makroskładników dopasowane do Ciebie
+• Pomysły na zdrowe posiłki na podstawie Twojego tygodnia
+• Statystyki tygodniowe i miesięczne, waga i aktywności
+• Udostępnij posiłek znajomemu
+• Wypróbuj bez konta, 36 języków, jasny i ciemny motyw
 
 Za darmo, bez reklam i subskrypcji. Eateria podaje szacunki, które pomagają lepiej poznać jedzenie. To nie jest porada medyczna.
 
 WHAT'S NEW
 Eateria 5.3 w nowym wyglądzie
-- Nowy szklany wygląd w iOS 26
-- Menu otwierają się na środku, przesuń w górę po więcej, w dół, aby zamknąć
-- Rozmiar tekstu idzie za telefonem, a cała aplikacja się dopasowuje
-- Wpisz posiłek z dowolnego minionego dnia
-- Spróbuj ręcznie od razu podpowiada nazwy
-- Więcej ekranów w Twoim języku
+• Nowy szklany wygląd w iOS 26
+• Menu otwierają się na środku, przesuń w górę po więcej, w dół, aby zamknąć
+• Rozmiar tekstu idzie za telefonem, a cała aplikacja się dopasowuje
+• Wpisz posiłek z dowolnego minionego dnia
+• Spróbuj ręcznie od razu podpowiada nazwy
+• Więcej ekranów w Twoim języku
 
 ==================================================
 Portuguese (Portugal / Brazil)
@@ -663,23 +663,23 @@ Tire uma foto da refeição e veja calorias, proteína, gordura e carboidratos e
 DESCRIPTION
 O Eateria mostra o que há no seu prato. Tire uma foto ou escreva uma refeição e, em segundos, veja calorias, proteína, gordura, carboidratos e uma nota de saúde simples.
 
-- Diário alimentar por foto ou texto, corrija o nome com um toque
-- Metas diárias de calorias e macros feitas para você
-- Ideias de refeições saudáveis com base na sua semana
-- Estatísticas semanais e mensais, peso e atividades
-- Compartilhe uma refeição com um amigo
-- Experimente sem conta, 36 idiomas, tema claro e escuro
+• Diário alimentar por foto ou texto, corrija o nome com um toque
+• Metas diárias de calorias e macros feitas para você
+• Ideias de refeições saudáveis com base na sua semana
+• Estatísticas semanais e mensais, peso e atividades
+• Compartilhe uma refeição com um amigo
+• Experimente sem conta, 36 idiomas, tema claro e escuro
 
 Grátis, sem anúncios nem assinatura. O Eateria dá estimativas para ajudar você a conhecer melhor a comida. Não é conselho médico.
 
 WHAT'S NEW
 Eateria 5.3 com visual novo
-- Novo design de vidro no iOS 26
-- Os menus abrem no meio, deslize para cima para ver mais e para baixo para fechar
-- O tamanho do texto segue o seu telefone e o app inteiro se ajusta
-- Escreva uma refeição para qualquer dia passado
-- Tentar manualmente mostra sugestões de nome na hora
-- Mais telas no seu idioma
+• Novo design de vidro no iOS 26
+• Os menus abrem no meio, deslize para cima para ver mais e para baixo para fechar
+• O tamanho do texto segue o seu telefone e o app inteiro se ajusta
+• Escreva uma refeição para qualquer dia passado
+• Tentar manualmente mostra sugestões de nome na hora
+• Mais telas no seu idioma
 
 ==================================================
 Romanian
@@ -690,23 +690,23 @@ Fotografiază-ți masa și vezi calorii, proteine, grăsimi și carbohidrați î
 DESCRIPTION
 Eateria îți arată ce ai în farfurie. Fă o poză sau scrie o masă și în câteva secunde vezi calorii, proteine, grăsimi, carbohidrați și un scor de sănătate simplu.
 
-- Jurnal de mese din poză sau text, corectezi numele dintr-o atingere
-- Obiective zilnice de calorii și macronutrienți făcute pentru tine
-- Idei de mese sănătoase pe baza săptămânii tale
-- Statistici săptămânale și lunare, greutate și activități
-- Împarte o masă cu un prieten
-- Încearcă fără cont, 36 de limbi, temă deschisă și întunecată
+• Jurnal de mese din poză sau text, corectezi numele dintr-o atingere
+• Obiective zilnice de calorii și macronutrienți făcute pentru tine
+• Idei de mese sănătoase pe baza săptămânii tale
+• Statistici săptămânale și lunare, greutate și activități
+• Împarte o masă cu un prieten
+• Încearcă fără cont, 36 de limbi, temă deschisă și întunecată
 
 Gratuit, fără reclame și abonament. Eateria oferă estimări ca să înțelegi mai bine ce mănânci. Nu este un sfat medical.
 
 WHAT'S NEW
 Eateria 5.3 are un aspect nou
-- Design nou de sticlă pe iOS 26
-- Meniurile se deschid la mijloc, glisează în sus pentru mai mult și în jos pentru închidere
-- Mărimea textului urmează telefonul și toată aplicația se adaptează
-- Scrie o masă pentru orice zi trecută
-- Încercați manual arată imediat sugestii de nume
-- Mai multe ecrane în limba ta
+• Design nou de sticlă pe iOS 26
+• Meniurile se deschid la mijloc, glisează în sus pentru mai mult și în jos pentru închidere
+• Mărimea textului urmează telefonul și toată aplicația se adaptează
+• Scrie o masă pentru orice zi trecută
+• Încercați manual arată imediat sugestii de nume
+• Mai multe ecrane în limba ta
 
 ==================================================
 Slovak
@@ -717,23 +717,23 @@ Odfoťte jedlo a za pár sekúnd uvidíte kalórie, bielkoviny, tuky a sacharidy
 DESCRIPTION
 Eateria vám ukáže, čo máte na tanieri. Odfoťte alebo napíšte jedlo a za pár sekúnd uvidíte kalórie, bielkoviny, tuky, sacharidy a jednoduché hodnotenie zdravia.
 
-- Záznam jedla fotkou alebo textom, názov opravíte jedným ťuknutím
-- Denné ciele kalórií a makroživín pripravené pre vás
-- Nápady na zdravé jedlá podľa vášho týždňa
-- Týždenné a mesačné štatistiky, váha a aktivity
-- Zdieľajte jedlo s priateľom
-- Vyskúšajte bez účtu, 36 jazykov, svetlý a tmavý motív
+• Záznam jedla fotkou alebo textom, názov opravíte jedným ťuknutím
+• Denné ciele kalórií a makroživín pripravené pre vás
+• Nápady na zdravé jedlá podľa vášho týždňa
+• Týždenné a mesačné štatistiky, váha a aktivity
+• Zdieľajte jedlo s priateľom
+• Vyskúšajte bez účtu, 36 jazykov, svetlý a tmavý motív
 
 Zadarmo, bez reklám a predplatného. Eateria poskytuje odhady, ktoré vám pomôžu spoznať jedlo. Nejde o lekársku radu.
 
 WHAT'S NEW
 Eateria 5.3 prináša nový vzhľad
-- Nový sklenený dizajn v iOS 26
-- Ponuky sa otvárajú v strede, potiahnite nahor pre viac, nadol pre zatvorenie
-- Veľkosť textu sa riadi telefónom a celá aplikácia sa prispôsobí
-- Zapíšte jedlo pre akýkoľvek minulý deň
-- Skúsiť ručne hneď ponúkne návrhy názvu
-- Viac obrazoviek vo vašom jazyku
+• Nový sklenený dizajn v iOS 26
+• Ponuky sa otvárajú v strede, potiahnite nahor pre viac, nadol pre zatvorenie
+• Veľkosť textu sa riadi telefónom a celá aplikácia sa prispôsobí
+• Zapíšte jedlo pre akýkoľvek minulý deň
+• Skúsiť ručne hneď ponúkne návrhy názvu
+• Viac obrazoviek vo vašom jazyku
 
 ==================================================
 Slovenian
@@ -744,23 +744,23 @@ Fotografirajte obrok in v nekaj sekundah vidite kalorije, beljakovine, maščobe
 DESCRIPTION
 Eateria vam pokaže, kaj imate na krožniku. Fotografirajte ali vpišite obrok in v nekaj sekundah vidite kalorije, beljakovine, maščobe, ogljikove hidrate in preprosto oceno zdravja.
 
-- Dnevnik prehrane s fotografijo ali besedilom, ime popravite z enim dotikom
-- Dnevni cilji kalorij in makrohranil, pripravljeni za vas
-- Ideje za zdrave obroke glede na vaš teden
-- Tedenska in mesečna statistika, teža in aktivnosti
-- Delite obrok s prijateljem
-- Preizkusite brez računa, 36 jezikov, svetla in temna tema
+• Dnevnik prehrane s fotografijo ali besedilom, ime popravite z enim dotikom
+• Dnevni cilji kalorij in makrohranil, pripravljeni za vas
+• Ideje za zdrave obroke glede na vaš teden
+• Tedenska in mesečna statistika, teža in aktivnosti
+• Delite obrok s prijateljem
+• Preizkusite brez računa, 36 jezikov, svetla in temna tema
 
 Brezplačno, brez oglasov in naročnine. Eateria daje ocene, ki vam pomagajo bolje spoznati hrano. To ni zdravniški nasvet.
 
 WHAT'S NEW
 Eateria 5.3 ima nov videz
-- Nov stekleni videz v iOS 26
-- Meniji se odprejo na sredini, povlecite gor za več in dol za zapiranje
-- Velikost besedila sledi telefonu in celotna aplikacija se prilagodi
-- Vpišite obrok za kateri koli pretekli dan
-- Poskusi ročno takoj pokaže predloge imen
-- Več zaslonov v vašem jeziku
+• Nov stekleni videz v iOS 26
+• Meniji se odprejo na sredini, povlecite gor za več in dol za zapiranje
+• Velikost besedila sledi telefonu in celotna aplikacija se prilagodi
+• Vpišite obrok za kateri koli pretekli dan
+• Poskusi ročno takoj pokaže predloge imen
+• Več zaslonov v vašem jeziku
 
 ==================================================
 Spanish (Spain / Mexico)
@@ -771,23 +771,23 @@ Haz una foto de tu comida y ve calorías, proteínas, grasas y carbohidratos en 
 DESCRIPTION
 Eateria te muestra qué hay en tu plato. Haz una foto o escribe una comida y en segundos verás calorías, proteínas, grasas, carbohidratos y una puntuación de salud sencilla.
 
-- Diario de comidas con foto o texto, corrige el nombre con un toque
-- Metas diarias de calorías y macros hechas para ti
-- Ideas de comidas sanas según tu semana
-- Estadísticas semanales y mensuales, peso y actividades
-- Comparte una comida con un amigo
-- Pruébala sin cuenta, 36 idiomas, tema claro y oscuro
+• Diario de comidas con foto o texto, corrige el nombre con un toque
+• Metas diarias de calorías y macros hechas para ti
+• Ideas de comidas sanas según tu semana
+• Estadísticas semanales y mensuales, peso y actividades
+• Comparte una comida con un amigo
+• Pruébala sin cuenta, 36 idiomas, tema claro y oscuro
 
 Gratis, sin anuncios ni suscripción. Eateria da estimaciones para ayudarte a conocer lo que comes. No es consejo médico.
 
 WHAT'S NEW
 Eateria 5.3 estrena look
-- Nuevo diseño de cristal en iOS 26
-- Los menús se abren en el centro, desliza hacia arriba para ver más y hacia abajo para cerrar
-- El tamaño del texto sigue al de tu teléfono y toda la app se adapta
-- Escribe una comida para cualquier día pasado
-- Intentar manualmente muestra sugerencias de nombre al instante
-- Más pantallas en tu idioma
+• Nuevo diseño de cristal en iOS 26
+• Los menús se abren en el centro, desliza hacia arriba para ver más y hacia abajo para cerrar
+• El tamaño del texto sigue al de tu teléfono y toda la app se adapta
+• Escribe una comida para cualquier día pasado
+• Intentar manualmente muestra sugerencias de nombre al instante
+• Más pantallas en tu idioma
 
 ==================================================
 Swedish
@@ -798,23 +798,23 @@ Fota din måltid och se kalorier, protein, fett och kolhydrater på några sekun
 DESCRIPTION
 Eateria visar vad som finns på din tallrik. Ta en bild eller skriv in en måltid och se på några sekunder kalorier, protein, fett, kolhydrater och en enkel hälsopoäng.
 
-- Matlogg med bild eller text, rätta namnet med ett tryck
-- Dagliga mål för kalorier och makron gjorda för dig
-- Idéer på hälsosamma måltider utifrån din vecka
-- Vecko- och månadsstatistik, vikt och aktiviteter
-- Dela en måltid med en vän
-- Testa utan konto, 36 språk, ljust och mörkt tema
+• Matlogg med bild eller text, rätta namnet med ett tryck
+• Dagliga mål för kalorier och makron gjorda för dig
+• Idéer på hälsosamma måltider utifrån din vecka
+• Vecko- och månadsstatistik, vikt och aktiviteter
+• Dela en måltid med en vän
+• Testa utan konto, 36 språk, ljust och mörkt tema
 
 Gratis, utan reklam och prenumeration. Eateria ger uppskattningar som hjälper dig att lära känna din mat. Det är inte medicinsk rådgivning.
 
 WHAT'S NEW
 Eateria 5.3 har fått nytt utseende
-- Ny glasdesign i iOS 26
-- Menyer öppnas i mitten, svep upp för mer och ner för att stänga
-- Textstorleken följer telefonen och hela appen skalar med
-- Skriv in en måltid för vilken tidigare dag som helst
-- Försök manuellt visar namnförslag direkt
-- Fler skärmar på ditt språk
+• Ny glasdesign i iOS 26
+• Menyer öppnas i mitten, svep upp för mer och ner för att stänga
+• Textstorleken följer telefonen och hela appen skalar med
+• Skriv in en måltid för vilken tidigare dag som helst
+• Försök manuellt visar namnförslag direkt
+• Fler skärmar på ditt språk
 
 ==================================================
 Thai
@@ -825,23 +825,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria บอกคุณว่าในจานมีอะไร ถ่ายรูปหรือพิมพ์ชื่ออาหาร แล้วดูแคลอรี โปรตีน ไขมัน คาร์บ และคะแนนสุขภาพแบบง่ายๆ ได้ในไม่กี่วินาที
 
-- บันทึกอาหารด้วยรูปหรือข้อความ แก้ชื่อได้ในแตะเดียว
-- เป้าหมายแคลอรีและสารอาหารรายวันที่ทำมาเพื่อคุณ
-- ไอเดียเมนูสุขภาพจากอาหารในสัปดาห์ของคุณ
-- สถิติรายสัปดาห์และรายเดือน น้ำหนักและกิจกรรม
-- แชร์อาหารกับเพื่อน
-- ลองใช้ได้โดยไม่ต้องมีบัญชี 36 ภาษา ธีมสว่างและมืด
+• บันทึกอาหารด้วยรูปหรือข้อความ แก้ชื่อได้ในแตะเดียว
+• เป้าหมายแคลอรีและสารอาหารรายวันที่ทำมาเพื่อคุณ
+• ไอเดียเมนูสุขภาพจากอาหารในสัปดาห์ของคุณ
+• สถิติรายสัปดาห์และรายเดือน น้ำหนักและกิจกรรม
+• แชร์อาหารกับเพื่อน
+• ลองใช้ได้โดยไม่ต้องมีบัญชี 36 ภาษา ธีมสว่างและมืด
 
 ใช้ฟรี ไม่มีโฆษณา ไม่ต้องสมัครสมาชิก Eateria ให้ค่าประมาณเพื่อช่วยให้คุณรู้จักอาหารมากขึ้น ไม่ใช่คำแนะนำทางการแพทย์
 
 WHAT'S NEW
 Eateria 5.3 โฉมใหม่
-- ดีไซน์กระจกใหม่บน iOS 26
-- เมนูเปิดกลางจอ ปัดขึ้นเพื่อดูเพิ่ม ปัดลงเพื่อปิด
-- ขนาดตัวอักษรตามการตั้งค่าโทรศัพท์ และทั้งแอปปรับตาม
-- พิมพ์อาหารย้อนหลังได้ทุกวัน
-- "ลองด้วยตนเอง" แนะนำชื่อให้ทันที
-- หน้าจอในภาษาของคุณมากขึ้น
+• ดีไซน์กระจกใหม่บน iOS 26
+• เมนูเปิดกลางจอ ปัดขึ้นเพื่อดูเพิ่ม ปัดลงเพื่อปิด
+• ขนาดตัวอักษรตามการตั้งค่าโทรศัพท์ และทั้งแอปปรับตาม
+• พิมพ์อาหารย้อนหลังได้ทุกวัน
+• "ลองด้วยตนเอง" แนะนำชื่อให้ทันที
+• หน้าจอในภาษาของคุณมากขึ้น
 
 ==================================================
 Turkish
@@ -852,23 +852,23 @@ Yemeğinin fotoğrafını çek, kalori, protein, yağ ve karbonhidratı saniyele
 DESCRIPTION
 Eateria tabağında ne olduğunu gösterir. Fotoğraf çek ya da yemeğini yaz, saniyeler içinde kalori, protein, yağ, karbonhidrat ve basit bir sağlık puanı gör.
 
-- Fotoğraf ya da yazıyla yemek günlüğü, adı tek dokunuşla düzelt
-- Sana göre hazırlanmış günlük kalori ve makro hedefleri
-- Haftana göre sağlıklı yemek fikirleri
-- Haftalık ve aylık istatistikler, kilo ve aktiviteler
-- Bir yemeği arkadaşınla paylaş
-- Hesap olmadan dene, 36 dil, açık ve koyu tema
+• Fotoğraf ya da yazıyla yemek günlüğü, adı tek dokunuşla düzelt
+• Sana göre hazırlanmış günlük kalori ve makro hedefleri
+• Haftana göre sağlıklı yemek fikirleri
+• Haftalık ve aylık istatistikler, kilo ve aktiviteler
+• Bir yemeği arkadaşınla paylaş
+• Hesap olmadan dene, 36 dil, açık ve koyu tema
 
 Ücretsiz, reklamsız ve abonesiz. Eateria yemeklerini tanıman için tahmini değerler verir. Tıbbi tavsiye değildir.
 
 WHAT'S NEW
 Eateria 5.3 yenilendi
-- iOS 26'da yeni cam tasarım
-- Menüler ekranın ortasında açılır, daha fazlası için yukarı, kapatmak için aşağı kaydır
-- Yazı boyutu telefonunu takip eder, tüm uygulama ona göre ölçeklenir
-- Geçmiş herhangi bir gün için yemek yaz
-- Manuel olarak dene hemen isim önerileri gösterir
-- Kendi dilinde daha fazla ekran
+• iOS 26'da yeni cam tasarım
+• Menüler ekranın ortasında açılır, daha fazlası için yukarı, kapatmak için aşağı kaydır
+• Yazı boyutu telefonunu takip eder, tüm uygulama ona göre ölçeklenir
+• Geçmiş herhangi bir gün için yemek yaz
+• Manuel olarak dene hemen isim önerileri gösterir
+• Kendi dilinde daha fazla ekran
 
 ==================================================
 Ukrainian
@@ -879,23 +879,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria показує, що у вашій тарілці. Сфотографуйте або напишіть страву, і за кілька секунд побачите калорії, білок, жири, вуглеводи та просту оцінку здоров'я.
 
-- Щоденник їжі з фото або тексту, назву виправите одним дотиком
-- Денні цілі калорій і макро, підібрані для вас
-- Ідеї здорових страв на основі вашого тижня
-- Статистика за тиждень і місяць, вага та активності
-- Поділіться стравою з другом
-- Спробуйте без акаунта, 36 мов, світла й темна тема
+• Щоденник їжі з фото або тексту, назву виправите одним дотиком
+• Денні цілі калорій і макро, підібрані для вас
+• Ідеї здорових страв на основі вашого тижня
+• Статистика за тиждень і місяць, вага та активності
+• Поділіться стравою з другом
+• Спробуйте без акаунта, 36 мов, світла й темна тема
 
 Безкоштовно, без реклами й підписки. Eateria дає оцінки, щоб ви краще знали свою їжу. Це не медична порада.
 
 WHAT'S NEW
 Eateria 5.3 має новий вигляд
-- Новий скляний дизайн в iOS 26
-- Меню відкриваються посередині, свайп угору для більшого, униз щоб закрити
-- Розмір тексту відповідає телефону, і весь застосунок масштабується
-- Записуйте страву за будь-який минулий день
-- Спробувати вручну одразу показує варіанти назви
-- Більше екранів вашою мовою
+• Новий скляний дизайн в iOS 26
+• Меню відкриваються посередині, свайп угору для більшого, униз щоб закрити
+• Розмір тексту відповідає телефону, і весь застосунок масштабується
+• Записуйте страву за будь-який минулий день
+• Спробувати вручну одразу показує варіанти назви
+• Більше екранів вашою мовою
 
 ==================================================
 Urdu
@@ -906,23 +906,23 @@ PROMOTIONAL TEXT
 DESCRIPTION
 Eateria دکھاتا ہے کہ آپ کی پلیٹ میں کیا ہے۔ تصویر لیں یا کھانا لکھیں، اور چند سیکنڈ میں کیلوریز، پروٹین، چکنائی، کاربوہائیڈریٹ اور آسان ہیلتھ اسکور دیکھیں۔
 
-- تصویر یا تحریر سے کھانے کا ریکارڈ، ایک ٹیپ میں نام درست کریں
-- آپ کے لیے بنائے گئے روزانہ کیلوری اور میکرو اہداف
-- آپ کے ہفتے کے مطابق صحت مند کھانوں کے آئیڈیاز
-- ہفتہ وار اور ماہانہ شماریات، وزن اور سرگرمیاں
-- دوست کے ساتھ کھانا شیئر کریں
-- اکاؤنٹ کے بغیر آزمائیں، 36 زبانیں، لائٹ اور ڈارک تھیم
+• تصویر یا تحریر سے کھانے کا ریکارڈ، ایک ٹیپ میں نام درست کریں
+• آپ کے لیے بنائے گئے روزانہ کیلوری اور میکرو اہداف
+• آپ کے ہفتے کے مطابق صحت مند کھانوں کے آئیڈیاز
+• ہفتہ وار اور ماہانہ شماریات، وزن اور سرگرمیاں
+• دوست کے ساتھ کھانا شیئر کریں
+• اکاؤنٹ کے بغیر آزمائیں، 36 زبانیں، لائٹ اور ڈارک تھیم
 
 مفت، بغیر اشتہار اور سبسکرپشن۔ Eateria کھانے کو سمجھنے کے لیے اندازے دیتا ہے۔ یہ طبی مشورہ نہیں ہے۔
 
 WHAT'S NEW
 Eateria 5.3 نئے انداز میں
-- iOS 26 پر نیا گلاس ڈیزائن
-- مینو اسکرین کے درمیان کھلتے ہیں، مزید کے لیے اوپر اور بند کرنے کے لیے نیچے سوائپ کریں
-- متن کا سائز فون کے مطابق، پوری ایپ اسی طرح بدلتی ہے
-- گزرے ہوئے کسی بھی دن کا کھانا لکھ کر شامل کریں
-- "دستی طور پر کوشش کریں" فوراً نام تجویز کرتا ہے
-- آپ کی زبان میں مزید اسکرینز
+• iOS 26 پر نیا گلاس ڈیزائن
+• مینو اسکرین کے درمیان کھلتے ہیں، مزید کے لیے اوپر اور بند کرنے کے لیے نیچے سوائپ کریں
+• متن کا سائز فون کے مطابق، پوری ایپ اسی طرح بدلتی ہے
+• گزرے ہوئے کسی بھی دن کا کھانا لکھ کر شامل کریں
+• "دستی طور پر کوشش کریں" فوراً نام تجویز کرتا ہے
+• آپ کی زبان میں مزید اسکرینز
 
 ==================================================
 Vietnamese
@@ -933,20 +933,20 @@ Chụp ảnh bữa ăn và xem calo, protein, chất béo, carb chỉ trong vài
 DESCRIPTION
 Eateria cho bạn biết trong đĩa có gì. Chụp ảnh hoặc nhập món ăn, và chỉ trong vài giây xem calo, protein, chất béo, carb cùng điểm sức khỏe đơn giản.
 
-- Nhật ký ăn uống bằng ảnh hoặc chữ, sửa tên chỉ với một chạm
-- Mục tiêu calo và dinh dưỡng hằng ngày dành riêng cho bạn
-- Gợi ý món ăn lành mạnh dựa trên tuần của bạn
-- Thống kê tuần và tháng, cân nặng và hoạt động
-- Chia sẻ bữa ăn với bạn bè
-- Dùng thử không cần tài khoản, 36 ngôn ngữ, giao diện sáng và tối
+• Nhật ký ăn uống bằng ảnh hoặc chữ, sửa tên chỉ với một chạm
+• Mục tiêu calo và dinh dưỡng hằng ngày dành riêng cho bạn
+• Gợi ý món ăn lành mạnh dựa trên tuần của bạn
+• Thống kê tuần và tháng, cân nặng và hoạt động
+• Chia sẻ bữa ăn với bạn bè
+• Dùng thử không cần tài khoản, 36 ngôn ngữ, giao diện sáng và tối
 
 Miễn phí, không quảng cáo, không thuê bao. Eateria đưa ra ước tính để giúp bạn hiểu hơn về thức ăn. Đây không phải lời khuyên y tế.
 
 WHAT'S NEW
 Eateria 5.3 có giao diện mới
-- Thiết kế kính mới trên iOS 26
-- Menu mở ở giữa màn hình, vuốt lên để xem thêm, vuốt xuống để đóng
-- Cỡ chữ theo điện thoại và cả ứng dụng thay đổi theo
-- Nhập món ăn cho bất kỳ ngày nào trước đó
-- Thử thủ công hiển thị gợi ý tên ngay lập tức
-- Thêm nhiều màn hình bằng ngôn ngữ của bạn
+• Thiết kế kính mới trên iOS 26
+• Menu mở ở giữa màn hình, vuốt lên để xem thêm, vuốt xuống để đóng
+• Cỡ chữ theo điện thoại và cả ứng dụng thay đổi theo
+• Nhập món ăn cho bất kỳ ngày nào trước đó
+• Thử thủ công hiển thị gợi ý tên ngay lập tức
+• Thêm nhiều màn hình bằng ngôn ngữ của bạn
