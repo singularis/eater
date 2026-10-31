@@ -639,7 +639,7 @@
 			repositoryURL = "https://github.com/vapor/jwt-kit.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.7.1;
+				minimumVersion = 5.8.0;
 			};
 		};
 		FEA995E72DC9640F00033042 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
