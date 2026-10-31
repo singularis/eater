@@ -64,8 +64,7 @@ struct StatisticsView: View {
           .reportScrollAtTop($isScrollAtTop)
         }
       }
-      .navigationTitle(loc("nav.statistics", "Statistics"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("nav.statistics", "Statistics"))
       .toolbar {
         if showsCloseButton {
           ToolbarItem(placement: .navigationBarLeading) {
@@ -79,9 +78,11 @@ struct StatisticsView: View {
       .onAppear { loadData() }
       .sheet(item: $selectedDay) { day in
         dayDetailSheet(day)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showGraphs) {
         StatisticsGraphsView(isPresented: $showGraphs, initialPeriod: selectedPeriod)
+          .appInterfaceScale()
       }
     }
     .environment(\.locale, Locale(identifier: LanguageService.shared.currentCode))
@@ -729,7 +730,7 @@ struct StatisticsView: View {
       }
       .padding(20)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .background(AppTheme.backgroundGradient.ignoresSafeArea())
+      .appSheetBackground()
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {

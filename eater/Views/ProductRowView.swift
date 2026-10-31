@@ -19,6 +19,10 @@ struct ProductRowView: View {
   @State private var isLoadingImage: Bool = false
   @State private var showShareLoginPrompt = false
   @State private var showDeleteConfirmation = false
+  @State private var showHealthSheet = false
+  @State private var healthPopup: FoodHealthPopupModel?
+  @State private var openExplainAfterPopup = false
+  @State private var imageResolveID = 0
 
   private var displayImage: UIImage? {
     product.image ?? remoteImage
@@ -28,10 +32,10 @@ struct ProductRowView: View {
     "\(product.totalCalories) \(loc("units.kcal", "kcal")) • \(product.totalWeight)\(loc("units.gram_suffix", "g"))"
   }
 
-  private var dishFontScale: CGFloat { CGFloat(appSettings.fontScale) }
-  private var photoSize: CGFloat { 101 * dishFontScale }
-  private var ratingStickerSize: CGFloat { 36 * dishFontScale }
-  private var actionIconFrame: CGFloat { 30 * 1.15 * 1.20 * dishFontScale }
+  /// Photo shrinks as text grows, from 101 pt at 80% to 68 pt at 160%.
+  private var photoSize: CGFloat { 101 - CGFloat(appSettings.interfaceTravel) * 33 }
+  private var ratingStickerSize: CGFloat { 36 }
+  private var actionIconFrame: CGFloat { 36 }
   private var actionGlyphSize: CGFloat { actionIconFrame * 0.48 }
 
   private var hasDishMacros: Bool {
@@ -40,7 +44,8 @@ struct ProductRowView: View {
 
   private func macroAmount(_ value: Double) -> String {
     let grams = loc("units.gram_suffix", "g")
-    let amount = value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
+    let wholeGrams = appSettings.largeTextLayout || value.rounded() == value
+    let amount = wholeGrams ? String(Int(value.rounded())) : String(format: "%.1f", value)
     return "\(amount)\(grams)"
   }
 
@@ -52,12 +57,11 @@ struct ProductRowView: View {
     "\(loc("macro.car", "CAR")) \(macroAmount(product.carbohydrates)) • \(loc("macro.sug", "SUG")) \(macroAmount(product.sugar))"
   }
 
-  /// Ingredients already named in the dish title (e.g. "Noodle", "Fried cabbage").
-  private var extraIngredientNames: [String] {
-    let dish = Localization.shared.translateFoodName(product.name)
-    return product.ingredients.compactMap { raw in
+  private var ingredientNames: [String] {
+    product.ingredients.compactMap { raw in
       let name = Localization.shared.translateFoodName(raw)
-      return Self.isCoveredByDishName(name, dish: dish) ? nil : name
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      return name.isEmpty ? nil : name
     }
   }
 
@@ -89,119 +93,126 @@ struct ProductRowView: View {
       }
       if product.addedSugarTsp > 0 || hasAddedSugarIngredient {
         Image(systemName: "cube.fill")
-          .font(.system(size: 14 * dishFontScale))
+          .font(.system(size: 14))
           .foregroundColor(AppTheme.textSecondary)
       }
     }
   }
 
+  /// Fills whatever the photo frame is, so the frame alone decides the card height.
   @ViewBuilder
-  private var photoThumb: some View {
-    let photo = Group {
-      if let image = displayImage {
-        Image(uiImage: image)
-          .resizable()
-          .aspectRatio(contentMode: .fill)
-          .frame(width: photoSize, height: photoSize)
-          .clipped()
-          .cornerRadius(AppTheme.smallRadius)
-          .onTapGesture {
-            if deletingProductTime != product.time {
-              HapticsService.shared.select()
-              onPhotoTap(image, product.name)
-            }
-          }
-      } else if isLoadingImage {
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
-          .fill(AppTheme.surfaceAlt)
-          .frame(width: photoSize, height: photoSize)
-          .overlay(
-            ProgressView()
-              .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textSecondary))
-          )
-      } else {
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius)
-          .fill(AppTheme.surfaceAlt)
-          .frame(width: photoSize, height: photoSize)
-          .overlay(
-            Image(systemName: product.needsRemoteFetch ? "arrow.down.circle" : "photo")
-              .foregroundColor(AppTheme.textSecondary)
-          )
-          .onTapGesture {
-            if deletingProductTime != product.time {
-              if product.needsRemoteFetch {
-                HapticsService.shared.select()
-                fetchRemoteImageIfNeeded()
-              } else {
-                let image = product.image ?? remoteImage
-                HapticsService.shared.select()
-                onPhotoTap(image, product.name)
-              }
-            }
-          }
-          .onLongPressGesture {
-            #if DEBUG
-            HapticsService.shared.mediumImpact()
-            runDiagnostic()
-            #endif
-          }
-      }
-    }
-
-    photo.overlay(alignment: .bottomLeading) {
-      if product.healthRating >= 0, deletingProductTime != product.time {
-        HealthRatingRing(
-          rating: product.effectiveHealthRating,
-          color: getHealthRatingColor(rating: product.effectiveHealthRating),
-          size: ratingStickerSize
+  private var photoFill: some View {
+    if let image = displayImage {
+      Image(uiImage: image)
+        .resizable()
+        .scaledToFill()
+    } else if isLoadingImage {
+      AppTheme.surfaceAlt
+        .overlay(
+          ProgressView()
+            .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.textSecondary))
         )
-        .background(Circle().fill(AppTheme.surface.opacity(0.94)))
-        .offset(x: -4, y: 6)
-        .onTapGesture { presentHealthInfo() }
-      }
+    } else {
+      AppTheme.surfaceAlt
+        .overlay(
+          Image(systemName: product.imageId.isEmpty
+            ? "fork.knife"
+            : (product.needsRemoteFetch ? "arrow.down.circle" : "photo"))
+            .font(.system(size: product.imageId.isEmpty ? 28 : 17, weight: .semibold))
+            .foregroundColor(AppTheme.textSecondary)
+        )
     }
-    .padding(.leading, 4)
+  }
+
+  private func photoTapped() {
+    guard deletingProductTime != product.time else { return }
+    if let image = displayImage {
+      HapticsService.shared.select()
+      onPhotoTap(image, product.name)
+    } else if isLoadingImage {
+      return
+    } else if product.needsRemoteFetch {
+      HapticsService.shared.select()
+      fetchRemoteImageIfNeeded()
+    } else {
+      HapticsService.shared.select()
+      onPhotoTap(nil, product.name)
+    }
+  }
+
+  /// Fixed width, but the height stretches to the card so the photo uses the space next to the text.
+  private var photoThumb: some View {
+    Color.clear
+      .frame(width: photoSize)
+      .frame(minHeight: photoSize, maxHeight: photoSize * 1.8)
+      .overlay { photoFill }
+      .appCorner(AppTheme.smallRadius)
+      .contentShape(Rectangle())
+      .onTapGesture { photoTapped() }
+      .onLongPressGesture {
+        #if DEBUG
+        guard displayImage == nil, !isLoadingImage else { return }
+        HapticsService.shared.mediumImpact()
+        runDiagnostic()
+        #endif
+      }
+      .overlay(alignment: .bottomLeading) {
+        if product.healthRating >= 0, deletingProductTime != product.time {
+          HealthRatingRing(
+            rating: product.effectiveHealthRating,
+            color: getHealthRatingColor(rating: product.effectiveHealthRating),
+            size: ratingStickerSize
+          )
+          .background(Circle().fill(AppTheme.surface.opacity(0.94)))
+          .padding(3)
+          .onTapGesture { presentHealthInfo() }
+        }
+      }
+      .padding(.leading, 4)
   }
 
   var body: some View {
-    let scale = dishFontScale
-    HStack(alignment: .top, spacing: 10 * scale) {
+    HStack(alignment: .top, spacing: 10) {
       photoThumb
 
-      VStack(alignment: .leading, spacing: 2 * scale) {
+      VStack(alignment: .leading, spacing: 2) {
         Text(Localization.shared.translateFoodName(product.name))
-          .font(.system(size: 16 * scale, weight: .semibold))
+          .font(.system(size: 16, weight: .semibold))
           .foregroundColor(AppTheme.textPrimary)
           .lineLimit(2)
           .minimumScaleFactor(0.85)
 
-        Text(detailsText)
-          .font(.system(size: 14 * scale))
-          .foregroundColor(AppTheme.textSecondary)
-          .lineLimit(1)
-          .minimumScaleFactor(0.7)
+        HStack(spacing: 6) {
+          Text(detailsText)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .layoutPriority(1)
+          if hasExtras {
+            extrasIconsView
+              .lineLimit(1)
+          }
+        }
+        .font(.system(size: 14))
+        .foregroundColor(AppTheme.textSecondary)
 
         if hasDishMacros {
-          VStack(alignment: .leading, spacing: 2 * scale) {
+          VStack(alignment: .leading, spacing: 2) {
             Text(dishMacrosLine1)
             Text(dishMacrosLine2)
           }
-          .font(.system(size: 13 * scale, weight: .medium, design: .rounded))
+          .font(.system(size: 13, weight: .medium, design: .rounded))
           .foregroundColor(AppTheme.textSecondary)
           .lineLimit(1)
           .minimumScaleFactor(0.7)
           .allowsTightening(true)
         }
 
-        if !extraIngredientNames.isEmpty {
-          FittingIngredientsText(names: extraIngredientNames, pointSize: 13 * scale)
-        }
-
-        if hasExtras {
-          extrasIconsView
-            .font(.system(size: 14 * scale))
+        if !ingredientNames.isEmpty {
+          Text(ingredientNames.joined(separator: ", "))
+            .font(.system(size: 13))
             .foregroundColor(AppTheme.textSecondary)
-            .lineLimit(1)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
       .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -216,18 +227,38 @@ struct ProductRowView: View {
           .scaleEffect(0.8)
           .frame(width: actionIconFrame)
       } else {
-        VStack(spacing: 6 * scale) {
+        VStack(spacing: 4) {
           shareIconButton
           moreOptionsIconButton
           deleteIconButton
         }
+        .appGlassGroup(spacing: 4)
       }
     }
-    .padding(.vertical, 4 * scale)
-    .id(appSettings.fontScale)
+    .fixedSize(horizontal: false, vertical: true)
+    .padding(.vertical, 4)
     .opacity(deletingProductTime == product.time ? 0.6 : 1.0)
     .onAppear {
       fetchRemoteImageIfNeeded()
+    }
+    .onChange(of: product.imageId) { _, _ in
+      fetchRemoteImageIfNeeded()
+    }
+    .sheet(item: $healthPopup, onDismiss: {
+      guard openExplainAfterPopup else { return }
+      openExplainAfterPopup = false
+      DispatchQueue.main.async { showHealthSheet = true }
+    }) { popup in
+      FoodHealthPopup(
+        title: popup.title,
+        description: popup.description,
+        lines: AlertHelper.componentLines(healthSummary: popup.summary),
+        onExplain: { openExplainAfterPopup = true }
+      )
+    }
+    .sheet(isPresented: $showHealthSheet) {
+      DishHealthSheet(product: product)
+        .environmentObject(authService)
     }
   }
 
@@ -250,19 +281,20 @@ struct ProductRowView: View {
       )
     }
     .buttonStyle(.plain)
-    .alert(
-      loc("share.login_required.title", "Login Required"), isPresented: $showShareLoginPrompt
-    ) {
-      Button(loc("common.not_yet", "Not Yet"), role: .cancel) {}
-      Button(loc("login.prompt.confirm", "Login Now")) {
-        AppNavigation.shared.showInPlaceLogin = true
-      }
-    } message: {
-      Text(
-        loc(
-          "share.login_required.message",
-          "Create an account or log in to share food with friends."))
-    }
+    .scaledNotice(
+      loc("share.login_required.title", "Login Required"),
+      isPresented: $showShareLoginPrompt,
+      message: loc(
+        "share.login_required.message",
+        "Create an account or log in to share food with friends."
+      ),
+      actions: [
+        ScaledNoticeAction(title: loc("login.prompt.confirm", "Login Now")) {
+          AppNavigation.shared.showInPlaceLogin = true
+        },
+        ScaledNoticeAction(title: loc("common.not_yet", "Not Yet"), kind: .secondary),
+      ]
+    )
   }
 
   private var moreOptionsIconButton: some View {
@@ -291,19 +323,20 @@ struct ProductRowView: View {
     }
     .buttonStyle(.plain)
     .disabled(onDelete == nil)
-    .alert(
-      loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
-    ) {
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {}
-      Button(loc("common.remove", "Remove"), role: .destructive) {
-        onDelete?()
-      }
-    } message: {
-      Text(
-        loc(
-          "list.delete.confirm.message",
-          "Are you sure you want to delete this food entry? This action cannot be undone."))
-    }
+    .scaledNotice(
+      loc("list.delete.confirm.title", "Delete Food?"),
+      isPresented: $showDeleteConfirmation,
+      message: loc(
+        "list.delete.confirm.message",
+        "Are you sure you want to delete this food entry? This action cannot be undone."
+      ),
+      actions: [
+        ScaledNoticeAction(title: loc("common.remove", "Remove"), kind: .destructive) {
+          onDelete?()
+        },
+        ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary),
+      ]
+    )
   }
 
   private func actionCircle(
@@ -317,9 +350,7 @@ struct ProductRowView: View {
       .foregroundColor(color)
       .offset(y: glyphOffsetY)
       .frame(width: actionIconFrame, height: actionIconFrame, alignment: .center)
-      .background(fill)
-      .clipShape(Circle())
-      .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
+      .appCircleSurface()
   }
 
   private func openPortionMenu() {
@@ -361,30 +392,34 @@ struct ProductRowView: View {
   }
 
   private func presentHealthInfo() {
-    HapticsService.shared.select()
+    if product.healthRating >= 0, AppSettingsService.shared.vibrationEnabled {
+      HapticsService.shared.foodQuality(rating: product.effectiveHealthRating)
+    } else {
+      HapticsService.shared.select()
+    }
 
     if let cached = ProductStorageService.shared.getHealthLevel(time: product.time) {
-      AlertHelper.showHealthLevelInfo(
+      healthPopup = FoodHealthPopupModel(
         title: cached.title,
         description: cached.description,
-        healthSummary: cached.healthSummary
+        summary: cached.healthSummary
       )
       return
     }
 
     GRPCService().getFoodHealthLevel(time: product.time, foodName: product.name) { response in
       DispatchQueue.main.async {
-        if let response = response {
+        if let response {
           ProductStorageService.shared.saveHealthLevel(
             time: product.time,
             title: response.title,
             description: response.description_p,
             healthSummary: response.healthSummary
           )
-          AlertHelper.showHealthLevelInfo(
+          self.healthPopup = FoodHealthPopupModel(
             title: response.title,
             description: response.description_p,
-            healthSummary: response.healthSummary
+            summary: response.healthSummary
           )
         }
       }
@@ -392,20 +427,65 @@ struct ProductRowView: View {
   }
 
   private func fetchRemoteImageIfNeeded() {
-    guard product.image == nil,
-          product.needsRemoteFetch,
-          !isLoadingImage else {
+    guard product.image == nil, remoteImage == nil else { return }
+    imageResolveID += 1
+    let resolveID = imageResolveID
+    if product.imageId.isEmpty {
+      reloadDishImage(attempt: 0, resolveID: resolveID)
       return
     }
+    startPhotoFetch(imageId: product.imageId, resolveID: resolveID)
+  }
 
+  private func startPhotoFetch(imageId: String, resolveID: Int) {
+    guard resolveID == imageResolveID else { return }
     isLoadingImage = true
-    
-    FoodPhotoService.shared.fetchPhoto(imageId: product.imageId) { image in
+    FoodPhotoService.shared.fetchPhoto(imageId: imageId, retry: true) { image in
+      guard resolveID == imageResolveID else { return }
       isLoadingImage = false
-      if let image = image {
+      if let image {
         remoteImage = image
       }
     }
+  }
+
+  private func reloadDishImage(attempt: Int, resolveID: Int) {
+    guard resolveID == imageResolveID else { return }
+    let delays: [TimeInterval] = [1, 2, 4, 8]
+    isLoadingImage = true
+    let apply: ([Product], Bool) -> Void = { list, ok in
+      DispatchQueue.main.async {
+        guard resolveID == self.imageResolveID else { return }
+        let imageId = ok ? (list.first { $0.time == self.product.time }?.imageId ?? "") : ""
+        if !imageId.isEmpty {
+          self.startPhotoFetch(imageId: imageId, resolveID: resolveID)
+        } else if attempt < delays.count {
+          DispatchQueue.main.asyncAfter(deadline: .now() + delays[attempt]) {
+            self.reloadDishImage(attempt: attempt + 1, resolveID: resolveID)
+          }
+        } else {
+          self.isLoadingImage = false
+        }
+      }
+    }
+    if Calendar.current.isDateInToday(Date(timeIntervalSince1970: TimeInterval(product.time) / 1000.0)) {
+      GRPCService().fetchProducts { products, _, _, ok in
+        apply(products, ok)
+      }
+    } else {
+      GRPCService().fetchCustomDateFood(date: dishDayString()) { products, _, _, ok in
+        apply(products, ok)
+      }
+    }
+  }
+
+  private func dishDayString() -> String {
+    let date = Date(timeIntervalSince1970: TimeInterval(product.time) / 1000.0)
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
+    formatter.dateFormat = "dd-MM-yyyy"
+    return formatter.string(from: date)
   }
 
 
@@ -486,30 +566,6 @@ struct ProductRowView: View {
   }
   #endif
 
-  private static func isCoveredByDishName(_ ingredient: String, dish: String) -> Bool {
-    let ingredientWords = tokenWords(ingredient)
-    let dishWords = tokenWords(dish)
-    guard !ingredientWords.isEmpty else { return true }
-    return ingredientWords.allSatisfy { word in
-      dishWords.contains { dishWord in tokensMatch(dishWord, word) }
-    }
-  }
-
-  private static func tokenWords(_ value: String) -> [String] {
-    value
-      .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-      .split { !$0.isLetter && !$0.isNumber }
-      .map(String.init)
-      .filter { $0.count >= 2 }
-  }
-
-  private static func tokensMatch(_ a: String, _ b: String) -> Bool {
-    if a == b { return true }
-    let shortest = min(a.count, b.count)
-    if shortest >= 4 && (a.hasPrefix(b) || b.hasPrefix(a)) { return true }
-    guard abs(a.count - b.count) <= 2, shortest >= 4 else { return false }
-    return a.prefix(3) == b.prefix(3)
-  }
 }
 
 struct HealthRatingRing: View {
@@ -524,68 +580,19 @@ struct HealthRatingRing: View {
         ZStack {
             Circle()
                 .stroke(color.opacity(0.2), lineWidth: lineWidth)
+                .padding(lineWidth / 2)
             Circle()
                 .trim(from: 0, to: CGFloat(progress))
                 .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .padding(lineWidth / 2)
             Text("\(rating)")
-                .font(.system(size: size * 0.48, weight: .bold, design: .rounded))
+                .font(.system(size: size * 0.42, weight: .bold, design: .rounded))
                 .foregroundColor(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, lineWidth + 1)
         }
         .frame(width: size, height: size)
     }
-}
-
-private struct FittingIngredientsText: View {
-  let names: [String]
-  var pointSize: CGFloat = 11
-  private let maxLines = 1
-  @State private var fitted: String = ""
-
-  var body: some View {
-    Text(fitted)
-      .font(.system(size: pointSize))
-      .foregroundColor(AppTheme.textSecondary)
-      .lineLimit(maxLines)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(
-        GeometryReader { geo in
-          Color.clear
-            .onAppear { update(width: geo.size.width) }
-            .onChange(of: geo.size.width) { _, w in update(width: w) }
-        }
-      )
-      .onChange(of: names) { _, _ in fitted = "" }
-      .onChange(of: pointSize) { _, _ in fitted = "" }
-      .accessibilityLabel(names.joined(separator: ", "))
-  }
-
-  private func update(width: CGFloat) {
-    let next = Self.fit(names: names, width: width, maxLines: maxLines, pointSize: pointSize)
-    if next != fitted { fitted = next }
-  }
-
-  private static func fit(names: [String], width: CGFloat, maxLines: Int, pointSize: CGFloat) -> String {
-    guard width > 1, !names.isEmpty else { return "" }
-    let font = UIFont.systemFont(ofSize: pointSize)
-    let maxHeight = font.lineHeight * CGFloat(maxLines) + 1
-    var kept: [String] = []
-    for name in names {
-      let candidate = kept.isEmpty ? name : kept.joined(separator: ", ") + ", " + name
-      let bounds = (candidate as NSString).boundingRect(
-        with: CGSize(width: width, height: .greatestFiniteMagnitude),
-        options: [.usesLineFragmentOrigin, .usesFontLeading],
-        attributes: [.font: font],
-        context: nil
-      )
-      if bounds.height <= maxHeight {
-        kept.append(name)
-      } else if kept.isEmpty {
-        return name
-      } else {
-        break
-      }
-    }
-    return kept.joined(separator: ", ")
-  }
 }

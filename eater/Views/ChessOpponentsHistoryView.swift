@@ -56,16 +56,24 @@ struct ChessOpponentsHistoryView: View {
           }
         }
       }
-      .navigationTitle(Localization.shared.tr("activities.chess.history.title", default: "Chess History"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItem(placement: .principal) {
+          Text(Localization.shared.tr("activities.chess.history.title", default: "Chess History"))
+            .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        ToolbarItem(placement: .topBarTrailing) {
           Button(action: {
             isPresented = false
           }) {
             Text(Localization.shared.tr("common.done", default: "Done"))
               .bold()
+              .lineLimit(1)
           }
+          .fixedSize(horizontal: true, vertical: false)
         }
       }
       .onAppear {
@@ -101,14 +109,15 @@ struct ChessOpponentsHistoryView: View {
       } else {
         List {
           ForEach(parsedOpponents, id: \.email) { opponent in
-            HStack {
+            HStack(alignment: .center, spacing: 8) {
               VStack(alignment: .leading, spacing: 4) {
                 Text(opponent.email)
                   .font(.headline)
                   .foregroundColor(AppTheme.textPrimary)
+                  .lineLimit(2)
+                  .minimumScaleFactor(0.7)
               }
-              
-              Spacer()
+              .frame(maxWidth: .infinity, alignment: .leading)
               
               HStack(spacing: 12) {
                 VStack(spacing: 0) {
@@ -199,31 +208,36 @@ struct ChessOpponentsHistoryView: View {
       icon = "minus.circle.fill"
     }
     
-    return HStack {
+    return HStack(alignment: .top, spacing: 8) {
       Image(systemName: icon)
-        .font(.system(size: 24))
+        .font(.system(size: 22))
         .foregroundColor(color)
-        .frame(width: 32)
+        .frame(width: 28)
       
       VStack(alignment: .leading, spacing: 4) {
         Text(opponentName)
           .font(.headline)
           .foregroundColor(AppTheme.textPrimary)
+          .lineLimit(2)
+          .minimumScaleFactor(0.7)
         
         Text("\(dateStr) • \(timeStr)")
           .font(.caption)
           .foregroundColor(AppTheme.textSecondary)
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
       }
-      
-      Spacer()
+      .frame(maxWidth: .infinity, alignment: .leading)
       
       Text(result.uppercased())
         .font(.subheadline.bold())
         .foregroundColor(color)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(color.opacity(0.1))
-        .cornerRadius(8)
+        .appCorner(AppTheme.tinyRadius)
     }
     .padding(.vertical, 4)
     .listRowBackground(AppTheme.surface)

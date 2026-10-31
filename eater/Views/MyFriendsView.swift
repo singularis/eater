@@ -31,6 +31,8 @@ struct MyFriendsView: View {
               .multilineTextAlignment(.center)
               .padding(.horizontal, 40)
 
+            friendsExplanation
+
             Button(action: { showAddFriends = true }) {
               Text(loc("friends.add", "Add Friend"))
                 .font(.headline)
@@ -38,12 +40,15 @@ struct MyFriendsView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(AppTheme.accent)
-                .cornerRadius(10)
+                .appCorner(AppTheme.smallRadius)
             }
           }
         } else {
           ScrollView {
             VStack(spacing: 12) {
+              friendsExplanation
+                .padding(.horizontal)
+
               ForEach(friends, id: \.email) { friend in
                 friendRow(friend)
               }
@@ -66,8 +71,7 @@ struct MyFriendsView: View {
           }
         }
       }
-      .navigationTitle(loc("friends.list.title", "My friends"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("friends.list.title", "My friends"))
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
           Button(action: { showAddFriends = true }) {
@@ -86,9 +90,23 @@ struct MyFriendsView: View {
       .sheet(isPresented: $showAddFriends) {
         AddFriendsView(isPresented: $showAddFriends)
           .onDisappear { fetchFriends() }
+          .appInterfaceScale()
       }
     }
     .onAppear { fetchFriends() }
+  }
+
+  private var friendsExplanation: some View {
+    Text(loc(
+      "friends.list.explain",
+      "Tap Add Friend to add someone. You can share food with them later."
+    ))
+    .font(.subheadline)
+    .foregroundColor(AppTheme.textSecondary)
+    .fixedSize(horizontal: false, vertical: true)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .appSurface(cornerRadius: AppTheme.cornerRadius)
   }
 
   private func friendRow(_ friend: (email: String, nickname: String)) -> some View {
@@ -113,7 +131,7 @@ struct MyFriendsView: View {
     }
     .padding()
     .background(AppTheme.surface)
-    .cornerRadius(12)
+    .appCorner(AppTheme.smallRadius)
   }
 
   private func fetchFriends() {

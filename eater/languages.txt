@@ -25,6 +25,7 @@ Maltese
 Dutch
 Polish
 Portuguese
+Portuguese (Brazil)
 Romanian
 Slovak
 Slovene (Slovenian)

@@ -1,11 +1,16 @@
 import SwiftUI
 
 struct HealthDisclaimerView: View {
-  /// Today's (or currently viewed date's) average health score, matching the ring
-  /// shown in the top bar. Nil when no rated food has been logged yet.
+  /// Stored day score from the server. Nil until a row exists. The phone does not average dishes.
   var todayHealthScore: (score: Int, color: Color)? = nil
+  var dayISO: String = ""
+  var newestDishTime: Int64 = 0
+  var userEmail: String = ""
+  var scoreFailed: Bool = false
 
   @Environment(\.dismiss) private var dismiss
+  @State private var explainText = ""
+  @State private var explaining = false
 
   private var appLocale: Locale { Locale(identifier: LanguageService.shared.currentCode) }
   private var lastUpdatedText: String {
@@ -14,6 +19,19 @@ struct HealthDisclaimerView: View {
     df.dateStyle = .medium
     df.timeStyle = .none
     return loc("disc.updated", "Last Updated:") + " " + df.string(from: Date())
+  }
+
+  /// "Today", or the weekday and date when a past day is open.
+  private var scoreDayText: String {
+    let f = DateFormatter()
+    f.locale = Locale(identifier: "en_US_POSIX")
+    f.calendar = Calendar.current
+    f.timeZone = TimeZone.current
+    f.dateFormat = "yyyy-MM-dd"
+    guard let day = f.date(from: dayISO), !Calendar.current.isDateInToday(day) else {
+      return loc("health.score.today_label", "Today")
+    }
+    return AppNavigation.dayLabel(for: day)
   }
 
   private func scoreBandLabel(_ score: Int) -> String {
@@ -27,19 +45,13 @@ struct HealthDisclaimerView: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       ZStack {
         AppTheme.backgroundGradient.edgesIgnoringSafeArea(.all)
         ScrollView {
         VStack(alignment: .leading, spacing: 20) {
-          Text(loc("disc.title", "Health Information Disclaimer"))
-            .font(.title)
-            .fontWeight(.bold)
-            .foregroundColor(AppTheme.textPrimary)
-            .padding(.bottom, 10)
-
-          Group {
-            Text(loc("health.score.section.title", "Your Health Score"))
+          VStack(alignment: .leading, spacing: 16) {
+            Text(loc("health.score.day_title", "Daily food score"))
               .font(.headline)
               .fontWeight(.semibold)
               .foregroundColor(AppTheme.textPrimary)
@@ -60,7 +72,7 @@ struct HealthDisclaimerView: View {
                 .frame(width: 56, height: 56)
 
                 VStack(alignment: .leading, spacing: 2) {
-                  Text(loc("health.score.value.label", "Today's Score"))
+                  Text(scoreDayText)
                     .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                   Text(scoreBandLabel(today.score))
@@ -72,27 +84,68 @@ struct HealthDisclaimerView: View {
                 Image(systemName: "heart.text.square")
                   .font(.system(size: 32))
                   .foregroundColor(AppTheme.textSecondary.opacity(0.6))
-                Text(loc("health.score.none", "No rated food logged yet today."))
+                Text(loc(
+                  scoreFailed ? "health.score.unavailable" : "health.score.none",
+                  scoreFailed
+                    ? "Sorry, we could not calculate this score."
+                    : "No score for this day yet."
+                ))
                   .font(.subheadline)
                   .foregroundColor(AppTheme.textSecondary)
               }
             }
 
+            Text(loc(
+              "health.score.weighs",
+              "This score weighs how much of each meal, not how many meals."
+            ))
+            .font(.subheadline)
+            .foregroundColor(AppTheme.textSecondary)
+
+            Button(action: explainDay) {
+              Text(loc("health.score.explain", "Explain"))
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(explaining)
+
+            if explaining {
+              HStack(spacing: 8) {
+                ProgressView()
+                Text(loc("health.score.explaining", "Explaining your food score"))
+                  .font(.subheadline)
+                  .foregroundColor(AppTheme.textSecondary)
+              }
+            }
+
+            if !explainText.isEmpty {
+              Text(explainText)
+                .font(.body)
+                .foregroundColor(AppTheme.textPrimary)
+            }
+
             Text(
               loc(
                 "health.score.explanation",
-                "This is the average health rating of everything you've logged today. Each food item gets a 0-100 score from our LLM's nutritional analysis \u{2014} based on ingredients, processing level and macro balance \u{2014} as soon as you scan it. This number is the average across all rated items for the day and updates automatically as you add or remove food. Tap any food's ring on its card to see that item's individual score and recommendation."
+                "Each meal gets its own 0-100 score from its ingredients. The number above weighs how much of each meal you ate. Tap a meal to see that meal's score."
               )
             )
             .font(.body)
             .foregroundColor(AppTheme.textPrimary)
           }
+          .padding(16)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .background(AppTheme.surface)
+          .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+
+          Text(loc("disc.title", "Health Information Disclaimer"))
+            .font(.caption.weight(.semibold))
+            .foregroundColor(AppTheme.textSecondary)
+            .padding(.top, 28)
 
           Group {
             Text(loc("disc.section.notice", "Important Notice"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(
               loc(
@@ -100,15 +153,14 @@ struct HealthDisclaimerView: View {
                 "This app provides general nutritional information and dietary suggestions for educational purposes only. The information is not intended to replace professional medical advice, diagnosis, or treatment."
               )
             )
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Group {
             Text(loc("disc.section.medical", "Medical Disclaimer"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(
               loc(
@@ -116,15 +168,14 @@ struct HealthDisclaimerView: View {
                 "Always consult with a qualified healthcare provider before making any changes to your diet or nutrition plan, especially if you have medical conditions, allergies, or dietary restrictions."
               )
             )
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Group {
             Text(loc("disc.section.sources", "Data Sources & Citations"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 12) {
               CitationView(
@@ -192,9 +243,8 @@ struct HealthDisclaimerView: View {
 
           Group {
             Text(loc("disc.section.accuracy", "Accuracy Disclaimer"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             Text(
               loc(
@@ -202,15 +252,14 @@ struct HealthDisclaimerView: View {
                 "Nutritional estimates are based on visual analysis and may not be completely accurate. Actual nutritional content may vary based on preparation methods, portion sizes, and ingredient variations."
               )
             )
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Group {
             Text(loc("disc.section.features", "App Features & Limitations"))
-              .font(.headline)
-              .fontWeight(.semibold)
-              .foregroundColor(AppTheme.textPrimary)
+              .font(.caption.weight(.semibold))
+              .foregroundColor(AppTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 8) {
               Text(
@@ -240,8 +289,8 @@ struct HealthDisclaimerView: View {
                   "• Personalized Plans: Optional BMR-based calorie recommendations using user health data"
                 ))
             }
-            .font(.body)
-            .foregroundColor(AppTheme.textPrimary)
+            .font(.caption)
+            .foregroundColor(AppTheme.textSecondary)
           }
 
           Text(lastUpdatedText)
@@ -252,8 +301,8 @@ struct HealthDisclaimerView: View {
         .padding()
         }
       }
-      .navigationTitle(loc("disc.nav", "Health Information"))
-      .navigationBarTitleDisplayMode(.inline)
+      .onAppear(perform: showCachedExplanation)
+      .scaledNavTitle(loc("health.score.section.title", "Your Health Score"))
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(loc("common.done", "Done")) {
@@ -262,6 +311,45 @@ struct HealthDisclaimerView: View {
           .foregroundColor(AppTheme.textPrimary)
         }
       }
+    }
+  }
+
+  private func showCachedExplanation() {
+    guard
+      let entry = FoodScoreExplainStore.shared.dayEntry(email: userEmail, day: dayISO),
+      entry.basisDishTime == newestDishTime
+    else {
+      explainText = ""
+      return
+    }
+    explainText = entry.text
+  }
+
+  private func explainDay() {
+    if let entry = FoodScoreExplainStore.shared.dayEntry(email: userEmail, day: dayISO),
+      entry.basisDishTime == newestDishTime
+    {
+      explainText = entry.text
+      return
+    }
+    explaining = true
+    explainText = ""
+    GRPCService().explainFoodScore(
+      userName: userEmail,
+      day: dayISO,
+      languageCode: LanguageService.shared.currentCode,
+      dishTime: 0
+    ) { result in
+      explaining = false
+      guard let result else { return }
+      let basis = result.basisDishTime != 0 ? result.basisDishTime : newestDishTime
+      FoodScoreExplainStore.shared.saveDay(
+        email: userEmail,
+        day: dayISO,
+        text: result.text,
+        basisDishTime: basis
+      )
+      explainText = result.text
     }
   }
 }
@@ -278,13 +366,12 @@ struct CitationView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(loc(titleKey, titleFallback))
-        .font(.subheadline)
-        .fontWeight(.medium)
-        .foregroundColor(AppTheme.textPrimary)
+        .font(.caption.weight(.medium))
+        .foregroundColor(AppTheme.textSecondary)
 
       Text(loc(sourceKey, sourceFallback))
-        .font(.caption)
-        .foregroundColor(AppTheme.accent)
+        .font(.caption2)
+        .foregroundColor(AppTheme.textSecondary)
         .onTapGesture {
           if let link = URL(string: urlString) {
             UIApplication.shared.open(link)

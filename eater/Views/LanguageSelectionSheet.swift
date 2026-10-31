@@ -32,7 +32,7 @@ struct LanguageSelectionSheet: View {
         }
         .scrollContentBackground(.hidden)
       }
-      .navigationTitle(loc("profile.language", "Language"))
+      .scaledNavTitle(loc("profile.language", "Language"))
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
           Button(loc("common.close", "Close")) { isPresented = false }

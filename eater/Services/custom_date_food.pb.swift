@@ -89,6 +89,9 @@ struct Eater_Dish: Sendable {
   /// Clears the value of `contains`. Subsequent reads from it will return its default value.
   mutating func clearContains() {self._contains = nil}
 
+  /// other short dish names from the same analysis, for "Try manually"
+  var alternativeNames: [String] = []
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -219,7 +222,7 @@ extension Eater_CustomDateFoodResponse: SwiftProtobuf.Message, SwiftProtobuf._Me
 
 extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".Dish"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}time\0\u{3}dish_name\0\u{3}estimated_avg_calories\0\u{1}ingredients\0\u{3}total_avg_weight\0\u{3}health_rating\0\u{3}image_id\0\u{1}contains\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}time\0\u{3}dish_name\0\u{3}estimated_avg_calories\0\u{1}ingredients\0\u{3}total_avg_weight\0\u{3}health_rating\0\u{3}image_id\0\u{1}contains\0\u{3}alternative_names\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -235,12 +238,17 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.healthRating) }()
       case 7: try { try decoder.decodeSingularStringField(value: &self.imageID) }()
       case 8: try { try decoder.decodeSingularMessageField(value: &self._contains) }()
+      case 9: try { try decoder.decodeRepeatedStringField(value: &self.alternativeNames) }()
       default: break
       }
     }
   }
 
   func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.time != 0 {
       try visitor.visitSingularInt64Field(value: self.time, fieldNumber: 1)
     }
@@ -265,6 +273,9 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
     try { if let v = self._contains {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
     } }()
+    if !self.alternativeNames.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.alternativeNames, fieldNumber: 9)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -277,6 +288,7 @@ extension Eater_Dish: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
     if lhs.healthRating != rhs.healthRating {return false}
     if lhs.imageID != rhs.imageID {return false}
     if lhs._contains != rhs._contains {return false}
+    if lhs.alternativeNames != rhs.alternativeNames {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

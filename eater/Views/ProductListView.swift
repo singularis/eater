@@ -81,8 +81,7 @@ private struct FoodListRow<Content: View>: View {
       }
       .foregroundColor(.white)
       .frame(width: actionSize, height: actionSize)
-      .background(Color.red)
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+      .appTintedGlass(AppTheme.danger)
     }
     .buttonStyle(.plain)
     .opacity(Double(isDeleteZoneActive ? 1 : (deleteRevealProgress / 0.25)))
@@ -106,8 +105,7 @@ private struct FoodListRow<Content: View>: View {
       }
       .foregroundColor(.white)
       .frame(width: actionSize, height: actionSize)
-      .background(AppTheme.accent)
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
+      .appTintedGlass(AppTheme.accent)
     }
     .buttonStyle(.plain)
     .opacity(Double(optionsRevealProgress))
@@ -159,21 +157,22 @@ private struct FoodListRow<Content: View>: View {
         )
     }
     .clipped()
-    .alert(
-      loc("list.delete.confirm.title", "Delete Food?"), isPresented: $showDeleteConfirmation
-    ) {
-      Button(loc("common.cancel", "Cancel"), role: .cancel) {
-        cancelDelete()
-      }
-      Button(deleteLabel, role: .destructive) {
-        confirmDelete()
-      }
-    } message: {
-      Text(
-        loc(
-          "list.delete.confirm.message",
-          "Are you sure you want to delete this food entry? This action cannot be undone."))
-    }
+    .scaledNotice(
+      loc("list.delete.confirm.title", "Delete Food?"),
+      isPresented: $showDeleteConfirmation,
+      message: loc(
+        "list.delete.confirm.message",
+        "Are you sure you want to delete this food entry? This action cannot be undone."
+      ),
+      actions: [
+        ScaledNoticeAction(title: deleteLabel, kind: .destructive) {
+          confirmDelete()
+        },
+        ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary) {
+          cancelDelete()
+        },
+      ]
+    )
   }
 }
 
@@ -190,7 +189,6 @@ struct ProductListView: View {
   let deletingProductTime: Int64?
   let onShareSuccess: () -> Void
 
-  @ObservedObject private var appSettings = AppSettingsService.shared
   private static let swipeOptionsHintKey = "hasSeenSwipeOptionsHint"
   @State private var showSwipeOptionsHintBanner = false
 
@@ -308,10 +306,10 @@ struct ProductListView: View {
                   onDelete: { onDelete(product.time) }
                 )
               }
-              .id("\(product.time)-\(appSettings.fontScale)")
+              .id("\(product.time)")
               .listRowBackground(Color.clear)
               .listRowSeparatorTint(AppTheme.textSecondary.opacity(0.3))
-              .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
+              .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
             }
           }
           .listRowSpacing(0)
@@ -332,7 +330,6 @@ struct ProductListView: View {
 
           if showSwipeOptionsHintBanner {
             SwipeOptionsHintBanner(onDismiss: dismissSwipeOptionsHint)
-              .padding(.horizontal, 16)
               .padding(.top, 8)
               .transition(.move(edge: .top).combined(with: .opacity))
               .zIndex(1)
@@ -368,9 +365,9 @@ private struct SwipeOptionsHintBanner: View {
       }
       .buttonStyle(.plain)
     }
-    .padding(.horizontal, 14)
-    .padding(.vertical, 10)
-    .cardContainer(padding: 0)
+    .padding(.horizontal, 12)
+    .padding(.vertical, 8)
+    .appSurface(cornerRadius: AppTheme.smallRadius)
     .onTapGesture {
       onDismiss()
     }

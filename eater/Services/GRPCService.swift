@@ -2,6 +2,17 @@ import Foundation
 import SwiftProtobuf
 import UIKit
 
+struct DayFoodScore {
+  var hasScore: Bool
+  var score: Int
+  var dishTime: Int64
+}
+
+struct FoodScoreExplanation {
+  var text: String
+  var basisDishTime: Int64
+}
+
 enum StatisticsRangeFetchResult {
   case days([DailyStatistics])
   /// Token missing, bad, or expired. JSON body, not proto. Re-auth; do not fan out.
@@ -106,7 +117,8 @@ class GRPCService {
             proteins: dish.contains.proteins,
             fats: dish.contains.fats,
             carbohydrates: dish.contains.carbohydrates,
-            sugar: dish.contains.sugar
+            sugar: dish.contains.sugar,
+            alternativeNames: dish.alternativeNames
           )
         }
         let remainingCalories = Int(todayFood.totalForDay.totalCalories)
@@ -241,6 +253,87 @@ class GRPCService {
     }
   }
 
+  /// Completes with success and the dish name the server saved ("" when the server does not send it).
+  func sendFoodText(
+    text: String, timestampMillis: Int64? = nil, completion finish: @escaping (Bool, String) -> Void
+  ) {
+    let completion: (Bool) -> Void = { finish($0, "") }
+    let timestamp: String
+    if let timestampMillis = timestampMillis {
+      let date = Date(timeIntervalSince1970: TimeInterval(timestampMillis) / 1000)
+      timestamp = ISO8601DateFormatter().string(from: date)
+    } else {
+      timestamp = ISO8601DateFormatter().string(from: Date())
+    }
+
+    var foodText = Eater_FoodTextMessage()
+    foodText.time = timestamp
+    foodText.text = text
+
+    do {
+      let serializedData = try foodText.serializedData()
+      guard
+        var request = createRequest(
+          endpoint: "eater_receive_text", httpMethod: "POST", body: serializedData, timeout: 70.0)
+      else {
+        completion(false)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
+        if error != nil {
+          DispatchQueue.main.async {
+            AlertHelper.showAlert(
+              title: loc("error.network.title", "Connection Error"),
+              message: loc(
+                "error.network.food_timeout",
+                "We are sorry. Network connection. Please try later. And eat healthy food!")
+            )
+          }
+          completion(false)
+          return
+        }
+
+        guard let http = response as? HTTPURLResponse else {
+          completion(false)
+          return
+        }
+
+        if !(200..<300).contains(http.statusCode),
+          Self.presentDailyLimitIfNeeded(data: data, statusCode: http.statusCode)
+        {
+          completion(false)
+          return
+        }
+
+        if let data = data, let parsed = try? Eater_FoodTextResponse(serializedBytes: data) {
+          if parsed.success {
+            finish(true, parsed.dishName)
+            return
+          }
+          DispatchQueue.main.async {
+            Self.presentFoodTextError(parsed)
+          }
+          completion(false)
+          return
+        }
+
+        DispatchQueue.main.async {
+          AlertHelper.showAlert(
+            title: loc("error.network.title", "Connection Error"),
+            message: loc(
+              "error.network.food_timeout",
+              "We are sorry. Network connection. Please try later. And eat healthy food!")
+          )
+        }
+        completion(false)
+      }
+    } catch {
+      completion(false)
+    }
+  }
+
   func deleteFood(time: Int64, completion: @escaping (Bool) -> Void) {
     var deleteFoodRequest = Eater_DeleteFoodRequest()
     deleteFoodRequest.time = time
@@ -326,6 +419,107 @@ class GRPCService {
       }
     } catch {
       DispatchQueue.main.async { completion("") }
+    }
+  }
+
+  func getFoodScore(userName: String, day: String, completion: @escaping (DayFoodScore?) -> Void) {
+    var scoreRequest = Eater_FoodScoreRequest()
+    scoreRequest.userName = userName
+    scoreRequest.day = day
+
+    let finish: (DayFoodScore?) -> Void = { result in
+      DispatchQueue.main.async { completion(result) }
+    }
+
+    do {
+      let requestBody = try scoreRequest.serializedData()
+      guard
+        var request = createRequest(
+          endpoint: "get_food_score", httpMethod: "POST", body: requestBody)
+      else {
+        finish(nil)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+      sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+        if error != nil {
+          finish(nil)
+          return
+        }
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data = data else {
+          finish(nil)
+          return
+        }
+        do {
+          let decoded = try Eater_FoodScoreResponse(serializedBytes: data)
+          finish(
+            DayFoodScore(
+              hasScore: decoded.hasScore_p,
+              score: Int(decoded.score),
+              dishTime: decoded.dishTime
+            )
+          )
+        } catch {
+          finish(nil)
+        }
+      }
+    } catch {
+      finish(nil)
+    }
+  }
+
+  func explainFoodScore(
+    userName: String,
+    day: String,
+    languageCode: String,
+    dishTime: Int64,
+    completion: @escaping (FoodScoreExplanation?) -> Void
+  ) {
+    var explainRequest = Eater_ExplainFoodScoreRequest()
+    explainRequest.userName = userName
+    explainRequest.day = day
+    explainRequest.languageCode = languageCode
+    explainRequest.dishTime = dishTime
+
+    let finish: (FoodScoreExplanation?) -> Void = { result in
+      DispatchQueue.main.async { completion(result) }
+    }
+
+    do {
+      let requestBody = try explainRequest.serializedData()
+      guard
+        var request = createRequest(
+          endpoint: "explain_food_score", httpMethod: "POST", body: requestBody)
+      else {
+        finish(nil)
+        return
+      }
+      request.addValue("application/protobuf", forHTTPHeaderField: "Content-Type")
+
+      sendRequest(request: request, retriesLeft: 0) { data, response, error in
+        if error != nil {
+          finish(nil)
+          return
+        }
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data = data else {
+          finish(nil)
+          return
+        }
+        do {
+          let decoded = try Eater_ExplainFoodScoreResponse(serializedBytes: data)
+          let text = decoded.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
+          guard !text.isEmpty else {
+            finish(nil)
+            return
+          }
+          finish(FoodScoreExplanation(text: text, basisDishTime: decoded.basisDishTime))
+        } catch {
+          finish(nil)
+        }
+      }
+    } catch {
+      finish(nil)
     }
   }
 
@@ -448,14 +642,14 @@ class GRPCService {
     }
 
     guard var request = createRequest(
-      endpoint: "suggest_dish_names", httpMethod: "POST", body: body)
+      endpoint: "suggest_dish_names", httpMethod: "POST", body: body, timeout: 20)
     else {
       completion([])
       return
     }
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-    sendRequest(request: request, retriesLeft: maxRetries) { data, response, error in
+    sendRequest(request: request, retriesLeft: 0) { data, response, error in
       guard error == nil,
         let response = response as? HTTPURLResponse,
         response.statusCode >= 200, response.statusCode < 300,
@@ -565,7 +759,8 @@ class GRPCService {
               proteins: dish.contains.proteins,
               fats: dish.contains.fats,
               carbohydrates: dish.contains.carbohydrates,
-              sugar: dish.contains.sugar
+              sugar: dish.contains.sugar,
+              alternativeNames: dish.alternativeNames
             )
           }
           let remainingCalories = Int(customDateFood.totalForDay.totalCalories)
@@ -1101,6 +1296,46 @@ class GRPCService {
       hasData: true,
       averageHealthScore: health
     )
+  }
+
+  private static func presentFoodTextError(_ response: Eater_FoodTextResponse) {
+    let blockedFallback = loc(
+      "type_food.blocked",
+      "This doesn't look like food. Please type a meal, like rice and vegetables 200g. Tip: fill half your plate with vegetables."
+    )
+    let foodFallback = loc(
+      "error.food.msg",
+      "We couldn't identify the food in your photo. Please try taking another photo with better lighting and make sure the food is clearly visible."
+    )
+    let title: String
+    let message: String
+    switch response.errorCode {
+    case "not_food":
+      title = loc("error.food.title", "Food Not Recognized")
+      let server = response.message.trimmingCharacters(in: .whitespacesAndNewlines)
+      message = server.isEmpty ? foodFallback : response.message
+    case "blocked":
+      title = loc("type_food.title", "Type food")
+      message = blockedFallback
+    case "empty":
+      title = loc("type_food.title", "Type food")
+      message = loc("type_food.empty", "Type a meal first.")
+    case "too_long":
+      title = loc("type_food.title", "Type food")
+      message = loc("type_food.too_long", "That's too long. Keep it under 200 characters.")
+    case "timeout":
+      title = loc("type_food.title", "Type food")
+      message = loc("type_food.timeout", "That took too long. Please try again.")
+    default:
+      title = loc("type_food.title", "Type food")
+      let server = response.message.trimmingCharacters(in: .whitespacesAndNewlines)
+      message = server.isEmpty
+        ? loc(
+          "error.network.food_timeout",
+          "We are sorry. Network connection. Please try later. And eat healthy food!")
+        : response.message
+    }
+    AlertHelper.showAlert(title: title, message: message, haptic: .error)
   }
 
   /// Returns true if a daily-quota alert was shown (caller should skip other error UI).
@@ -1668,58 +1903,7 @@ class GRPCService {
       }
     }
   }
-  
-  /// Get chess statistics for current user
-  func getChessStats(
-    userEmail: String,
-    opponentEmail: String? = nil,
-    completion: @escaping (Bool, String?, String?, String?) -> Void
-  ) {
-    var requestDict: [String: Any] = ["user_email": userEmail]
-    if let opponent = opponentEmail {
-      requestDict["opponent_email"] = opponent
-    }
-    
-    guard let body = try? JSONSerialization.data(withJSONObject: requestDict) else {
-      completion(false, nil, nil, nil)
-      return
-    }
-    
-    guard var urlRequest = createRequest(endpoint: "autocomplete/get_chess_stats", httpMethod: "POST", body: body) else {
-      completion(false, nil, nil, nil)
-      return
-    }
-    
-    urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    
-    sendRequest(request: urlRequest, retriesLeft: 3) { data, response, error in
-      if error != nil {
-        completion(false, nil, nil, nil)
-        return
-      }
-      
-      guard let data = data else {
-        completion(false, nil, nil, nil)
-        return
-      }
-      
-      do {
-        guard let responseDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-          completion(false, nil, nil, nil)
-          return
-        }
-        
-        let score = responseDict["score"] as? String ?? "0:0"
-        let opponentName = responseDict["opponent_name"] as? String
-        let lastGameDate = responseDict["last_game_date"] as? String
-        
-        completion(true, score, opponentName, lastGameDate)
-      } catch {
-        completion(false, nil, nil, nil)
-      }
-    }
-  }
-  
+
   /// Get chess history (list of past games)
   /// - Parameters:
   ///   - limit: Number of games to fetch (default 50)

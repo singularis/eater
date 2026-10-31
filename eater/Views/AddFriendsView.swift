@@ -23,7 +23,7 @@ struct AddFriendsView: View {
           .autocorrectionDisabled(true)
           .padding(12)
           .background(AppTheme.surface)
-          .cornerRadius(AppTheme.smallRadius)
+          .appCorner(AppTheme.smallRadius)
           .onChange(of: query) { _, newValue in
             handleQueryChange(newValue)
           }
@@ -105,21 +105,29 @@ struct AddFriendsView: View {
               }
               .padding(20)
               .background(AppTheme.surface)
-              .cornerRadius(AppTheme.smallRadius)
+              .appCorner(AppTheme.smallRadius)
             }
           }
         }
       )
-      .navigationTitle(loc("nav.addfriends", "Add Friends"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
+        ToolbarItem(placement: .principal) {
+          Text(loc("nav.addfriends", "Add Friends"))
+            .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        ToolbarItem(placement: .topBarTrailing) {
           Button(loc("common.close", "Close")) {
             HapticsService.shared.select()
             isPresented = false
           }
-            .foregroundColor(AppTheme.textPrimary)
-            .disabled(isAddingFriend)
+          .lineLimit(1)
+          .fixedSize(horizontal: true, vertical: false)
+          .foregroundColor(AppTheme.textPrimary)
+          .disabled(isAddingFriend)
         }
       }
       .onAppear { setupSocket() }

@@ -227,50 +227,72 @@ class ThemeService: ObservableObject {
   
   func playSound(for action: String) {
     guard soundEnabled else { return }
-    
-    let soundName: String?
-    switch (currentMascot, action) {
-    // HAPPY SOUNDS (good food, activities, wins)
-    case (.cat, "success"), (.cat, "happy"), (.cat, "good_food"), (.cat, "activity"):
-      soundName = "cat_happy"
-    case (.dog, "success"), (.dog, "happy"), (.dog, "good_food"), (.dog, "activity"):
-      soundName = "dog_happy"
-    
-    // ANGRY/NEGATIVE SOUNDS (bad food, alcohol, sugar, loss)
-    case (.cat, "error"), (.cat, "angry"), (.cat, "bad_food"), (.cat, "sugar"), (.cat, "alcohol"), (.cat, "loss"):
-      soundName = "cat_hiss"
-    case (.dog, "error"), (.dog, "angry"), (.dog, "bad_food"), (.dog, "sugar"), (.dog, "alcohol"), (.dog, "loss"):
-      soundName = "dog_growl"
-    
-    default:
-      soundName = nil  // No sound for default theme
+    guard let soundName = Self.soundFileName(mascot: currentMascot, action: action) else { return }
+
+    // Session changes and playback stay off the main thread. The sync
+    // setCategory/setActive/play calls were hanging the UI.
+    Task.detached {
+      guard let player = ThemeService.makePlayer(named: soundName) else { return }
+      await MainActor.run { [weak self] in
+        self?.audioPlayer = player
+      }
     }
-    
-    guard let soundName = soundName else { return }
-    
-    // Try to play sound - support multiple formats
-    let extensions = ["m4a", "mp3", "wav"]
-    for ext in extensions {
-      if let soundURL = Bundle.main.url(forResource: soundName, withExtension: ext) {
-        do {
-          audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-          audioPlayer?.volume = 0.5
-          audioPlayer?.play()
-          return
-        } catch {
-          print("Failed to play sound \(soundName).\(ext): \(error)")
-        }
+  }
+
+  private static func soundFileName(mascot: AppMascot, action: String) -> String? {
+    switch (mascot, action) {
+    case (.cat, "success"), (.cat, "happy"), (.cat, "good_food"), (.cat, "activity"):
+      return "cat_happy"
+    case (.dog, "success"), (.dog, "happy"), (.dog, "good_food"), (.dog, "activity"):
+      return "dog_happy"
+    case (.cat, "error"), (.cat, "angry"), (.cat, "bad_food"), (.cat, "sugar"), (.cat, "alcohol"), (.cat, "loss"):
+      return "cat_hiss"
+    case (.dog, "error"), (.dog, "angry"), (.dog, "bad_food"), (.dog, "sugar"), (.dog, "alcohol"), (.dog, "loss"):
+      return "dog_growl"
+    default:
+      return nil
+    }
+  }
+
+  nonisolated private static func makePlayer(named soundName: String) -> AVAudioPlayer? {
+    let session = AVAudioSession.sharedInstance()
+    do {
+      // Ambient mixes with other audio and leaves the food buzz alone.
+      // This runs off the main thread, so the sync session calls do not hang the UI.
+      try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+      try session.setActive(true)
+    } catch {
+      print("Failed to activate audio session: \(error)")
+      return nil
+    }
+
+    for ext in ["m4a", "mp3", "wav"] {
+      guard let soundURL = Bundle.main.url(forResource: soundName, withExtension: ext) else { continue }
+      do {
+        let player = try AVAudioPlayer(contentsOf: soundURL)
+        player.volume = 0.5
+        player.prepareToPlay()
+        player.play()
+        return player
+      } catch {
+        print("Failed to play sound \(soundName).\(ext): \(error)")
       }
     }
     print("⚠️ Sound file not found: \(soundName) (tried: m4a, mp3, wav)")
+    return nil
   }
   
-  // Play sound based on health rating
-  func playSoundForFood(healthRating: Int) {
-    if healthRating <= 50 {
-      playSound(for: "bad_food")
-    } else {
-      playSound(for: "good_food")
+  /// Quality buzz, then the pet sound. Waits until at least 0.4s after the upload tap.
+  func playSoundForFood(healthRating: Int, uploadTap: Date = Date()) {
+    let wait = max(0, 0.4 - Date().timeIntervalSince(uploadTap))
+    DispatchQueue.main.asyncAfter(deadline: .now() + wait) { [weak self] in
+      HapticsService.shared.foodQuality(rating: healthRating)
+      guard let self else { return }
+      if healthRating <= 50 {
+        self.playSound(for: "bad_food")
+      } else {
+        self.playSound(for: "good_food")
+      }
     }
   }
   
@@ -282,17 +304,6 @@ class ThemeService: ObservableObject {
   // Get mascot image for specific state
   func getMascotImage(for state: MascotState) -> String? {
     return currentMascot.image(for: state)
-  }
-  
-  // Get mascot image based on action
-  func getMascotImageForAction(_ action: String) -> String? {
-    switch action {
-    case "gym", "activity_recorded": return getMascotImage(for: .gym)
-    case "alcohol": return getMascotImage(for: .alcohol)
-    case "bad_food": return getMascotImage(for: .badFood)
-    case "sugar", "loss", "error", "angry": return getMascotImage(for: .angry)
-    default: return getMascotImage(for: .happy)
-    }
   }
 
   /// Returns `count` unique preview images for the current mascot.
