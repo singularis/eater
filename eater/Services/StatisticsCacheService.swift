@@ -36,19 +36,6 @@ class StatisticsCacheService {
     saveCachedData(cachedData)
   }
 
-  func getMissingDates(from dateStrings: [String]) -> [String] {
-    let cachedData = getCachedData() ?? [:]
-
-    return dateStrings.filter { dateString in
-      guard let cachedEntry = cachedData[dateString] else {
-        return true  // Not cached, need to fetch
-      }
-
-      // Check if expired
-      return isExpired(dateString: dateString, cachedTime: cachedEntry.cachedTime)
-    }
-  }
-
   func getCachedStatistics(for dateStrings: [String]) -> [DailyStatistics] {
     let cachedData = getCachedData() ?? [:]
 

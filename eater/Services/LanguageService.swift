@@ -167,6 +167,8 @@ final class LanguageService: ObservableObject {
       "Slovene (Slovenian)": "sl",
       "English (US)": "en-US",
       "English (UK)": "en",
+      "Portuguese (Brazil)": "pt-BR",
+      "Portuguese (Brasil)": "pt-BR",
     ]
     if let c = manual[displayName] { return c }
     // Default to English
@@ -176,10 +178,12 @@ final class LanguageService: ObservableObject {
   private static let displayNames: [String: String] = [
     "en": "English (UK)",
     "en-US": "English (US)",
+    "pt": "Português (Portugal)",
+    "pt-BR": "Português (Brasil)",
   ]
 
   /// Regional packs that have their own `Localization/*.json` file.
-  private static let regionalVariants: Set<String> = ["en-us"]
+  private static let regionalVariants: Set<String> = ["en-us", "pt-br"]
 
   static func baseLanguageCode(of code: String) -> String {
     code.lowercased().replacingOccurrences(of: "_", with: "-")
@@ -201,53 +205,11 @@ final class LanguageService: ObservableObject {
     return lang
   }
 
-  // Short label for Recommendation/Advice
-  func shortRecommendationLabel() -> String {
-    let map: [String: String] = [
-      "ar": "نصيحة",    // naseeha (advice)
-      "be": "Пара",
-      "bg": "Съвет",
-      "bn": "পরামর্শ",   // paramarsha (advice)
-      "cs": "Rada",     // rada (advice)
-      "da": "Råd",      // råd (advice)
-      "de": "Rat",      // Rat (advice)
-      "el": "Συμβ",     // symvouli (advice) - short for συμβουλή
-      "en": "Advice",   // advice
-      "es": "Cons",     // consejo (advice)
-      "et": "Nõu",      // nõu (advice)
-      "fi": "Neuvo",    // neuvo (advice)
-      "fr": "Avis",     // avis (advice)
-      "ga": "Comh",     // comhairle (advice)
-      "hi": "सलाह",     // salah (advice)
-      "hr": "Savj",     // savjet (advice)
-      "hu": "Tanács",   // tanács (advice)
-      "it": "Cons",     // consiglio (advice)
-      "ja": "助言",      // jogen (advice)
-      "ko": "조언",      // jo-eon (advice)
-      "lt": "Patar",    // patarimas (advice)
-      "lv": "Padom",    // padoms (advice)
-      "mt": "Parir",    // parir (advice)
-      "nl": "Advies",   // advies (advice)
-      "pl": "Rada",     // rada (advice)
-      "pt": "Cons",     // conselho (advice)
-      "ro": "Sfat",     // sfat (advice)
-      "sk": "Rada",     // rada (advice)
-      "sl": "Nasvet",   // nasvet (advice)
-      "sv": "Råd",      // råd (advice)
-      "th": "แนะนำ",     // khamnaenam (advice)
-      "tr": "Tavsiye",  // tavsiye (advice)
-      "uk": "Порада",
-      "ur": "مشورہ",    // mashwara (advice)
-      "vi": "L.khuyên", // lời khuyên (advice)
-      "zh": "建议",      // jiànyi (advice)
-    ]
-    return map[currentCode] ?? map[LanguageService.baseLanguageCode(of: currentCode)] ?? "Advice"
-  }
-
   func flagEmoji(forLanguageCode code: String) -> String {
     let norm = LanguageService.normalize(code: code)
     let regionalCountry: [String: String] = [
       "en-US": "US",
+      "pt-BR": "BR",
     ]
     if let country = regionalCountry[norm] {
       return flagEmoji(forRegionCode: country)

@@ -61,9 +61,9 @@ struct FeedbackView: View {
               }
               .frame(minHeight: 150)
               .background(AppTheme.surface)
-              .cornerRadius(AppTheme.smallRadius)
+              .appCorner(AppTheme.smallRadius)
               .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.smallRadius)
+                RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
                   .stroke(AppTheme.divider, lineWidth: 1)
               )
             }
@@ -115,8 +115,7 @@ struct FeedbackView: View {
           .padding(.vertical, 10)
         }
       }
-      .navigationTitle(loc("feedback.nav", "Feedback"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("feedback.nav", "Feedback"))
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
           Button(loc("common.close", "Close")) {
@@ -127,18 +126,22 @@ struct FeedbackView: View {
         }
       }
     }
-    .alert(loc("common.done", "Done"), isPresented: $showSuccessAlert) {
-      Button(loc("common.ok", "OK")) {
-        isPresented = false
-      }
-    } message: {
-      Text(alertMessage)
-    }
-    .alert(loc("common.error", "Error"), isPresented: $showErrorAlert) {
-      Button(loc("common.ok", "OK")) {}
-    } message: {
-      Text(alertMessage)
-    }
+    .scaledNotice(
+      loc("common.done", "Done"),
+      isPresented: $showSuccessAlert,
+      message: alertMessage,
+      actions: [
+        ScaledNoticeAction(title: loc("common.ok", "OK")) {
+          isPresented = false
+        }
+      ]
+    )
+    .scaledNotice(
+      loc("common.error", "Error"),
+      isPresented: $showErrorAlert,
+      message: alertMessage,
+      actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+    )
   }
 
   private func submitFeedback() {

@@ -62,8 +62,7 @@ struct SignInSheet: View {
             .appSurface()
         }
       }
-      .navigationTitle(loc("login.scan_prompt_title", "Unlock All Features"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("login.scan_prompt_title", "Unlock All Features"))
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button(loc("common.not_yet", "Not Yet")) {
@@ -71,22 +70,20 @@ struct SignInSheet: View {
           }
         }
       }
-      .alert(
+      .scaledNotice(
         loc("error.network.title", "Connection Error"),
         isPresented: Binding(
           get: { authService.lastAuthError != nil },
           set: { if !$0 { authService.lastAuthError = nil } }
-        )
-      ) {
-        Button(loc("common.ok", "OK"), role: .cancel) {
-          authService.lastAuthError = nil
-        }
-      } message: {
-        Text(
-          authService.lastAuthError
-            ?? loc("error.network.generic", "We are sorry. Network connection. Please try later.")
-        )
-      }
+        ),
+        message: authService.lastAuthError
+          ?? loc("error.network.generic", "We are sorry. Network connection. Please try later."),
+        actions: [
+          ScaledNoticeAction(title: loc("common.ok", "OK")) {
+            authService.lastAuthError = nil
+          }
+        ]
+      )
       .onChange(of: authService.isAnonymous) { _, isAnonymous in
         if !isAnonymous {
           dismiss()

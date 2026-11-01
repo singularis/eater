@@ -108,7 +108,8 @@ final class FoodExtrasStore {
         proteins: p.proteins,
         fats: p.fats,
         carbohydrates: p.carbohydrates + Double(sugarTsp) * 5.0,
-        sugar: p.sugar + Double(sugarTsp) * 5.0
+        sugar: p.sugar + Double(sugarTsp) * 5.0,
+        alternativeNames: p.alternativeNames
       )
     }
   }

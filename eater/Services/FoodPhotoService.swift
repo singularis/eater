@@ -8,135 +8,98 @@ class FoodPhotoService {
 
 
   
-  // Track in-flight requests to prevent duplicate fetches
-  private var inFlightRequests: Set<String> = []
+  // One in-flight loop per image. Extra callers wait for that loop instead of giving up.
+  private var waiters: [String: [(UIImage?) -> Void]] = [:]
+  private var retryWanted: Set<String> = []
   private let syncQueue = DispatchQueue(label: "com.eater.FoodPhotoService.sync", qos: .userInitiated)
+  private let retryDelays: [TimeInterval] = [1, 2, 4, 8]
 
-  /// Fetches a food photo by its image ID from the backend
-  /// - Parameters:
-  ///   - imageId: The image_id from a Dish/Product object
-  ///   - completion: Callback with the UIImage if successful, nil otherwise
-  func fetchPhoto(imageId: String, completion: @escaping (UIImage?) -> Void) {
-    // Skip if no image ID
+  /// Fetches a food photo by its image ID from the backend.
+  /// `retry` is for a visible thumb. Prefetch stays a single attempt.
+  func fetchPhoto(imageId: String, retry: Bool = false, completion: @escaping (UIImage?) -> Void) {
     guard !imageId.isEmpty else {
       completion(nil)
       return
     }
 
-    // Check disk cache first
     if let cachedImage = ImageStorageService.shared.loadCachedImage(forImageId: imageId) {
       completion(cachedImage)
       return
     }
 
-    // Check and update in-flight requests synchronously
     var shouldFetch = false
     syncQueue.sync {
-      if inFlightRequests.contains(imageId) {
-        shouldFetch = false
+      if retry {
+        retryWanted.insert(imageId)
+      }
+      if waiters[imageId] != nil {
+        waiters[imageId, default: []].append(completion)
       } else {
-        inFlightRequests.insert(imageId)
+        waiters[imageId] = [completion]
         shouldFetch = true
       }
     }
 
-    guard shouldFetch else {
-      // Already fetching, wait and try cache again after a delay
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-        if let cachedImage = ImageStorageService.shared.loadCachedImage(forImageId: imageId) {
-          completion(cachedImage)
-        } else {
-          completion(nil)
-        }
-      }
-      return
-    }
+    guard shouldFetch else { return }
+    loadPhoto(imageId: imageId, attempt: 0)
+  }
 
-    // Encode / and @ so ingress does not treat image_id as extra path segments
-    // (profile ids look like email/profile/uuid.jpg).
+  private func loadPhoto(imageId: String, attempt: Int) {
     var imageIdAllowed = CharacterSet.urlQueryAllowed
     imageIdAllowed.remove(charactersIn: "/@+&?=#")
-    guard let encodedImageId = imageId.addingPercentEncoding(withAllowedCharacters: imageIdAllowed) else {
-      removeInFlightRequest(imageId)
-      completion(nil)
+    guard let encodedImageId = imageId.addingPercentEncoding(withAllowedCharacters: imageIdAllowed),
+      let url = URL(string: "\(AppEnvironment.baseURL)/get_photo?image_id=\(encodedImageId)")
+    else {
+      finish(imageId: imageId, image: nil)
       return
     }
 
-    // Construct URL
-    guard let url = URL(string: "\(AppEnvironment.baseURL)/get_photo?image_id=\(encodedImageId)") else {
-      removeInFlightRequest(imageId)
-      completion(nil)
-      return
-    }
-
-    // Create request with auth header
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
-
     if let token = KeychainHelper.shared.read("auth_token") {
       request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
-    // Fetch data
-    let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-      defer {
-        self?.removeInFlightRequest(imageId)
-      }
-
-      if let error = error {
-        print("📷 Failed to fetch photo: \(error.localizedDescription)")
-        DispatchQueue.main.async {
-          completion(nil)
-        }
+    URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+      guard let self else { return }
+      let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+      if error == nil, status == 200, let data, let image = UIImage(data: data) {
+        _ = ImageStorageService.shared.saveCachedImage(image, forImageId: imageId)
+        self.finish(imageId: imageId, image: image)
         return
       }
 
-      // Validate response
-      guard let httpResponse = response as? HTTPURLResponse else {
-        DispatchQueue.main.async {
-          completion(nil)
+      let delay = self.retryDelays.indices.contains(attempt) ? self.retryDelays[attempt] : nil
+      var shouldRetry = false
+      self.syncQueue.sync {
+        shouldRetry = delay != nil && self.retryWanted.contains(imageId)
+      }
+      if shouldRetry, let delay {
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + delay) {
+          self.loadPhoto(imageId: imageId, attempt: attempt + 1)
         }
-        return
+      } else {
+        self.finish(imageId: imageId, image: nil)
       }
+    }.resume()
+  }
 
-      guard httpResponse.statusCode == 200 else {
-        print("📷 Photo fetch failed with status: \(httpResponse.statusCode)")
-        DispatchQueue.main.async {
-          completion(nil)
-        }
-        return
-      }
-
-      guard let data = data, let image = UIImage(data: data) else {
-        print("📷 Failed to create image from data")
-        DispatchQueue.main.async {
-          completion(nil)
-        }
-        return
-      }
-
-      // Cache the image to disk
-      _ = ImageStorageService.shared.saveCachedImage(image, forImageId: imageId)
-
-      DispatchQueue.main.async {
-        completion(image)
-      }
+  private func finish(imageId: String, image: UIImage?) {
+    let callbacks: [(UIImage?) -> Void] = syncQueue.sync {
+      retryWanted.remove(imageId)
+      return waiters.removeValue(forKey: imageId) ?? []
     }
-    task.resume()
+    DispatchQueue.main.async {
+      callbacks.forEach { $0(image) }
+    }
   }
 
   /// Async/await version for SwiftUI
   func fetchPhoto(imageId: String) async -> UIImage? {
     return await withCheckedContinuation { continuation in
-      fetchPhoto(imageId: imageId) { image in
+      fetchPhoto(imageId: imageId, retry: false) { image in
         continuation.resume(returning: image)
       }
-    }
-  }
-
-  private func removeInFlightRequest(_ imageId: String) {
-    syncQueue.async { [weak self] in
-      self?.inFlightRequests.remove(imageId)
     }
   }
 

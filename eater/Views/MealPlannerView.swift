@@ -47,8 +47,7 @@ struct MealPlannerView: View {
               plannerStack
             }
           }
-          .navigationTitle(loc("meal_planner.title", "Meal Plan"))
-          .navigationBarTitleDisplayMode(.inline)
+          .scaledNavTitle(loc("meal_planner.title", "Meal Plan"))
           .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
               cycleButton

@@ -28,7 +28,7 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    view.backgroundColor = .systemBackground
+    view.backgroundColor = .clear
     title = String(format: loc("share.title", "Share %@"), foodName)
     navigationItem.leftBarButtonItem = UIBarButtonItem(
       barButtonSystemItem: .close, target: self, action: #selector(closeTapped))
@@ -47,6 +47,11 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     tableView.translatesAutoresizingMaskIntoConstraints = false
     tableView.delegate = self
     tableView.dataSource = self
+    // iOS 26 sheets draw Liquid Glass behind a clear view; older systems get a blur.
+    tableView.backgroundColor = .clear
+    if #unavailable(iOS 26.0) {
+      tableView.backgroundView = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+    }
     view.addSubview(tableView)
     NSLayoutConstraint.activate([
       tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -136,6 +141,8 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
     )
 
     let root = AddFriendsView(isPresented: presentedBinding)
+      .appInterfaceScale()
+      .preferredColorScheme(AppSettingsService.shared.scheme)
     let host = UIHostingController(rootView: root)
     present(host, animated: true)
   }
@@ -298,52 +305,40 @@ final class ShareFoodViewController: UIViewController, UITableViewDataSource, UI
   }
 
   private func promptSharePercentage(onSelected: @escaping (Int32) -> Void) {
-    let alert = UIAlertController(
-      title: loc("share.percentage.title", "How much did your friend eat?"), message: nil,
-      preferredStyle: .actionSheet)
-    let options: [Int32] = [25, 50, 75]
-    for v in options {
-      alert.addAction(
-        UIAlertAction(title: "\(v)%", style: .default, handler: { _ in onSelected(v) }))
+    var actions: [ScaledNoticeAction] = [Int32(25), 50, 75].map { v in
+      ScaledNoticeAction(title: "\(v)%", kind: .secondary) { onSelected(v) }
     }
-    let sameAmountAction = UIAlertAction(
-      title: loc("share.percentage.same", "Same amount"), style: .default,
-      handler: { _ in onSelected(100) })
-    // Green so "same amount" stands out from 25/50/75%.
-    sameAmountAction.setValue(UIColor.systemGreen, forKey: "titleTextColor")
-    alert.addAction(sameAmountAction)
-    alert.addAction(
-      UIAlertAction(
-        title: loc("share.percentage.custom", "Custom..."), style: .default,
-        handler: { [weak self] _ in
-          self?.promptCustomPercentage(onSelected: onSelected)
-        }))
-    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
-    present(alert, animated: true)
+    actions.append(
+      ScaledNoticeAction(
+        title: loc("share.percentage.same", "Same amount"), kind: .secondary, tint: AppTheme.success
+      ) { onSelected(100) })
+    actions.append(
+      ScaledNoticeAction(title: loc("share.percentage.custom", "Custom..."), kind: .secondary) {
+        [weak self] in
+        self?.promptCustomPercentage(onSelected: onSelected)
+      })
+    actions.append(ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary))
+    present(
+      ScaledHost.notice(
+        title: loc("share.percentage.title", "How much did your friend eat?"),
+        message: "",
+        actions: actions),
+      animated: true)
   }
 
   private func promptCustomPercentage(onSelected: @escaping (Int32) -> Void) {
-    let alert = UIAlertController(
-      title: loc("share.custom.title", "Custom percentage"),
-      message: loc("share.custom.message", "Enter a value between 1 and 300"),
-      preferredStyle: .alert
-    )
-    alert.addTextField { tf in
-      tf.placeholder = loc("share.custom.placeholder", "e.g. 40")
-      tf.keyboardType = .numberPad
-    }
-    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
-    alert.addAction(
-      UIAlertAction(
-        title: loc("common.ok", "OK"), style: .default,
-        handler: { _ in
-          if let text = alert.textFields?.first?.text, let value = Int(text), value > 0,
-            value <= 300
-          {
-            onSelected(Int32(value))
-          }
-        }))
-    present(alert, animated: true)
+    present(
+      ScaledHost.textPrompt(
+        title: loc("share.custom.title", "Custom percentage"),
+        message: loc("share.custom.message", "Enter a value between 1 and 300"),
+        placeholder: loc("share.custom.placeholder", "e.g. 40"),
+        keyboard: .numberPad
+      ) { text in
+        if let value = Int(text), value > 0, value <= 300 {
+          onSelected(Int32(value))
+        }
+      },
+      animated: true)
   }
 
   // MARK: - Persistence of share counts

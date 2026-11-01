@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package eater;
+
+message FoodScoreRequest {
+  string user_name = 1;
+  string day = 2;  // Local yyyy-MM-dd. The server trusts the token email.
+}
+
+message FoodScoreResponse {
+  bool has_score = 1;
+  int32 score = 2;      // Used only when has_score is true. 0 is a real score.
+  int64 dish_time = 3;  // Newest dish time included when this score was written.
+}

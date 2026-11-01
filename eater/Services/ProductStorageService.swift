@@ -10,11 +10,11 @@ class ProductStorageService {
   private let caloriesKey = "cached_calories"
   private let weightKey = "cached_weight"
   private let lastUpdateKey = "last_update_timestamp"
-  private let healthLevelCacheKey = "health_level_cache"
+  private let caloriesTotalKey = "cached_calories_total"
+  private let caloriesLeftServerKey = "cached_calories_left_server"
+  private let caloriesEatenServerKey = "cached_calories_eaten_server"
 
   // MARK: - Health Level Cache Structure
-  
-
 
   private let healthLevelKey = "cached_health_levels"
 
@@ -42,6 +42,21 @@ class ProductStorageService {
     }
   }
 
+  func saveCalorieBudget(eaten: Int, total: Int, left: Int) {
+    userDefaults.set(eaten, forKey: caloriesEatenServerKey)
+    userDefaults.set(total, forKey: caloriesTotalKey)
+    userDefaults.set(left, forKey: caloriesLeftServerKey)
+  }
+
+  /// Server fields from the last today fetch. Zeros mean the budget was never stored.
+  func loadCalorieBudget() -> (eaten: Int, total: Int, left: Int) {
+    (
+      userDefaults.integer(forKey: caloriesEatenServerKey),
+      userDefaults.integer(forKey: caloriesTotalKey),
+      userDefaults.integer(forKey: caloriesLeftServerKey)
+    )
+  }
+
   func loadProducts() -> ([Product], Int, Float) {
     guard let productsData = userDefaults.data(forKey: productsKey) else {
       return ([], 0, 0)
@@ -64,7 +79,7 @@ class ProductStorageService {
 
   func fetchAndProcessProducts(
     tempImageTime: Int64? = nil, forceRefresh: Bool = false,
-    completion: @escaping ([Product], Int, Float, Bool) -> Void
+    completion: @escaping ([Product], Int, Float, Bool, Int, Int) -> Void
   ) {
     let shouldForceRefresh = forceRefresh || (tempImageTime != nil)
 
@@ -72,7 +87,8 @@ class ProductStorageService {
     if !shouldForceRefresh, !isDataStale() {
       let (cachedProducts, cachedCalories, cachedWeight) = loadProducts()
       if !cachedProducts.isEmpty || cachedCalories > 0 || cachedWeight > 0 {
-        completion(cachedProducts, cachedCalories, cachedWeight, true)
+        let budget = loadCalorieBudget()
+        completion(cachedProducts, cachedCalories, cachedWeight, true, budget.total, budget.left)
         return
       }
     }
@@ -82,34 +98,36 @@ class ProductStorageService {
        let date = Date(timeIntervalSince1970: TimeInterval(tempTime) / 1000)
        let formatter = DateFormatter()
        formatter.dateFormat = "dd-MM-yyyy"
-       // Ensure we use the same timezone/calendar logic as CameraButtonView (essentially UTC date)
+       // Ensure we use the same timezone/calendar logic as photo backdating (essentially UTC date)
        formatter.timeZone = TimeZone(abbreviation: "UTC") 
        let dateStr = formatter.string(from: date)
        
        let isToday = Calendar.current.isDateInToday(date)
 
        // Always fetch using the specific date from the timestamp to ensure we get the list where this food belongs
-       GRPCService().fetchCustomDateFood(date: dateStr) { [weak self] products, calories, weight, success in
+       GRPCService().fetchCustomDateFood(date: dateStr) { [weak self] products, calories, weight, success, caloriesTotal, caloriesLeft in
          DispatchQueue.main.async {
            if success {
              self?.mapTemporaryImage(products: products, tempTime: tempTime)
              if isToday {
                self?.saveProducts(products, calories: calories, weight: weight)
+               self?.saveCalorieBudget(eaten: calories, total: caloriesTotal, left: caloriesLeft)
              }
            }
-           completion(products, calories, weight, success)
+           completion(products, calories, weight, success, caloriesTotal, caloriesLeft)
          }
        }
        return
     }
 
     // Default: Fetch today's data (no temp time provided)
-    GRPCService().fetchProducts { [weak self] products, calories, weight, success in
+    GRPCService().fetchProducts { [weak self] products, calories, weight, success, caloriesTotal, caloriesLeft in
       DispatchQueue.main.async {
         if success {
           self?.saveProducts(products, calories: calories, weight: weight)
+          self?.saveCalorieBudget(eaten: calories, total: caloriesTotal, left: caloriesLeft)
         }
-        completion(products, calories, weight, success)
+        completion(products, calories, weight, success, caloriesTotal, caloriesLeft)
       }
     }
   }
@@ -138,11 +156,11 @@ class ProductStorageService {
   }
 
   func fetchAndProcessCustomDateProducts(
-    date: String, completion: @escaping ([Product], Int, Float, Bool) -> Void
+    date: String, completion: @escaping ([Product], Int, Float, Bool, Int, Int) -> Void
   ) {
-    GRPCService().fetchCustomDateFood(date: date) { products, calories, weight, success in
+    GRPCService().fetchCustomDateFood(date: date) { products, calories, weight, success, caloriesTotal, caloriesLeft in
       DispatchQueue.main.async {
-        completion(products, calories, weight, success)
+        completion(products, calories, weight, success, caloriesTotal, caloriesLeft)
       }
     }
   }
@@ -154,6 +172,9 @@ class ProductStorageService {
     userDefaults.removeObject(forKey: caloriesKey)
     userDefaults.removeObject(forKey: weightKey)
     userDefaults.removeObject(forKey: lastUpdateKey)
+    userDefaults.removeObject(forKey: caloriesTotalKey)
+    userDefaults.removeObject(forKey: caloriesLeftServerKey)
+    userDefaults.removeObject(forKey: caloriesEatenServerKey)
   }
 
   func isDataStale(maxAgeMinutes: Double = 60) -> Bool {
@@ -163,28 +184,6 @@ class ProductStorageService {
     return ageMinutes > maxAgeMinutes
   }
 
-  // Fast method to get cached data if available and fresh
-  func getCachedDataIfFresh() -> ([Product], Int, Float)? {
-    guard !isDataStale() else { return nil }
-    let (products, calories, weight) = loadProducts()
-    // Only return if we have actual data
-    if !products.isEmpty || calories > 0 || weight > 0 {
-      return (products, calories, weight)
-    }
-    return nil
-  }
-
-  // Fallback method to get cached data even if slightly stale (for better UX when network is slow)
-  func getCachedDataAsFallback(maxStaleHours: Double = 12) -> ([Product], Int, Float)? {
-    let maxStaleMinutes = maxStaleHours * 60
-    guard !isDataStale(maxAgeMinutes: maxStaleMinutes) else { return nil }
-    let (products, calories, weight) = loadProducts()
-    // Only return if we have actual data
-    if !products.isEmpty || calories > 0 || weight > 0 {
-      return (products, calories, weight)
-    }
-    return nil
-  }
   // MARK: - Health Level Cache implementation
 
   func saveHealthLevel(time: Int64, title: String, description: String, healthSummary: String) {
@@ -252,10 +251,11 @@ private struct ProductData: Codable {
   let fats: Double
   let carbohydrates: Double
   let sugar: Double
+  let alternativeNames: [String]
 
   enum CodingKeys: String, CodingKey {
     case time, name, calories, weight, ingredients, healthRating, imageId, addedSugarTsp, extras
-    case proteins, fats, carbohydrates, sugar
+    case proteins, fats, carbohydrates, sugar, alternativeNames
   }
 
   init(from product: Product) {
@@ -272,6 +272,7 @@ private struct ProductData: Codable {
     fats = product.fats
     carbohydrates = product.carbohydrates
     sugar = product.sugar
+    alternativeNames = product.alternativeNames
   }
 
   init(from decoder: Decoder) throws {
@@ -289,6 +290,7 @@ private struct ProductData: Codable {
     fats = try c.decodeIfPresent(Double.self, forKey: .fats) ?? 0
     carbohydrates = try c.decodeIfPresent(Double.self, forKey: .carbohydrates) ?? 0
     sugar = try c.decodeIfPresent(Double.self, forKey: .sugar) ?? 0
+    alternativeNames = try c.decodeIfPresent([String].self, forKey: .alternativeNames) ?? []
   }
 
   func toProduct() -> Product {
@@ -305,7 +307,8 @@ private struct ProductData: Codable {
       proteins: proteins,
       fats: fats,
       carbohydrates: carbohydrates,
-      sugar: sugar
+      sugar: sugar,
+      alternativeNames: alternativeNames
     )
   }
 }

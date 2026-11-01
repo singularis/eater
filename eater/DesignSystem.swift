@@ -56,10 +56,10 @@ enum AppTheme {
       : Color.white.opacity(0.15)
   }
 
-  // Layout
+  // Layout. Three corners only: cards and full-width buttons, controls and tiles, small chips.
   static let cornerRadius: CGFloat = 16
   static let smallRadius: CGFloat = 12
-  static let cardPadding: CGFloat = 16
+  static let tinyRadius: CGFloat = 8
 
   // Shadows - same weight on tiles, cards, and header circles
   static var cardShadow: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) {
@@ -91,15 +91,6 @@ enum AppTheme {
     }
   }
 
-  /// Kept as a solid so leftover gradient callers stay flat.
-  static var primaryButtonGradient: LinearGradient {
-    LinearGradient(
-      colors: [primaryButtonFill, primaryButtonFill],
-      startPoint: .top,
-      endPoint: .bottom
-    )
-  }
-
   /// Mascot callout: action blue into the theme violet, left to right.
   /// Both stops stay dark enough for white text (system purple is too light).
   static var mascotCalloutGradient: LinearGradient {
@@ -123,19 +114,6 @@ enum AppTheme {
     )
   }
 
-  // Liquid Glass Styles
-  static var liquidGlassStroke: LinearGradient {
-    LinearGradient(
-      colors: [
-        .white.opacity(0.6),
-        .white.opacity(0.1),
-        .white.opacity(0.05)
-      ],
-      startPoint: .topLeading,
-      endPoint: .bottomTrailing
-    )
-  }
-
   private static func colorScheme() -> ColorScheme {
     if let scheme = AppSettingsService.shared.scheme {
       return scheme
@@ -149,9 +127,22 @@ private struct FilledButtonChrome: ViewModifier {
   let fill: Color
   let isPressed: Bool
 
+  @ViewBuilder
   func body(content: Content) -> some View {
+    if #available(iOS 26.0, *) {
+      content
+        .padding()
+        .frame(maxWidth: .infinity)
+        .foregroundColor(.white)
+        .glassEffect(.regular.tint(fill).interactive(), in: .capsule)
+    } else {
+      flat(content)
+    }
+  }
+
+  private func flat(_ content: Content) -> some View {
     let shadow = AppTheme.cardShadow
-    content
+    return content
       .padding()
       .frame(maxWidth: .infinity)
       .background(fill)
@@ -175,6 +166,42 @@ private struct FilledButtonChrome: ViewModifier {
   }
 }
 
+extension View {
+  /// Scales the whole screen with the text-size slider, including fixed fonts,
+  /// icons, photos, and spacing.
+  func appInterfaceScale() -> some View {
+    modifier(AppInterfaceScaleModifier())
+  }
+
+  /// One-line title that shrinks to fit beside the bar buttons at large text sizes.
+  func scaledNavTitle(_ title: String) -> some View {
+    navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .principal) {
+          Text(title)
+            .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+      }
+  }
+}
+
+private struct AppInterfaceScaleModifier: ViewModifier {
+  @ObservedObject private var settings = AppSettingsService.shared
+
+  func body(content: Content) -> some View {
+    let scale = CGFloat(settings.fontScale)
+    GeometryReader { proxy in
+      content
+        .frame(width: proxy.size.width / scale, height: proxy.size.height / scale, alignment: .topLeading)
+        .scaleEffect(scale, anchor: .topLeading)
+        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
+    }
+  }
+}
+
 struct PrimaryButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label.modifier(
@@ -187,13 +214,20 @@ private struct GradientButtonChrome: ViewModifier {
   let fill: LinearGradient
   let isPressed: Bool
 
+  private var shape: AnyShape {
+    if #available(iOS 26.0, *) {
+      return AnyShape(Capsule())
+    }
+    return AnyShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+  }
+
   func body(content: Content) -> some View {
     let shadow = AppTheme.cardShadow
     content
       .padding()
       .frame(maxWidth: .infinity)
       .background(fill)
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+      .clipShape(shape)
       .foregroundColor(.white)
       .shadow(
         color: isPressed ? shadow.color.opacity(0.3) : shadow.color,
@@ -217,14 +251,6 @@ struct MascotCalloutButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label.modifier(
       GradientButtonChrome(fill: AppTheme.mascotCalloutGradient, isPressed: configuration.isPressed)
-    )
-  }
-}
-
-struct GreenToPurpleButtonStyle: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label.modifier(
-      FilledButtonChrome(fill: AppTheme.primaryButtonFill, isPressed: configuration.isPressed)
     )
   }
 }
@@ -256,39 +282,9 @@ struct CardModifier: ViewModifier {
   let paddingValue: CGFloat
 
   func body(content: Content) -> some View {
-    let shadow = AppTheme.cardShadow
-    return content
-      .padding(paddingValue)
-      .background(AppTheme.surface)
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
-  }
-}
-
-struct LiquidGlassModifier: ViewModifier {
-  let paddingValue: CGFloat
-  let cornerRadius: CGFloat
-  
-  init(paddingValue: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) {
-    self.paddingValue = paddingValue
-    self.cornerRadius = cornerRadius
-  }
-
-  func body(content: Content) -> some View {
-    let shadow = AppTheme.cardShadow
     content
       .padding(paddingValue)
-      .background(AppTheme.surface)
-      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+      .appSurface()
   }
 }
 
@@ -296,32 +292,77 @@ extension View {
   func cardContainer(padding: CGFloat = 12) -> some View {
     modifier(CardModifier(paddingValue: padding))
   }
-  
-  func liquidGlass(padding: CGFloat = 12, cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
-    modifier(LiquidGlassModifier(paddingValue: padding, cornerRadius: cornerRadius))
-  }
 
-  /// Flat panel used by Home tiles, date chip, and cards.
+  /// Panel used by Home tiles, date chip, and cards. Liquid Glass on iOS 26, flat before.
+  @ViewBuilder
   func appSurface(cornerRadius: CGFloat = AppTheme.cornerRadius) -> some View {
-    let shadow = AppTheme.cardShadow
-    return self
-      .background(AppTheme.surface)
-      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    if #available(iOS 26.0, *) {
+      glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+    } else {
+      let shadow = AppTheme.cardShadow
+      self
+        .background(AppTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .stroke(AppTheme.divider, lineWidth: 1)
+        )
+        .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    }
   }
 
-  /// Same fill, stroke, and shadow as `appSurface`, for circular header chips.
+  /// Circular header chips and card action buttons. Interactive Liquid Glass on iOS 26.
+  @ViewBuilder
   func appCircleSurface() -> some View {
-    let shadow = AppTheme.cardShadow
-    return self
-      .background(AppTheme.surface)
-      .clipShape(Circle())
-      .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
-      .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    if #available(iOS 26.0, *) {
+      glassEffect(.regular.interactive(), in: .circle)
+    } else {
+      let shadow = AppTheme.cardShadow
+      self
+        .background(AppTheme.surface)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(AppTheme.divider, lineWidth: 1))
+        .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+    }
+  }
+
+  /// Colored control, such as swipe chips. Tinted Liquid Glass on iOS 26, solid fill before.
+  @ViewBuilder
+  func appTintedGlass(_ tint: Color, cornerRadius: CGFloat = AppTheme.smallRadius) -> some View {
+    if #available(iOS 26.0, *) {
+      glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: cornerRadius))
+    } else {
+      self
+        .background(tint)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+  }
+
+  /// Sheet backdrop. iOS 26 draws the system Liquid Glass behind clear content; older systems get a blur.
+  @ViewBuilder
+  func appSheetBackground() -> some View {
+    if #available(iOS 26.0, *) {
+      self
+    } else {
+      self
+        .background(.regularMaterial, ignoresSafeAreaEdges: .all)
+        .presentationBackground(.clear)
+    }
+  }
+
+  /// Merges neighbouring glass controls into one Liquid Glass group on iOS 26.
+  @ViewBuilder
+  func appGlassGroup(spacing: CGFloat? = nil) -> some View {
+    if #available(iOS 26.0, *) {
+      GlassEffectContainer(spacing: spacing) { self }
+    } else {
+      self
+    }
+  }
+
+  /// Continuous corner, matching cards and buttons. Plain `.cornerRadius` draws a harder curve.
+  func appCorner(_ radius: CGFloat) -> some View {
+    clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
   }
 
   func appCardShadow() -> some View {
@@ -366,7 +407,20 @@ private struct AppFormFieldModifier: ViewModifier {
 
 // Secondary (neutral) button style
 struct SecondaryButtonStyle: ButtonStyle {
+  @ViewBuilder
   func makeBody(configuration: Configuration) -> some View {
+    if #available(iOS 26.0, *) {
+      configuration.label
+        .padding()
+        .frame(maxWidth: .infinity)
+        .foregroundColor(AppTheme.textPrimary)
+        .glassEffect(.regular.interactive(), in: .capsule)
+    } else {
+      flat(configuration)
+    }
+  }
+
+  private func flat(_ configuration: Configuration) -> some View {
     configuration.label
       .padding()
       .frame(maxWidth: .infinity)
@@ -404,6 +458,8 @@ struct AppLabeledNumberField: View {
   @Binding var text: String
   var keyboard: UIKeyboardType = .numberPad
   var placeholder: String = "0"
+  /// Fields with consecutive tags get a Next key that moves to the following one.
+  var focusTag: Int = 0
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -411,7 +467,7 @@ struct AppLabeledNumberField: View {
         .font(.subheadline.weight(.semibold))
         .foregroundColor(AppTheme.textPrimary)
       HStack(spacing: 8) {
-        AppNumberTextField(text: $text, placeholder: placeholder, keyboard: keyboard)
+        AppNumberTextField(text: $text, placeholder: placeholder, keyboard: keyboard, focusTag: focusTag)
           .frame(minHeight: 22)
           .appFormField()
         Text(unit)
@@ -429,6 +485,7 @@ struct AppNumberTextField: UIViewRepresentable {
   @Binding var text: String
   var placeholder: String
   var keyboard: UIKeyboardType
+  var focusTag: Int = 0
 
   func makeCoordinator() -> Coordinator {
     Coordinator(text: $text)
@@ -448,6 +505,7 @@ struct AppNumberTextField: UIViewRepresentable {
     tf.setContentHuggingPriority(.defaultLow, for: .horizontal)
     tf.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     tf.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)
+    tf.tag = focusTag
 
     let toolbar = UIToolbar()
     let flex = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
@@ -457,7 +515,17 @@ struct AppNumberTextField: UIViewRepresentable {
       target: context.coordinator,
       action: #selector(Coordinator.done)
     )
-    toolbar.items = [flex, done]
+    if focusTag > 0 {
+      let next = UIBarButtonItem(
+        title: loc("common.next", "Next"),
+        style: .plain,
+        target: context.coordinator,
+        action: #selector(Coordinator.next)
+      )
+      toolbar.items = [next, flex, done]
+    } else {
+      toolbar.items = [flex, done]
+    }
     toolbar.sizeToFit()
     tf.inputAccessoryView = toolbar
     context.coordinator.field = tf
@@ -492,6 +560,27 @@ struct AppNumberTextField: UIViewRepresentable {
 
     @objc func done() {
       field?.resignFirstResponder()
+    }
+
+    /// Focuses the field tagged one higher in the same window, or closes the keyboard.
+    @objc func next() {
+      guard let field, field.tag > 0, let window = field.window else {
+        field?.resignFirstResponder()
+        return
+      }
+      if let following = Self.textField(tagged: field.tag + 1, in: window) {
+        following.becomeFirstResponder()
+      } else {
+        field.resignFirstResponder()
+      }
+    }
+
+    private static func textField(tagged tag: Int, in view: UIView) -> UITextField? {
+      if let field = view as? UITextField, field.tag == tag, !field.isHidden { return field }
+      for child in view.subviews {
+        if let found = textField(tagged: tag, in: child) { return found }
+      }
+      return nil
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {

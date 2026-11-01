@@ -22,6 +22,7 @@ message Dish {
   int32 health_rating = 6;
   string image_id = 7;  // MinIO object path for the food photo
   Contains contains = 8;  // proteins / fats / carbohydrates / sugar for this dish
+  repeated string alternative_names = 9;  // other short dish names from the same analysis, for "Try manually"
 }
 
 message Contains {
@@ -35,4 +36,6 @@ message TotalForDay {
   Contains contains = 1;
   int32 total_avg_weight = 2;
   int32 total_calories = 3;
-} 
+  int32 calories_total = 4;
+  int32 calories_left = 5;
+}

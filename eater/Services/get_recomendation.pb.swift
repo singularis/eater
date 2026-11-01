@@ -42,6 +42,9 @@ struct Eater_RecommendationResponse: Sendable {
 
   var recommendation: String = String()
 
+  /// Newest day's score from this run. The home ring does not read this.
+  var recscore: Int32 = 0
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -88,7 +91,7 @@ extension Eater_RecommendationRequest: SwiftProtobuf.Message, SwiftProtobuf._Mes
 
 extension Eater_RecommendationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".RecommendationResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}recommendation\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}recommendation\0\u{1}recscore\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -97,6 +100,7 @@ extension Eater_RecommendationResponse: SwiftProtobuf.Message, SwiftProtobuf._Me
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.recommendation) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.recscore) }()
       default: break
       }
     }
@@ -106,11 +110,15 @@ extension Eater_RecommendationResponse: SwiftProtobuf.Message, SwiftProtobuf._Me
     if !self.recommendation.isEmpty {
       try visitor.visitSingularStringField(value: self.recommendation, fieldNumber: 1)
     }
+    if self.recscore != 0 {
+      try visitor.visitSingularInt32Field(value: self.recscore, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   static func ==(lhs: Eater_RecommendationResponse, rhs: Eater_RecommendationResponse) -> Bool {
     if lhs.recommendation != rhs.recommendation {return false}
+    if lhs.recscore != rhs.recscore {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

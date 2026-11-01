@@ -111,7 +111,7 @@ struct MacroGoalsEditView: View {
       .frame(maxWidth: .infinity)
     }
     .scrollIndicators(.hidden)
-    .background(AppTheme.backgroundGradient.ignoresSafeArea())
+    .appSheetBackground()
     .presentationDetents([.medium, .large])
     .presentationDragIndicator(.hidden)
     .tint(AppTheme.primaryButtonFill)

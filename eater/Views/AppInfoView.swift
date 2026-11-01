@@ -65,8 +65,7 @@ struct AppInfoView: View {
           .padding(20)
         }
       }
-      .navigationTitle(loc("info.title", "About Eateria"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(loc("info.title", "About Eateria"))
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(loc("common.close", "Close")) {

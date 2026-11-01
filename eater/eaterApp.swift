@@ -37,6 +37,7 @@ struct AppNameApp: App {
             }
         }
       }
+      .appInterfaceScale()
       .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ForceLogout"))) { _ in
         // Keep disk profile; only drop the session.
         authService.signOut()

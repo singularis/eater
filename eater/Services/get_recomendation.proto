@@ -9,4 +9,5 @@ message RecommendationRequest {
 
 message RecommendationResponse {
   string recommendation = 1;
+  int32 recscore = 2;  // Newest day's score from this run. The home ring does not read this.
 }

@@ -51,13 +51,21 @@ struct AlcoholCalendarView: View {
         .padding(.bottom, 24)
       }
       .background(Color(.systemGroupedBackground).ignoresSafeArea())
-      .navigationTitle(loc("alcohol.addiction_mode.title", "🍷 Addiction Mode"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .confirmationAction) {
+        ToolbarItem(placement: .principal) {
+          Text(loc("alcohol.addiction_mode.title", "Addiction Mode"))
+            .font(.headline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .foregroundColor(AppTheme.textPrimary)
+        }
+        ToolbarItem(placement: .topBarTrailing) {
           Button(loc("common.done", "Done")) {
             isPresented = false
           }
+          .lineLimit(1)
+          .fixedSize(horizontal: true, vertical: false)
           .fontWeight(.semibold)
           .foregroundColor(AppTheme.primaryButtonFill)
         }
@@ -70,11 +78,12 @@ struct AlcoholCalendarView: View {
       LoadingOverlay(
         isVisible: isLoading, message: loc("overlay.loading_alcohol", "Loading alcohol..."))
     )
-    .alert(detailsAlertTitle, isPresented: $showDetailsAlert) {
-      Button(loc("common.ok", "OK"), role: .cancel) {}
-    } message: {
-      Text(detailsAlertMessage)
-    }
+    .scaledNotice(
+      detailsAlertTitle,
+      isPresented: $showDetailsAlert,
+      message: detailsAlertMessage,
+      actions: [ScaledNoticeAction(title: loc("common.ok", "OK"))]
+    )
   }
 
   private var addictionModeExplanation: some View {
@@ -136,6 +145,8 @@ struct AlcoholCalendarView: View {
       Text(monthTitle(for: monthAnchorDate))
         .font(.headline)
         .foregroundColor(AppTheme.textPrimary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
       Spacer()
       Button(action: { changeMonth(by: 1) }) {
         Image(systemName: "chevron.right")
@@ -154,6 +165,8 @@ struct AlcoholCalendarView: View {
         Text(weekdaySymbols[idx])
           .font(.caption.weight(.semibold))
           .foregroundColor(AppTheme.textSecondary)
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
           .frame(maxWidth: .infinity)
       }
     }
@@ -198,6 +211,7 @@ struct AlcoholCalendarView: View {
         .font(.caption)
         .foregroundColor(AppTheme.textSecondary)
         .lineLimit(1)
+        .minimumScaleFactor(0.7)
     }
   }
 
@@ -217,10 +231,14 @@ struct AlcoholCalendarView: View {
         Text("\(day.dayNumber)")
           .font(.system(size: 15, weight: isToday ? .semibold : .medium, design: .rounded))
           .foregroundColor(dayNumberColor(isCurrentMonth: isCurrentMonth, hasDrinks: hasDrinks))
+          .lineLimit(1)
+          .minimumScaleFactor(0.6)
         if hasDrinks {
           Text(amount > 9 ? "9+" : "\(amount)")
             .font(.system(size: 10, weight: .bold, design: .rounded))
             .foregroundColor(AppTheme.danger)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
         } else {
           Text(" ")
             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -229,11 +247,11 @@ struct AlcoholCalendarView: View {
       .frame(maxWidth: .infinity)
       .frame(minHeight: 48)
       .background(
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .fill(dayFill(isToday: isToday, hasDrinks: hasDrinks, isCurrentMonth: isCurrentMonth))
       )
       .overlay(
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
           .stroke(isToday ? AppTheme.primaryButtonFill : Color.clear, lineWidth: 2)
       )
       .opacity(isCurrentMonth ? 1 : 0.45)

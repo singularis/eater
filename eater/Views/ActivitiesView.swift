@@ -32,6 +32,7 @@ enum ActivityType: CaseIterable {
 
 struct ActivitiesView: View {
   @Environment(\.dismiss) private var dismiss
+  @ObservedObject private var appSettings = AppSettingsService.shared
   @AppStorage("chessTotalWins") private var chessTotalWins = 0
   @AppStorage("chessOpponents") private var chessOpponents = "{}" // JSON: {"opponent@email.com": "3:2"}
   @AppStorage("lastChessDate") private var lastChessDate = ""
@@ -49,6 +50,8 @@ struct ActivitiesView: View {
   let dateISO: String
   
   @State private var showChessWinnerSheet = false
+  @State private var showChessColorSheet = false
+  @State private var showChessOpponentColorSheet = false
   @State private var showOpponentPicker = false
   @State private var showActivityInputSheet = false
   @State private var showStatistics = false
@@ -77,8 +80,13 @@ struct ActivitiesView: View {
             Divider()
               .padding(.vertical, 10)
             
-            // Activities as honeycomb: filled = tracked, outline = not yet
-            honeycombActivitiesView
+            // Activities as honeycomb: filled = tracked, outline = not yet.
+            // At 160% the wide honeycomb clips, so the cells become squares, two in a row.
+            if appSettings.fontScale >= 1.15 && activityGridWidth < honeycombSpan {
+              compactActivityGrid
+            } else {
+              honeycombActivitiesView
+            }
           }
           .padding()
         }
@@ -93,8 +101,7 @@ struct ActivitiesView: View {
           }
         }
       }
-      .navigationTitle(Localization.shared.tr("activities.title", default: "Activities"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(Localization.shared.tr("activities.title", default: "Activities"))
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button(action: {
@@ -107,9 +114,19 @@ struct ActivitiesView: View {
       }
       .sheet(isPresented: $showStatistics) {
         ActivityStatisticsView(isPresented: $showStatistics)
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showChessWinnerSheet) {
         chessWinnerSheet
+          .appInterfaceScale()
+      }
+      .sheet(isPresented: $showChessColorSheet) {
+        chessColorSheet
+          .appInterfaceScale()
+      }
+      .sheet(isPresented: $showChessOpponentColorSheet) {
+        chessOpponentColorSheet
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showOpponentPicker) {
         ChessOpponentPickerView(
@@ -118,13 +135,17 @@ struct ActivitiesView: View {
           onOpponentSelected: { opponentNickname, opponentEmail in
             chessOpponentEmail = opponentEmail
             showOpponentPicker = false
-            recordChessGame(winner: pendingGameResult)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+              showChessColorSheet = true
+            }
           },
           initialFriends: cachedFriends
         )
+        .appInterfaceScale()
       }
       .sheet(isPresented: $showActivityInputSheet) {
         activityInputSheet
+          .appInterfaceScale()
       }
       .sheet(isPresented: $showChessSheet, onDismiss: { showChessHistory = false }) {
         ZStack {
@@ -134,8 +155,7 @@ struct ActivitiesView: View {
                 .padding(.bottom, 24)
             }
             .background(AppTheme.backgroundGradient.ignoresSafeArea())
-            .navigationTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
-            .navigationBarTitleDisplayMode(.inline)
+            .scaledNavTitle(Localization.shared.tr("activities.chess.name", default: "Chess"))
             .toolbar {
               ToolbarItem(placement: .navigationBarTrailing) {
                 Button(Localization.shared.tr("common.done", default: "Done")) {
@@ -157,6 +177,7 @@ struct ActivitiesView: View {
           }
         }
         .animation(.easeInOut(duration: 0.2), value: showChessHistory)
+        .appInterfaceScale()
       }
       .onAppear {
         // Initialize player name if not set
@@ -265,7 +286,7 @@ struct ActivitiesView: View {
           .padding(.vertical, 8)
           .padding(.horizontal, 16)
           .background(Color.red.opacity(0.15))
-          .cornerRadius(10)
+          .appCorner(AppTheme.smallRadius)
         }
         .padding(.top, 5)
         
@@ -310,7 +331,80 @@ struct ActivitiesView: View {
   // +20% size (88→106, 76→91)
   private static let hexWidth: CGFloat = 106
   private static let hexHeight: CGFloat = 91
+  /// Full honeycomb width. Below this, cells become squares, two in a row.
+  private var honeycombSpan: CGFloat {
+    let gap: CGFloat = 18
+    let stepX = Self.hexWidth + gap
+    return 2 * stepX + Self.hexWidth * 1.05
+  }
   
+  /// Width left for the activity grid inside the scaled layout, minus this screen's padding.
+  private var activityGridWidth: CGFloat {
+    let scale = CGFloat(max(appSettings.fontScale, 0.8))
+    return max(160, UIScreen.main.bounds.width / scale - 48)
+  }
+
+  private var compactCellSide: CGFloat {
+    let gap: CGFloat = 10
+    return max(72, floor((activityGridWidth - gap) / 2))
+  }
+
+  private var compactActivityGrid: some View {
+    let gap: CGFloat = 10
+    let side = compactCellSide
+    return VStack(spacing: gap) {
+      HStack(spacing: gap) {
+        squareActivity(honeycombCellStatistics(), side: side)
+        squareActivity(
+          honeycombCell(
+            type: .elliptical,
+            title: Localization.shared.tr("activities.elliptical", default: "Elliptical"),
+            icon: "figure.elliptical",
+            color: .purple
+          ),
+          side: side
+        )
+      }
+      HStack(spacing: gap) {
+        squareActivity(
+          honeycombCell(type: .gym, title: Localization.shared.tr("activities.gym", default: "Gym"), icon: "dumbbell.fill", color: .orange),
+          side: side
+        )
+        squareActivity(
+          honeycombCell(type: .steps, title: Localization.shared.tr("activities.steps", default: "Steps"), icon: "figure.walk", color: .green),
+          side: side
+        )
+      }
+      HStack(spacing: gap) {
+        squareActivity(
+          honeycombCell(type: .treadmill, title: Localization.shared.tr("activities.treadmill", default: "Treadmill"), icon: "figure.run", color: .blue),
+          side: side
+        )
+        squareActivity(
+          honeycombCell(
+            type: .yoga,
+            title: Localization.shared.tr("activities.yoga", default: "Yoga"),
+            icon: "figure.mind.and.body",
+            color: Color(red: 0.4, green: 0.6, blue: 0.5)
+          ),
+          side: side
+        )
+      }
+      HStack(spacing: gap) {
+        squareActivity(honeycombCellChess(), side: side)
+        Color.clear.frame(width: side, height: side)
+      }
+    }
+    .frame(maxWidth: .infinity)
+    .frame(height: 4 * side + 3 * gap)
+  }
+
+  private func squareActivity<Content: View>(_ content: Content, side: CGFloat) -> some View {
+    content
+      .frame(width: side, height: side)
+      .clipped()
+  }
+
   private var honeycombActivitiesView: some View {
     let w = Self.hexWidth
     let h = Self.hexHeight
@@ -499,7 +593,7 @@ struct ActivitiesView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(Color.blue.opacity(0.1))
-        .cornerRadius(8)
+        .appCorner(AppTheme.tinyRadius)
         .foregroundColor(.blue)
         
         Spacer()
@@ -540,7 +634,7 @@ struct ActivitiesView: View {
           .padding(.horizontal, 16)
           .padding(.vertical, 6)
           .background(getLeagueColor().opacity(0.15))
-          .cornerRadius(12)
+          .appCorner(AppTheme.smallRadius)
       }
       
       // Current / Last Opponent Score (clearer W-L format)
@@ -594,13 +688,13 @@ struct ActivitiesView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 6)
             .background(Color.purple.opacity(0.12))
-            .cornerRadius(10)
+            .appCorner(AppTheme.smallRadius)
           }
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 12)
         .background(AppTheme.surface.opacity(0.5))
-        .cornerRadius(12)
+        .appCorner(AppTheme.smallRadius)
       }
       
       if !lastChessDate.isEmpty {
@@ -629,59 +723,7 @@ struct ActivitiesView: View {
     .appSurface()
     .padding(.horizontal)
   }
-  
-  // MARK: - Chess Activity Button (opens sheet)
-  
-  private var chessActivityButton: some View {
-    let tracked = isTrackedForViewedDate(.chess)
-    return Button(action: {
-      HapticsService.shared.select()
-      showChessSheet = true
-    }) {
-      HStack {
-        Image(systemName: ThemeService.shared.icon(for: "square.grid.3x3.fill"))
-          .font(.title2)
-          .foregroundColor(tracked ? .white : .purple)
-          .frame(width: 40)
-        
-        VStack(alignment: .leading, spacing: 2) {
-          Text(Localization.shared.tr("activities.chess.name", default: "Chess"))
-            .font(.headline)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
-          Text(Localization.shared.tr("activities.chess.subtitle", default: "Record games, view wins"))
-            .font(.caption)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-        
-        Image(systemName: "chevron.right")
-          .font(.caption)
-          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
-      }
-      .padding()
-      .background(
-        Group {
-          if tracked {
-            AppTheme.success
-          } else {
-            AppTheme.surface
-          }
-        }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .appCardShadow()
-    }
-    .buttonStyle(.plain)
-  }
-  
+
   // MARK: - Tracked Today Helpers
   
   private func activityTypeKey(_ type: ActivityType) -> String {
@@ -706,14 +748,7 @@ struct ActivitiesView: View {
     default: return nil
     }
   }
-  
-  private func isTrackedToday(_ type: ActivityType) -> Bool {
-    if type == .chess {
-      return lastChessDate == getCurrentUTCDateString()
-    }
-    return todayTrackedActivityTypes.contains(activityTypeKey(type))
-  }
-  
+
   /// Highlight (green-purple) only activities tracked for the currently viewed date, not other dates.
   private func isTrackedForViewedDate(_ type: ActivityType) -> Bool {
     if type == .chess {
@@ -721,12 +756,6 @@ struct ActivitiesView: View {
         || summaryActivityTypes.contains("chess")
     }
     return summaryActivityTypes.contains(activityTypeKey(type))
-  }
-
-  private func trackedActivitiesToday() -> [ActivityType] {
-    todayTrackedActivityTypes
-      .split(separator: ",")
-      .compactMap { activityTypeFromKey(String($0)) }
   }
 
   private func activityDisplayName(_ type: ActivityType) -> String {
@@ -747,60 +776,144 @@ struct ActivitiesView: View {
   }
   
   // MARK: - Activity Button
-  
-  private func activityButton(type: ActivityType, title: String, subtitle: String, icon: String, color: Color) -> some View {
-    let tracked = isTrackedForViewedDate(type)
-    return Button(action: {
-      HapticsService.shared.select()
-      selectedActivityType = type
-      inputValue = ""
-      showActivityInputSheet = true
-    }) {
-      HStack {
-        // Theme-aware icon
-        Image(systemName: ThemeService.shared.icon(for: icon))
-          .font(.title2)
-          .foregroundColor(tracked ? .white : color)
-          .frame(width: 40)
-        
+
+  // MARK: - Chess Color
+
+  private var chessColorSheet: some View {
+    NavigationView {
+      ZStack {
+        AppTheme.backgroundGradient.ignoresSafeArea()
+        VStack(spacing: 16) {
+          Text(Localization.shared.tr("activities.chess.your_color", default: "Which side did you play?"))
+            .font(.title2.bold())
+            .foregroundColor(AppTheme.textPrimary)
+            .multilineTextAlignment(.center)
+            .padding(.top, 30)
+            .padding(.horizontal, 24)
+
+          Spacer()
+
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.black", default: "Black"),
+            swatch: .black,
+            bordered: false
+          ) {
+            chooseChessColor("black")
+          }
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.white", default: "White"),
+            swatch: .white,
+            bordered: true
+          ) {
+            chooseChessColor("white")
+          }
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.red", default: "Red"),
+            subtitle: Localization.shared.tr("activities.chess.color.xiangqi", default: "Xiangqi"),
+            swatch: .red,
+            bordered: false
+          ) {
+            chooseChessColor("red")
+          }
+
+          Spacer()
+        }
+        .padding(.horizontal, 24)
+      }
+    }
+  }
+
+  private var chessOpponentColorSheet: some View {
+    NavigationView {
+      ZStack {
+        AppTheme.backgroundGradient.ignoresSafeArea()
+        VStack(spacing: 16) {
+          Text(Localization.shared.tr("activities.chess.opponent_color", default: "Opponent side"))
+            .font(.title2.bold())
+            .foregroundColor(AppTheme.textPrimary)
+            .multilineTextAlignment(.center)
+            .padding(.top, 30)
+            .padding(.horizontal, 24)
+
+          Spacer()
+
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.white", default: "White"),
+            swatch: .white,
+            bordered: true
+          ) {
+            chooseOpponentColor(nil)
+          }
+          chessSideButton(
+            title: Localization.shared.tr("activities.chess.color.red", default: "Red"),
+            subtitle: Localization.shared.tr("activities.chess.color.xiangqi", default: "Xiangqi"),
+            swatch: .red,
+            bordered: false
+          ) {
+            chooseOpponentColor("red")
+          }
+
+          Spacer()
+        }
+        .padding(.horizontal, 24)
+      }
+    }
+  }
+
+  private func chessSideButton(
+    title: String,
+    subtitle: String? = nil,
+    swatch: Color,
+    bordered: Bool,
+    action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      HStack(spacing: 14) {
+        PlayedPawnMark(
+          fill: swatch,
+          outline: bordered
+            ? Color.black.opacity(0.45)
+            : (swatch == .black ? Color.white.opacity(0.55) : Color.black.opacity(0.25))
+        )
+        .frame(width: 22, height: 30)
         VStack(alignment: .leading, spacing: 2) {
           Text(title)
-            .font(.headline)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .foregroundColor(tracked ? .white : AppTheme.textPrimary)
-          Text(subtitle)
-            .font(.caption)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .foregroundColor(tracked ? .white.opacity(0.9) : AppTheme.textSecondary)
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-        
-        Image(systemName: "chevron.right")
-          .font(.caption)
-          .foregroundColor(tracked ? .white : AppTheme.textSecondary)
-      }
-      .padding()
-      .background(
-        Group {
-          if tracked {
-            AppTheme.success
-          } else {
-            AppTheme.surface
+            .font(.title3.bold())
+            .foregroundColor(AppTheme.textPrimary)
+          if let subtitle {
+            Text(subtitle)
+              .font(.caption)
+              .foregroundColor(AppTheme.textSecondary)
           }
         }
-      )
-      .clipShape(RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: AppTheme.smallRadius, style: .continuous)
-          .stroke(AppTheme.divider, lineWidth: 1)
-      )
-      .appCardShadow()
+        Spacer()
+      }
+      .padding(.horizontal, 20)
+      .frame(maxWidth: .infinity)
+      .frame(height: subtitle == nil ? 72 : 84)
+      .appSurface()
     }
     .buttonStyle(.plain)
   }
-  
+
+  private func chooseChessColor(_ color: String) {
+    HapticsService.shared.select()
+    showChessColorSheet = false
+    if color == "black" {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        showChessOpponentColorSheet = true
+      }
+      return
+    }
+    recordChessGame(winner: pendingGameResult, color: color, opponentColor: nil)
+  }
+
+  private func chooseOpponentColor(_ opponentColor: String?) {
+    HapticsService.shared.select()
+    showChessOpponentColorSheet = false
+    recordChessGame(winner: pendingGameResult, color: "black", opponentColor: opponentColor)
+  }
+
   // MARK: - Chess Winner Sheet
   
   private var chessWinnerSheet: some View {
@@ -893,7 +1006,7 @@ struct ActivitiesView: View {
               .padding(.vertical, 12)
               .padding(.horizontal, 20)
               .background(Color.orange.opacity(0.15))
-              .cornerRadius(12)
+              .appCorner(AppTheme.smallRadius)
             }
             .padding(.bottom, 10)
           }
@@ -1060,7 +1173,7 @@ struct ActivitiesView: View {
     }
   }
   
-  private func recordChessGame(winner: String) {
+  private func recordChessGame(winner: String, color: String, opponentColor: String?) {
     let today = getCurrentUTCDateString()
     
     // If this is the first game today, save current state as "start of day"
@@ -1133,7 +1246,9 @@ struct ActivitiesView: View {
       GRPCService().recordChessGame(
         playerEmail: playerEmail,
         opponentEmail: chessOpponentEmail,
-        result: backendResult
+        result: backendResult,
+        color: color,
+        opponentColor: opponentColor
       ) { _, _, _ in }
     }
     
@@ -1258,7 +1373,7 @@ struct ActivitiesView: View {
     guard !isSyncingChess else { return }
     isSyncingChess = true
     
-    GRPCService().getAllChessData { success, totalWins, opponents in
+    GRPCService().getAllChessData { success, totalWins, opponents, _, _ in
       DispatchQueue.main.async {
         self.isSyncingChess = false
         

@@ -23,6 +23,10 @@
 	<string>This app uses the camera to take photos of food for nutritional analysis and to capture weight scale readings for health tracking.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app accesses your photo library to allow you to select existing photos of food for nutritional analysis.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Eateria reads your height, weight, age, sex, and active energy from Apple Health to set your daily calorie target and add calories you burn to today's limit. This data stays on your iPhone and is never used for advertising.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Eateria only reads from Apple Health and does not save any data to it.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app saves the food photos you take to your photo library for your memories.</string>
 

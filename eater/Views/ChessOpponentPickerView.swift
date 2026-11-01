@@ -46,7 +46,7 @@ struct ChessOpponentPickerView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(AppTheme.accent)
-                .cornerRadius(10)
+                .appCorner(AppTheme.smallRadius)
             }
           }
         } else {
@@ -75,8 +75,7 @@ struct ChessOpponentPickerView: View {
           }
         }
       }
-      .navigationTitle(Localization.shared.tr("activities.chess.select_opponent", default: "Select Opponent"))
-      .navigationBarTitleDisplayMode(.inline)
+      .scaledNavTitle(Localization.shared.tr("activities.chess.select_opponent", default: "Select Opponent"))
 
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {

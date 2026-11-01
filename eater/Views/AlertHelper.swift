@@ -1,5 +1,12 @@
 import SwiftUI
 
+struct HealthComponentLine: Identifiable {
+  let id: Int
+  let name: String
+  let note: String
+  let isRisk: Bool
+}
+
 class AlertHelper {
   enum HapticKind {
     case success
@@ -112,31 +119,14 @@ class AlertHelper {
       }
     }
 
-    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-
-    if let attr = attributedMessage {
-      alert.setValue(attr, forKey: "attributedMessage")
-    } else if let attributedMessage = alert.message {
-      let mutableAttributedMessage = NSMutableAttributedString(string: attributedMessage)
-
-      let largerFontSize: CGFloat = 16
-
-      mutableAttributedMessage.addAttribute(
-        .font,
-        value: UIFont.systemFont(ofSize: largerFontSize),
-        range: NSRange(location: 0, length: mutableAttributedMessage.length)
-      )
-
-      alert.setValue(mutableAttributedMessage, forKey: "attributedMessage")
-    }
-
-    alert.addAction(
-      UIAlertAction(title: loc("common.ok", "OK"), style: .default) { _ in
-        completion?()
-      })
-
-    // Find the topmost view controller that can present
-    presentAlert(alert, from: rootViewController)
+    let notice = ScaledHost.notice(
+      title: title,
+      message: attributedMessage?.string ?? message ?? "",
+      actions: [
+        ScaledNoticeAction(title: loc("common.ok", "OK")) { completion?() },
+      ]
+    )
+    presentController(notice, from: rootViewController)
   }
 
   static func showDailyLimitReached(isGuest: Bool, limit: Int) {
@@ -149,25 +139,26 @@ class AlertHelper {
         : loc("quota.user.msg", "You've used your %d scans for today. Come back tomorrow."),
       limit
     )
-    var actions: [UIAlertAction] = [
-      UIAlertAction(title: loc("common.ok", "OK"), style: .cancel)
-    ]
+    var actions: [ScaledNoticeAction] = []
     if isGuest {
       actions.append(
-        UIAlertAction(title: loc("quota.sign_in", "Sign in"), style: .default) { _ in
+        ScaledNoticeAction(title: loc("quota.sign_in", "Sign in")) {
           DispatchQueue.main.async {
             AppNavigation.shared.showInPlaceLogin = true
           }
         }
       )
     }
+    actions.append(
+      ScaledNoticeAction(title: loc("common.ok", "OK"), kind: isGuest ? .secondary : .primary)
+    )
     showConfirmation(title: title, message: message, actions: actions, haptic: .warning)
   }
 
   static func showConfirmation(
     title: String,
     message: String? = nil,
-    actions: [UIAlertAction],
+    actions: [ScaledNoticeAction],
     haptic: HapticKind? = nil
   ) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -189,12 +180,8 @@ class AlertHelper {
       }
     }
 
-    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    for action in actions {
-      alert.addAction(action)
-    }
-
-    presentAlert(alert, from: rootViewController)
+    let notice = ScaledHost.notice(title: title, message: message ?? "", actions: actions)
+    presentController(notice, from: rootViewController)
   }
 
   /// Full-screen celebration with simple confetti.
@@ -223,12 +210,6 @@ class AlertHelper {
       secondaryAction: secondaryAction
     )
     presentController(vc, from: rootViewController)
-  }
-
-  private static func presentAlert(
-    _ alert: UIAlertController, from viewController: UIViewController, retryCount: Int = 0
-  ) {
-    presentController(alert, from: viewController, retryCount: retryCount)
   }
 
   private static func presentController(
@@ -283,6 +264,7 @@ class AlertHelper {
     let vc = ShareFoodViewController(foodName: foodName, time: time, imageId: imageId)
     vc.onShareSuccess = onShareSuccess
     let nav = UINavigationController(rootViewController: vc)
+    nav.traitOverrides.preferredContentSizeCategory = ScaledHost.contentSizeCategory
     nav.modalPresentationStyle = .pageSheet
     if let sheet = nav.sheetPresentationController {
       sheet.detents = [.medium(), .large()]
@@ -292,18 +274,18 @@ class AlertHelper {
   }
 
   private static func presentLoginRequiredAlert(on rootViewController: UIViewController, message: String) {
-    let loginAlert = UIAlertController(
+    let loginNotice = ScaledHost.notice(
       title: loc("share.login_required.title", "Login Required"),
       message: message,
-      preferredStyle: .alert
+      actions: [
+        ScaledNoticeAction(title: loc("login.prompt.confirm", "Login Now")) {
+          AppNavigation.shared.showInPlaceLogin = true
+        },
+        ScaledNoticeAction(title: loc("common.not_yet", "Not Yet"), kind: .secondary),
+      ]
     )
-    loginAlert.addAction(UIAlertAction(title: loc("common.not_yet", "Not Yet"), style: .cancel))
-    loginAlert.addAction(
-      UIAlertAction(title: loc("login.prompt.confirm", "Login Now"), style: .default) { _ in
-        AppNavigation.shared.showInPlaceLogin = true
-      })
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-      rootViewController.present(loginAlert, animated: true)
+      rootViewController.present(loginNotice, animated: true)
     }
   }
 
@@ -315,94 +297,28 @@ class AlertHelper {
       foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
   }
 
-  static func showHealthRecommendation(recommendation: String, completion: (() -> Void)? = nil) {
-    let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
-    let body = loc(
-      "rec.disclaimer.text",
-      "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
-    )
-    let sourcesLabel = loc("alert.health.sources.label", "Sources:")
-    let sourceUSDA = loc("alert.health.sources.usda", "USDA FoodData Central")
-    let sourceGuidelines = loc(
-      "alert.health.sources.guidelines", "Dietary Guidelines for Americans")
-    let disclaimerText =
-      "\n\n" + header + "\n" + body + "\n\n" + sourcesLabel + " " + sourceUSDA + ", "
-      + sourceGuidelines
-    let fullMessage = recommendation + disclaimerText
-    let title = loc("health.recommendation.title", "Health Recommendation")
-    showAlert(title: title, message: fullMessage, completion: completion)
+  static func localizedHealthText(_ text: String) -> String {
+    translateHealthText(text)
   }
 
-  static func showHealthLevelInfo(title: String, description: String, healthSummary: String) {
-    let header = loc("rec.disclaimer.title", "Important Health Disclaimer")
-    let body = loc(
-      "rec.disclaimer.text",
-      "⚠️ This information is for educational purposes only and should not replace professional medical advice. Consult your healthcare provider before making dietary changes."
-    )
-    let displayTitle = translateHealthText(title)
-    let displayDescription = translateHealthText(description)
-
-    // Attempt to parse JSON healthSummary
-    if let data = healthSummary.data(using: .utf8),
-       let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data) {
-      
-      let fullStr = NSMutableAttributedString()
-      
-      fullStr.append(NSAttributedString(string: displayDescription + "\n\n", attributes: [
-        .font: UIFont.systemFont(ofSize: 17),
-        .foregroundColor: UIColor.secondaryLabel
-      ]))
-      
-      for (index, item) in items.enumerated() {
-        if index > 0 {
-          fullStr.append(NSAttributedString(string: "\n"))
-        }
-
-        let name = item.ingredient ?? item.ingredients ?? ""
-        if !name.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(name) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
-            .foregroundColor: UIColor.label
-          ]))
-        }
-        
-        let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
-        if !impactText.isEmpty {
-          let isRisk = (item.impact?.lowercased().contains("risk") ?? true) || item.risk != nil
-          let color = isRisk ? UIColor.systemOrange : UIColor.systemGreen
-          fullStr.append(NSAttributedString(string: translateHealthText(impactText) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-            .foregroundColor: color
-          ]))
-        } else if let risk = item.risk, !risk.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(risk) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-            .foregroundColor: UIColor.systemOrange
-          ]))
-        } else if let benefit = item.benefit, !benefit.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(benefit) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16, weight: .medium),
-            .foregroundColor: UIColor.systemGreen
-          ]))
-        }
-        
-        if let desc = item.description, !desc.isEmpty {
-          fullStr.append(NSAttributedString(string: translateHealthText(desc) + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 16),
-            .foregroundColor: UIColor.label
-          ]))
-        }
-      }
-      
-      let disclaimer = "\n" + header + "\n" + body
-      fullStr.append(NSAttributedString(string: disclaimer, attributes: [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.secondaryLabel]))
-      
-      showAlert(title: displayTitle, attributedMessage: fullStr)
-      return
+  static func componentLines(healthSummary: String) -> [HealthComponentLine] {
+    guard let data = healthSummary.data(using: .utf8),
+      let items = try? JSONDecoder().decode([HealthSummaryItem].self, from: data)
+    else {
+      return []
     }
-    
-    let message = displayDescription + "\n\n" + healthSummary + "\n\n" + header + "\n" + body
-    showAlert(title: displayTitle, message: message)
+    return items.enumerated().compactMap { index, item in
+      let name = translateHealthText(item.ingredient ?? item.ingredients ?? "")
+      let impactText = item.impact_text ?? item.risk ?? item.benefit ?? ""
+      let detail = translateHealthText(item.description ?? "")
+      let note = [translateHealthText(impactText), detail]
+        .filter { !$0.isEmpty }
+        .joined(separator: " ")
+      if name.isEmpty && note.isEmpty { return nil }
+      let impact = item.impact?.lowercased() ?? ""
+      let isRisk = impact.contains("risk") || ((item.risk?.isEmpty == false) && impact.isEmpty)
+      return HealthComponentLine(id: index, name: name, note: note, isRisk: isRisk)
+    }
   }
 
   static func showPortionSelectionAlert(
@@ -427,164 +343,122 @@ class AlertHelper {
       return
     }
 
-    let alert = UIAlertController(
+    let isAnonymousUser = UserDefaults.standard.bool(forKey: "is_anonymous")
+    let portions: [(title: String, percentage: Int32)] = [
+      (String(format: loc("portion.200", "200%% (%dg) - Double portion"), originalWeight * 2), 200),
+      (String(format: loc("portion.150", "150%% (%dg) - One and a half portion"), originalWeight * 3 / 2), 150),
+      (String(format: loc("portion.125", "125%% (%dg) - One and a quarter portion"), originalWeight * 5 / 4), 125),
+      (String(format: loc("portion.75", "75%% (%dg) - Three quarters"), originalWeight * 3 / 4), 75),
+      (String(format: loc("portion.50", "50%% (%dg) - Half portion"), originalWeight / 2), 50),
+    ]
+
+    var actions: [ScaledNoticeAction] = portions.map { portion in
+      ScaledNoticeAction(title: portion.title, kind: .secondary) {
+        onPortionSelected(portion.percentage, nil)
+      }
+    }
+
+    actions.append(
+      ScaledNoticeAction(
+        title: loc("portion.share", "Share food with friend"),
+        kind: .secondary,
+        tint: isAnonymousUser ? AppTheme.textSecondary : AppTheme.success
+      ) {
+        if isAnonymousUser {
+          presentLoginRequiredAlert(
+            on: rootViewController,
+            message: loc(
+              "share.login_required.message",
+              "Create an account or log in to share food with friends."))
+        } else {
+          presentShareFriendsController(
+            foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
+        }
+      })
+
+    if !isFruitOrVegetable {
+      let additionalTitle = loc("portion.additional", "Additives")
+      let additionalTint = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+          ? UIColor.systemYellow
+          : UIColor(red: 0.72, green: 0.52, blue: 0.00, alpha: 1.0)
+      })
+      actions.append(
+        ScaledNoticeAction(title: additionalTitle, kind: .secondary, tint: additionalTint) {
+          let extras: [ScaledNoticeAction]
+          if isDrink {
+            extras = [
+              ScaledNoticeAction(title: loc("portion.extra.lemon", "Lemon 5g"), kind: .secondary) {
+                onAddDrinkExtra?("lemon_5g")
+              },
+              ScaledNoticeAction(title: loc("portion.extra.honey", "Honey 10g"), kind: .secondary) {
+                onAddDrinkExtra?("honey_10g")
+              },
+              ScaledNoticeAction(title: loc("portion.extra.milk", "Milk 50g"), kind: .secondary) {
+                onAddDrinkExtra?("milk_50g")
+              },
+              ScaledNoticeAction(title: loc("portion.add_extra", "Add 1 tsp sugar"), kind: .secondary) {
+                onAddSugar?()
+              },
+            ]
+          } else {
+            extras = [
+              ScaledNoticeAction(title: loc("portion.extra.soy", "Soy sauce 15g"), kind: .secondary) {
+                onAddFoodExtra?("soy_sauce_15g")
+              },
+              ScaledNoticeAction(title: loc("portion.extra.wasabi", "Wasabi 3g"), kind: .secondary) {
+                onAddFoodExtra?("wasabi_3g")
+              },
+              ScaledNoticeAction(title: loc("portion.extra.pepper", "Spicy pepper 5g"), kind: .secondary) {
+                onAddFoodExtra?("spicy_pepper_5g")
+              },
+            ]
+          }
+          let submenu = ScaledHost.notice(
+            title: additionalTitle,
+            message: "",
+            actions: extras + [ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary)]
+          )
+          rootViewController.present(submenu, animated: true)
+        })
+    }
+
+    actions.append(
+      ScaledNoticeAction(
+        title: imageId.isEmpty
+          ? loc("manual_food.title", "Fix food name")
+          : loc("common.try_manual", "Try manually"),
+        kind: .secondary,
+        tint: isAnonymousUser ? AppTheme.textSecondary : .orange
+      ) {
+        if isAnonymousUser {
+          presentLoginRequiredAlert(
+            on: rootViewController,
+            message: loc(
+              "manual_food.login_required.message",
+              "Create an account or log in to manually fix or suggest food names."))
+        } else {
+          onTryAgain?()
+        }
+      })
+
+    actions.append(
+      ScaledNoticeAction(title: loc("portion.custom", "Custom grams"), kind: .secondary, tint: .purple) {
+        showCustomPortionAlert(
+          foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
+      })
+
+    actions.append(ScaledNoticeAction(title: loc("common.cancel", "Cancel"), kind: .secondary))
+
+    let menu = ScaledHost.notice(
       title: loc("portion.modify.title", "Modify Portion"),
       message: String(
         format: loc(
           "portion.modify.msg", "How much of '%@' did you actually eat?\nOriginal weight: %dg"),
         foodName, originalWeight),
-      preferredStyle: .alert
+      actions: actions
     )
-
-    // Add percentage options with calculated weights
-    let portions = [
-      (
-        title: String(
-          format: loc("portion.200", "200%% (%dg) - Double portion"), originalWeight * 2),
-        percentage: Int32(200)
-      ),
-      (
-        title: String(
-          format: loc("portion.150", "150%% (%dg) - One and a half portion"), originalWeight * 3 / 2
-        ), percentage: Int32(150)
-      ),
-      (
-        title: String(
-          format: loc("portion.125", "125%% (%dg) - One and a quarter portion"),
-          originalWeight * 5 / 4), percentage: Int32(125)
-        ),
-      (
-        title: String(
-          format: loc("portion.75", "75%% (%dg) - Three quarters"), originalWeight * 3 / 4),
-        percentage: Int32(75)
-      ),
-      (
-        title: String(format: loc("portion.50", "50%% (%dg) - Half portion"), originalWeight / 2),
-        percentage: Int32(50)
-      ),
-    ]
-
-    for portion in portions {
-      alert.addAction(
-        UIAlertAction(title: portion.title, style: .default) { _ in
-          onPortionSelected(portion.percentage, nil)
-        })
-    }
-
-    // Share food with friend action (visually highlighted)
-    let isAnonymousUser = UserDefaults.standard.bool(forKey: "is_anonymous")
-    let shareTitle = loc("portion.share", "Share food with friend")
-    let shareAction = UIAlertAction(title: shareTitle, style: .default) { _ in
-      if isAnonymousUser {
-        presentLoginRequiredAlert(
-          on: rootViewController,
-          message: loc(
-            "share.login_required.message",
-            "Create an account or log in to share food with friends."))
-      } else {
-        presentShareFriendsController(
-          foodName: foodName, time: time, imageId: imageId, onShareSuccess: onShareSuccess)
-      }
-    }
-    // Make action title green (private API key path, commonly works in UIKit alerts)
-    shareAction.setValue(
-      isAnonymousUser ? UIColor.systemGray : UIColor.systemGreen, forKey: "titleTextColor")
-    alert.addAction(shareAction)
-
-    // Additives extras: not for fruit/vegetable; tap "Additives" to open submenu
-    if !isFruitOrVegetable {
-      let additionalTitle = loc("portion.additional", "Additives")
-      let additionalAction = UIAlertAction(title: additionalTitle, style: .default) { _ in
-          // Present a second alert (submenu) with extra options
-          let additionalAlert = UIAlertController(
-            title: additionalTitle,
-            message: nil,
-            preferredStyle: .alert
-          )
-
-          if isDrink {
-            additionalAlert.addAction(
-              UIAlertAction(title: loc("portion.extra.lemon", "Lemon 5g"), style: .default) { _ in
-                onAddDrinkExtra?("lemon_5g")
-              })
-            additionalAlert.addAction(
-              UIAlertAction(title: loc("portion.extra.honey", "Honey 10g"), style: .default) { _ in
-                onAddDrinkExtra?("honey_10g")
-              })
-            additionalAlert.addAction(
-              UIAlertAction(title: loc("portion.extra.milk", "Milk 50g"), style: .default) { _ in
-                onAddDrinkExtra?("milk_50g")
-              })
-            let addSugarTitle = loc("portion.add_extra", "Add 1 tsp sugar")
-            additionalAlert.addAction(
-              UIAlertAction(title: addSugarTitle, style: .default) { _ in
-                onAddSugar?()
-              })
-          } else {
-            additionalAlert.addAction(
-              UIAlertAction(title: loc("portion.extra.soy", "Soy sauce 15g"), style: .default) { _ in
-                onAddFoodExtra?("soy_sauce_15g")
-              })
-            additionalAlert.addAction(
-              UIAlertAction(title: loc("portion.extra.wasabi", "Wasabi 3g"), style: .default) { _ in
-                onAddFoodExtra?("wasabi_3g")
-              })
-            additionalAlert.addAction(
-              UIAlertAction(title: loc("portion.extra.pepper", "Spicy pepper 5g"), style: .default) { _ in
-                onAddFoodExtra?("spicy_pepper_5g")
-              })
-          }
-
-          additionalAlert.addAction(
-            UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel, handler: nil))
-
-          // Present after the first alert dismisses
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            rootViewController.present(additionalAlert, animated: true)
-          }
-        }
-      // Yellow text for "Additives" (darker in Light Mode for readability)
-      let additionalTitleColor = UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-          return UIColor.systemYellow
-        }
-        // Amber-ish yellow that stays readable on white backgrounds
-        return UIColor(red: 0.72, green: 0.52, blue: 0.00, alpha: 1.0)
-      }
-      additionalAction.setValue(additionalTitleColor, forKey: "titleTextColor")
-      alert.addAction(additionalAction)
-    }
-
-    // Try manually – visible button between Share and Custom.
-    // Guest accounts have nowhere to save a name fix, so gray the button and ask to log in.
-    let tryManualTitle = loc("common.try_manual", "Try manually")
-    let tryManualAction = UIAlertAction(title: tryManualTitle, style: .default) { _ in
-      if isAnonymousUser {
-        presentLoginRequiredAlert(
-          on: rootViewController,
-          message: loc(
-            "manual_food.login_required.message",
-            "Create an account or log in to manually fix or suggest food names."))
-      } else {
-        onTryAgain?()
-      }
-    }
-    tryManualAction.setValue(
-      isAnonymousUser ? UIColor.systemGray : UIColor.systemOrange, forKey: "titleTextColor")
-    alert.addAction(tryManualAction)
-
-    // Add custom option (purple)
-    let customTitle = loc("portion.custom", "Custom grams")
-    let customAction = UIAlertAction(title: customTitle, style: .default) { _ in
-      showCustomPortionAlert(
-        foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
-    }
-    customAction.setValue(UIColor.systemPurple, forKey: "titleTextColor")
-    alert.addAction(customAction)
-
-    alert.addAction(UIAlertAction(title: loc("common.cancel", "Cancel"), style: .cancel))
-
-    rootViewController.present(alert, animated: true)
+    rootViewController.present(menu, animated: true)
   }
 
   static func showCustomPortionAlert(
@@ -598,60 +472,19 @@ class AlertHelper {
       return
     }
 
-    let customPortionVC = CustomPortionViewController(
-      foodName: foodName, originalWeight: originalWeight, onPortionSelected: onPortionSelected)
-    let navController = UINavigationController(rootViewController: customPortionVC)
-    navController.modalPresentationStyle = UIModalPresentationStyle.pageSheet
-
-    if #available(iOS 15.0, *) {
-      if let sheet = navController.sheetPresentationController {
-        sheet.detents = [.medium()]
-        sheet.prefersGrabberVisible = true
-      }
+    let controller = ScaledHost.makeController(swipeToDismiss: true) { close in
+      CustomPortionSheet(
+        foodName: foodName,
+        originalWeight: originalWeight,
+        onCancel: { close {} },
+        onSelect: { percentage, grams in
+          close { onPortionSelected(percentage, grams) }
+        }
+      )
     }
-
-    rootViewController.present(navController, animated: true)
+    rootViewController.present(controller, animated: true)
   }
 
-  /// Generic text input alert helper (single text field)
-  static func showTextInputAlert(
-    title: String,
-    message: String? = nil,
-    placeholder: String,
-    initialText: String = "",
-    confirmTitle: String = "OK",
-    keyboardType: UIKeyboardType = .default,
-    onSubmit: @escaping (String) -> Void
-  ) {
-    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let window = windowScene.windows.first,
-      let rootViewController = window.rootViewController
-    else {
-      return
-    }
-
-    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    alert.addTextField { textField in
-      textField.placeholder = placeholder
-      textField.text = initialText
-      textField.keyboardType = keyboardType
-    }
-
-    let submitAction = UIAlertAction(title: confirmTitle, style: .default) { _ in
-      let text =
-        alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-      guard !text.isEmpty else { return }
-      onSubmit(text)
-    }
-
-    let cancelAction = UIAlertAction(
-      title: loc("common.cancel", "Cancel"), style: .cancel, handler: nil)
-
-    alert.addAction(submitAction)
-    alert.addAction(cancelAction)
-
-    presentAlert(alert, from: rootViewController)
-  }
 }
 
 private final class CelebrationViewController: UIViewController {
@@ -750,10 +583,18 @@ private final class CelebrationViewController: UIViewController {
       primary.heightAnchor.constraint(equalToConstant: 44),
     ])
 
+    let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(swipedDown))
+    swipeDown.direction = .down
+    view.addGestureRecognizer(swipeDown)
+
     startConfetti()
     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
       self?.stopConfetti()
     }
+  }
+
+  @objc private func swipedDown() {
+    dismiss(animated: true)
   }
 
   private func startConfetti() {
@@ -805,178 +646,3 @@ private final class CelebrationViewController: UIViewController {
 }
 
 // Custom view controller for portion selection
-private class CustomPortionViewController: UIViewController {
-  private let foodName: String
-  private let originalWeight: Int
-  private let onPortionSelected: (Int32, Double?) -> Void
-  private var scrollView: UIScrollView!
-  private var stackView: UIStackView!
-  private var manualInputTextField: UITextField!
-
-  init(foodName: String, originalWeight: Int, onPortionSelected: @escaping (Int32, Double?) -> Void) {
-    self.foodName = foodName
-    self.originalWeight = originalWeight
-    self.onPortionSelected = onPortionSelected
-    super.init(nibName: nil, bundle: nil)
-  }
-
-  @available(*, unavailable)
-  required init?(coder _: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
-
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    setupUI()
-  }
-
-  private func setupUI() {
-    title = loc("portion.custom.title", "Custom Portion")
-    view.backgroundColor = .systemBackground
-
-    // Add cancel button
-    navigationItem.leftBarButtonItem = UIBarButtonItem(
-      title: loc("common.cancel", "Cancel"),
-      style: .plain,
-      target: self,
-      action: #selector(cancelTapped)
-    )
-
-    // Create scroll view and stack view
-    scrollView = UIScrollView()
-    scrollView.translatesAutoresizingMaskIntoConstraints = false
-    scrollView.showsVerticalScrollIndicator = true
-
-    stackView = UIStackView()
-    stackView.translatesAutoresizingMaskIntoConstraints = false
-    stackView.axis = .vertical
-    stackView.spacing = 12
-    stackView.alignment = .fill
-    stackView.layoutMargins = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
-    stackView.isLayoutMarginsRelativeArrangement = true
-
-    // Add title label
-    let titleLabel = UILabel()
-    titleLabel.text = String(
-      format: loc("portion.custom.msg", "Select the amount of '%@' you ate:\nOriginal weight: %dg"),
-      foodName, originalWeight)
-    titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-    titleLabel.textAlignment = .center
-    titleLabel.numberOfLines = 0
-    stackView.addArrangedSubview(titleLabel)
-
-    // Add separator
-    let separator = UIView()
-    separator.backgroundColor = .separator
-    separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
-    stackView.addArrangedSubview(separator)
-
-    // Add manual input section
-    let manualStack = UIStackView()
-    manualStack.axis = .horizontal
-    manualStack.spacing = 12
-    manualStack.alignment = .center
-
-    let textField = UITextField()
-    textField.placeholder = loc("portion.custom.manual_placeholder", "e.g. 146.4")
-    textField.keyboardType = .decimalPad
-    textField.borderStyle = .roundedRect
-    textField.heightAnchor.constraint(equalToConstant: 44).isActive = true
-    self.manualInputTextField = textField
-    manualStack.addArrangedSubview(textField)
-
-    let applyButton = UIButton(type: .system)
-    applyButton.setTitle(loc("common.apply", "Apply"), for: .normal)
-    applyButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-    applyButton.backgroundColor = UIColor.systemBlue
-    applyButton.setTitleColor(.white, for: .normal)
-    applyButton.layer.cornerRadius = 8
-    // Fallback if contentEdgeInsets is deprecated or just use layout constraints
-    if #available(iOS 15.0, *) {
-      var config = UIButton.Configuration.filled()
-      config.title = loc("common.apply", "Apply")
-      config.baseBackgroundColor = .systemBlue
-      applyButton.configuration = config
-    } else {
-      applyButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-    }
-    applyButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
-    applyButton.addTarget(self, action: #selector(manualApplyTapped), for: .touchUpInside)
-    manualStack.addArrangedSubview(applyButton)
-
-    stackView.addArrangedSubview(manualStack)
-    
-    // Add another separator
-    let separator2 = UIView()
-    separator2.backgroundColor = .separator
-    separator2.heightAnchor.constraint(equalToConstant: 1).isActive = true
-    stackView.addArrangedSubview(separator2)
-
-    // Create percentage options from 10% to 300% in 10% increments
-    let percentageOptions = stride(from: 10, through: 300, by: 10).map { Int32($0) }
-
-    // Add percentage buttons with calculated weights
-    for percentage in percentageOptions {
-      let calculatedWeight = Int(Double(originalWeight) * Double(percentage) / 100.0)
-      let button = UIButton(type: .system)
-      let optionTitle = String(
-        format: loc("portion.custom.option", "%d%% (%dg)"), percentage, calculatedWeight)
-      button.setTitle(optionTitle, for: .normal)
-      button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-      button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
-      button.layer.cornerRadius = 12
-      button.layer.borderWidth = 1
-      button.layer.borderColor = UIColor.systemBlue.withAlphaComponent(0.3).cgColor
-      button.heightAnchor.constraint(equalToConstant: 50).isActive = true
-
-      button.tag = Int(percentage)
-      button.addTarget(self, action: #selector(percentageButtonTapped(_:)), for: .touchUpInside)
-
-      stackView.addArrangedSubview(button)
-    }
-
-    // Add views to hierarchy
-    scrollView.addSubview(stackView)
-    view.addSubview(scrollView)
-
-    // Set up constraints
-    NSLayoutConstraint.activate([
-      scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-      scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-      stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-      stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-      stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-      stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-      stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-    ])
-  }
-
-  @objc private func cancelTapped() {
-    dismiss(animated: true)
-  }
-
-  @objc private func manualApplyTapped() {
-    guard let text = manualInputTextField.text?.replacingOccurrences(of: ",", with: "."),
-          let grams = Double(text),
-          grams > 0 else {
-      return
-    }
-    
-    let percentage = Int32(max(1, round((grams / Double(originalWeight)) * 100.0)))
-    
-    manualInputTextField.resignFirstResponder()
-    dismiss(animated: true) { [weak self] in
-      self?.onPortionSelected(percentage, grams)
-    }
-  }
-
-  @objc private func percentageButtonTapped(_ sender: UIButton) {
-    let percentage = Int32(sender.tag)
-    dismiss(animated: true) { [weak self] in
-      self?.onPortionSelected(percentage, nil)
-    }
-  }
-}

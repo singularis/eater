@@ -64,7 +64,7 @@ enum AnonymousUserIdentity {
 
   /// Friendly menu/profile title when the user has not set a real name or nickname.
   static var defaultDisplayName: String {
-    loc("profile.default_display_name", "Health Eater")
+    loc("profile.default_display_name", "Healthy Eater")
   }
 
   static func isUsablePersonName(_ name: String?) -> Bool {
@@ -79,7 +79,7 @@ enum AnonymousUserIdentity {
     return true
   }
 
-  /// Name shown in profile/menu: nickname → real name → "Health Eater".
+  /// Name shown in profile/menu: nickname → real name → "Healthy Eater".
   static func menuDisplayName(nickname: String?, userName: String?) -> String {
     if hasUsableNickname(nickname) {
       return nickname!.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -16,6 +16,8 @@ struct Product: Identifiable, Codable, Equatable {
   let fats: Double
   let carbohydrates: Double
   let sugar: Double
+  /// Other names the photo analysis considered. Shown instantly in "Try manually".
+  var alternativeNames: [String] = []
 
   // Custom initializer for creating products
   init(
@@ -31,7 +33,8 @@ struct Product: Identifiable, Codable, Equatable {
     proteins: Double = 0,
     fats: Double = 0,
     carbohydrates: Double = 0,
-    sugar: Double = 0
+    sugar: Double = 0,
+    alternativeNames: [String] = []
   ) {
     self.time = time
     self.name = name
@@ -46,6 +49,7 @@ struct Product: Identifiable, Codable, Equatable {
     self.fats = fats
     self.carbohydrates = carbohydrates
     self.sugar = sugar
+    self.alternativeNames = alternativeNames
   }
 
   var image: UIImage? {
@@ -189,6 +193,26 @@ struct Product: Identifiable, Codable, Equatable {
   // Codable implementation
   private enum CodingKeys: String, CodingKey {
     case time, name, calories, weight, ingredients, healthRating, imageId, addedSugarTsp, extras
-    case proteins, fats, carbohydrates, sugar
+    case proteins, fats, carbohydrates, sugar, alternativeNames
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      time: try c.decode(Int64.self, forKey: .time),
+      name: try c.decode(String.self, forKey: .name),
+      calories: try c.decode(Int.self, forKey: .calories),
+      weight: try c.decode(Int.self, forKey: .weight),
+      ingredients: try c.decode([String].self, forKey: .ingredients),
+      healthRating: try c.decodeIfPresent(Int.self, forKey: .healthRating) ?? -1,
+      imageId: try c.decodeIfPresent(String.self, forKey: .imageId) ?? "",
+      addedSugarTsp: try c.decodeIfPresent(Float.self, forKey: .addedSugarTsp) ?? 0,
+      extras: try c.decodeIfPresent([String: Int].self, forKey: .extras) ?? [:],
+      proteins: try c.decodeIfPresent(Double.self, forKey: .proteins) ?? 0,
+      fats: try c.decodeIfPresent(Double.self, forKey: .fats) ?? 0,
+      carbohydrates: try c.decodeIfPresent(Double.self, forKey: .carbohydrates) ?? 0,
+      sugar: try c.decodeIfPresent(Double.self, forKey: .sugar) ?? 0,
+      alternativeNames: try c.decodeIfPresent([String].self, forKey: .alternativeNames) ?? []
+    )
   }
 }
