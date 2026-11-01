@@ -10,7 +10,7 @@ Plain text, no emojis. Lists use the • character, which App Store shows as typ
 English (U.K. / U.S. / Australia / Canada)
 ==================================================
 PROMOTIONAL TEXT
-Snap your meal and see calories, protein, fat and carbs in seconds. Now with a fresh glass design. Free, no ads, no subscription.
+Snap a meal or type it. See calories, protein, fat, carbs and a health score. Free, no ads, no subscription.
 
 DESCRIPTION
 Eateria shows what is on your plate. Take a photo or type a meal, and in seconds see calories, protein, fat, carbs and a simple health score.
@@ -25,7 +25,7 @@ Eateria shows what is on your plate. Take a photo or type a meal, and in seconds
 Free, no ads, no subscription. Eateria gives estimates to help you learn about food. It is not medical advice.
 
 KEYWORDS
-calorie counter,food tracker,macros,nutrition,diet,weight loss,healthy eating,food scanner,calories
+calorie counter,food tracker,macros,nutrition,diet,weight loss,healthy eating,food scanner,food log
 
 WHAT'S NEW
 Eateria 5.3 brings a fresh look
@@ -40,7 +40,7 @@ Eateria 5.3 brings a fresh look
 Arabic
 ==================================================
 PROMOTIONAL TEXT
-التقط صورة لوجبتك وشاهد السعرات والبروتين والدهون والكربوهيدرات في ثوانٍ. الآن بتصميم زجاجي جديد. مجاني، بلا إعلانات ولا اشتراك.
+صوّر وجبتك أو اكتبها. شاهد السعرات والبروتين والدهون والكربوهيدرات وتقييم الصحة. مجاني، بلا إعلانات ولا اشتراك.
 
 DESCRIPTION
 Eateria يُظهر لك ما في طبقك. التقط صورة أو اكتب وجبتك، وخلال ثوانٍ ترى السعرات والبروتين والدهون والكربوهيدرات وتقييمًا صحيًا بسيطًا.
@@ -70,7 +70,7 @@ Eateria 5.3 بمظهر جديد
 Bangla
 ==================================================
 PROMOTIONAL TEXT
-খাবারের ছবি তুলুন, কয়েক সেকেন্ডে দেখুন ক্যালোরি, প্রোটিন, চর্বি ও কার্বোহাইড্রেট। এখন নতুন গ্লাস ডিজাইনে। ফ্রি, বিজ্ঞাপন ও সাবস্ক্রিপশন ছাড়া।
+খাবারের ছবি তুলুন বা নাম লিখুন। ক্যালোরি, প্রোটিন, চর্বি, কার্ব ও স্বাস্থ্য স্কোর দেখুন। ফ্রি, বিজ্ঞাপন ও সাবস্ক্রিপশন ছাড়া।
 
 DESCRIPTION
 Eateria দেখায় আপনার প্লেটে কী আছে। ছবি তুলুন বা খাবারের নাম লিখুন, কয়েক সেকেন্ডে দেখুন ক্যালোরি, প্রোটিন, চর্বি, কার্বোহাইড্রেট আর সহজ স্বাস্থ্য স্কোর।
@@ -100,7 +100,7 @@ Eateria 5.3 এসেছে নতুন রূপে
 Catalan
 ==================================================
 PROMOTIONAL TEXT
-Fes una foto del teu àpat i mira calories, proteïnes, greixos i hidrats en segons. Ara amb un nou disseny de vidre. Gratis, sense anuncis ni subscripció.
+Fes una foto o escriu l'àpat. Veuràs calories, proteïnes, greixos, hidrats i una puntuació de salut. Gratis, sense anuncis ni subscripció.
 
 DESCRIPTION
 Eateria et mostra què hi ha al teu plat. Fes una foto o escriu un àpat i en segons veuràs calories, proteïnes, greixos, hidrats i una puntuació de salut senzilla.
@@ -130,7 +130,7 @@ Eateria 5.3 estrena aspecte
 Chinese (Simplified)
 ==================================================
 PROMOTIONAL TEXT
-拍下你的餐食，几秒内看到热量、蛋白质、脂肪和碳水。全新玻璃设计。免费，无广告，无订阅。
+拍照或输入餐食，几秒内看到热量、蛋白质、脂肪、碳水和健康评分。免费，无广告，无订阅。
 
 DESCRIPTION
 Eateria 告诉你盘中有什么。拍照或输入餐食，几秒内即可看到热量、蛋白质、脂肪、碳水和简单的健康评分。
@@ -160,7 +160,7 @@ Eateria 5.3 焕然一新
 Chinese (Traditional)
 ==================================================
 PROMOTIONAL TEXT
-拍下你的餐點，幾秒內看到熱量、蛋白質、脂肪和碳水。全新玻璃設計。免費，無廣告，無訂閱。
+拍照或輸入餐點，幾秒內看到熱量、蛋白質、脂肪、碳水和健康評分。免費，無廣告，無訂閱。
 
 DESCRIPTION
 Eateria 告訴你盤中有什麼。拍照或輸入餐點，幾秒內即可看到熱量、蛋白質、脂肪、碳水和簡單的健康評分。
@@ -190,7 +190,7 @@ Eateria 5.3 煥然一新
 Croatian
 ==================================================
 PROMOTIONAL TEXT
-Fotografirajte obrok i za par sekundi vidite kalorije, bjelančevine, masti i ugljikohidrate. Sada s novim staklenim dizajnom. Besplatno, bez oglasa i pretplate.
+Fotografirajte ili upišite obrok. Vidite kalorije, bjelančevine, masti, ugljikohidrate i ocjenu zdravlja. Besplatno, bez oglasa i pretplate.
 
 DESCRIPTION
 Eateria vam pokazuje što je na tanjuru. Fotografirajte ili upišite obrok i za par sekundi vidite kalorije, bjelančevine, masti, ugljikohidrate i jednostavnu ocjenu zdravlja.
@@ -220,7 +220,7 @@ Eateria 5.3 donosi novi izgled
 Czech
 ==================================================
 PROMOTIONAL TEXT
-Vyfoťte jídlo a za pár sekund uvidíte kalorie, bílkoviny, tuky a sacharidy. Nově se skleněným designem. Zdarma, bez reklam a předplatného.
+Vyfoťte nebo napište jídlo. Uvidíte kalorie, bílkoviny, tuky, sacharidy a hodnocení zdraví. Zdarma, bez reklam a předplatného.
 
 DESCRIPTION
 Eateria vám ukáže, co máte na talíři. Vyfoťte nebo napište jídlo a za pár sekund uvidíte kalorie, bílkoviny, tuky, sacharidy a jednoduché hodnocení zdraví.
@@ -250,7 +250,7 @@ Eateria 5.3 přináší nový vzhled
 Danish
 ==================================================
 PROMOTIONAL TEXT
-Tag et billede af dit måltid og se kalorier, protein, fedt og kulhydrater på få sekunder. Nu med nyt glasdesign. Gratis, uden reklamer og abonnement.
+Tag et billede eller skriv måltidet. Se kalorier, protein, fedt, kulhydrater og en sundhedsscore. Gratis, uden reklamer og abonnement.
 
 DESCRIPTION
 Eateria viser, hvad der er på din tallerken. Tag et billede eller skriv et måltid, og se på få sekunder kalorier, protein, fedt, kulhydrater og en enkel sundhedsscore.
@@ -280,7 +280,7 @@ Eateria 5.3 har fået nyt look
 Dutch
 ==================================================
 PROMOTIONAL TEXT
-Maak een foto van je maaltijd en zie binnen seconden calorieën, eiwit, vet en koolhydraten. Nu met een nieuw glasontwerp. Gratis, zonder advertenties of abonnement.
+Maak een foto of typ je maaltijd. Zie calorieën, eiwit, vet, koolhydraten en een gezondheidsscore. Gratis, zonder advertenties of abonnement.
 
 DESCRIPTION
 Eateria laat zien wat er op je bord ligt. Maak een foto of typ een maaltijd en zie binnen seconden calorieën, eiwit, vet, koolhydraten en een eenvoudige gezondheidsscore.
@@ -310,7 +310,7 @@ Eateria 5.3 heeft een frisse look
 Finnish
 ==================================================
 PROMOTIONAL TEXT
-Kuvaa ateriasi ja näe kalorit, proteiini, rasva ja hiilihydraatit sekunneissa. Nyt uudella lasiulkoasulla. Ilmainen, ei mainoksia eikä tilausta.
+Kuvaa tai kirjoita ateria. Näet kalorit, proteiinin, rasvan, hiilihydraatit ja terveyspisteen. Ilmainen, ei mainoksia eikä tilausta.
 
 DESCRIPTION
 Eateria näyttää, mitä lautasellasi on. Ota kuva tai kirjoita ateria, niin näet sekunneissa kalorit, proteiinin, rasvan, hiilihydraatit ja helpon terveyspisteen.
@@ -340,7 +340,7 @@ Eateria 5.3 sai uuden ilmeen
 French (France / Canada)
 ==================================================
 PROMOTIONAL TEXT
-Photographiez votre repas et voyez calories, protéines, lipides et glucides en quelques secondes. Nouveau design en verre. Gratuit, sans pub ni abonnement.
+Photographiez ou écrivez votre repas. Voyez calories, protéines, lipides, glucides et un score santé. Gratuit, sans pub ni abonnement.
 
 DESCRIPTION
 Eateria vous montre ce qu'il y a dans votre assiette. Prenez une photo ou écrivez un repas, et voyez en quelques secondes calories, protéines, lipides, glucides et un score santé simple.
@@ -370,7 +370,7 @@ Eateria 5.3 fait peau neuve
 German
 ==================================================
 PROMOTIONAL TEXT
-Fotografiere dein Essen und sieh Kalorien, Eiweiß, Fett und Kohlenhydrate in Sekunden. Jetzt im neuen Glas-Design. Kostenlos, ohne Werbung und Abo.
+Fotografiere oder tippe dein Essen. Sieh Kalorien, Eiweiß, Fett, Kohlenhydrate und einen Gesundheitswert. Kostenlos, ohne Werbung und Abo.
 
 DESCRIPTION
 Eateria zeigt dir, was auf deinem Teller ist. Mach ein Foto oder tippe eine Mahlzeit ein und sieh in Sekunden Kalorien, Eiweiß, Fett, Kohlenhydrate und einen einfachen Gesundheitswert.
@@ -400,7 +400,7 @@ Eateria 5.3 im neuen Look
 Greek
 ==================================================
 PROMOTIONAL TEXT
-Φωτογράφισε το γεύμα σου και δες θερμίδες, πρωτεΐνη, λίπος και υδατάνθρακες σε δευτερόλεπτα. Τώρα με νέο γυάλινο σχεδιασμό. Δωρεάν, χωρίς διαφημίσεις και συνδρομή.
+Φωτογράφισε ή γράψε το γεύμα σου. Δες θερμίδες, πρωτεΐνη, λίπος, υδατάνθρακες και βαθμολογία υγείας. Δωρεάν, χωρίς διαφημίσεις και συνδρομή.
 
 DESCRIPTION
 Το Eateria σου δείχνει τι έχει το πιάτο σου. Τράβηξε μια φωτογραφία ή γράψε ένα γεύμα και δες σε δευτερόλεπτα θερμίδες, πρωτεΐνη, λίπος, υδατάνθρακες και μια απλή βαθμολογία υγείας.
@@ -430,7 +430,7 @@ WHAT'S NEW
 Hebrew
 ==================================================
 PROMOTIONAL TEXT
-צלמו את הארוחה וראו קלוריות, חלבון, שומן ופחמימות תוך שניות. עכשיו בעיצוב זכוכית חדש. חינם, בלי פרסומות ובלי מנוי.
+צלמו או הקלידו ארוחה. ראו קלוריות, חלבון, שומן, פחמימות וציון בריאות. חינם, בלי פרסומות ובלי מנוי.
 
 DESCRIPTION
 Eateria מראה לכם מה יש בצלחת. צלמו או הקלידו ארוחה, ותוך שניות תראו קלוריות, חלבון, שומן, פחמימות וציון בריאות פשוט.
@@ -460,7 +460,7 @@ Eateria 5.3 במראה חדש
 Hindi
 ==================================================
 PROMOTIONAL TEXT
-अपने खाने की फ़ोटो लें और कुछ ही सेकंड में कैलोरी, प्रोटीन, वसा और कार्ब्स देखें। अब नए ग्लास डिज़ाइन के साथ। मुफ़्त, बिना विज्ञापन और सब्सक्रिप्शन।
+खाने की फ़ोटो लें या नाम लिखें। कैलोरी, प्रोटीन, वसा, कार्ब्स और हेल्थ स्कोर देखें। मुफ़्त, बिना विज्ञापन और सब्सक्रिप्शन।
 
 DESCRIPTION
 Eateria दिखाता है कि आपकी थाली में क्या है। फ़ोटो लें या खाना लिखें, और कुछ ही सेकंड में कैलोरी, प्रोटीन, वसा, कार्ब्स और आसान हेल्थ स्कोर देखें।
@@ -490,7 +490,7 @@ Eateria 5.3 नए रूप में
 Hungarian
 ==================================================
 PROMOTIONAL TEXT
-Fotózd le az ételed, és pár másodperc alatt lásd a kalóriát, fehérjét, zsírt és szénhidrátot. Új üveghatású dizájn. Ingyenes, reklám és előfizetés nélkül.
+Fotózd le vagy írd be az ételt. Lásd a kalóriát, fehérjét, zsírt, szénhidrátot és az egészségpontot. Ingyenes, reklám és előfizetés nélkül.
 
 DESCRIPTION
 Az Eateria megmutatja, mi van a tányérodon. Fotózz vagy írj be egy ételt, és pár másodperc alatt látod a kalóriát, fehérjét, zsírt, szénhidrátot és egy egyszerű egészségpontszámot.
@@ -520,7 +520,7 @@ Az Eateria 5.3 új külsőt kapott
 Indonesian
 ==================================================
 PROMOTIONAL TEXT
-Foto makananmu dan lihat kalori, protein, lemak, dan karbohidrat dalam hitungan detik. Kini dengan desain kaca baru. Gratis, tanpa iklan dan langganan.
+Foto atau ketik makananmu. Lihat kalori, protein, lemak, karbohidrat, dan skor kesehatan. Gratis, tanpa iklan dan langganan.
 
 DESCRIPTION
 Eateria menunjukkan apa yang ada di piringmu. Foto atau ketik makananmu, dan dalam hitungan detik lihat kalori, protein, lemak, karbohidrat, dan skor kesehatan yang sederhana.
@@ -550,7 +550,7 @@ Eateria 5.3 tampil baru
 Italian
 ==================================================
 PROMOTIONAL TEXT
-Fotografa il tuo pasto e vedi calorie, proteine, grassi e carboidrati in pochi secondi. Ora con un nuovo design in vetro. Gratis, senza pubblicità né abbonamento.
+Fotografa o scrivi il pasto. Vedi calorie, proteine, grassi, carboidrati e un punteggio di salute. Gratis, senza pubblicità né abbonamento.
 
 DESCRIPTION
 Eateria ti mostra cosa c'è nel tuo piatto. Scatta una foto o scrivi un pasto e in pochi secondi vedi calorie, proteine, grassi, carboidrati e un semplice punteggio di salute.
@@ -580,7 +580,7 @@ Eateria 5.3 si rinnova
 Japanese
 ==================================================
 PROMOTIONAL TEXT
-食事を撮るだけで、カロリー、タンパク質、脂質、炭水化物が数秒でわかります。新しいガラスデザインに。無料、広告なし、サブスクなし。
+食事を撮るか入力するだけ。カロリー、タンパク質、脂質、炭水化物と健康スコアがわかります。無料、広告なし、サブスクなし。
 
 DESCRIPTION
 Eateria はお皿の中身を教えてくれます。写真を撮るか食事を入力するだけで、カロリー、タンパク質、脂質、炭水化物とシンプルな健康スコアを数秒で表示します。
@@ -610,7 +610,7 @@ Eateria 5.3 は見た目を一新
 Korean
 ==================================================
 PROMOTIONAL TEXT
-식사를 찍으면 칼로리, 단백질, 지방, 탄수화물을 몇 초 만에 확인할 수 있어요. 새로운 글래스 디자인. 무료, 광고와 구독 없음.
+식사를 찍거나 입력하세요. 칼로리, 단백질, 지방, 탄수화물과 건강 점수를 바로 확인해요. 무료, 광고와 구독 없음.
 
 DESCRIPTION
 Eateria는 접시에 무엇이 있는지 보여줘요. 사진을 찍거나 식사를 입력하면 몇 초 만에 칼로리, 단백질, 지방, 탄수화물과 간단한 건강 점수를 확인할 수 있어요.
@@ -640,7 +640,7 @@ Eateria 5.3이 새롭게 바뀌었어요
 Malay
 ==================================================
 PROMOTIONAL TEXT
-Ambil gambar hidangan anda dan lihat kalori, protein, lemak dan karbohidrat dalam beberapa saat. Kini dengan reka bentuk kaca baharu. Percuma, tanpa iklan dan langganan.
+Ambil gambar atau taip hidangan. Lihat kalori, protein, lemak, karbohidrat dan skor kesihatan. Percuma, tanpa iklan dan langganan.
 
 DESCRIPTION
 Eateria menunjukkan isi pinggan anda. Ambil gambar atau taip hidangan, dan dalam beberapa saat lihat kalori, protein, lemak, karbohidrat serta skor kesihatan yang ringkas.
@@ -670,7 +670,7 @@ Eateria 5.3 tampil baharu
 Norwegian
 ==================================================
 PROMOTIONAL TEXT
-Ta bilde av måltidet og se kalorier, protein, fett og karbohydrater på sekunder. Nå med nytt glassdesign. Gratis, uten reklame og abonnement.
+Ta bilde eller skriv måltidet. Se kalorier, protein, fett, karbohydrater og en helsescore. Gratis, uten reklame og abonnement.
 
 DESCRIPTION
 Eateria viser hva som er på tallerkenen din. Ta et bilde eller skriv inn et måltid, og se på sekunder kalorier, protein, fett, karbohydrater og en enkel helsescore.
@@ -700,7 +700,7 @@ Eateria 5.3 har fått nytt utseende
 Polish
 ==================================================
 PROMOTIONAL TEXT
-Zrób zdjęcie posiłku i w kilka sekund zobacz kalorie, białko, tłuszcz i węglowodany. Teraz z nowym szklanym wyglądem. Za darmo, bez reklam i subskrypcji.
+Zrób zdjęcie lub wpisz posiłek. Zobacz kalorie, białko, tłuszcz, węglowodany i ocenę zdrowia. Za darmo, bez reklam i subskrypcji.
 
 DESCRIPTION
 Eateria pokazuje, co masz na talerzu. Zrób zdjęcie lub wpisz posiłek, a w kilka sekund zobaczysz kalorie, białko, tłuszcz, węglowodany i prostą ocenę zdrowia.
@@ -730,7 +730,7 @@ Eateria 5.3 w nowym wyglądzie
 Portuguese (Portugal / Brazil)
 ==================================================
 PROMOTIONAL TEXT
-Tire uma foto da refeição e veja calorias, proteína, gordura e carboidratos em segundos. Agora com novo design de vidro. Grátis, sem anúncios nem assinatura.
+Tire uma foto ou escreva a refeição. Veja calorias, proteína, gordura, carboidratos e uma nota de saúde. Grátis, sem anúncios nem assinatura.
 
 DESCRIPTION
 O Eateria mostra o que há no seu prato. Tire uma foto ou escreva uma refeição e, em segundos, veja calorias, proteína, gordura, carboidratos e uma nota de saúde simples.
@@ -760,7 +760,7 @@ Eateria 5.3 com visual novo
 Romanian
 ==================================================
 PROMOTIONAL TEXT
-Fotografiază-ți masa și vezi calorii, proteine, grăsimi și carbohidrați în câteva secunde. Acum cu un nou design de sticlă. Gratuit, fără reclame și abonament.
+Fotografiază sau scrie masa. Vezi calorii, proteine, grăsimi, carbohidrați și un scor de sănătate. Gratuit, fără reclame și abonament.
 
 DESCRIPTION
 Eateria îți arată ce ai în farfurie. Fă o poză sau scrie o masă și în câteva secunde vezi calorii, proteine, grăsimi, carbohidrați și un scor de sănătate simplu.
@@ -790,7 +790,7 @@ Eateria 5.3 are un aspect nou
 Slovak
 ==================================================
 PROMOTIONAL TEXT
-Odfoťte jedlo a za pár sekúnd uvidíte kalórie, bielkoviny, tuky a sacharidy. Teraz s novým skleneným dizajnom. Zadarmo, bez reklám a predplatného.
+Odfoťte alebo napíšte jedlo. Uvidíte kalórie, bielkoviny, tuky, sacharidy a hodnotenie zdravia. Zadarmo, bez reklám a predplatného.
 
 DESCRIPTION
 Eateria vám ukáže, čo máte na tanieri. Odfoťte alebo napíšte jedlo a za pár sekúnd uvidíte kalórie, bielkoviny, tuky, sacharidy a jednoduché hodnotenie zdravia.
@@ -820,7 +820,7 @@ Eateria 5.3 prináša nový vzhľad
 Slovenian
 ==================================================
 PROMOTIONAL TEXT
-Fotografirajte obrok in v nekaj sekundah vidite kalorije, beljakovine, maščobe in ogljikove hidrate. Nov stekleni videz. Brezplačno, brez oglasov in naročnine.
+Fotografirajte ali vpišite obrok. Vidite kalorije, beljakovine, maščobe, ogljikove hidrate in oceno zdravja. Brezplačno, brez oglasov in naročnine.
 
 DESCRIPTION
 Eateria vam pokaže, kaj imate na krožniku. Fotografirajte ali vpišite obrok in v nekaj sekundah vidite kalorije, beljakovine, maščobe, ogljikove hidrate in preprosto oceno zdravja.
@@ -850,7 +850,7 @@ Eateria 5.3 ima nov videz
 Spanish (Spain / Mexico)
 ==================================================
 PROMOTIONAL TEXT
-Haz una foto de tu comida y ve calorías, proteínas, grasas y carbohidratos en segundos. Ahora con un nuevo diseño de cristal. Gratis, sin anuncios ni suscripción.
+Haz una foto o escribe la comida. Ve calorías, proteínas, grasas, carbohidratos y una puntuación de salud. Gratis, sin anuncios ni suscripción.
 
 DESCRIPTION
 Eateria te muestra qué hay en tu plato. Haz una foto o escribe una comida y en segundos verás calorías, proteínas, grasas, carbohidratos y una puntuación de salud sencilla.
@@ -880,7 +880,7 @@ Eateria 5.3 estrena look
 Swedish
 ==================================================
 PROMOTIONAL TEXT
-Fota din måltid och se kalorier, protein, fett och kolhydrater på några sekunder. Nu med ny glasdesign. Gratis, utan reklam och prenumeration.
+Fota eller skriv måltiden. Se kalorier, protein, fett, kolhydrater och en hälsopoäng. Gratis, utan reklam och prenumeration.
 
 DESCRIPTION
 Eateria visar vad som finns på din tallrik. Ta en bild eller skriv in en måltid och se på några sekunder kalorier, protein, fett, kolhydrater och en enkel hälsopoäng.
@@ -910,7 +910,7 @@ Eateria 5.3 har fått nytt utseende
 Thai
 ==================================================
 PROMOTIONAL TEXT
-ถ่ายรูปอาหาร แล้วดูแคลอรี โปรตีน ไขมัน และคาร์บได้ในไม่กี่วินาที ตอนนี้มาพร้อมดีไซน์กระจกใหม่ ใช้ฟรี ไม่มีโฆษณา ไม่ต้องสมัครสมาชิก
+ถ่ายรูปหรือพิมพ์อาหาร แล้วดูแคลอรี โปรตีน ไขมัน คาร์บ และคะแนนสุขภาพ ใช้ฟรี ไม่มีโฆษณา ไม่ต้องสมัครสมาชิก
 
 DESCRIPTION
 Eateria บอกคุณว่าในจานมีอะไร ถ่ายรูปหรือพิมพ์ชื่ออาหาร แล้วดูแคลอรี โปรตีน ไขมัน คาร์บ และคะแนนสุขภาพแบบง่ายๆ ได้ในไม่กี่วินาที
@@ -940,7 +940,7 @@ Eateria 5.3 โฉมใหม่
 Turkish
 ==================================================
 PROMOTIONAL TEXT
-Yemeğinin fotoğrafını çek, kalori, protein, yağ ve karbonhidratı saniyeler içinde gör. Şimdi yeni cam tasarımla. Ücretsiz, reklamsız ve abonesiz.
+Fotoğraf çek ya da yemeğini yaz. Kalori, protein, yağ, karbonhidrat ve sağlık puanını gör. Ücretsiz, reklamsız ve abonesiz.
 
 DESCRIPTION
 Eateria tabağında ne olduğunu gösterir. Fotoğraf çek ya da yemeğini yaz, saniyeler içinde kalori, protein, yağ, karbonhidrat ve basit bir sağlık puanı gör.
@@ -970,7 +970,7 @@ Eateria 5.3 yenilendi
 Ukrainian
 ==================================================
 PROMOTIONAL TEXT
-Сфотографуйте страву і за кілька секунд побачите калорії, білок, жири та вуглеводи. Тепер у новому скляному дизайні. Безкоштовно, без реклами й підписки.
+Сфотографуйте або напишіть страву. Побачите калорії, білок, жири, вуглеводи та оцінку здоров'я. Безкоштовно, без реклами й підписки.
 
 DESCRIPTION
 Eateria показує, що у вашій тарілці. Сфотографуйте або напишіть страву, і за кілька секунд побачите калорії, білок, жири, вуглеводи та просту оцінку здоров'я.
@@ -1000,7 +1000,7 @@ Eateria 5.3 має новий вигляд
 Urdu
 ==================================================
 PROMOTIONAL TEXT
-اپنے کھانے کی تصویر لیں اور چند سیکنڈ میں کیلوریز، پروٹین، چکنائی اور کاربوہائیڈریٹ دیکھیں۔ اب نئے گلاس ڈیزائن کے ساتھ۔ مفت، بغیر اشتہار اور سبسکرپشن۔
+کھانے کی تصویر لیں یا نام لکھیں۔ کیلوریز، پروٹین، چکنائی، کاربوہائیڈریٹ اور ہیلتھ اسکور دیکھیں۔ مفت، بغیر اشتہار اور سبسکرپشن۔
 
 DESCRIPTION
 Eateria دکھاتا ہے کہ آپ کی پلیٹ میں کیا ہے۔ تصویر لیں یا کھانا لکھیں، اور چند سیکنڈ میں کیلوریز، پروٹین، چکنائی، کاربوہائیڈریٹ اور آسان ہیلتھ اسکور دیکھیں۔
@@ -1030,7 +1030,7 @@ Eateria 5.3 نئے انداز میں
 Vietnamese
 ==================================================
 PROMOTIONAL TEXT
-Chụp ảnh bữa ăn và xem calo, protein, chất béo, carb chỉ trong vài giây. Nay với thiết kế kính mới. Miễn phí, không quảng cáo, không thuê bao.
+Chụp ảnh hoặc nhập món. Xem calo, protein, chất béo, carb và điểm sức khỏe. Miễn phí, không quảng cáo, không thuê bao.
 
 DESCRIPTION
 Eateria cho bạn biết trong đĩa có gì. Chụp ảnh hoặc nhập món ăn, và chỉ trong vài giây xem calo, protein, chất béo, carb cùng điểm sức khỏe đơn giản.
