@@ -380,7 +380,7 @@
   "limits.use_health": "Uporabi izračun na podlagi zdravja",
   "list.delete.confirm.message": "Ali ste prepričani, da želite izbrisati ta vnos hrane? Tega dejanja ni mogoče razveljaviti.",
   "list.delete.confirm.title": "Izbriši hrano?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Fotografirajte obrok, da se shranijo kalorije in makroji.",
   "list.empty.title": "Še ni obrokov",
   "list.swipe_options.action": "Možnosti",
   "list.swipe_options.hint": "Nasvet: Povlecite obrok v desno, da odprete možnosti",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Neznano"
+  "chess.summary.unknown": "Neznano",
+  "onboarding.plates.slide1.title": "Avokadova solata",
+  "onboarding.plates.slide1.desc": "Avokado, jajce, paradižnik, sir, oliva. Navaden primer, ki ima pogosto nad 90.",
+  "onboarding.plates.slide2.title": "Skleda s piščančjimi prsmi",
+  "onboarding.plates.slide2.desc": "Piščančje prsi, riž, avokado, kumara. Nasitno in uravnoteženo, običajno visok rezultat.",
+  "onboarding.plates.slide3.title": "Piščanec z brokolijem in jajcem",
+  "onboarding.plates.slide3.desc": "Piščanec z žara, brokoli, jajce. Preprosto, veliko beljakovin, visok rezultat."
 }

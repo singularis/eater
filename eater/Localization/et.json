@@ -380,7 +380,7 @@
   "limits.use_health": "Kasuta tervisepõhist arvutust",
   "list.delete.confirm.message": "Kas oled kindel, et soovid selle toidukirje kustutada? Seda toimingut ei saa tagasi võtta.",
   "list.delete.confirm.title": "Kustuta toit?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Pildista eine, et kalorid ja makrotoitained salvestuksid.",
   "list.empty.title": "Veel pole toite",
   "list.swipe_options.action": "Valikud",
   "list.swipe_options.hint": "Vihje: pühi toit paremale, et avada valikud",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Teadmata"
+  "chess.summary.unknown": "Teadmata",
+  "onboarding.plates.slide1.title": "Avokaadosalat",
+  "onboarding.plates.slide1.desc": "Avokaado, muna, tomat, juust, oliiv. Tavaline näide, mis on sageli üle 90.",
+  "onboarding.plates.slide2.title": "Kauss kanarinnega",
+  "onboarding.plates.slide2.desc": "Kanarind, riis, avokaado, kurk. Täitev ja tasakaalus, tavaliselt kõrge tulemus.",
+  "onboarding.plates.slide3.title": "Kana brokoli ja munaga",
+  "onboarding.plates.slide3.desc": "Grillkana, brokoli, muna. Lihtne, palju valku, kõrge tulemus."
 }

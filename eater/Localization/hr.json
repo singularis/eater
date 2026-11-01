@@ -380,7 +380,7 @@
   "limits.use_health": "Koristi izračun temeljen na zdravlju",
   "list.delete.confirm.message": "Jeste li sigurni da želite izbrisati ovaj unos hrane? Ova se radnja ne može poništiti.",
   "list.delete.confirm.title": "Izbrisati hranu?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Slikajte obrok da se spreme kalorije i makroi.",
   "list.empty.title": "Još nema obroka",
   "list.swipe_options.action": "Opcije",
   "list.swipe_options.hint": "Savjet: Prijeđite prstom po obroku udesno za otvaranje opcija",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Nepoznato"
+  "chess.summary.unknown": "Nepoznato",
+  "onboarding.plates.slide1.title": "Salata od avokada",
+  "onboarding.plates.slide1.desc": "Avokado, jaje, rajčica, sir, maslina. Običan primjer koji često ima preko 90.",
+  "onboarding.plates.slide2.title": "Zdjela s pilećim prsima",
+  "onboarding.plates.slide2.desc": "Pileća prsa, riža, avokado, krastavac. Zasitan i uravnotežen obrok, obično visok rezultat.",
+  "onboarding.plates.slide3.title": "Piletina s brokulom i jajetom",
+  "onboarding.plates.slide3.desc": "Piletina s roštilja, brokula, jaje. Jednostavno, puno proteina, visok rezultat."
 }

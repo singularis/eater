@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Unknown"
+  "chess.summary.unknown": "Unknown",
+  "onboarding.plates.slide1.title": "Avocado salad",
+  "onboarding.plates.slide1.desc": "Avocado, egg, tomato, cheese, olive. A real life example that often scores in the 90s.",
+  "onboarding.plates.slide2.title": "Chicken breast bowl",
+  "onboarding.plates.slide2.desc": "Chicken breast, rice, avocado, cucumber. Filling and balanced, typical high score.",
+  "onboarding.plates.slide3.title": "Chicken with broccoli and egg",
+  "onboarding.plates.slide3.desc": "Grilled chicken, broccoli, egg. Simple, high protein, high score."
 }

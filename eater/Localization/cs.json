@@ -380,7 +380,7 @@
   "limits.use_health": "Použít výpočet dle zdravotních údajů",
   "list.delete.confirm.message": "Opravdu chcete smazat tento záznam o jídle? Tuto akci nelze vrátit zpět.",
   "list.delete.confirm.title": "Smazat jídlo?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Vyfoťte jídlo a uloží se kalorie a makra.",
   "list.empty.title": "Zatím žádná jídla",
   "list.swipe_options.action": "Možnosti",
   "list.swipe_options.hint": "Tip: Přejetím jídla doprava otevřete možnosti",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Neznámé"
+  "chess.summary.unknown": "Neznámé",
+  "onboarding.plates.slide1.title": "Avokádový salát",
+  "onboarding.plates.slide1.desc": "Avokádo, vejce, rajče, sýr, oliva. Běžný příklad, který má často přes 90.",
+  "onboarding.plates.slide2.title": "Miska s kuřecími prsy",
+  "onboarding.plates.slide2.desc": "Kuřecí prsa, rýže, avokádo, okurka. Syté a vyvážené, obvykle vysoké skóre.",
+  "onboarding.plates.slide3.title": "Kuře s brokolicí a vejcem",
+  "onboarding.plates.slide3.desc": "Grilované kuře, brokolice, vejce. Jednoduché, hodně bílkovin, vysoké skóre."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Sağlık Bazlı Hesaplama Kullan",
   "list.delete.confirm.message": "Bu yemek kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
   "list.delete.confirm.title": "Yemek silinsin mi?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Kalori ve makroları kaydetmek için yemeğin fotoğrafını çek.",
   "list.empty.title": "Henüz öğün yok",
   "list.swipe_options.action": "Seçenekler",
   "list.swipe_options.hint": "İpucu: Seçenekleri açmak için bir öğünü sağa kaydırın",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Bilinmiyor"
+  "chess.summary.unknown": "Bilinmiyor",
+  "onboarding.plates.slide1.title": "Avokado salatası",
+  "onboarding.plates.slide1.desc": "Avokado, yumurta, domates, peynir, zeytin. Sık sık 90'ın üstüne çıkan günlük bir örnek.",
+  "onboarding.plates.slide2.title": "Tavuk göğsü kasesi",
+  "onboarding.plates.slide2.desc": "Tavuk göğsü, pirinç, avokado, salatalık. Doyurucu ve dengeli, genelde yüksek puan.",
+  "onboarding.plates.slide3.title": "Brokoli ve yumurtalı tavuk",
+  "onboarding.plates.slide3.desc": "Izgara tavuk, brokoli, yumurta. Sade, bol protein, yüksek puan."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Gezondheidsgebaseerde berekening gebruiken",
   "list.delete.confirm.message": "Weet je zeker dat je dit voedingsitem wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
   "list.delete.confirm.title": "Eten verwijderen?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Maak een foto van je maaltijd om calorieën en macro's op te slaan.",
   "list.empty.title": "Nog geen maaltijden",
   "list.swipe_options.action": "Opties",
   "list.swipe_options.hint": "Tip: Veeg een maaltijd naar rechts om opties te openen",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Onbekend"
+  "chess.summary.unknown": "Onbekend",
+  "onboarding.plates.slide1.title": "Avocadosalade",
+  "onboarding.plates.slide1.desc": "Avocado, ei, tomaat, kaas, olijf. Een voorbeeld uit het echte leven dat vaak boven 90 zit.",
+  "onboarding.plates.slide2.title": "Kom met kipfilet",
+  "onboarding.plates.slide2.desc": "Kipfilet, rijst, avocado, komkommer. Vullend en in balans, meestal een hoge score.",
+  "onboarding.plates.slide3.title": "Kip met broccoli en ei",
+  "onboarding.plates.slide3.desc": "Gegrilde kip, broccoli, ei. Eenvoudig, veel eiwit, hoge score."
 }

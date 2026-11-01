@@ -380,7 +380,7 @@
   "limits.use_health": "ใช้การคำนวณตามสุขภาพ",
   "list.delete.confirm.message": "คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
   "list.delete.confirm.title": "ลบอาหารหรือไม่?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "ถ่ายรูปมื้ออาหารเพื่อบันทึกแคลอรีและสารอาหาร",
   "list.empty.title": "ยังไม่มีมื้ออาหาร",
   "list.swipe_options.action": "ตัวเลือก",
   "list.swipe_options.hint": "เคล็ดลับ: ปัดมื้ออาหารไปทางขวาเพื่อเปิดตัวเลือก",
@@ -871,5 +871,11 @@
   "units.lb": "ปอนด์",
   "units.ft": "ฟุต",
   "units.in": "นิ้ว",
-  "chess.summary.unknown": "ไม่ทราบ"
+  "chess.summary.unknown": "ไม่ทราบ",
+  "onboarding.plates.slide1.title": "สลัดอะโวคาโด",
+  "onboarding.plates.slide1.desc": "อะโวคาโด ไข่ มะเขือเทศ ชีส มะกอก ตัวอย่างธรรมดาที่มักได้เกิน 90",
+  "onboarding.plates.slide2.title": "ชามอกไก่",
+  "onboarding.plates.slide2.desc": "อกไก่ ข้าว อะโวคาโด แตงกวา อิ่มและสมดุล คะแนนมักสูง",
+  "onboarding.plates.slide3.title": "ไก่กับบรอกโคลีและไข่",
+  "onboarding.plates.slide3.desc": "ไก่ย่าง บรอกโคลี ไข่ ง่าย โปรตีนสูง คะแนนสูง"
 }

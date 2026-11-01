@@ -380,7 +380,7 @@
   "limits.use_health": "Usa calcolo basato sulla salute",
   "list.delete.confirm.message": "Vuoi davvero eliminare questo alimento? Questa azione non può essere annullata.",
   "list.delete.confirm.title": "Eliminare il cibo?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Scatta una foto del pasto per salvare calorie e macro.",
   "list.empty.title": "Nessun pasto ancora",
   "list.swipe_options.action": "Opzioni",
   "list.swipe_options.hint": "Suggerimento: scorri un pasto a destra per aprire le opzioni",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Sconosciuto"
+  "chess.summary.unknown": "Sconosciuto",
+  "onboarding.plates.slide1.title": "Insalata di avocado",
+  "onboarding.plates.slide1.desc": "Avocado, uovo, pomodoro, formaggio, oliva. Un esempio reale che spesso supera 90.",
+  "onboarding.plates.slide2.title": "Bowl di petto di pollo",
+  "onboarding.plates.slide2.desc": "Petto di pollo, riso, avocado, cetriolo. Saziante e bilanciato, punteggio alto.",
+  "onboarding.plates.slide3.title": "Pollo con broccoli e uovo",
+  "onboarding.plates.slide3.desc": "Pollo alla griglia, broccoli, uovo. Semplice, tante proteine, punteggio alto."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Uża Kalkolu bbażat fuq is-Saħħa",
   "list.delete.confirm.message": "Int żgur li trid tħassar din id-daħla tal-ikel? Din l-azzjoni ma tistax titħassar.",
   "list.delete.confirm.title": "Ħassar l-ikel?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Ħu ritratt tal-ikla biex jinżammu l-kaloriji u l-makros.",
   "list.empty.title": "Għadek m'għandekx ikliet",
   "list.swipe_options.action": "Għażliet",
   "list.swipe_options.hint": "Parir: Iskorri ikla lejn il-lemin biex tiftaħ l-għażliet",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Mhux magħruf"
+  "chess.summary.unknown": "Mhux magħruf",
+  "onboarding.plates.slide1.title": "Insalata tal-avokado",
+  "onboarding.plates.slide1.desc": "Avokado, bajda, tadam, ġobon, żebbuġ. Eżempju ta' kuljum li spiss ikun 'il fuq minn 90.",
+  "onboarding.plates.slide2.title": "Borma ta' sider tat-tiġieġ",
+  "onboarding.plates.slide2.desc": "Sider tat-tiġieġ, ross, avokado, ħjar. Ixebba' u bilanċjat, punteġġ għoli s-soltu.",
+  "onboarding.plates.slide3.title": "Tiġieġ bil-brokkoli u bajda",
+  "onboarding.plates.slide3.desc": "Tiġieġ mixwi, brokkoli, bajda. Sempliċi, ħafna proteina, punteġġ għoli."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Brug sundhedsbaseret beregning",
   "list.delete.confirm.message": "Er du sikker på, at du vil slette denne madpost? Denne handling kan ikke fortrydes.",
   "list.delete.confirm.title": "Slet mad?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Tag et billede af måltidet for at gemme kalorier og makroer.",
   "list.empty.title": "Ingen måltider endnu",
   "list.swipe_options.action": "Valgmuligheder",
   "list.swipe_options.hint": "Tip: Stryg et måltid til højre for at åbne indstillinger",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Ukendt"
+  "chess.summary.unknown": "Ukendt",
+  "onboarding.plates.slide1.title": "Avokadosalat",
+  "onboarding.plates.slide1.desc": "Avokado, æg, tomat, ost, oliven. Et hverdagseksempel, der ofte ligger over 90.",
+  "onboarding.plates.slide2.title": "Skål med kyllingebryst",
+  "onboarding.plates.slide2.desc": "Kyllingebryst, ris, avokado, agurk. Mættende og balanceret, typisk høj score.",
+  "onboarding.plates.slide3.title": "Kylling med broccoli og æg",
+  "onboarding.plates.slide3.desc": "Grillet kylling, broccoli, æg. Enkelt, meget protein, høj score."
 }

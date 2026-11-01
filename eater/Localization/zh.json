@@ -380,7 +380,7 @@
   "limits.use_health": "使用基于健康的计算",
   "list.delete.confirm.message": "确定要删除这条食物记录吗？此操作无法撤销。",
   "list.delete.confirm.title": "删除食物？",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "拍下这一餐，记录热量和营养素。",
   "list.empty.title": "还没有餐食",
   "list.swipe_options.action": "选项",
   "list.swipe_options.hint": "提示：向右滑动某餐可打开选项",
@@ -871,5 +871,11 @@
   "units.lb": "磅",
   "units.ft": "英尺",
   "units.in": "英寸",
-  "chess.summary.unknown": "未知"
+  "chess.summary.unknown": "未知",
+  "onboarding.plates.slide1.title": "鳄梨沙拉",
+  "onboarding.plates.slide1.desc": "鳄梨、鸡蛋、番茄、奶酪、橄榄。日常例子，分数经常超过 90。",
+  "onboarding.plates.slide2.title": "鸡胸肉碗",
+  "onboarding.plates.slide2.desc": "鸡胸肉、米饭、鳄梨、黄瓜。饱腹又均衡，通常分数很高。",
+  "onboarding.plates.slide3.title": "西兰花鸡蛋鸡胸",
+  "onboarding.plates.slide3.desc": "烤鸡、西兰花、鸡蛋。简单，蛋白质高，分数高。"
 }

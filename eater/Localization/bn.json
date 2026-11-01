@@ -380,7 +380,7 @@
   "limits.use_health": "স্বাস্থ্য-ভিত্তিক হিসাব ব্যবহার করুন",
   "list.delete.confirm.message": "আপনি কি নিশ্চিতভাবে এই খাবারের এন্ট্রিটি মুছে ফেলতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।",
   "list.delete.confirm.title": "খাবার মুছবেন?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "ক্যালোরি ও ম্যাক্রো রাখতে খাবারের ছবি তুলুন।",
   "list.empty.title": "এখনো কোনো খাবার নেই",
   "list.swipe_options.action": "বিকল্প",
   "list.swipe_options.hint": "টিপ: বিকল্প খুলতে খাবার ডানদিকে সোয়াইপ করুন",
@@ -871,5 +871,11 @@
   "units.lb": "পাউন্ড",
   "units.ft": "ফুট",
   "units.in": "ইঞ্চি",
-  "chess.summary.unknown": "অজানা"
+  "chess.summary.unknown": "অজানা",
+  "onboarding.plates.slide1.title": "অ্যাভোকাডো সালাদ",
+  "onboarding.plates.slide1.desc": "অ্যাভোকাডো, ডিম, টমেটো, পনির, জলপাই। সাধারণ উদাহরণ, যা প্রায়ই ৯০-এর ওপরে থাকে।",
+  "onboarding.plates.slide2.title": "চিকেন ব্রেস্ট বাউল",
+  "onboarding.plates.slide2.desc": "চিকেন ব্রেস্ট, ভাত, অ্যাভোকাডো, শসা। পেট ভরে এবং সুষম, সাধারণত উঁচু স্কোর।",
+  "onboarding.plates.slide3.title": "ব্রোকলি ও ডিমসহ চিকেন",
+  "onboarding.plates.slide3.desc": "গ্রিল চিকেন, ব্রোকলি, ডিম। সহজ, বেশি প্রোটিন, উঁচু স্কোর।"
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Usar cálculo baseado em dados de saúde",
   "list.delete.confirm.message": "Tem certeza de que deseja excluir este item de comida? Esta ação não pode ser desfeita.",
   "list.delete.confirm.title": "Eliminar alimento?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Tire uma foto da refeição para registrar calorias e macros.",
   "list.empty.title": "Ainda sem refeições",
   "list.swipe_options.action": "Opções",
   "list.swipe_options.hint": "Dica: Deslize uma refeição para a direita para abrir opções",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Desconhecido"
+  "chess.summary.unknown": "Desconhecido",
+  "onboarding.plates.slide1.title": "Salada de abacate",
+  "onboarding.plates.slide1.desc": "Abacate, ovo, tomate, queijo, azeitona. Um exemplo real que muitas vezes passa de 90.",
+  "onboarding.plates.slide2.title": "Tigela de peito de frango",
+  "onboarding.plates.slide2.desc": "Peito de frango, arroz, abacate, pepino. Saciante e equilibrado, pontuação alta.",
+  "onboarding.plates.slide3.title": "Frango com brócolis e ovo",
+  "onboarding.plates.slide3.desc": "Frango grelhado, brócolis, ovo. Simples, muita proteína, pontuação alta."
 }

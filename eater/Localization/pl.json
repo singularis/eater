@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Nieznane"
+  "chess.summary.unknown": "Nieznane",
+  "onboarding.plates.slide1.title": "Sałatka z awokado",
+  "onboarding.plates.slide1.desc": "Awokado, jajko, pomidor, ser, oliwka. Zwyczajny przykład, który często ma ponad 90.",
+  "onboarding.plates.slide2.title": "Miska z piersią z kurczaka",
+  "onboarding.plates.slide2.desc": "Pierś z kurczaka, ryż, awokado, ogórek. Sycące i zbilansowane, zwykle wysoki wynik.",
+  "onboarding.plates.slide3.title": "Kurczak z brokułem i jajkiem",
+  "onboarding.plates.slide3.desc": "Grillowany kurczak, brokuł, jajko. Prosto, dużo białka, wysoki wynik."
 }

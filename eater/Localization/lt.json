@@ -380,7 +380,7 @@
   "limits.use_health": "Naudoti sveikatos pagrįstą skaičiavimą",
   "list.delete.confirm.message": "Ar tikrai norite ištrinti šį maisto įrašą? Šio veiksmo anuliuoti negalima.",
   "list.delete.confirm.title": "Ištrinti maistą?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Nufotografuokite patiekalą, kad išliktų kalorijos ir makroelementai.",
   "list.empty.title": "Dar nėra patiekalų",
   "list.swipe_options.action": "Parinktys",
   "list.swipe_options.hint": "Patarimas: perbraukite maistą į dešinę, kad atidarytumėte parinktis",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Nežinoma"
+  "chess.summary.unknown": "Nežinoma",
+  "onboarding.plates.slide1.title": "Avokadų salotos",
+  "onboarding.plates.slide1.desc": "Avokadas, kiaušinis, pomidoras, sūris, alyvuogė. Įprastas pavyzdys, dažnai virš 90.",
+  "onboarding.plates.slide2.title": "Dubuo su vištos krūtinėle",
+  "onboarding.plates.slide2.desc": "Vištos krūtinėlė, ryžiai, avokadas, agurkas. Sotūs ir subalansuoti, paprastai aukštas balas.",
+  "onboarding.plates.slide3.title": "Vištiena su brokoliais ir kiaušiniu",
+  "onboarding.plates.slide3.desc": "Grilio vištiena, brokoliai, kiaušinis. Paprasta, daug baltymų, aukštas balas."
 }

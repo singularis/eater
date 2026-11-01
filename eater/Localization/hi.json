@@ -380,7 +380,7 @@
   "limits.use_health": "स्वास्थ्य-आधारित गणना का उपयोग करें",
   "list.delete.confirm.message": "क्या आप वाकई इस भोजन प्रविष्टि को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
   "list.delete.confirm.title": "खाना हटाएं?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "कैलोरी और मैक्रो सहेजने के लिए खाने की फोटो लें।",
   "list.empty.title": "अभी तक कोई भोजन नहीं",
   "list.swipe_options.action": "विकल्प",
   "list.swipe_options.hint": "सुझाव: विकल्प खोलने के लिए भोजन को दाईं ओर स्वाइप करें",
@@ -871,5 +871,11 @@
   "units.lb": "पाउंड",
   "units.ft": "फुट",
   "units.in": "इंच",
-  "chess.summary.unknown": "अज्ञात"
+  "chess.summary.unknown": "अज्ञात",
+  "onboarding.plates.slide1.title": "एवोकाडो सलाद",
+  "onboarding.plates.slide1.desc": "एवोकाडो, अंडा, टमाटर, पनीर, जैतून। आम उदाहरण, जो अक्सर 90 से ऊपर होता है।",
+  "onboarding.plates.slide2.title": "चिकन ब्रेस्ट बाउल",
+  "onboarding.plates.slide2.desc": "चिकन ब्रेस्ट, चावल, एवोकाडो, खीरा। भरपेट और संतुलित, आमतौर पर ऊँचा अंक।",
+  "onboarding.plates.slide3.title": "ब्रोकली और अंडे के साथ चिकन",
+  "onboarding.plates.slide3.desc": "ग्रिल चिकन, ब्रोकली, अंडा। सरल, ज़्यादा प्रोटीन, ऊँचा अंक।"
 }

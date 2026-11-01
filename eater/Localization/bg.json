@@ -380,7 +380,7 @@
   "limits.use_health": "Използвай изчисление по здравни данни",
   "list.delete.confirm.message": "Сигурни ли сте, че искате да изтриете този хранителен запис? Това действие не може да бъде отменено.",
   "list.delete.confirm.title": "Изтриване на храна?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Снимайте ястието, за да се запишат калориите и макросите.",
   "list.empty.title": "Все още няма ястия",
   "list.swipe_options.action": "Опции",
   "list.swipe_options.hint": "Съвет: плъзнете храна надясно, за да отворите опциите",
@@ -871,5 +871,11 @@
   "units.lb": "фунт",
   "units.ft": "фут",
   "units.in": "инч",
-  "chess.summary.unknown": "Неизвестно"
+  "chess.summary.unknown": "Неизвестно",
+  "onboarding.plates.slide1.title": "Салата с авокадо",
+  "onboarding.plates.slide1.desc": "Авокадо, яйце, домат, сирене, маслина. Обикновен пример, който често е над 90.",
+  "onboarding.plates.slide2.title": "Купа с пилешко филе",
+  "onboarding.plates.slide2.desc": "Пилешко филе, ориз, авокадо, краставица. Засищащо и балансирано, обикновено висок резултат.",
+  "onboarding.plates.slide3.title": "Пиле с броколи и яйце",
+  "onboarding.plates.slide3.desc": "Пиле на скара, броколи, яйце. Просто, много белтъчини, висок резултат."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "健康データに基づく計算を使用",
   "list.delete.confirm.message": "この食品の記録を削除してもよろしいですか？この操作は取り消せません。",
   "list.delete.confirm.title": "食品を削除しますか？",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "食事を撮ると、カロリーと栄養素が記録されます。",
   "list.empty.title": "まだ食事がありません",
   "list.swipe_options.action": "オプション",
   "list.swipe_options.hint": "ヒント：食事を右にスワイプするとオプションが開きます",
@@ -871,5 +871,11 @@
   "units.lb": "ポンド",
   "units.ft": "フィート",
   "units.in": "インチ",
-  "chess.summary.unknown": "不明"
+  "chess.summary.unknown": "不明",
+  "onboarding.plates.slide1.title": "アボカドサラダ",
+  "onboarding.plates.slide1.desc": "アボカド、卵、トマト、チーズ、オリーブ。よく90を超える日常の例です。",
+  "onboarding.plates.slide2.title": "鶏むねボウル",
+  "onboarding.plates.slide2.desc": "鶏むね、ご飯、アボカド、きゅうり。満足できてバランスがよく、点数は高めです。",
+  "onboarding.plates.slide3.title": "ブロッコリーと卵のチキン",
+  "onboarding.plates.slide3.desc": "グリルチキン、ブロッコリー、卵。シンプルでタンパク質が多く、点数は高いです。"
 }

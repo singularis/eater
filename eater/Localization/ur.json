@@ -380,7 +380,7 @@
   "limits.use_health": "صحت پر مبنی حساب استعمال کریں",
   "list.delete.confirm.message": "کیا آپ واقعی اس کھانے کی انٹری کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔",
   "list.delete.confirm.title": "کھانا حذف کریں؟",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "کیلوریز اور میکرو محفوظ کرنے کے لیے کھانے کی تصویر لیں۔",
   "list.empty.title": "ابھی تک کوئی کھانا نہیں",
   "list.swipe_options.action": "اختیارات",
   "list.swipe_options.hint": "تجویز: اختیارات کھولنے کے لیے کھانے کو دائیں سوائپ کریں",
@@ -871,5 +871,11 @@
   "units.lb": "پاونڈ",
   "units.ft": "فٹ",
   "units.in": "انچ",
-  "chess.summary.unknown": "نامعلوم"
+  "chess.summary.unknown": "نامعلوم",
+  "onboarding.plates.slide1.title": "ایوکاڈو سلاد",
+  "onboarding.plates.slide1.desc": "ایوکاڈو، انڈا، ٹماٹر، پنیر، زیتون۔ عام مثال جو اکثر 90 سے اوپر ہوتی ہے۔",
+  "onboarding.plates.slide2.title": "چکن بریسٹ باؤل",
+  "onboarding.plates.slide2.desc": "چکن بریسٹ، چاول، ایوکاڈو، کھیرا۔ پیٹ بھرتا ہے اور متوازن ہے، سکور عموماً اونچا۔",
+  "onboarding.plates.slide3.title": "بروکلی اور انڈے کے ساتھ چکن",
+  "onboarding.plates.slide3.desc": "گرل چکن، بروکلی، انڈا۔ سادہ، زیادہ پروٹین، اونچا سکور۔"
 }

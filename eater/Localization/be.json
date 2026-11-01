@@ -380,7 +380,7 @@
   "limits.use_health": "Выкарыстоўваць разлік паводле здароўя",
   "list.delete.confirm.message": "Вы ўпэўнены, што хочаце выдаліць гэты запіс пра ежу? Гэтае дзеянне нельга адрабіць назад.",
   "list.delete.confirm.title": "Выдаліць ежу?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Зрабіце фота стравы, каб запісаць калорыі і макрасы.",
   "list.empty.title": "Пакуль няма страў",
   "list.swipe_options.action": "Опцыі",
   "list.swipe_options.hint": "Падказка: правядзіце направа па стравы, каб адкрыць опцыі",
@@ -871,5 +871,11 @@
   "units.lb": "фунт",
   "units.ft": "фут",
   "units.in": "цаля",
-  "chess.summary.unknown": "Невядома"
+  "chess.summary.unknown": "Невядома",
+  "onboarding.plates.slide1.title": "Салата з авакада",
+  "onboarding.plates.slide1.desc": "Авакада, яйка, памідор, сыр, аліўка. Звычайны прыклад, які часта вышэй за 90.",
+  "onboarding.plates.slide2.title": "Міска з курынай грудкай",
+  "onboarding.plates.slide2.desc": "Курыная грудка, рыс, авакада, агурок. Сытна і збалансавана, звычайна высокі бал.",
+  "onboarding.plates.slide3.title": "Курыца з брокалі і яйкам",
+  "onboarding.plates.slide3.desc": "Курыца на грылі, брокалі, яйка. Проста, шмат бялку, высокі бал."
 }

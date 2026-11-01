@@ -380,7 +380,7 @@
   "limits.use_health": "Χρήση υπολογισμού βάσει υγείας",
   "list.delete.confirm.message": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτήν την καταχώριση φαγητού; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
   "list.delete.confirm.title": "Διαγραφή φαγητού;",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Βγάλε φωτογραφία το γεύμα για να αποθηκευτούν θερμίδες και μακροθρεπτικά.",
   "list.empty.title": "Δεν υπάρχουν γεύματα ακόμη",
   "list.swipe_options.action": "Επιλογές",
   "list.swipe_options.hint": "Συμβουλή: Σύρετε ένα γεύμα δεξιά για να ανοίξετε τις επιλογές",
@@ -871,5 +871,11 @@
   "units.lb": "λίβ.",
   "units.ft": "πόδι",
   "units.in": "ίντσα",
-  "chess.summary.unknown": "Άγνωστο"
+  "chess.summary.unknown": "Άγνωστο",
+  "onboarding.plates.slide1.title": "Σαλάτα με αβοκάντο",
+  "onboarding.plates.slide1.desc": "Αβοκάντο, αυγό, ντομάτα, τυρί, ελιά. Συνηθισμένο παράδειγμα που συχνά περνά το 90.",
+  "onboarding.plates.slide2.title": "Μπολ με στήθος κοτόπουλου",
+  "onboarding.plates.slide2.desc": "Στήθος κοτόπουλου, ρύζι, αβοκάντο, αγγούρι. Χορταστικό και ισορροπημένο, συνήθως υψηλός βαθμός.",
+  "onboarding.plates.slide3.title": "Κοτόπουλο με μπρόκολο και αυγό",
+  "onboarding.plates.slide3.desc": "Ψητό κοτόπουλο, μπρόκολο, αυγό. Απλό, πολλή πρωτεΐνη, υψηλός βαθμός."
 }

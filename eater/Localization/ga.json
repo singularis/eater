@@ -380,7 +380,7 @@
   "limits.use_health": "Úsáid Ríomh Bunaithe ar Shláinte",
   "list.delete.confirm.message": "An bhfuil tú cinnte gur mian leat an iontráil bia seo a scriosadh? Ní féidir an gníomh seo a chur ar ceal.",
   "list.delete.confirm.title": "Scrios an bia?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Tóg grianghraf den bhéile chun calraí agus macraí a shábháil.",
   "list.empty.title": "Níl aon bhéilí fós",
   "list.swipe_options.action": "Roghanna",
   "list.swipe_options.hint": "Leid: Sciorr bia ar dheis chun roghanna a oscailt",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Anaithnid"
+  "chess.summary.unknown": "Anaithnid",
+  "onboarding.plates.slide1.title": "Sailéad avocado",
+  "onboarding.plates.slide1.desc": "Avocado, ubh, trátaí, cáis, ológ. Sampla laethúil a bhíonn go minic os cionn 90.",
+  "onboarding.plates.slide2.title": "Babhla cíche sicín",
+  "onboarding.plates.slide2.desc": "Cíoch sicín, rís, avocado, cúcamar. Líontach agus cothrom, scór ard de ghnáth.",
+  "onboarding.plates.slide3.title": "Sicín le brocailí agus ubh",
+  "onboarding.plates.slide3.desc": "Sicín greille, brocailí, ubh. Simplí, a lán próitéine, scór ard."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Izmantot uz veselības datiem balstītu aprēķinu",
   "list.delete.confirm.message": "Vai tiešām vēlaties dzēst šo ēdiena ierakstu? Šo darbību nevar atsaukt.",
   "list.delete.confirm.title": "Dzēst ēdienu?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Nofotografējiet maltīti, lai saglabātu kalorijas un makro.",
   "list.empty.title": "Vēl nav ēdienu",
   "list.swipe_options.action": "Opcijas",
   "list.swipe_options.hint": "Padoms: pavelciet ēdienu pa labi, lai atvērtu opcijas",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Nezināms"
+  "chess.summary.unknown": "Nezināms",
+  "onboarding.plates.slide1.title": "Avokado salāti",
+  "onboarding.plates.slide1.desc": "Avokado, ola, tomāts, siers, olīva. Parasts piemērs, kas bieži ir virs 90.",
+  "onboarding.plates.slide2.title": "Bļoda ar vistas fileju",
+  "onboarding.plates.slide2.desc": "Vistas fileja, rīsi, avokado, gurķis. Sātīgi un līdzsvaroti, parasti augsts rezultāts.",
+  "onboarding.plates.slide3.title": "Vista ar brokoļiem un olu",
+  "onboarding.plates.slide3.desc": "Grilēta vista, brokoļi, ola. Vienkārši, daudz olbaltumvielu, augsts rezultāts."
 }

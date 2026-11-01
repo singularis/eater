@@ -380,7 +380,7 @@
   "limits.use_health": "Folosește calcul bazat pe sănătate",
   "list.delete.confirm.message": "Sigur doriți să ștergeți această înregistrare de aliment? Această acțiune nu poate fi anulată.",
   "list.delete.confirm.title": "Ștergeți alimentul?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Fă o poză mesei ca să salvezi caloriile și macrourile.",
   "list.empty.title": "Încă nu există mese",
   "list.swipe_options.action": "Opțiuni",
   "list.swipe_options.hint": "Sfat: Glisează o masă spre dreapta pentru a deschide opțiunile",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Necunoscut"
+  "chess.summary.unknown": "Necunoscut",
+  "onboarding.plates.slide1.title": "Salată de avocado",
+  "onboarding.plates.slide1.desc": "Avocado, ou, roșie, brânză, măslină. Un exemplu obișnuit care trece des de 90.",
+  "onboarding.plates.slide2.title": "Bol cu piept de pui",
+  "onboarding.plates.slide2.desc": "Piept de pui, orez, avocado, castravete. Sățios și echilibrat, scor de obicei mare.",
+  "onboarding.plates.slide3.title": "Pui cu broccoli și ou",
+  "onboarding.plates.slide3.desc": "Pui la grătar, broccoli, ou. Simplu, multe proteine, scor mare."
 }

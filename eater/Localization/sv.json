@@ -380,7 +380,7 @@
   "limits.use_health": "Använd hälso-baserad beräkning",
   "list.delete.confirm.message": "Är du säker på att du vill ta bort den här matposten? Åtgärden går inte att ångra.",
   "list.delete.confirm.title": "Ta bort mat?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Ta en bild på måltiden för att spara kalorier och makron.",
   "list.empty.title": "Inga måltider ännu",
   "list.swipe_options.action": "Alternativ",
   "list.swipe_options.hint": "Tips: Svep en måltid åt höger för att öppna alternativ",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Okänd"
+  "chess.summary.unknown": "Okänd",
+  "onboarding.plates.slide1.title": "Avokadosallad",
+  "onboarding.plates.slide1.desc": "Avokado, ägg, tomat, ost, oliv. Ett vardagsexempel som ofta får över 90.",
+  "onboarding.plates.slide2.title": "Skål med kycklingbröst",
+  "onboarding.plates.slide2.desc": "Kycklingbröst, ris, avokado, gurka. Mättande och balanserat, oftast högt poäng.",
+  "onboarding.plates.slide3.title": "Kyckling med broccoli och ägg",
+  "onboarding.plates.slide3.desc": "Grillad kyckling, broccoli, ägg. Enkelt, mycket protein, högt poäng."
 }

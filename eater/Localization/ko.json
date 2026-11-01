@@ -380,7 +380,7 @@
   "limits.use_health": "건강 기반 계산 사용",
   "list.delete.confirm.message": "이 음식 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "list.delete.confirm.title": "음식을 삭제할까요?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "식사를 찍으면 칼로리와 영양소가 기록됩니다.",
   "list.empty.title": "아직 식사가 없습니다",
   "list.swipe_options.action": "옵션",
   "list.swipe_options.hint": "팁: 음식을 오른쪽으로 스와이프하면 옵션이 열립니다",
@@ -871,5 +871,11 @@
   "units.lb": "파운드",
   "units.ft": "피트",
   "units.in": "인치",
-  "chess.summary.unknown": "알 수 없음"
+  "chess.summary.unknown": "알 수 없음",
+  "onboarding.plates.slide1.title": "아보카도 샐러드",
+  "onboarding.plates.slide1.desc": "아보카도, 달걀, 토마토, 치즈, 올리브. 90점을 넘는 일이 많은 일상 예시입니다.",
+  "onboarding.plates.slide2.title": "닭가슴살 볼",
+  "onboarding.plates.slide2.desc": "닭가슴살, 밥, 아보카도, 오이. 든든하고 균형이 있으며 점수가 높은 편입니다.",
+  "onboarding.plates.slide3.title": "브로콜리와 달걀을 넣은 치킨",
+  "onboarding.plates.slide3.desc": "구운 닭고기, 브로콜리, 달걀. 간단하고 단백질이 많으며 점수가 높습니다."
 }

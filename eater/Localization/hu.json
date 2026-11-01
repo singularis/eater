@@ -380,7 +380,7 @@
   "limits.use_health": "Egészség-alapú számítás használata",
   "list.delete.confirm.message": "Biztosan törlöd ezt az étel bejegyzést? Ez a művelet nem vonható vissza.",
   "list.delete.confirm.title": "Törlöd az ételt?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Fotózd le az étkezést, hogy megmaradjanak a kalóriák és a makrók.",
   "list.empty.title": "Még nincsenek étkezések",
   "list.swipe_options.action": "Beállítások",
   "list.swipe_options.hint": "Tipp: Húzz jobbra egy ételen a beállítások megnyitásához",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Ismeretlen"
+  "chess.summary.unknown": "Ismeretlen",
+  "onboarding.plates.slide1.title": "Avokádósaláta",
+  "onboarding.plates.slide1.desc": "Avokádó, tojás, paradicsom, sajt, olíva. Hétköznapi példa, ami gyakran 90 fölött van.",
+  "onboarding.plates.slide2.title": "Tál csirkemellel",
+  "onboarding.plates.slide2.desc": "Csirkemell, rizs, avokádó, uborka. Laktató és kiegyensúlyozott, általában magas pont.",
+  "onboarding.plates.slide3.title": "Csirke brokkolival és tojással",
+  "onboarding.plates.slide3.desc": "Grillezett csirke, brokkoli, tojás. Egyszerű, sok fehérje, magas pont."
 }

@@ -380,7 +380,7 @@
   "limits.use_health": "Dùng tính toán dựa trên sức khỏe",
   "list.delete.confirm.message": "Bạn có chắc chắn muốn xóa mục món ăn này không? Không thể hoàn tác hành động này.",
   "list.delete.confirm.title": "Xóa món ăn?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Chụp bữa ăn để lưu calo và chất dinh dưỡng.",
   "list.empty.title": "Chưa có bữa ăn nào",
   "list.swipe_options.action": "Tùy chọn",
   "list.swipe_options.hint": "Mẹo: Vuốt món ăn sang phải để mở tùy chọn",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Không rõ"
+  "chess.summary.unknown": "Không rõ",
+  "onboarding.plates.slide1.title": "Salad bơ",
+  "onboarding.plates.slide1.desc": "Bơ, trứng, cà chua, phô mai, ô liu. Ví dụ thường ngày, điểm hay trên 90.",
+  "onboarding.plates.slide2.title": "Bát ức gà",
+  "onboarding.plates.slide2.desc": "Ức gà, cơm, bơ, dưa chuột. No và cân bằng, điểm thường cao.",
+  "onboarding.plates.slide3.title": "Gà với bông cải và trứng",
+  "onboarding.plates.slide3.desc": "Gà nướng, bông cải, trứng. Đơn giản, nhiều đạm, điểm cao."
 }

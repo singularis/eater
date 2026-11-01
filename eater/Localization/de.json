@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Unbekannt"
+  "chess.summary.unknown": "Unbekannt",
+  "onboarding.plates.slide1.title": "Avocadosalat",
+  "onboarding.plates.slide1.desc": "Avocado, Ei, Tomate, Käse, Olive. Ein Beispiel aus dem Alltag, das oft über 90 liegt.",
+  "onboarding.plates.slide2.title": "Schüssel mit Hähnchenbrust",
+  "onboarding.plates.slide2.desc": "Hähnchenbrust, Reis, Avocado, Gurke. Sättigend und ausgewogen, meist ein hoher Wert.",
+  "onboarding.plates.slide3.title": "Hähnchen mit Brokkoli und Ei",
+  "onboarding.plates.slide3.desc": "Gegrilltes Hähnchen, Brokkoli, Ei. Einfach, viel Protein, hoher Wert."
 }

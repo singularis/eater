@@ -380,7 +380,7 @@
   "limits.use_health": "Käytä terveyspohjaista laskentaa",
   "list.delete.confirm.message": "Haluatko varmasti poistaa tämän ruokamerkinnän? Tätä toimintoa ei voi kumota.",
   "list.delete.confirm.title": "Poistetaanko ruoka?",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "Ota kuva ateriasta, niin kalorit ja makrot tallentuvat.",
   "list.empty.title": "Ei vielä aterioita",
   "list.swipe_options.action": "Asetukset",
   "list.swipe_options.hint": "Vinkki: Pyyhkäise ateriaa oikealle avataksesi asetukset",
@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Tuntematon"
+  "chess.summary.unknown": "Tuntematon",
+  "onboarding.plates.slide1.title": "Avokadosalaatti",
+  "onboarding.plates.slide1.desc": "Avokado, kananmuna, tomaatti, juusto, oliivi. Tavallinen esimerkki, joka saa usein yli 90.",
+  "onboarding.plates.slide2.title": "Kulho kananrintaa",
+  "onboarding.plates.slide2.desc": "Kananrinta, riisi, avokado, kurkku. Täyttävä ja tasapainoinen, yleensä korkea piste.",
+  "onboarding.plates.slide3.title": "Kanaa, parsakaalia ja muna",
+  "onboarding.plates.slide3.desc": "Grillattua kanaa, parsakaalia, muna. Yksinkertaista, paljon proteiinia, korkea piste."
 }

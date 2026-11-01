@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Inconnu"
+  "chess.summary.unknown": "Inconnu",
+  "onboarding.plates.slide1.title": "Salade d'avocat",
+  "onboarding.plates.slide1.desc": "Avocat, œuf, tomate, fromage, olive. Un exemple réel qui dépasse souvent 90.",
+  "onboarding.plates.slide2.title": "Bol de blanc de poulet",
+  "onboarding.plates.slide2.desc": "Blanc de poulet, riz, avocat, concombre. Rassasiant et équilibré, score souvent élevé.",
+  "onboarding.plates.slide3.title": "Poulet, brocoli et œuf",
+  "onboarding.plates.slide3.desc": "Poulet grillé, brocoli, œuf. Simple, riche en protéines, score élevé."
 }

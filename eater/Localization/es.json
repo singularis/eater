@@ -871,5 +871,11 @@
   "units.lb": "lb",
   "units.ft": "ft",
   "units.in": "in",
-  "chess.summary.unknown": "Desconocido"
+  "chess.summary.unknown": "Desconocido",
+  "onboarding.plates.slide1.title": "Ensalada de aguacate",
+  "onboarding.plates.slide1.desc": "Aguacate, huevo, tomate, queso, aceituna. Un ejemplo real que suele pasar de 90.",
+  "onboarding.plates.slide2.title": "Bol de pechuga de pollo",
+  "onboarding.plates.slide2.desc": "Pechuga de pollo, arroz, aguacate, pepino. Saciante y equilibrado, puntuación alta.",
+  "onboarding.plates.slide3.title": "Pollo con brócoli y huevo",
+  "onboarding.plates.slide3.desc": "Pollo a la plancha, brócoli, huevo. Simple, mucha proteína, puntuación alta."
 }

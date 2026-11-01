@@ -380,7 +380,7 @@
   "limits.use_health": "استخدام حساب قائم على الصحة",
   "list.delete.confirm.message": "هل أنت متأكد أنك تريد حذف عنصر الطعام هذا؟ لا يمكن التراجع عن هذا الإجراء.",
   "list.delete.confirm.title": "حذف الطعام؟",
-  "list.empty.subtitle": "Snap a photo of your meal to log calories and macros.",
+  "list.empty.subtitle": "صوّر وجبتك لتسجيل السعرات والماكروز.",
   "list.empty.title": "لا توجد وجبات بعد",
   "list.swipe_options.action": "خيارات",
   "list.swipe_options.hint": "نصيحة: اسحب وجبة لليمين لفتح الخيارات",
@@ -871,5 +871,11 @@
   "units.lb": "رطل",
   "units.ft": "قدم",
   "units.in": "بوصة",
-  "chess.summary.unknown": "غير معروف"
+  "chess.summary.unknown": "غير معروف",
+  "onboarding.plates.slide1.title": "سلطة أفوكادو",
+  "onboarding.plates.slide1.desc": "أفوكادو، بيض، طماطم، جبن، زيتون. مثال عادي يتجاوز غالباً 90.",
+  "onboarding.plates.slide2.title": "وعاء صدر دجاج",
+  "onboarding.plates.slide2.desc": "صدر دجاج، أرز، أفوكادو، خيار. مشبع ومتوازن، والنتيجة عادة مرتفعة.",
+  "onboarding.plates.slide3.title": "دجاج مع بروكلي وبيض",
+  "onboarding.plates.slide3.desc": "دجاج مشوي، بروكلي، بيض. بسيط، بروتين كثير، نتيجة مرتفعة."
 }

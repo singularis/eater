@@ -871,5 +871,11 @@
   "units.lb": "фунт",
   "units.ft": "фут",
   "units.in": "дюйм",
-  "chess.summary.unknown": "Невідомо"
+  "chess.summary.unknown": "Невідомо",
+  "onboarding.plates.slide1.title": "Салат з авокадо",
+  "onboarding.plates.slide1.desc": "Авокадо, яйце, помідор, сир, оливка. Звичайний приклад, який часто набирає більше 90.",
+  "onboarding.plates.slide2.title": "Боул з курячою грудкою",
+  "onboarding.plates.slide2.desc": "Куряча грудка, рис, авокадо, огірок. Ситно і збалансовано, зазвичай високий бал.",
+  "onboarding.plates.slide3.title": "Курка з броколі та яйцем",
+  "onboarding.plates.slide3.desc": "Курка на грилі, броколі, яйце. Просто, багато білка, високий бал."
 }
